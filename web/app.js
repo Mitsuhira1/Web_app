@@ -994,3 +994,33 @@ function openChat() {
   $("chatClose").onclick = () => { chatOpenNow = false; closeSheet(); };
 }
 $("chatBtn").onclick = openChat;
+
+// ---------------------------------------------------------------- Android の戻るボタン(ブラウザの「戻る」)
+// 履歴に「戻るための1段」を置いておき、戻るが押されたらアプリの中で一つ前の画面へ戻して、また1段置き直す。
+// ホームのゲームのタブで押した時だけ、そのままページを離れる。
+const BACK_BUTTON = { play: "playBack", detail: "detailBack", rules: "rulesBack", bench: "benchBack", join: "joinBack", lobby: "lobbyBack", onlineSettings: "osBack" };
+let leaving = false;
+function armBack() { try { history.pushState({ asobi: 1 }, ""); } catch { /* 履歴が使えない時は何もしない */ } }
+function inAppBack() {
+  const modal = $("modal");
+  if (!modal.classList.contains("hidden")) { if (!modal.dataset.lock) closeSheet(); return true; }
+  const scr = document.querySelector(".screen:not(.hidden)")?.id;
+  if (scr === "home") { if (homeTab !== 0) { showTab(0); return true; } return false; }
+  const id = BACK_BUTTON[scr];
+  if (id && $(id)) { $(id).click(); return true; }
+  return false;
+}
+try {
+  history.replaceState({ asobi: 0 }, "");
+  armBack();
+  window.addEventListener("popstate", () => {
+    if (leaving) return;
+    if (inAppBack()) armBack();
+    else { leaving = true; history.back(); }
+  });
+} catch { /* 履歴が使えない場面(埋め込みなど)では、戻るボタンの対応をしない */ }
+
+// ---------------------------------------------------------------- ネットが切れても遊べるように(全部のファイルを端末に保存する)
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js").catch(() => { /* 保存できない場面(埋め込みなど)では、ふつうに読む */ });
+}

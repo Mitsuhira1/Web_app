@@ -6,3 +6,4 @@ gradle -q :core:jsBrowserProductionLibraryDistribution "$@"
 rm -rf web/core && mkdir -p web/core
 cp core/build/dist/js/productionLibrary/*.mjs web/core/
 echo "web/core を更新しました"
+python3 "$(dirname "$0")/make_sw.py"

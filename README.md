@@ -1,5 +1,7 @@
 # あそび箱30 Web 版
 
+公開ページ: https://mitsuhira1.github.io/Web_app/ (一度開くと全部のファイルを端末に保存するので、ネットが切れても1人用・CPU対戦は遊べる。ホーム画面に追加もできる)
+
 ボードゲーム・カードゲーム30種の Web アプリ(日本語のみ・スマホの縦画面が主)。
 規則と CPU は、Android 版(日本アソビ大辞典30)と同じ Kotlin のコードを JavaScript にして使う。画面は新しく書いた(HTML/SVG)。
 
@@ -10,7 +12,7 @@
 
 ## 作り方・動かし方
 ```
-tools/build_web.sh              # core を JS にして web/core/ へ
+tools/build_web.sh              # core を JS にして web/core/ へ(web/sw.js の保存の一覧も作り直す)
 python3 -m http.server -d web   # http://localhost:8000
 gradle :core:crossCheckJvm      # 規則の一致の試験(JVM 側)。JS 側は docs/STAGE1_NOTES.md
 gradle :core:crossCheckJvm -Pmode=crypto   # 通信部品を JDK と照らし合わせる
