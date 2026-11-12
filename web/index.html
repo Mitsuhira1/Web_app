@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>あそび箱30</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app">
+  <section id="home" class="screen">
+    <div id="tabGames" class="tab">
+      <header class="hhead"><div class="ttl">あそび箱<b id="count">30</b></div><span class="chip" id="cpuChip"></span></header>
+      <div id="continueBox"></div>
+      <div class="filter" id="filterSeg"></div>
+      <div id="shelf"></div>
+    </div>
+    <div id="tabTogether" class="tab hidden">
+      <h1 class="tabttl">みんなで遊ぶ</h1>
+      <p class="lead">先に友だちと接続します。遊ぶゲームとルールは、接続した後にホストが決めます。</p>
+      <div class="pnlabel">ルームを作る(ホスト)</div>
+      <button class="ccard blue" id="hostBtn"><span class="ci" id="hostIcon"></span><span><b>ルームを作る</b><small>招待コードを送って、離れた友だちと接続します。</small></span></button>
+      <div class="pnlabel">ルームに参加</div>
+      <button class="ccard orange" id="joinBtn"><span class="ci" id="joinIcon"></span><span><b>参加する</b><small>ホストから届いた招待コードを入力します。</small></span></button>
+    </div>
+    <div id="tabStats" class="tab hidden"></div>
+    <div id="tabSettings" class="tab hidden"></div>
+    <nav class="bottomnav" id="nav"></nav>
+  </section>
+
+  <section id="detail" class="screen hidden">
+    <div class="topbar"><button class="ichip" id="detailBack" aria-label="戻る"></button><span class="grow"></span><button class="ichip lbl" id="detailRules"></button></div>
+    <div id="detailBody" class="scrollbody"></div>
+    <div class="startbar"><button class="bigbtn primary start" id="startBtn">スタート</button></div>
+  </section>
+
+  <section id="rules" class="screen hidden">
+    <div class="topbar"><button class="ichip" id="rulesBack" aria-label="戻る"></button><div class="tbname" id="rulesTitle"></div></div>
+    <div id="rulesBody" class="scrollbody"></div>
+  </section>
+
+  <section id="play" class="screen hidden">
+    <div class="topbar">
+      <button class="ichip" id="playBack" aria-label="戻る"></button>
+      <div class="tbbox" id="playBox"></div>
+      <div class="tbname"><div id="playName"></div><div class="tbsub" id="playSub"></div></div>
+      <button class="ichip lbl" id="undoBtn"></button>
+      <button class="ichip lbl hidden" id="chatBtn"></button>
+      <button class="ichip lbl" id="playRules"></button>
+      <button class="ichip lbl" id="restartBtn"></button>
+    </div>
+    <div class="strip" id="strip"></div>
+    <div class="turnrow" id="turnRow"></div>
+    <div class="status" id="status"></div>
+    <div class="boardwrap" id="boardwrap"></div>
+    <div class="acts" id="acts"></div>
+    <div class="dev" id="dev"></div>
+    <div class="result hidden" id="resultPanel"></div>
+  </section>
+
+  <section id="join" class="screen hidden">
+    <div class="topbar"><button class="ichip" id="joinBack" aria-label="戻る"></button><div class="tbname">ルームに参加</div></div>
+    <div class="scrollbody" id="joinBody"></div>
+  </section>
+
+  <section id="lobby" class="screen hidden">
+    <div class="topbar"><button class="ichip" id="lobbyBack" aria-label="戻る"></button><div class="tbname"><div id="lobbyTitle">部屋</div><div class="tbsub">オンライン</div></div><button class="ichip lbl hidden" id="lobbyChat" aria-label="チャット"></button></div>
+    <div class="scrollbody" id="lobbyBody"></div>
+    <div class="startbar hidden" id="lobbyBar"><button class="bigbtn primary" id="toSettings">ゲーム設定へ</button></div>
+  </section>
+
+  <section id="onlineSettings" class="screen hidden">
+    <div class="topbar"><button class="ichip" id="osBack" aria-label="戻る"></button><div class="tbname"><div>ゲーム設定</div><div class="tbsub" id="osSub"></div></div></div>
+    <div class="scrollbody" id="osBody"></div>
+    <div class="startbar"><button class="bigbtn primary" id="startOnline">始める</button></div>
+  </section>
+
+  <section id="bench" class="screen hidden">
+    <div class="topbar"><button class="ichip" id="benchBack" aria-label="戻る"></button><div class="tbname">速さの試験</div></div>
+    <div class="panel pad"><button class="bigbtn primary" id="benchRun">はじめる</button></div>
+    <pre id="benchOut" class="benchout"></pre>
+  </section>
+</main>
+<div id="toast" class="toast hidden"></div>
+<div id="modal" class="modal hidden"><div class="sheet" id="sheet"></div></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

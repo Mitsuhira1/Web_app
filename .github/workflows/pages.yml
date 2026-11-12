@@ -1,0 +1,27 @@
+name: Web を公開する(GitHub Pages)
+# web/ の中身をそのまま公開する(規則・CPU の JS は tools/build_web.sh で作って web/core/ に入れてある)。
+on:
+  push:
+    branches: [ccr-efc07031-6exjqs, main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: d
+        uses: actions/deploy-pages@v4
