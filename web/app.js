@@ -974,9 +974,13 @@ $("chatBtn").onclick = openChat;
 // ホームのゲームのタブで押した時だけ、そのままページを離れる。
 const BACK_BUTTON = { play: "playBack", detail: "detailBack", rules: "rulesBack", join: "joinBack", lobby: "lobbyBack", onlineSettings: "osBack" };
 let leaving = false;
-// Chrome は、画面に触れる前に置いた履歴の段を「戻る」で飛ばす。だから、触れた時(タップ)に置き直す
-let armedByTouch = false;
-function armBack(byTouch) { try { history.pushState({ asobi: 1 }, ""); armedByTouch = !!byTouch; } catch { /* 履歴が使えない時は何もしない */ } }
+// Chrome(Android)は、ページが「操作されていない時」に積んだ履歴の段を、戻るボタンで飛ばす(元のページごと飛ばすこともある)。
+// だから段は、Chrome が「操作した」と数える時(指を離した時・クリック・キー)にだけ積む。戻るを続けて押せるよう、3段までためる
+const TRAP_MAX = 3;
+let traps = 0;
+function fillTraps() {
+  try { while (traps < TRAP_MAX) { history.pushState({ asobi: 1 }, ""); traps++; } } catch { /* 履歴が使えない時は何もしない */ }
+}
 function inAppBack() {
   const modal = $("modal");
   if (!modal.classList.contains("hidden")) { if (!modal.dataset.lock) closeSheet(); return true; }
@@ -993,20 +997,18 @@ function askExit() {
     closeSheet();
     leaving = true;
     try { window.close(); } catch { /* 閉じられない時は履歴を戻ってページを離れる */ }
-    // 置いた1段とこのページの最初の1段をさかのぼる。前のページがあればそこへ戻り、なければ次の戻るでブラウザが閉じる
-    history.go(-2);
+    // ためた段とこのページの最初の段をさかのぼる。前のページがあればそこへ戻り、なければ次の戻るでブラウザが閉じる
+    history.go(-(traps + 1));
+    traps = 0;
     setTimeout(() => { leaving = false; }, 1500);
   };
 }
 try {
-  history.replaceState({ asobi: 0 }, "");
-  armBack(false);
-  window.addEventListener("pointerdown", () => { if (!armedByTouch) armBack(true); }, { capture: true, passive: true });
+  for (const ev of ["pointerup", "click", "keydown"]) window.addEventListener(ev, () => { if (!leaving) fillTraps(); }, { capture: true, passive: true });
   window.addEventListener("popstate", () => {
     if (leaving) return;
-    armedByTouch = false;
+    traps = Math.max(0, traps - 1);
     if (!inAppBack()) askExit();
-    armBack(false);
   });
 } catch { /* 履歴が使えない場面(埋め込みなど)では、戻るボタンの対応をしない */ }
 
