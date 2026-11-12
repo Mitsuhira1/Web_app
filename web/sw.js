@@ -1,5 +1,5 @@
 // ネットが切れても遊べるように、最初に全部のファイルを端末に保存する(tools/make_sw.py が作る。手で直さない)
-const VERSION = "29d87e0fdb7e";
+const VERSION = "377e6d802565";
 const CACHE = "asobi30-" + VERSION;
 const FILES = [
   "./",

@@ -1015,8 +1015,19 @@ try {
   armBack();
   window.addEventListener("popstate", () => {
     if (leaving) return;
-    if (inAppBack()) armBack();
-    else { leaving = true; history.back(); }
+    if (inAppBack()) { armBack(); return; }
+    // ホームのゲームのタブ: 終了してよいかを聞く(聞いている間も、戻るの1段は置き直しておく)
+    armBack();
+    openSheet('<h2>このアプリを終了しますか?</h2><div class="btns"><button class="main" id="exitYes">終了する</button><button id="exitNo">キャンセル</button></div>');
+    $("exitNo").onclick = closeSheet;
+    $("exitYes").onclick = () => {
+      closeSheet();
+      leaving = true;
+      try { window.close(); } catch { /* 閉じられない時は履歴を戻ってページを離れる */ }
+      // 置いた1段とこのページの最初の1段をさかのぼる。前のページがあればそこへ戻り、なければ次の戻るでブラウザが閉じる
+      history.go(-2);
+      setTimeout(() => { leaving = false; }, 1500);
+    };
   });
 } catch { /* 履歴が使えない場面(埋め込みなど)では、戻るボタンの対応をしない */ }
 
