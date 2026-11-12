@@ -294,3 +294,10 @@ select.txt { max-width: 60%; }
 .osgame b { font-size: 24px; }
 .osgame p { margin: 2px 0 0; font-size: 13px; color: var(--sub); }
 .privacy { font-size: 11px; line-height: 1.6; color: var(--sub); margin-top: 14px; }
+
+.avrow { justify-content: flex-start; gap: 14px; padding: 10px 14px; }
+.avbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+.crop { position: relative; overflow: hidden; margin: 0 auto 12px; border-radius: 14px; background: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
+.crop img { position: absolute; max-width: none; pointer-events: none; }
+.cropmask { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0,0,0,.55); pointer-events: none; outline: 2px solid rgba(255,255,255,.8); }
+.cropzoom { display: block; width: 100%; margin: 0 0 14px; accent-color: var(--gold); }

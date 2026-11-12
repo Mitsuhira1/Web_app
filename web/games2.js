@@ -316,7 +316,7 @@ export const RENDER2 = { dots, hitblow, hare, chinese, ludo, backgammon, go, yac
 // ------------------------------------------------------------ カードゲーム共通(札・ボタン・点数を Kotlin から受け取って描く)
 const CCOL = { 赤: "#C8463C", 黄: "#C79A12", 緑: "#3E9B63", 青: "#3F78C4" };
 function cardsRender(b, A) {
-  A.strip(b.scores.map((s) => `<div class="pl${s.turn ? " turn" : ""}"><span class="who"><span class="nm">${s.name}</span><span class="nt">${s.v}</span></span></div>`).join(""));
+  A.strip(b.scores.map((s) => `<div class="pl${s.turn ? " turn" : ""}">${s.name === "あなた" && A.face ? A.face(24) : ""}<span class="who"><span class="nm">${s.name}</span><span class="nt">${s.v}</span></span></div>`).join(""));
   const mask = A.sel || 0;
   const human = A.view.human;
   const cardHtml = (c, zi, ki) => {

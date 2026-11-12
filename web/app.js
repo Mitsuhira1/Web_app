@@ -211,13 +211,17 @@ function renderSettings() {
   const nameRow = document.createElement("div");
   nameRow.className = "row";
   nameRow.innerHTML = '<div class="k">名前</div><input class="txt" id="setName" maxlength="12" autocomplete="off">';
-  t.append(panel("プレイヤー", [nameRow]));
+  const av = document.createElement("div");
+  av.className = "row avrow";
+  av.innerHTML = `${faceHtml(56)}<div class="avbtns"><button class="sbtn pri" id="avPick">写真を選ぶ</button>${avatar ? '<button class="sbtn" id="avClear">元に戻す</button>' : ""}<input type="file" id="avFile" accept="image/*" hidden></div>`;
+  t.append(panel("プレイヤー", [nameRow, av]));
+  $("avPick").onclick = () => $("avFile").click();
+  $("avFile").onchange = (e) => { const f = e.target.files && e.target.files[0]; if (f) openCrop(f); e.target.value = ""; };
+  if ($("avClear")) $("avClear").onclick = () => { avatar = null; store.set("avatar", null); renderSettings(); };
   $("setName").value = store.get("name", "あなた");
   $("setName").oninput = (e) => store.set("name", e.target.value);
   const lic = document.createElement("div"); lic.className = "row"; lic.innerHTML = '<div class="k">ライセンス</div><span class="note">›</span>'; lic.onclick = openLicenses;
-  const bench = document.createElement("div"); bench.className = "row"; bench.innerHTML = '<div class="k">速さの試験<small>Web 版の確認用</small></div><span class="note">›</span>';
-  bench.onclick = () => { $("benchOut").textContent = "「はじめる」を押してください。数十秒かかります。"; $("benchBack").innerHTML = IC.back; show("bench"); };
-  t.append(panel("このアプリについて", [lic, bench]));
+  t.append(panel("このアプリについて", [lic]));
 }
 
 // ---------------------------------------------------------------- ゲームの設定(詳細)
@@ -549,6 +553,7 @@ function api() {
     sheet: (html, init) => { openSheet(html); if (init) init($("sheet")); }, closeSheet,
     get sel() { return sel; }, set sel(v) { sel = v; },
     get hints() { return showHints; },
+    face: (size) => faceHtml(size, (store.get("name", "あなた") || "あ").slice(0, 1)),
   };
 }
 function playMoveSound(m) {
@@ -728,37 +733,6 @@ function renderShogi(b) {
   };
 }
 
-// ---------------------------------------------------------------- 速さの試験
-$("benchBack").onclick = () => showTab(3);
-$("benchRun").onclick = async () => {
-  const out = $("benchOut");
-  $("benchRun").disabled = true;
-  const log = (t) => { out.textContent += t + "\n"; };
-  out.textContent = "";
-  try {
-    log(`端末: ${navigator.userAgent}`);
-    log(`CPU の数(目安): ${navigator.hardwareConcurrency || "?"}`);
-    const t = await callT("crossCheckReport", 3, 0);
-    log(`\n全30ゲームの規則の試験(ランダムに最後まで指す): ${t.ms.toFixed(0)}ms`);
-    for (const [id, name] of [["shogi", "将棋"], ["gogo", "5五将棋"], ["reversi", "リバーシ"]]) {
-      for (const lv of [0, 1, 2]) {
-        const hh = await call("newMatch", id, "", "12345", "", lv);
-        let total = 0, max = 0, n = 0;
-        for (let k = 0; k < 8; k++) {
-          const { r: mv, ms } = await callT("cpuChoose", hh, THINK[lv]);
-          if (mv < 0) break;
-          total += ms; max = Math.max(max, ms); n++;
-          await call("playMove", hh, mv);
-        }
-        log(`${name} ${["初級", "中級", "上級"][lv]}: ${n}手 平均${(total / n).toFixed(0)}ms 最大${max.toFixed(0)}ms(上限${THINK[lv]}ms)`);
-      }
-    }
-    log("\n完了。この画面の文字を、そのまま教えてください。");
-  } catch (e) {
-    log("失敗: " + e.message);
-  }
-  $("benchRun").disabled = false;
-};
 
 document.addEventListener("click", (e) => { if (e.target.closest && e.target.closest("button")) sfx.play(e.target.closest(".back") ? "BACK" : "TAP"); }, true);
 call("catalogJson").then((t) => { catalog = JSON.parse(t); showTab(0); }).then(() => sfx.init()).catch((e) => { $("shelf").textContent = "読み込みに失敗しました:" + e.message; });
@@ -876,7 +850,7 @@ function renderLobby() {
   let html = "";
   if (ost.phase === "JOINING") html += '<div class="cardbox">ホストにつないでいます…</div>';
   if (ost.transportError) html += `<p class="red">${esc(ost.transportError)}</p>`;
-  html += `<div class="pnlabel">参加者 ${ost.members.length}/${MAX_MEMBERS}</div><div class="cardbox">${ost.members.map((m, i) => { const me = m.slot === ost.mySlot; return `<div class="member"><span class="face" style="background:${FACE[i % FACE.length]}">${esc(m.name.slice(0, 1))}</span><span class="mn">${esc(m.name)}${me && m.name !== "あなた" ? "(あなた)" : ""}</span>${m.slot === 0 ? '<span class="tag">ホスト</span>' : ""}</div>`; }).join("")}</div>`;
+  html += `<div class="pnlabel">参加者 ${ost.members.length}/${MAX_MEMBERS}</div><div class="cardbox">${ost.members.map((m, i) => { const me = m.slot === ost.mySlot; return `<div class="member">${me ? faceHtml(34, m.name.slice(0, 1), FACE[i % FACE.length]) : `<span class="face" style="background:${FACE[i % FACE.length]}">${esc(m.name.slice(0, 1))}</span>`}<span class="mn">${esc(m.name)}${me && m.name !== "あなた" ? "(あなた)" : ""}</span>${m.slot === 0 ? '<span class="tag">ホスト</span>' : ""}</div>`; }).join("")}</div>`;
   if (ost.legacy.length) html += `<p class="note">${ost.legacy.map(esc).join("・")}のアプリが古い版です。「待った」・チャット・時間切れの「負け」は使えません。</p>`;
   const codes = {}, inputs = {};
   if (host) {
@@ -998,9 +972,11 @@ $("chatBtn").onclick = openChat;
 // ---------------------------------------------------------------- Android の戻るボタン(ブラウザの「戻る」)
 // 履歴に「戻るための1段」を置いておき、戻るが押されたらアプリの中で一つ前の画面へ戻して、また1段置き直す。
 // ホームのゲームのタブで押した時だけ、そのままページを離れる。
-const BACK_BUTTON = { play: "playBack", detail: "detailBack", rules: "rulesBack", bench: "benchBack", join: "joinBack", lobby: "lobbyBack", onlineSettings: "osBack" };
+const BACK_BUTTON = { play: "playBack", detail: "detailBack", rules: "rulesBack", join: "joinBack", lobby: "lobbyBack", onlineSettings: "osBack" };
 let leaving = false;
-function armBack() { try { history.pushState({ asobi: 1 }, ""); } catch { /* 履歴が使えない時は何もしない */ } }
+// Chrome は、画面に触れる前に置いた履歴の段を「戻る」で飛ばす。だから、触れた時(タップ)に置き直す
+let armedByTouch = false;
+function armBack(byTouch) { try { history.pushState({ asobi: 1 }, ""); armedByTouch = !!byTouch; } catch { /* 履歴が使えない時は何もしない */ } }
 function inAppBack() {
   const modal = $("modal");
   if (!modal.classList.contains("hidden")) { if (!modal.dataset.lock) closeSheet(); return true; }
@@ -1010,28 +986,109 @@ function inAppBack() {
   if (id && $(id)) { $(id).click(); return true; }
   return false;
 }
+function askExit() {
+  openSheet('<h2>このアプリを終了しますか?</h2><div class="btns"><button class="main" id="exitYes">終了する</button><button id="exitNo">キャンセル</button></div>');
+  $("exitNo").onclick = closeSheet;
+  $("exitYes").onclick = () => {
+    closeSheet();
+    leaving = true;
+    try { window.close(); } catch { /* 閉じられない時は履歴を戻ってページを離れる */ }
+    // 置いた1段とこのページの最初の1段をさかのぼる。前のページがあればそこへ戻り、なければ次の戻るでブラウザが閉じる
+    history.go(-2);
+    setTimeout(() => { leaving = false; }, 1500);
+  };
+}
 try {
   history.replaceState({ asobi: 0 }, "");
-  armBack();
+  armBack(false);
+  window.addEventListener("pointerdown", () => { if (!armedByTouch) armBack(true); }, { capture: true, passive: true });
   window.addEventListener("popstate", () => {
     if (leaving) return;
-    if (inAppBack()) { armBack(); return; }
-    // ホームのゲームのタブ: 終了してよいかを聞く(聞いている間も、戻るの1段は置き直しておく)
-    armBack();
-    openSheet('<h2>このアプリを終了しますか?</h2><div class="btns"><button class="main" id="exitYes">終了する</button><button id="exitNo">キャンセル</button></div>');
-    $("exitNo").onclick = closeSheet;
-    $("exitYes").onclick = () => {
-      closeSheet();
-      leaving = true;
-      try { window.close(); } catch { /* 閉じられない時は履歴を戻ってページを離れる */ }
-      // 置いた1段とこのページの最初の1段をさかのぼる。前のページがあればそこへ戻り、なければ次の戻るでブラウザが閉じる
-      history.go(-2);
-      setTimeout(() => { leaving = false; }, 1500);
-    };
+    armedByTouch = false;
+    if (!inAppBack()) askExit();
+    armBack(false);
   });
 } catch { /* 履歴が使えない場面(埋め込みなど)では、戻るボタンの対応をしない */ }
 
 // ---------------------------------------------------------------- ネットが切れても遊べるように(全部のファイルを端末に保存する)
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js").catch(() => { /* 保存できない場面(埋め込みなど)では、ふつうに読む */ });
+  // 新しい版を保存し終えたら、1回だけ読み込み直して新しい版に入れ替える(古い版が出たままにならないように)
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || reloaded) return;
+    const scr = document.querySelector(".screen:not(.hidden)")?.id;
+    if (scr === "play" || scr === "lobby" || scr === "join" || scr === "onlineSettings") return; // 対局中・通信中は入れ替えない(次に開いた時)
+    reloaded = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register("./sw.js").then((r) => r.update()).catch(() => { /* 保存できない場面(埋め込みなど)では、ふつうに読む */ });
+}
+
+
+// ---------------------------------------------------------------- プレイヤーの写真(元のアプリの AvatarSetting・AvatarCrop と同じ流れ)
+// 選んだ写真を、丸い枠の中で動かす・拡大縮小して保存する。保存した写真と設定は、この端末のブラウザに残る(開き直しても消えない)
+let avatar = store.get("avatar", null);
+function faceHtml(size, fallback = "あ", color = "#C8463C") {
+  const st = `width:${size}px;height:${size}px;border-radius:50%;flex:none;`;
+  return avatar ? `<img class="avatar" src="${avatar}" alt="" style="${st}object-fit:cover">` : `<span class="face" style="${st}background:${color};display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:${Math.round(size * 0.42)}px">${esc(fallback)}</span>`;
+}
+function openCrop(file) {
+  openSheet('<h2>写真の位置と大きさ</h2><div class="note" id="cropMsg">写真を読み込んでいます…</div>', true);
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onerror = () => { URL.revokeObjectURL(url); openSheet('<h2>写真の位置と大きさ</h2><div class="note">この写真は読み込めませんでした</div><div class="btns"><button id="cropNo">キャンセル</button></div>'); $("cropNo").onclick = closeSheet; };
+  img.onload = () => {
+    const S = Math.min(300, window.innerWidth - 64);
+    const base = Math.max(S / img.naturalWidth, S / img.naturalHeight);
+    let zoom = 1, x = 0, y = 0; // x, y: 写真の中心が枠の中心からずれている量(画面の px)
+    openSheet(`<h2>写真の位置と大きさ</h2><div class="crop" id="cropStage" style="width:${S}px;height:${S}px"><img id="cropImg" src="${url}" alt="" draggable="false"><div class="cropmask"></div></div><input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" aria-label="大きさ" class="cropzoom"><div class="btns"><button class="main" id="cropOk">この位置で保存</button><button id="cropNo">キャンセル</button></div>`, true);
+    const el = $("cropImg"), stage = $("cropStage");
+    const clamp = () => {
+      const w = img.naturalWidth * base * zoom, h = img.naturalHeight * base * zoom;
+      x = Math.min((w - S) / 2, Math.max(-(w - S) / 2, x));
+      y = Math.min((h - S) / 2, Math.max(-(h - S) / 2, y));
+    };
+    const draw = () => {
+      clamp();
+      const w = img.naturalWidth * base * zoom, h = img.naturalHeight * base * zoom;
+      el.style.width = w + "px"; el.style.height = h + "px";
+      el.style.left = (S - w) / 2 + x + "px"; el.style.top = (S - h) / 2 + y + "px";
+    };
+    draw();
+    // 1本の指で動かし、2本の指で拡大縮小(下の棒でも大きさを変えられる)
+    const pts = new Map();
+    let last = null, lastDist = 0;
+    stage.onpointerdown = (e) => { stage.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); last = [e.clientX, e.clientY]; if (pts.size === 2) { const [a, b] = [...pts.values()]; lastDist = Math.hypot(a[0] - b[0], a[1] - b[1]); } };
+    stage.onpointermove = (e) => {
+      if (!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, [e.clientX, e.clientY]);
+      if (pts.size >= 2) {
+        const [a, b] = [...pts.values()];
+        const dd = Math.hypot(a[0] - b[0], a[1] - b[1]);
+        if (lastDist) { const nz = Math.min(4, Math.max(1, zoom * dd / lastDist)); x *= nz / zoom; y *= nz / zoom; zoom = nz; $("cropZoom").value = String(zoom); }
+        lastDist = dd;
+      } else if (last) { x += e.clientX - last[0]; y += e.clientY - last[1]; }
+      last = [e.clientX, e.clientY];
+      draw();
+    };
+    stage.onpointerup = stage.onpointercancel = (e) => { pts.delete(e.pointerId); lastDist = 0; const r = [...pts.values()][0]; last = r ? [...r] : null; };
+    $("cropZoom").oninput = (e) => { const nz = +e.target.value; x *= nz / zoom; y *= nz / zoom; zoom = nz; draw(); };
+    $("cropNo").onclick = () => { URL.revokeObjectURL(url); closeSheet(); };
+    $("cropOk").onclick = () => {
+      // 枠の中に見えている所を 256×256 にして保存する
+      const out = 256, k = out / S;
+      const c = document.createElement("canvas"); c.width = out; c.height = out;
+      const w = img.naturalWidth * base * zoom, h = img.naturalHeight * base * zoom;
+      c.getContext("2d").drawImage(img, ((S - w) / 2 + x) * k, ((S - h) / 2 + y) * k, w * k, h * k);
+      try {
+        avatar = c.toDataURL("image/jpeg", 0.88);
+        store.set("avatar", avatar);
+      } catch { avatar = null; }
+      URL.revokeObjectURL(url);
+      closeSheet();
+      renderSettings();
+    };
+  };
+  img.src = url;
 }
