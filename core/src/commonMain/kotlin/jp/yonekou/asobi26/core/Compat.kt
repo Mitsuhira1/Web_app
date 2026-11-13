@@ -27,11 +27,10 @@ object Compat {
     )
 
     /**
-     * Web 版だけの変更: 画面のないゲーム(麻雀・道のりすごろく・スピード・ソリティア)は、規則の番号を 0 と名乗る。
-     * Android 版のホストの部屋では「版が違う」扱いになり、そのゲームは選べなくなる(選ばれても Web 版では遊べないため)。
-     * 画面を作ったら、この表から外して元の番号(1)に戻す。
+     * Web 版で遊べないゲームは、規則の番号を 0 と名乗る(Android 版のホストの部屋では選べなくなる)。
+     * 画面を元のアプリと同じ Compose のコードにしたので、今は 30 個すべて遊べる(空)。
      */
-    val WEB_UNSUPPORTED: Set<String> = setOf("mahjong", "life", "speed", "solitaire")
+    val WEB_UNSUPPORTED: Set<String> = emptySet()
 
     fun ruleOf(gameId: String): Int = if (gameId in WEB_UNSUPPORTED) 0 else RULES[gameId] ?: 1
 

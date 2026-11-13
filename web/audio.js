@@ -30,7 +30,7 @@ export function createSfx(call) {
       if (SAMPLES[s.name]) {
         for (const f of SAMPLES[s.name]) {
           try {
-            const res = await fetch(`audio/${f}.mp3`);
+            const res = await fetch(new URL(`./audio/${f}.mp3`, import.meta.url));
             bufs[s.name].push(await c.decodeAudioData(await res.arrayBuffer()));
           } catch { /* 読めなくても止めない */ }
         }

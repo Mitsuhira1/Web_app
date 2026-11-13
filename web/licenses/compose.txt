@@ -1,0 +1,11 @@
+Compose Multiplatform — Copyright JetBrains s.r.o. and respective authors and developers.
+Licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
+
+Skiko (Skia for Kotlin) — Copyright JetBrains s.r.o.
+Licensed under the Apache License, Version 2.0.
+
+Skia — Copyright (c) 2011 Google Inc. All rights reserved.
+Licensed under the BSD 3-Clause License (https://skia.org/docs/dev/contrib/license/).
+
+この Web 版の画面は、元の Android アプリ(日本アソビ大辞典30)の Jetpack Compose のコードを、
+Compose Multiplatform で WebAssembly にしたものです。

@@ -86,6 +86,8 @@ enum class Sound(val variants: Int, val volume: Float) {
     LOSE(1, 0.55f),
     /** 引き分け */
     DRAW(1, 0.55f),
+    /** チャット・スタンプが届いた(小さく木をたたく「コッ」。順番を変えると他の音が変わるので、いちばん後ろに足す) */
+    CHAT(1, 0.4f),
 }
 
 /** 音の計算(純粋な Kotlin。JVM のテストでも作れる) */
@@ -348,6 +350,9 @@ object Synth {
             Sound.LOSE -> render(1.3, rng, room = 0.16) { b ->
                 listOf(783.99, 698.46, 587.33).forEachIndexed { i, f -> marimba(b, i * 0.2, f, 0.8) }
                 marimba(b, 0.62, 392.0, 0.9)
+            }
+            Sound.CHAT -> render(0.16, rng, room = 0.08) { b ->
+                b.strike(0.0, 1.0, 0.8, listOf(Mode(920.0, 1.0, 0.06), Mode(1950.0, 0.4, 0.035), Mode(460.0, 0.35, 0.05)), noise = 0.2, noiseHz = 2200.0)
             }
             Sound.DRAW -> render(1.0, rng, room = 0.14) { b ->
                 marimba(b, 0.0, 523.25, 0.8); marimba(b, 0.2, 523.25, 0.7); marimba(b, 0.2, 392.0, 0.5)

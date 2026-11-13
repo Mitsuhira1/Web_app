@@ -6,6 +6,7 @@
 規則と CPU は、Android 版(日本アソビ大辞典30)と同じ Kotlin のコードを JavaScript にして使う。画面は新しく書いた(HTML/SVG)。
 
 ## 構成
+- `app/` … 画面。元の Android アプリの Jetpack Compose のコード(ui/・AppModel・data/)を、Compose Multiplatform で WebAssembly にしたもの。Android にしかない部品だけを `web/` の置き換え部品(Shims)で同じ名前に用意し、元のコードはほぼそのまま。
 - `core/` … Kotlin(Multiplatform: JVM と JS)。規則・CPU・通信の部屋・効果音の計算。`jsMain/Engine.kt` と `WebNet.kt` が画面への入口。
 - `web/` … 画面(`app.js`・`games.js`・`games2.js`)、通信の部品(`net.js`)、効果音(`audio.js`)、字・録音・ライセンス。
 - `tools/` … `build_web.sh`(JS を作って `web/core/` に入れる)、`subset_fonts.py`(字を軽くする)。
@@ -29,6 +30,8 @@ gradle :core:crossCheckJvm -Pmode=crypto   # 通信部品を JDK と照らし合
 | 部品 | ライセンス |
 |---|---|
 | Kotlin(コンパイラ・標準ライブラリ) | Apache-2.0 |
+| Compose Multiplatform・Skiko | Apache-2.0 |
+| Skia | BSD-3-Clause |
 | Zen Maru Gothic | SIL Open Font License 1.1 |
 | Yuji Boku | SIL Open Font License 1.1 |
 | 碁石の録音(KaTrain、Jordan Seaward) | MIT |

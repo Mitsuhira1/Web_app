@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>あそび箱30</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F3EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1712" media="(prefers-color-scheme: dark)">
+<style>
+  :root { --bg: #F3EFE6; --ink: #2A2118; --sub: #7A6F60; color-scheme: light; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1C1712; --ink: #F3EBDD; --sub: #A89B88; color-scheme: dark; } }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); overscroll-behavior: none; }
+  body { touch-action: none; }
+  #splash { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; z-index: 5; }
+  #splash img { width: 96px; height: 96px; border-radius: 22px; }
+  #splash p { margin: 0; font-size: 14px; color: var(--sub); }
+  #toast { position: fixed; left: 16px; right: 16px; bottom: calc(28px + env(safe-area-inset-bottom)); max-width: 528px; margin: 0 auto; background: #3A2616; color: #F6E2B0; border-radius: 12px; padding: 12px 16px; font: 700 14px system-ui, sans-serif; text-align: center; z-index: 10; }
+</style>
+</head>
+<body>
+<div id="splash"><img src="icons/icon-192.png" alt=""><p>読み込んでいます…</p></div>
+<div id="toast" hidden></div>
+<script type="module" src="boot.js"></script>
+</body>
+</html>

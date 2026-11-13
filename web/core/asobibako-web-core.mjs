@@ -39,7 +39,7 @@ import {
   hashCodeq5arwsb9dgti as hashCode,
   compareValues1n2ayl87ihzfk as compareValues,
   mapOf1xd03cq9cnmy8 as mapOf,
-  setOf45ia9pnfhe90 as setOf,
+  emptySetcxexqki71qfa as emptySet,
   Long2qws0ah9gnpki as Long,
   sortedWith2csnbbb21k0lg as sortedWith,
   joinToString1cxrrlmo0chqs as joinToString,
@@ -95,6 +95,7 @@ import {
   toInt2q8uldh7sc951 as toInt,
   toLongkk4waq8msp1k as toLong_0,
   Exceptiondt2hlxn7j7vw as Exception,
+  setOf45ia9pnfhe90 as setOf,
   Collection1k04j3hzsbod0 as Collection,
   get_lastIndex1yw0x4k50k51w as get_lastIndex,
   ArrayList_init_$Create$3c5f9d0lbt4oq as ArrayList_init_$Create$_1,
@@ -147,7 +148,6 @@ import {
   minOfvsfy10u29zot as minOf,
   shuffled3grcsjfy8dw80 as shuffled,
   ensureNotNull1e947j3ixpazm as ensureNotNull,
-  emptySetcxexqki71qfa as emptySet,
   getStringHashCode26igk1bx568vk as getStringHashCode,
   getBooleanHashCode1bbj3u6b3v0a7 as getBooleanHashCode,
   random38lhenfn27cm6 as random,
@@ -555,8 +555,9 @@ var Sound_TIMEUP_instance;
 var Sound_WIN_instance;
 var Sound_LOSE_instance;
 var Sound_DRAW_instance;
+var Sound_CHAT_instance;
 function values() {
-  return [Sound_TAP_getInstance(), Sound_BACK_getInstance(), Sound_STONE_getInstance(), Sound_FLIP_getInstance(), Sound_GO_getInstance(), Sound_KOMA_getInstance(), Sound_CHESS_getInstance(), Sound_MARBLE_getInstance(), Sound_RATTLE_getInstance(), Sound_DISC_getInstance(), Sound_WOOD_getInstance(), Sound_TAKE_getInstance(), Sound_PEN_getInstance(), Sound_SCRIBBLE_getInstance(), Sound_TILE_getInstance(), Sound_PEG_getInstance(), Sound_DICE_getInstance(), Sound_SPIN_getInstance(), Sound_CARD_getInstance(), Sound_CARD_FLIP_getInstance(), Sound_DEAL_getInstance(), Sound_SHUFFLE_getInstance(), Sound_CHIP_getInstance(), Sound_HANA_getInstance(), Sound_MJ_getInstance(), Sound_MJ_MIX_getInstance(), Sound_CUTIN_getInstance(), Sound_TURN_getInstance(), Sound_KNOCK_getInstance(), Sound_COUNT_getInstance(), Sound_COUNT_LAST_getInstance(), Sound_TIMEUP_getInstance(), Sound_WIN_getInstance(), Sound_LOSE_getInstance(), Sound_DRAW_getInstance()];
+  return [Sound_TAP_getInstance(), Sound_BACK_getInstance(), Sound_STONE_getInstance(), Sound_FLIP_getInstance(), Sound_GO_getInstance(), Sound_KOMA_getInstance(), Sound_CHESS_getInstance(), Sound_MARBLE_getInstance(), Sound_RATTLE_getInstance(), Sound_DISC_getInstance(), Sound_WOOD_getInstance(), Sound_TAKE_getInstance(), Sound_PEN_getInstance(), Sound_SCRIBBLE_getInstance(), Sound_TILE_getInstance(), Sound_PEG_getInstance(), Sound_DICE_getInstance(), Sound_SPIN_getInstance(), Sound_CARD_getInstance(), Sound_CARD_FLIP_getInstance(), Sound_DEAL_getInstance(), Sound_SHUFFLE_getInstance(), Sound_CHIP_getInstance(), Sound_HANA_getInstance(), Sound_MJ_getInstance(), Sound_MJ_MIX_getInstance(), Sound_CUTIN_getInstance(), Sound_TURN_getInstance(), Sound_KNOCK_getInstance(), Sound_COUNT_getInstance(), Sound_COUNT_LAST_getInstance(), Sound_TIMEUP_getInstance(), Sound_WIN_getInstance(), Sound_LOSE_getInstance(), Sound_DRAW_getInstance(), Sound_CHAT_getInstance()];
 }
 function valueOf(value) {
   switch (value) {
@@ -630,6 +631,8 @@ function valueOf(value) {
       return Sound_LOSE_getInstance();
     case 'DRAW':
       return Sound_DRAW_getInstance();
+    case 'CHAT':
+      return Sound_CHAT_getInstance();
     default:
       Sound_initEntries();
       THROW_IAE('No enum constant value.');
@@ -681,6 +684,7 @@ function Sound_initEntries() {
   Sound_WIN_instance = new Sound('WIN', 32, 1, 0.65);
   Sound_LOSE_instance = new Sound('LOSE', 33, 1, 0.55);
   Sound_DRAW_instance = new Sound('DRAW', 34, 1, 0.55);
+  Sound_CHAT_instance = new Sound('CHAT', 35, 1, 0.4);
 }
 var $ENTRIES;
 function Sound(name, ordinal, variants, volume) {
@@ -1739,6 +1743,10 @@ function Synth$make$lambda_31(b) {
   return Unit_instance;
 }
 function Synth$make$lambda_32(b) {
+  b.tf(0.0, 1.0, 0.8, listOf([new Mode(920.0, 1.0, 0.06), new Mode(1950.0, 0.4, 0.035), new Mode(460.0, 0.35, 0.05)]), 0.2, 2200.0);
+  return Unit_instance;
+}
+function Synth$make$lambda_33(b) {
   marimba(Synth_instance, b, 0.0, 523.25, 0.8);
   marimba(Synth_instance, b, 0.2, 523.25, 0.7);
   marimba(Synth_instance, b, 0.2, 392.0, 0.5);
@@ -1870,8 +1878,11 @@ protoOf(Synth).kg = function (s, variant) {
     case 33:
       tmp = render(this, 1.3, rng, 0.16, Synth$make$lambda_31);
       break;
+    case 35:
+      tmp = render(this, 0.16, rng, 0.08, Synth$make$lambda_32);
+      break;
     case 34:
-      tmp = render(this, 1.0, rng, 0.14, Synth$make$lambda_32);
+      tmp = render(this, 1.0, rng, 0.14, Synth$make$lambda_33);
       break;
     default:
       noWhenBranchMatchedException();
@@ -2022,6 +2033,10 @@ function Sound_LOSE_getInstance() {
 function Sound_DRAW_getInstance() {
   Sound_initEntries();
   return Sound_DRAW_instance;
+}
+function Sound_CHAT_getInstance() {
+  Sound_initEntries();
+  return Sound_CHAT_instance;
 }
 var Category_BOARD_instance;
 var Category_CARD_instance;
@@ -2261,7 +2276,7 @@ function Compat() {
   this.cs_1 = 2;
   this.ds_1 = 2;
   this.es_1 = mapOf([to('life', 1), to('mahjong', 1), to('hanafuda', 1), to('speed', 1), to('holdem', 1), to('uno', 1), to('solitaire', 1), to('daifugo', 1), to('sevens', 1), to('poker', 1), to('memory', 1), to('blackjack', 1), to('ludo', 1), to('chinese', 1), to('yacht', 1), to('reversi', 1), to('gomoku', 1), to('connect4', 1), to('shogi', 1), to('gogo', 1), to('chess', 1), to('backgammon', 1), to('dots', 1), to('mancala', 1), to('hex', 1), to('morris', 1), to('hare', 1), to('checkers', 1), to('go', 1), to('hitblow', 1)]);
-  this.fs_1 = setOf(['mahjong', 'life', 'speed', 'solitaire']);
+  this.fs_1 = emptySet();
   this.gs_1 = 16;
   this.hs_1 = 40;
   this.is_1 = new Long(700, 0);

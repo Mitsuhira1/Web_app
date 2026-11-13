@@ -1,14 +1,14 @@
 // あそび箱30(試作)の画面。規則・CPU は worker.js 経由で Kotlin から作った JS を呼ぶ。
 import { RENDER } from "./games.js";
 import { tileArt } from "./art.js";
-import * as mainCore from "./core/asobibako-web-core.mjs";
-import { createNet } from "./net.js";
-import { createSfx, moveSound, SHUFFLE_GAMES } from "./audio.js";
+import * as mainCore from "../core/asobibako-web-core.mjs";
+import { createNet } from "../net.js";
+import { createSfx, moveSound, SHUFFLE_GAMES } from "../audio.js";
 import { RENDER2 } from "./games2.js";
 const RENDERERS = { ...RENDER, ...RENDER2 };
 const PASS_MOVES = { reversi: 64, ludo: 99, backgammon: 999 };
 
-const worker = new Worker("./worker.js", { type: "module" });
+const worker = new Worker("../worker.js", { type: "module" });
 let seq = 1;
 const pending = new Map();
 let readyResolve;
@@ -925,7 +925,7 @@ async function startOnlinePlay(handle) {
 
 // ---------------------------------------------------------------- ライセンス
 async function openLicenses() {
-  const files = [["Zen Maru Gothic(字)", "licenses/ZenMaruGothic-OFL.txt"], ["Yuji Boku(将棋の駒・麻雀の牌の字)", "licenses/YujiBoku-OFL.txt"], ["効果音の録音(碁石=KaTrain、将棋の駒=ShogiHome)", "licenses/sounds.txt"], ["Kotlin(標準ライブラリ)", "licenses/kotlin.txt"]];
+  const files = [["Zen Maru Gothic(字)", "../licenses/ZenMaruGothic-OFL.txt"], ["Yuji Boku(将棋の駒・麻雀の牌の字)", "../licenses/YujiBoku-OFL.txt"], ["効果音の録音(碁石=KaTrain、将棋の駒=ShogiHome)", "../licenses/sounds.txt"], ["Kotlin(標準ライブラリ)", "../licenses/kotlin.txt"]];
   let html = "<h2>ライセンス</h2>";
   for (const [name, f] of files) {
     let t = "(読み込めませんでした)";
@@ -1024,7 +1024,7 @@ if ("serviceWorker" in navigator) {
     reloaded = true;
     location.reload();
   });
-  navigator.serviceWorker.register("./sw.js").then((r) => r.update()).catch(() => { /* 保存できない場面(埋め込みなど)では、ふつうに読む */ });
+  navigator.serviceWorker.register("../sw.js").then((r) => r.update()).catch(() => { /* 保存できない場面(埋め込みなど)では、ふつうに読む */ });
 }
 
 

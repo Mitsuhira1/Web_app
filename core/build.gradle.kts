@@ -9,6 +9,8 @@ kotlin {
         useEsModules()
         binaries.library()
     }
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs { browser() }
     sourceSets.all { languageSettings.optIn("kotlin.ExperimentalStdlibApi") }
 }
 
