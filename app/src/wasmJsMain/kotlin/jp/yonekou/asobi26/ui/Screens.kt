@@ -893,8 +893,6 @@ fun SettingsScreen(model: AppModel) {
             )
             AvatarSetting(model)
 
-            DebugScenarioList(model)
-
             SectionLabel("ライセンス", Modifier.padding(top = 10.dp))
             Text(
                 "字: Zen Maru Gothic(SIL Open Font License 1.1)\n将棋の駒・麻雀の牌の字: Yuji Boku(SIL Open Font License 1.1)\n碁石・リバーシの石の音: KaTrain(Jordan Seaward, MIT License)\n将棋の駒の音: ShogiHome(Kubo Ryosuke, MIT License)\nCompose Multiplatform・Kotlin(Apache License 2.0)\n画面の描画: Skiko(Apache License 2.0)・Skia(BSD 3-Clause License)\n通信対戦: ブラウザの WebRTC",
@@ -946,36 +944,6 @@ private fun ToggleRow(title: String, note: String, checked: Boolean, onChange: (
 private fun Divider() {
     val c = LocalAsobi.current
     Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(1.dp).background(c.line))
-}
-
-/** 確認用の場面(0.4.10 だけ。確かめてもらったら次の版で消す) */
-@Composable
-private fun DebugScenarioList(model: AppModel) {
-    val c = LocalAsobi.current
-    val tap = rememberTap(model.tapSound)
-    val scope = rememberCoroutineScope()
-    var busy by remember { mutableStateOf<String?>(null) }
-    var note by remember { mutableStateOf("") }
-    SectionLabel("確認用(次の版で消します)", Modifier.padding(top = 10.dp))
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(c.surface)) {
-        for (item in jp.yonekou.asobi26.core.DebugScenarios.items) {
-            Text(
-                if (busy == item.id) "${item.label}(探しています…)" else item.label,
-                color = c.ink, fontSize = 14.sp,
-                modifier = Modifier.fillMaxWidth().clickable(enabled = busy == null, role = Role.Button) {
-                    tap()
-                    busy = item.id
-                    note = ""
-                    scope.launch {
-                        val rec = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { jp.yonekou.asobi26.core.DebugScenarios.build(item.id) }
-                        busy = null
-                        if (rec != null) model.resume(rec) else note = "その場面を作れませんでした"
-                    }
-                }.padding(horizontal = 16.dp, vertical = 12.dp),
-            )
-        }
-    }
-    if (note.isNotEmpty()) Text(note, color = c.sub, fontSize = 12.sp)
 }
 
 /** プレイヤーのアイコン(写真を選ぶ・元に戻す) */

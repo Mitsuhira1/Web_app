@@ -90,11 +90,18 @@ window.addEventListener("pageshow", (e) => { if (e.persisted) location.reload();
 // 戻るが押されたら、画面(Kotlin)の BackHandler に渡す。ホームでは「このアプリを終了しますか?」を画面が出す。
 const TRAP_MAX = 3;
 let traps = 0;
+// 「終了する」を選んだ後は、戻るボタンを捕まえない(次の戻るでブラウザがページを閉じる)。画面に触れたら元に戻す
 let leaving = false;
+let exitBack = false;
 function fillTraps() { try { while (traps < TRAP_MAX) { history.pushState({ asobi: 1 }, ""); traps++; } } catch { /* 何もしない */ } }
 for (const ev of ["pointerup", "click", "keydown"]) window.addEventListener(ev, () => { if (!leaving) fillTraps(); }, { capture: true, passive: true });
+window.addEventListener("pointerdown", () => { if (leaving && !exitBack) leaving = false; }, { capture: true, passive: true });
 window.addEventListener("popstate", () => {
-  if (leaving) return;
+  if (leaving) {
+    // 積んだ段を全部戻り終えた所。前のページがあれば、そこへ戻る(なければ何も起きず、次の戻るで閉じる)
+    if (exitBack) { exitBack = false; history.go(-1); }
+    return;
+  }
   traps = Math.max(0, traps - 1);
   if (!appReady) { recover("back"); return; }
   try { globalThis.asobiOnBack && globalThis.asobiOnBack(); } catch { /* 何もしない */ }
@@ -102,9 +109,10 @@ window.addEventListener("popstate", () => {
 globalThis.asobiExit = () => {
   leaving = true;
   try { window.close(); } catch { /* 閉じられない時は履歴を戻ってページを離れる */ }
-  history.go(-(traps + 1));
+  // history.go は、戻りすぎる数を渡すと何もしない。だから先に積んだ段だけ戻り、そのあと1つ前のページへ戻る
+  const n = traps;
   traps = 0;
-  setTimeout(() => (leaving = false), 1500);
+  if (n > 0) { exitBack = true; history.go(-n); } else history.go(-1);
 };
 
 // ---------------------------------------------------------------- 読み込み終わり
