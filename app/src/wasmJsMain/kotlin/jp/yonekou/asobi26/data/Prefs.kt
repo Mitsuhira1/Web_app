@@ -8,6 +8,15 @@ import jp.yonekou.asobi26.core.MatchRecord
 class Prefs(context: Context) {
     private val sp = context.applicationContext.getSharedPreferences("asobi", Context.MODE_PRIVATE)
 
+    init {
+        // 初回起動の入力を済ませたか。何も保存されていない(入れたばかり)時だけ「まだ」。以前の版から入れ替えた人は済みとみなす
+        if (!sp.contains(KEY_ONBOARDED)) sp.edit().putBoolean(KEY_ONBOARDED, sp.all.isNotEmpty()).apply()
+    }
+
+    var onboarded: Boolean
+        get() = sp.getBoolean(KEY_ONBOARDED, true)
+        set(v) { sp.edit().putBoolean(KEY_ONBOARDED, v).apply() }
+
     /** 0=端末に合わせる 1=ライト 2=ダーク */
     var themeMode: Int
         get() = sp.getInt(KEY_THEME, 0)
@@ -107,6 +116,7 @@ class Prefs(context: Context) {
         private const val KEY_PACE = "cpuPace"
         private const val KEY_LEVEL = "level"
         private const val KEY_NAME = "name"
+        private const val KEY_ONBOARDED = "onboarded"
         private const val KEY_RECENT = "recent"
         private const val KEY_REC = "rec_"
         private const val KEY_SETUP = "setup_"

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -88,80 +89,93 @@ fun ChatButton(model: AppModel) {
     }
 }
 
+/** 通知を出しておく長さ[ミリ秒] */
+private const val BANNER_MS = 3000L
+
 /**
- * チャットの吹き出しと窓(対局画面・部屋の画面の上に重ねる)。
- * anchorY = 吹き出しを出す高さ(名札の帯の下。画面の上からの px)。seatFraction(slot) = 話した人の名札の横の位置(0〜1。分からなければ null=真ん中)。
+ * チャットの通知と窓(対局画面・部屋の画面の上に重ねる)。
+ * 通知は画面の上に LINE のように出して、3秒で消える(横か上へのスワイプでも消せる)。自分が送ったものは出さない(窓の履歴で見る)。
+ * 通知はほかのボタンに重なってよい。通知の部分への操作はスワイプだけを見て、タップは下のボタンへ通す。
  */
 @Composable
-fun BoxScope.ChatOverlay(model: AppModel, anchorY: Int, seatFraction: (Int) -> Float?) {
-    ChatBubbles(model, anchorY, seatFraction)
+fun BoxScope.ChatOverlay(model: AppModel) {
+    ChatBanner(model)
     if (model.chatOpen) ChatSheet(model)
 }
 
 @Composable
-private fun ChatBubbles(model: AppModel, anchorY: Int, seatFraction: (Int) -> Float?) {
-    if (model.chatOpen) return
-    var now by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
-    val lastId = model.chatLog.lastOrNull()?.id
-    LaunchedEffect(lastId) {
-        while (true) {
-            now = SystemClock.elapsedRealtime()
-            if (model.chatLog.none { it.at + BUBBLE_MS > now }) break
-            delay(100)
-        }
+private fun BoxScope.ChatBanner(model: AppModel) {
+    val latest = model.chatLog.lastOrNull()
+    var shown by remember { mutableStateOf<AppModel.ChatItem?>(null) }
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(latest?.id) {
+        val m = latest ?: return@LaunchedEffect
+        // 自分のもの・窓を開いている間・昔のもの(画面に戻った時の履歴)は出さない
+        if (m.mine || model.chatOpen || SystemClock.elapsedRealtime() - m.at > 1500) return@LaunchedEffect
+        shown = m; visible = true
+        delay(BANNER_MS)
+        visible = false
     }
-    val live = model.chatLog.filter { it.at + BUBBLE_MS > now }.takeLast(3)
-    if (live.isEmpty()) return
-    // タップは通す(盤の操作のじゃまにならない)。新しいものを上に、古いものを下に
-    Column(Modifier.offset { IntOffset(0, anchorY) }.fillMaxWidth().testTag("chatBubbles"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        for (m in live.asReversed()) {
-            val remain = m.at + BUBBLE_MS - now
-            Bubble(m, seatFraction(m.slot) ?: 0.5f, Modifier.alpha((remain / 350f).coerceIn(0f, 1f)))
-        }
+    androidx.compose.animation.AnimatedVisibility(
+        visible = visible && !model.chatOpen,
+        modifier = Modifier.align(Alignment.TopCenter),
+        enter = androidx.compose.animation.slideInVertically { -it } + androidx.compose.animation.fadeIn(),
+        exit = androidx.compose.animation.slideOutVertically { -it } + androidx.compose.animation.fadeOut(),
+    ) {
+        val m = shown
+        if (m != null) Banner(m, Modifier.then(SwipeAwayElement(LocalDensity.current.density * 36f) { visible = false }))
     }
 }
 
 @Composable
-private fun Bubble(m: AppModel.ChatItem, fraction: Float, modifier: Modifier) {
+private fun Banner(m: AppModel.ChatItem, modifier: Modifier) {
     val c = LocalAsobi.current
-    val density = LocalDensity.current
-    val shape = RoundedCornerShape(14.dp)
-    val fill = if (m.mine) c.accent.copy(alpha = 0.28f).compositeOver(c.surface) else c.surface
-    val border = c.ink.copy(alpha = 0.85f)
-    var tailX by remember { mutableFloatStateOf(40f) }
-    val pad = with(density) { 10.dp.roundToPx() }
-    Box(
-        modifier.fillMaxWidth().layout { measurable, cons ->
-            val p = measurable.measure(cons.copy(minWidth = 0, maxWidth = (cons.maxWidth * 0.64f).roundToInt()))
-            layout(cons.maxWidth, p.height) {
-                val cx = fraction * cons.maxWidth
-                val x = (cx - p.width / 2f).coerceIn(pad.toFloat(), (cons.maxWidth - p.width - pad).toFloat().coerceAtLeast(pad.toFloat()))
-                tailX = (cx - x).coerceIn(16f, (p.width - 16f).coerceAtLeast(16f))
-                p.place(x.roundToInt(), 0)
-            }
-        },
+    val shape = RoundedCornerShape(18.dp)
+    Row(
+        modifier.statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth()
+            .clip(shape).background(c.surface).border(1.5.dp, c.ink.copy(alpha = 0.85f), shape)
+            .padding(horizontal = 12.dp, vertical = 9.dp).testTag("chatBanner"),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        val tailH = with(density) { 8.dp.toPx() }
-        val tailW = with(density) { 7.dp.toPx() }
-        Column(
-            Modifier.background(fill, shape).border(1.5.dp, border, shape)
-                .drawWithContent {
-                    drawContent()
-                    // 名札の方を指す三角(上の辺に重ねる)
-                    val tri = Path().apply { moveTo(tailX - tailW, 1f); lineTo(tailX, -tailH); lineTo(tailX + tailW, 1f); close() }
-                    drawPath(tri, fill)
-                    drawLine(border, Offset(tailX - tailW, 0f), Offset(tailX, -tailH), 1.5.dp.toPx())
-                    drawLine(border, Offset(tailX + tailW, 0f), Offset(tailX, -tailH), 1.5.dp.toPx())
-                    drawLine(fill, Offset(tailX - tailW + 2f, 0f), Offset(tailX + tailW - 2f, 0f), 3.dp.toPx())
-                }
-                .padding(horizontal = 11.dp, vertical = 7.dp),
-        ) {
-            if (m.kind == 1) {
-                Box(Modifier.padding(top = 1.dp)) { StampArt(m.body.toIntOrNull() ?: 0, 64.dp) }
-            } else {
-                Text(m.name, color = c.sub, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(m.body, color = c.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp)
+        Box(Modifier.size(34.dp).clip(androidx.compose.foundation.shape.CircleShape).background(c.select), contentAlignment = Alignment.Center) {
+            androidx.compose.material3.Icon(AppIcons.Chat, contentDescription = null, tint = c.onSelect, modifier = Modifier.size(20.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(m.name, color = c.sub, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            if (m.kind == 1) Text(STAMPS.getOrNull(m.body.toIntOrNull() ?: 0)?.label ?: "", color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.Black, maxLines = 1)
+            else Text(m.body, color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        }
+        if (m.kind == 1) StampArt(m.body.toIntOrNull() ?: 0, 44.dp)
+    }
+}
+
+/**
+ * 横か上へのスワイプで onDismiss を呼ぶ。タップは消費せず、下に重なっているボタンへ通す
+ * (sharePointerInputWithSiblings)。
+ */
+private class SwipeAwayElement(val limit: Float, val onDismiss: () -> Unit) : androidx.compose.ui.node.ModifierNodeElement<SwipeAwayNode>() {
+    override fun create() = SwipeAwayNode(limit, onDismiss)
+    override fun update(node: SwipeAwayNode) { node.limit = limit; node.onDismiss = onDismiss }
+    override fun equals(other: Any?) = other is SwipeAwayElement && other.limit == limit && other.onDismiss == onDismiss
+    override fun hashCode() = onDismiss.hashCode() * 31 + limit.hashCode()
+}
+
+private class SwipeAwayNode(var limit: Float, var onDismiss: () -> Unit) : Modifier.Node(), androidx.compose.ui.node.PointerInputModifierNode {
+    private var start: Offset? = null
+    private var done = false
+    override fun sharePointerInputWithSiblings() = true
+    override fun onCancelPointerInput() { start = null }
+    override fun onPointerEvent(pointerEvent: androidx.compose.ui.input.pointer.PointerEvent, pass: androidx.compose.ui.input.pointer.PointerEventPass, bounds: androidx.compose.ui.unit.IntSize) {
+        if (pass != androidx.compose.ui.input.pointer.PointerEventPass.Main) return
+        val ch = pointerEvent.changes.firstOrNull() ?: return
+        val s = start
+        when {
+            ch.pressed && !ch.previousPressed -> { start = ch.position; done = false }
+            ch.pressed && s != null && !done -> {
+                val d = ch.position - s
+                if (kotlin.math.abs(d.x) > limit || d.y < -limit) { done = true; onDismiss() }
             }
+            !ch.pressed -> start = null
         }
     }
 }

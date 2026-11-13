@@ -209,6 +209,16 @@ class AppModel(app: Application) : AndroidViewModel(app) {
     var playerName by mutableStateOf(prefs.playerName)
         private set
 
+    /** 初回起動の「表示名とアイコン」の入力を済ませたか */
+    var onboarded by mutableStateOf(prefs.onboarded)
+        private set
+    /** 初回の入力を終える。名前が空なら今のまま(スキップ) */
+    fun finishOnboarding(name: String) {
+        if (name.isNotBlank()) changePlayerName(name.trim())
+        onboarded = true
+        prefs.onboarded = true
+    }
+
     /** プレイヤーのアイコン(写真。null = 決まった絵) */
     var avatar by mutableStateOf(jp.yonekou.asobi26.data.Avatar.load(app)?.asImageBitmap())
         private set

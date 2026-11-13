@@ -171,7 +171,6 @@ private fun PlayContent(model: AppModel, ses: Session<*>, gi: GameInfo) {
     if (showPieces) PieceGuide(gi.id) { showPieces = false }
     var askRestart by remember { mutableStateOf(false) }
     var askResign by remember { mutableStateOf(false) }
-    var chatAnchorY by remember { mutableIntStateOf(0) }
 
     val outcome = ses.outcome
     val cpu = ses.seats.firstOrNull { !it.human }
@@ -206,7 +205,7 @@ private fun PlayContent(model: AppModel, ses: Session<*>, gi: GameInfo) {
         // 操作ボタンは上の帯にアイコンで並べる(盤の下は空けて、盤を広く使う)
         TopBar(gi.name, subtitle = subtitle, onBack = { model.back() }, gameId = gi.id) {
             LocalTick.current
-            if (ses.def.undoAllowed && cpu != null) {
+            if (ses.def.undoAllowed && cpu != null && !model.onlineGame) {
                 val canUndo = model.canUndo && !model.animating
                 IconChip(AppIcons.Undo, "待った", enabled = canUndo) { tap(); model.undo() }
             }
@@ -224,27 +223,21 @@ private fun PlayContent(model: AppModel, ses: Session<*>, gi: GameInfo) {
             if (gi.id in setOf("chess", "shogi", "gogo")) TextButton(onClick = { showPieces = true }) { Text("駒", color = c.accentInk, fontWeight = FontWeight.Bold) }
             if(gi.id=="mahjong") TextButton(onClick={showRoles=true}){Text("役",color=c.accentInk,fontWeight=FontWeight.Bold)}
             if (gi.id in setOf("yacht", "poker", "holdem")) RolesButton(poker = gi.id in setOf("poker", "holdem")) { tap(); showRoles = true }
-            // 通信対戦のチャット(窓を閉じていても、届いたものは吹き出しで少しの間見える)
+            // 通信対戦のチャット(窓を閉じていても、届いたものは画面の上に3秒だけ通知で出る)
             if (model.onlineGame) ChatButton(model)
-            // CPUの番をとばす(人が1人だけで、残りが CPU の対局のとき)。押せない時も位置を固定するため薄く出す
-            if (!model.onlineGame && !model.localPass && ses.seats.count { it.human } == 1 && ses.seats.any { !it.human }) {
-                IconChip(AppIcons.SkipCpu, "CPUの番をとばす", enabled = ses.outcome == null && ses.isCpuTurn) { tap(); model.skipCpu() }
-            }
+            // CPU とだけの対戦: CPU の番の動きをとばすボタン(ダブルタップでも同じ)
+            if (vsCpuOnly) IconChip(AppIcons.Skip, "CPUの番をとばす", enabled = outcome == null && ses.isCpuTurn) { tap(); model.skipCpu() }
             IconChip(AppIcons.Rules, "ルール") { tap(); showRules = true }
             if (!model.onlineGame) IconChip(AppIcons.Restart, "最初から") { tap(); askRestart = true }
         }
         // ヨットは得点表に全員が出るので、名札は出さない(3人以上でも並びきらないため)
         // カードゲームは卓の上に名札を出すので、上の名札は出さない
         if (gi.id != "yacht" && gi.id !in CARD_TABLE_GAMES && ses.seats.size <= 2) PlayerStrip(model, ses, gi, v)
-        // 吹き出しを出す高さの目印(名札の帯の下)
-        Box(Modifier.fillMaxWidth().height(0.dp).onGloballyPositioned { chatAnchorY = it.positionInRoot().y.roundToInt() })
         if(gi.id!="mahjong"&&gi.id!="life"){
         // 3人以上とカードの卓は、全員を手番の順に並べた帯(番・NEXT・回る向き)で見せる
         val tinfo = if (outcome == null && model.reviewMove == null && (ses.seats.size >= 3 || gi.id in CARD_TABLE_GAMES)) turnInfo(ses) else null
         if (tinfo != null) {
             TurnOrderBar(ses, tinfo)
-            // 全員の席の帯がある時は、吹き出しの高さをその下にする
-            Box(Modifier.fillMaxWidth().height(0.dp).onGloballyPositioned { chatAnchorY = it.positionInRoot().y.roundToInt() })
         } else
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 4.dp).background(c.surface, RoundedCornerShape(12.dp))
@@ -254,7 +247,14 @@ private fun PlayContent(model: AppModel, ses: Session<*>, gi: GameInfo) {
             Text(if (ses.outcome != null) "対局終了" else if(model.reviewMove!=null)"局の結果" else if (ses.rules is ConcurrentRules<*> && ses.seats.size>1) "それぞれ操作できます" else if (model.localPass || !ses.isHumanTurn) "${seatLabel(ses, ses.toMove)}の番です" else "あなたの番です", color = c.ink, fontWeight = FontWeight.Black, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         }
         Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(if(model.reviewMove!=null)"結果確認中"else if (model.clockRemaining < 0) "制限時間なし" else "残り ${model.clockRemaining} 秒", color = if (model.clockRemaining in 0..5) c.shu else c.sub, fontSize = 12.sp, modifier = Modifier.weight(1f))
+            // 残り時間は数字を大きく太く(5秒以下は赤)
+            if (model.reviewMove != null) Text("結果確認中", color = c.sub, fontSize = 12.sp, modifier = Modifier.weight(1f))
+            else if (model.clockRemaining < 0) Text("制限時間なし", color = c.sub, fontSize = 12.sp, modifier = Modifier.weight(1f))
+            else Row(Modifier.weight(1f), verticalAlignment = Alignment.Bottom) {
+                Text("残り ", color = c.sub, fontSize = 12.sp, modifier = Modifier.padding(bottom = 3.dp))
+                Text("${model.clockRemaining}", color = if (model.clockRemaining in 0..5) c.shu else c.ink, fontSize = 26.sp, fontWeight = FontWeight.Black, lineHeight = 30.sp)
+                Text(" 秒", color = c.sub, fontSize = 12.sp, modifier = Modifier.padding(bottom = 3.dp))
+            }
             if (ses.canResign) androidx.compose.material3.OutlinedButton(onClick = { askResign = true }, enabled = outcome == null && !model.handover && (!model.localPass || ses.isHumanTurn)) { Text("降参") }
         }
         }
@@ -364,14 +364,7 @@ private fun PlayContent(model: AppModel, ses: Session<*>, gi: GameInfo) {
     MoveSounds(ses, v)
     CountdownOverlay(model, ses)
     OnlineUndoOverlay(model)
-    if (model.onlineGame) {
-        val slots = model.room?.begin?.seatSlots
-        val n = ses.seats.size
-        ChatOverlay(model, chatAnchorY + with(androidx.compose.ui.platform.LocalDensity.current) { 6.dp.roundToPx() }) { slot ->
-            val i = slots?.indexOf(slot) ?: -1
-            if (i < 0 || gi.id == "mahjong" || gi.id == "life") null else (i + 0.5f) / n
-        }
-    }
+    if (model.onlineGame) ChatOverlay(model)
     // ヨットの役の一覧(下から出す。後ろを暗くして、外をタップしても閉じる)
     if (showRoles && gi.id in setOf("yacht", "poker", "holdem", "mahjong")) {
         BackHandler { tap(); showRoles = false }

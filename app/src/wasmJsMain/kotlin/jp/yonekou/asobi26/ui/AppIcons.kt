@@ -38,23 +38,32 @@ object AppIcons {
         horizontalLineTo(11f)
     }
 
-    /** チャット(吹き出しと2本の線) */
+    /** チャット(丸い吹き出しと3つの点。角を作らない) */
     val Chat: ImageVector = stroke("Chat") {
-        moveTo(4f, 5f); horizontalLineTo(20f); verticalLineTo(16f); horizontalLineTo(11f); lineTo(6f, 20f); verticalLineTo(16f); horizontalLineTo(4f); close()
-        moveTo(8f, 9.5f); horizontalLineTo(16f)
-        moveTo(8f, 12.5f); horizontalLineTo(13f)
+        moveTo(12f, 4f)
+        curveTo(16.4f, 4f, 20f, 7.1f, 20f, 11f)
+        curveTo(20f, 14.9f, 16.4f, 18f, 12f, 18f)
+        curveTo(11.2f, 18f, 10.5f, 17.9f, 9.8f, 17.7f)
+        curveTo(8.6f, 18.9f, 7f, 19.6f, 5f, 19.8f)
+        curveTo(5.9f, 18.8f, 6.4f, 17.8f, 6.5f, 16.7f)
+        curveTo(4.9f, 15.4f, 4f, 13.3f, 4f, 11f)
+        curveTo(4f, 7.1f, 7.6f, 4f, 12f, 4f)
+        close()
+        moveTo(8.5f, 11f); lineTo(8.6f, 11f)
+        moveTo(12f, 11f); lineTo(12.1f, 11f)
+        moveTo(15.5f, 11f); lineTo(15.6f, 11f)
+    }
+
+    /** CPU の番をとばす(右向きの二重の矢じり) */
+    val Skip: ImageVector = stroke("Skip") {
+        moveTo(5f, 6f); lineTo(11f, 12f); lineTo(5f, 18f)
+        moveTo(13f, 6f); lineTo(19f, 12f); lineTo(13f, 18f)
     }
 
     /** 閉じる(×) */
     val Close: ImageVector = stroke("Close") {
         moveTo(6f, 6f); lineTo(18f, 18f)
         moveTo(18f, 6f); lineTo(6f, 18f)
-    }
-
-    /** CPUの番をとばす(右向きの二重の矢じり) */
-    val SkipCpu: ImageVector = stroke("SkipCpu") {
-        moveTo(5f, 6f); lineTo(11f, 12f); lineTo(5f, 18f)
-        moveTo(13f, 6f); lineTo(19f, 12f); lineTo(13f, 18f)
     }
 
     /** ルール(開いた本) */

@@ -102,6 +102,7 @@ fun AppRoot(model: AppModel) {
             Screen.RoomSettings -> OnlineGameSettingsScreen(model)
             Screen.Join -> JoinScreen(model)
         }
+        if (!model.onboarded) FirstRunScreen(model)
         if (model.confirmRoomReturn) AlertDialog(
             onDismissRequest = { model.confirmRoomReturn = false },
             title = { Text("ゲーム選択へ戻りますか？") },
@@ -614,8 +615,8 @@ fun DetailScreen(model: AppModel, gameId: String) {
                 if (canPass) {
                     localHumans = localHumans.coerceIn(1, total)
                     PanelLabel("手番ごとに交代", enabled = pass)
-                    Panel(enabled = pass) {
-                        PanelRow("交代する人", if (!pass) "「手番ごとに交代」を選ぶと変えられます" else null) {
+                    Panel(enabled = pass, switched = true) {
+                        PanelRow("交代する人") {
                             Stepper("${localHumans}人", pass && localHumans > 1, pass && localHumans < total,
                                 onMinus = { tap(); localHumans-- }, onPlus = { tap(); localHumans++ })
                         }
@@ -678,11 +679,13 @@ private fun PanelLabel(text: String, enabled: Boolean = true) {
 
 /** 項目をまとめる板(角丸 14dp・細い線)。enabled=false なら薄くして触れなくする */
 @Composable
-private fun Panel(enabled: Boolean = true, content: @Composable () -> Unit) {
+private fun Panel(enabled: Boolean = true, switched: Boolean = false, content: @Composable () -> Unit) {
     val c = LocalAsobi.current
     val shape = RoundedCornerShape(14.dp)
-    Box(Modifier.fillMaxWidth().clip(shape).background(c.surface).border(1.dp, c.line, shape)) {
-        Column(Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.38f)) { content() }
+    // switched = 入り切りのある板。線の太さは変えず(高さが揺れない)、入っている時は金の線、切れている時は灰色の地に薄い字
+    val edge = if (switched) (if (enabled) c.accent else c.line) else c.line
+    Box(Modifier.fillMaxWidth().clip(shape).background(if (switched && !enabled) c.well else c.surface).border(if (switched) 2.dp else 1.dp, edge, shape)) {
+        Column(Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.4f)) { content() }
         // 触れなくする覆い(下の部品にタップを渡さない)
         if (!enabled) Box(Modifier.matchParentSize().pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } } })
     }

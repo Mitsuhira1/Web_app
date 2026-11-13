@@ -1,7 +1,7 @@
 // ネットが切れても遊べるように、ファイルを端末に保存する(tools/make_sw.py が作る。手で直さない)
 // ・ページ(index.html)は、ネットにつながる時はいつもネットから取る(新しい版がすぐ出る)
 // ・ほかのファイルは、この版で保存したものを先に使う(なければネットから取って保存する)
-const VERSION = "5d84e9910f9d";
+const VERSION = "69ab3e794e6b";
 const CACHE = "asobi30-" + VERSION;
 const FIRST = [
   "./",

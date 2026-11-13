@@ -128,7 +128,9 @@ fun LobbyScreen(model: AppModel) {
     val r = model.room ?: return
     var showInvite by remember(r) { mutableStateOf(false) }
     var previousInvites by remember(r) { mutableStateOf(emptySet<String>()) }
-    val selectedGameId = r.gameId
+    // ゲームは1回目のタップで仮選択、同じゲームをもう一度タップで決める
+    var pendingId by remember { mutableStateOf<String?>(null) }
+    val selectedGameId = pendingId ?: r.gameId
     val gi = Catalog.byId(selectedGameId)
     Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize()) {
@@ -151,6 +153,36 @@ fun LobbyScreen(model: AppModel) {
                     else "近くの端末と通信を始められません($err)。Bluetooth と Wi-Fi がオンか確かめてください。",
                     color = Color(0xFFC8322B), fontSize = 12.sp, lineHeight = 18.sp,
                 )
+            }
+            // オンラインのホスト: 招待コード(必ず押すので、いちばん上に置く)
+            val book = model.invites
+            if (r.isHost && book != null) {
+                SectionLabel("招待コード(1人に1つ)")
+                for (inv in book.items) {
+                    CardBox(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                when (inv.state) {
+                                    InviteState.WAITING_REPLY -> when (inv.auto) {
+                                        AutoReply.LISTENING -> "この招待コードを送ってください。相手がコードを貼ると、自動でつながります"
+                                        AutoReply.STARTING -> "この招待コードを送ってください(自動で受け取る準備をしています)"
+                                        else -> "この招待コードを送り、相手の「返信コード」を下に貼ってください"
+                                    }
+                                    InviteState.CONNECTING -> "つないでいます…"
+                                    InviteState.FAILED -> "つながりませんでした" + (inv.error?.let { "($it)" } ?: "")
+                                },
+                                color = c.ink, fontSize = 13.sp, lineHeight = 19.sp,
+                            )
+                            if (inv.state == InviteState.WAITING_REPLY) {
+                                CodeBox(inv.code)
+                                CodeInput("返信コード", "つなぐ") { text -> book.submitReply(inv, text) }
+                            }
+                            SmallButton("取り消す") { book.cancel(inv) }
+                        }
+                    }
+                }
+                book.error?.let { Text(it, color = Color(0xFFC8322B), fontSize = 12.sp) }
+                SmallButton(if (book.creating) "作っています…" else "招待コードを作る", primary = true, enabled = book.canCreate) { tap(); previousInvites = book.items.map { it.peerId }.toSet(); showInvite = true; book.create() }
             }
             SectionLabel("参加者 ${r.members.size}/${OnlineRoom.MAX}")
             CardBox(Modifier.fillMaxWidth()) {
@@ -185,7 +217,11 @@ fun LobbyScreen(model: AppModel) {
                             if (g.id == selectedGameId) c.accent else Color.Transparent, RoundedCornerShape(12.dp)).padding(5.dp)) {
                             Column {
                             Text(if (g.id == selectedGameId) "✓ " + g.name else " ", color = c.ink, fontSize = 11.sp)
-                            GameTile(g) { tap(); if (g.id != r.gameId) model.chooseOnlineGame(g.id); model.open(Screen.RoomSettings) }
+                            GameTile(g) {
+                                tap()
+                                if (pendingId == g.id) { if (g.id != r.gameId) model.chooseOnlineGame(g.id); pendingId = null; model.open(Screen.RoomSettings) }
+                                else pendingId = g.id
+                            }
                             }
                         }
                         repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
@@ -201,36 +237,6 @@ fun LobbyScreen(model: AppModel) {
                     }
                 }
             }
-            // オンラインのホスト: 招待コード
-            val book = model.invites
-            if (r.isHost && book != null) {
-                SectionLabel("招待コード(1人に1つ)")
-                for (inv in book.items) {
-                    CardBox(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(
-                                when (inv.state) {
-                                    InviteState.WAITING_REPLY -> when (inv.auto) {
-                                        AutoReply.LISTENING -> "この招待コードを送ってください。相手がコードを貼ると、自動でつながります"
-                                        AutoReply.STARTING -> "この招待コードを送ってください(自動で受け取る準備をしています)"
-                                        else -> "この招待コードを送り、相手の「返信コード」を下に貼ってください"
-                                    }
-                                    InviteState.CONNECTING -> "つないでいます…"
-                                    InviteState.FAILED -> "つながりませんでした" + (inv.error?.let { "($it)" } ?: "")
-                                },
-                                color = c.ink, fontSize = 13.sp, lineHeight = 19.sp,
-                            )
-                            if (inv.state == InviteState.WAITING_REPLY) {
-                                CodeBox(inv.code)
-                                CodeInput("返信コード", "つなぐ") { text -> book.submitReply(inv, text) }
-                            }
-                            SmallButton("取り消す") { book.cancel(inv) }
-                        }
-                    }
-                }
-                book.error?.let { Text(it, color = Color(0xFFC8322B), fontSize = 12.sp) }
-                SmallButton(if (book.creating) "作っています…" else "招待コードを作る", primary = true, enabled = book.canCreate) { tap(); previousInvites = book.items.map { it.peerId }.toSet(); showInvite = true; book.create() }
-            }
             if (!r.isHost && r.phase == OnlineRoom.Phase.LOBBY) {
                 Text("ホストが始めるのを待っています", color = c.sub, fontSize = 13.sp)
             }
@@ -242,7 +248,7 @@ fun LobbyScreen(model: AppModel) {
             }
         }
     }
-    ChatOverlay(model, with(androidx.compose.ui.platform.LocalDensity.current) { (WindowInsets.statusBars.getTop(this) + 70.dp.roundToPx()) }) { null }
+    ChatOverlay(model)
     OnlineUndoOverlay(model)
     }
     if (showInvite) AlertDialog(
