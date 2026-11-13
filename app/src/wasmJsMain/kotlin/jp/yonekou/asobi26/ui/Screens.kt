@@ -352,7 +352,7 @@ private fun ContinueBar(model: AppModel) {
 private fun TogetherTab(model: AppModel) {
     val c = LocalAsobi.current
     val tap = rememberTap(model.tapSound)
-    val (hostNearby, hostOnline) = rememberHostActions(model)
+    val (_, hostOnline) = rememberHostActions(model)
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding().padding(horizontal = 18.dp)) {
         Text("みんなで遊ぶ", color = c.ink, fontSize = 24.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(top = 16.dp))
         Text(
@@ -362,8 +362,7 @@ private fun TogetherTab(model: AppModel) {
         Spacer(Modifier.height(18.dp))
         SectionLabel("ルームを作る(ホスト)")
         Spacer(Modifier.height(10.dp))
-        ConnectCard(AppIcons.Nearby, "近くの人と", "同じ場所にいる端末と接続します。インターネットがなくても遊べます。", Color(0xFF2FA36C), Color(0xFF1C7A4D)) { tap(); hostNearby() }
-        Spacer(Modifier.height(12.dp))
+        // Web 版では「近くの人と」(Bluetooth・Wi-Fi Direct)が使えないので、そのボタンは出さない
         ConnectCard(AppIcons.Globe, "オンライン", "招待コードを送って、離れた友だちと接続します。", Color(0xFF3A7BE0), Color(0xFF2556B0)) { tap(); hostOnline() }
         Spacer(Modifier.height(18.dp))
         SectionLabel("ルームに参加")

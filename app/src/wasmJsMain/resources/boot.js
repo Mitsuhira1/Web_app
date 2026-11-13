@@ -54,6 +54,27 @@ globalThis.asobiToast = (text, ms) => {
   globalThis.asobiToast.t = setTimeout(() => (el.hidden = true), ms || 2000);
 };
 
+// ---------------------------------------------------------------- 固まった時の自動復帰
+// ブラウザが裏で終了して読み込み直された時などに、画面が出ないまま止まることがある。
+// ・一定時間たっても画面が出ない / 画面の部品の読み込みに失敗した / 画面が出る前に戻るを押した → 自動で読み込み直す
+// ・読み込み直しが続いても、無限に繰り返さない(1分に2回まで)
+let appReady = false;
+function recover(why) {
+  try {
+    const now = Date.now();
+    const log = JSON.parse(sessionStorage.getItem("asobi-recover") || "[]").filter((t) => now - t < 60000);
+    if (log.length >= 2) return;
+    log.push(now);
+    sessionStorage.setItem("asobi-recover", JSON.stringify(log));
+  } catch { /* 記録できなくても読み込み直す */ }
+  location.reload();
+}
+setTimeout(() => { if (!appReady) recover("timeout"); }, 25000);
+// 裏から戻った時に、まだ画面が出ていなければ読み込み直す
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !appReady) setTimeout(() => { if (!appReady) recover("visible"); }, 8000); });
+// ページが履歴の保存(bfcache)から戻された時は、いつも読み込み直す(古い状態で固まらないように)
+window.addEventListener("pageshow", (e) => { if (e.persisted) location.reload(); });
+
 // ---------------------------------------------------------------- Android の戻るボタン
 // Chrome は、ページが「操作されていない時」に積んだ履歴の段を、戻るボタンで飛ばす。
 // だから段は、指を離した時・クリック・キーの時にだけ積む(戻るを続けて押せるよう3段まで)。
@@ -66,6 +87,7 @@ for (const ev of ["pointerup", "click", "keydown"]) window.addEventListener(ev, 
 window.addEventListener("popstate", () => {
   if (leaving) return;
   traps = Math.max(0, traps - 1);
+  if (!appReady) { recover("back"); return; }
   try { globalThis.asobiOnBack && globalThis.asobiOnBack(); } catch { /* 何もしない */ }
 });
 globalThis.asobiExit = () => {
@@ -77,7 +99,13 @@ globalThis.asobiExit = () => {
 };
 
 // ---------------------------------------------------------------- 読み込み終わり
-globalThis.asobiReady = () => { const s = document.getElementById("splash"); if (s) s.remove(); };
+globalThis.asobiReady = () => {
+  appReady = true;
+  const s = document.getElementById("splash");
+  if (s) s.remove();
+  // 画面が出たら、大きいファイル(画面の Wasm など)も端末に保存しておく(次からネットなしで開ける)
+  try { navigator.serviceWorker.ready.then((r) => r.active && r.active.postMessage("save-rest")).catch(() => {}); } catch { /* 何もしない */ }
+};
 
 // ---------------------------------------------------------------- ネットが切れても遊べるように(全部のファイルを端末に保存する)
 if ("serviceWorker" in navigator) {
@@ -94,4 +122,5 @@ if ("serviceWorker" in navigator) {
 // ---------------------------------------------------------------- 画面(Compose)を読み込む
 const s = document.createElement("script");
 s.src = "asobi.js";
+s.onerror = () => recover("script");
 document.body.appendChild(s);

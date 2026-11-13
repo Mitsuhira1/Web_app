@@ -18,17 +18,31 @@ h = hashlib.sha256()
 for f in files:
     h.update(f.encode()); h.update(open(os.path.join(WEB, f), "rb").read())
 version = h.hexdigest()[:12]
-lst = ",\n  ".join(f'"./{f}"' for f in files)
-sw = f'''// ネットが切れても遊べるように、最初に全部のファイルを端末に保存する(tools/make_sw.py が作る。手で直さない)
+# 起動に要る小さいファイルだけを先に保存して、すぐ新しい版に入れ替える。
+# 大きいファイル(画面の Wasm など)と前の画面(lite/)は、読み込んだ時に保存する(2回目からはネットなしで開ける)
+BIG = 1_000_000
+first = [f for f in files if not f.startswith("lite/") and os.path.getsize(os.path.join(WEB, f)) < BIG]
+rest = [f for f in files if not f.startswith("lite/") and f not in first]
+lst = ",\n  ".join(f'"./{f}"' for f in first)
+rlst = ",\n  ".join(f'"./{f}"' for f in rest)
+sw = f'''// ネットが切れても遊べるように、ファイルを端末に保存する(tools/make_sw.py が作る。手で直さない)
+// ・ページ(index.html)は、ネットにつながる時はいつもネットから取る(新しい版がすぐ出る)
+// ・ほかのファイルは、この版で保存したものを先に使う(なければネットから取って保存する)
 const VERSION = "{version}";
 const CACHE = "asobi30-" + VERSION;
-const FILES = [
+const FIRST = [
   "./",
   {lst},
 ];
+// 画面が読み込み終わった後に、ページから頼まれて保存する大きいファイル
+const REST = [
+  {rlst},
+];
 
 self.addEventListener("install", (e) => {{
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE)
+    .then((c) => c.addAll(FIRST.map((u) => new Request(u, {{ cache: "reload" }}))))
+    .then(() => self.skipWaiting()));
 }});
 
 self.addEventListener("activate", (e) => {{
@@ -39,17 +53,25 @@ self.addEventListener("activate", (e) => {{
   );
 }});
 
-// 同じサイトのファイルは、保存したものを先に使う(なければネットから取って保存する)。外のサイト(中継など)は触らない
+self.addEventListener("message", (e) => {{
+  if (e.data !== "save-rest") return;
+  e.waitUntil(caches.open(CACHE).then((c) => Promise.all(REST.map((u) => c.match(u).then((hit) => hit || c.add(new Request(u, {{ cache: "no-cache" }})).catch(() => {{}}))))));
+}});
+
+const save = (req, res) => {{ if (res.ok) {{ const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }} return res; }};
+
 self.addEventListener("fetch", (e) => {{
   const req = e.request;
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
+  if (req.mode === "navigate") {{
+    e.respondWith(fetch(req, {{ cache: "no-cache" }}).then((res) => {{ if (!res.ok) throw new Error("bad"); return save(req, res); }})
+      .catch(() => caches.match(req, {{ ignoreSearch: true }}).then((hit) => hit || caches.match("./index.html"))));
+    return;
+  }}
   e.respondWith(
-    caches.match(req, {{ ignoreSearch: true }}).then((hit) => hit || fetch(req).then((res) => {{
-      if (res.ok) {{ const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }}
-      return res;
-    }}).catch(() => (req.mode === "navigate" ? caches.match("./index.html") : Response.error()))),
+    caches.match(req, {{ ignoreSearch: true }}).then((hit) => hit || fetch(req, {{ cache: "no-cache" }}).then((res) => save(req, res))),
   );
 }});
 '''
 open(os.path.join(WEB, "sw.js"), "w", encoding="utf-8").write(sw)
-print(f"web/sw.js: {len(files)} 個のファイル、版 {version}")
+print(f"web/sw.js: 先に保存 {len(first)} 個 / 全部 {len(files)} 個、版 {version}")

@@ -226,6 +226,10 @@ private fun PlayContent(model: AppModel, ses: Session<*>, gi: GameInfo) {
             if (gi.id in setOf("yacht", "poker", "holdem")) RolesButton(poker = gi.id in setOf("poker", "holdem")) { tap(); showRoles = true }
             // 通信対戦のチャット(窓を閉じていても、届いたものは吹き出しで少しの間見える)
             if (model.onlineGame) ChatButton(model)
+            // CPUの番をとばす(人が1人だけで、残りが CPU の対局のとき)。押せない時も位置を固定するため薄く出す
+            if (!model.onlineGame && !model.localPass && ses.seats.count { it.human } == 1 && ses.seats.any { !it.human }) {
+                IconChip(AppIcons.SkipCpu, "CPUの番をとばす", enabled = ses.outcome == null && ses.isCpuTurn) { tap(); model.skipCpu() }
+            }
             IconChip(AppIcons.Rules, "ルール") { tap(); showRules = true }
             if (!model.onlineGame) IconChip(AppIcons.Restart, "最初から") { tap(); askRestart = true }
         }

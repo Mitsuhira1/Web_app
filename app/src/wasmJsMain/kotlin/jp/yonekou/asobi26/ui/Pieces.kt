@@ -126,7 +126,7 @@ fun DrawScope.komaPiece(tm: TextMeasurer, center: Offset, w: Float, kind: Int, u
             val a = komaGlyph(tm, text.substring(0, 1), fs, color)
             val b = komaGlyph(tm, text.substring(1, 2), fs, color)
             val gap = fs * 0.98f
-            val mid = top + h * 0.09f
+            val mid = top + h * 0.0f
             drawText(a, topLeft = Offset(cx - a.size.width / 2f, mid - gap / 2 - a.size.height / 2f), alpha = alpha)
             drawText(b, topLeft = Offset(cx - b.size.width / 2f, mid + gap / 2 - b.size.height / 2f), alpha = alpha)
         } else if (text.isNotEmpty()) {

@@ -1,10 +1,11 @@
-// ネットが切れても遊べるように、最初に全部のファイルを端末に保存する(tools/make_sw.py が作る。手で直さない)
-const VERSION = "7234b5795297";
+// ネットが切れても遊べるように、ファイルを端末に保存する(tools/make_sw.py が作る。手で直さない)
+// ・ページ(index.html)は、ネットにつながる時はいつもネットから取る(新しい版がすぐ出る)
+// ・ほかのファイルは、この版で保存したものを先に使う(なければネットから取って保存する)
+const VERSION = "5d84e9910f9d";
 const CACHE = "asobi30-" + VERSION;
-const FILES = [
+const FIRST = [
   "./",
   "./asobi.js",
-  "./asobi.wasm",
   "./audio.js",
   "./audio/go_stone_1.mp3",
   "./audio/go_stone_2.mp3",
@@ -14,12 +15,8 @@ const FILES = [
   "./audio/koma_piece.mp3",
   "./boot.js",
   "./composeResources/jp.yonekou.asobi26.res/files/koma_yuji_boku.ttf",
-  "./composeResources/jp.yonekou.asobi26.res/files/zen_maru_gothic_bold.ttf",
-  "./composeResources/jp.yonekou.asobi26.res/files/zen_maru_gothic_medium.ttf",
-  "./core/asobibako-web-core.mjs",
   "./core/kotlin-kotlin-stdlib.mjs",
   "./core/kotlin_org_jetbrains_kotlin_kotlin_dom_api_compat.mjs",
-  "./dd568dbcd078c0adf7cf.wasm",
   "./fonts/YujiBoku-Koma.woff2",
   "./fonts/ZenMaruGothic-Bold.woff2",
   "./fonts/ZenMaruGothic-Medium.woff2",
@@ -35,20 +32,23 @@ const FILES = [
   "./licenses/compose.txt",
   "./licenses/kotlin.txt",
   "./licenses/sounds.txt",
-  "./lite/app.js",
-  "./lite/art.js",
-  "./lite/art_sample.js",
-  "./lite/games.js",
-  "./lite/games2.js",
-  "./lite/index.html",
-  "./lite/style.css",
   "./manifest.webmanifest",
   "./net.js",
   "./worker.js",
 ];
+// 画面が読み込み終わった後に、ページから頼まれて保存する大きいファイル
+const REST = [
+  "./asobi.wasm",
+  "./composeResources/jp.yonekou.asobi26.res/files/zen_maru_gothic_bold.ttf",
+  "./composeResources/jp.yonekou.asobi26.res/files/zen_maru_gothic_medium.ttf",
+  "./core/asobibako-web-core.mjs",
+  "./dd568dbcd078c0adf7cf.wasm",
+];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE)
+    .then((c) => c.addAll(FIRST.map((u) => new Request(u, { cache: "reload" }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {
@@ -59,14 +59,22 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// 同じサイトのファイルは、保存したものを先に使う(なければネットから取って保存する)。外のサイト(中継など)は触らない
+self.addEventListener("message", (e) => {
+  if (e.data !== "save-rest") return;
+  e.waitUntil(caches.open(CACHE).then((c) => Promise.all(REST.map((u) => c.match(u).then((hit) => hit || c.add(new Request(u, { cache: "no-cache" })).catch(() => {}))))));
+});
+
+const save = (req, res) => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); } return res; };
+
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
+  if (req.mode === "navigate") {
+    e.respondWith(fetch(req, { cache: "no-cache" }).then((res) => { if (!res.ok) throw new Error("bad"); return save(req, res); })
+      .catch(() => caches.match(req, { ignoreSearch: true }).then((hit) => hit || caches.match("./index.html"))));
+    return;
+  }
   e.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((hit) => hit || fetch(req).then((res) => {
-      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
-      return res;
-    }).catch(() => (req.mode === "navigate" ? caches.match("./index.html") : Response.error()))),
+    caches.match(req, { ignoreSearch: true }).then((hit) => hit || fetch(req, { cache: "no-cache" }).then((res) => save(req, res))),
   );
 });

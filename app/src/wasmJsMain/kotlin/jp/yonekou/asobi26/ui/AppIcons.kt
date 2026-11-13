@@ -51,6 +51,12 @@ object AppIcons {
         moveTo(18f, 6f); lineTo(6f, 18f)
     }
 
+    /** CPUの番をとばす(右向きの二重の矢じり) */
+    val SkipCpu: ImageVector = stroke("SkipCpu") {
+        moveTo(5f, 6f); lineTo(11f, 12f); lineTo(5f, 18f)
+        moveTo(13f, 6f); lineTo(19f, 12f); lineTo(13f, 18f)
+    }
+
     /** ルール(開いた本) */
     val Rules: ImageVector = stroke("Rules") {
         moveTo(12f, 6.5f)
