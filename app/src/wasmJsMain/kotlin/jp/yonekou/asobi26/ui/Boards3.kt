@@ -162,6 +162,7 @@ fun ShogiBoard(ses: Session<ShogiState>, version: Int, enabled: Boolean, onMove:
         ) {
             val geo = ShogiGeo(size.width, size.height, n)
             val cell = geo.cell
+            cachedLayer("shogi:$n", pad = (cell * 0.12f).toInt() + 8) {
             // 駒台
             for (bottom in listOf(false, true)) {
                 val y = if (bottom) geo.top + geo.boardW + geo.margin else geo.margin
@@ -178,6 +179,7 @@ fun ShogiBoard(ses: Session<ShogiState>, version: Int, enabled: Boolean, onMove:
                 drawLine(KAYA_LINE, Offset(geo.left, geo.top + k * cell), Offset(geo.left + geo.boardW, geo.top + k * cell), lw)
             }
             if (n == 9) for (a in listOf(3, 6)) for (b in listOf(3, 6)) drawCircle(KAYA_LINE, cell * 0.06f, Offset(geo.left + a * cell, geo.top + b * cell))
+            }
             // 直前の手・王手
             val last = st.lastMove
             if (last >= 0) {

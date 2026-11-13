@@ -135,9 +135,10 @@ fun GoBoard(ses: Session<GoState>, version: Int, enabled: Boolean, onMove: (Int)
             // 端の石が盤からはみ出さないよう、余白は石の大きさに合わせる
             val step = w / (n - 1 + 1.3f)
             val m = step * 0.65f
+            val line = Color(0xFF2A1A0A).copy(alpha = 0.85f)
+            cachedLayer("go:$n") {
             drawRoundRect(KAYA_FLAT, cornerRadius = CornerRadius(w * 0.015f))
             grain(Grain.STRAIGHT, Offset.Zero, Size(w, w), alpha = 0.18f)
-            val line = Color(0xFF2A1A0A).copy(alpha = 0.85f)
             for (k in 0 until n) {
                 val p = m + k * step
                 val lw = if (k == 0 || k == n - 1) 2.2f else 1.2f
@@ -145,6 +146,7 @@ fun GoBoard(ses: Session<GoState>, version: Int, enabled: Boolean, onMove: (Int)
                 drawLine(line, Offset(m, p), Offset(w - m, p), lw)
             }
             for ((x, y) in stars) drawCircle(line, step * 0.1f, Offset(m + x * step, m + y * step))
+            }
             fun at(i: Int) = Offset(m + (i % n) * step, m + (i / n) * step)
             val r = step * 0.48f
             // 取られた石(動きの間だけ薄くなって消える)
@@ -246,6 +248,10 @@ fun DrawScope.chip(c: Offset, r: Float, color: Color) {
 /** 緑のポーカーテーブル(木の縁・フェルト)。上は丸く、下は角の丸い四角 */
 fun DrawScope.pokerTable() {
     if (size.minDimension < 4f) return // 半径0の陰影は Android で例外になる(0.4.5 の不具合)
+    cachedLayer("pokerTable") { pokerTableDraw() }
+}
+
+private fun DrawScope.pokerTableDraw() {
     val w = size.width; val h = size.height
     val outer = Path().apply { addRoundRect(androidx.compose.ui.geometry.RoundRect(0f, 0f, w, h, CornerRadius(w * 0.42f, w * 0.42f), CornerRadius(w * 0.42f, w * 0.42f), CornerRadius(w * 0.1f), CornerRadius(w * 0.1f))) }
     drawPath(outer, Brush.verticalGradient(listOf(Color(0xFF5A3518), Color(0xFF3B2210))))

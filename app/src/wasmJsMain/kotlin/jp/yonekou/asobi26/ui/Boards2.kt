@@ -137,15 +137,17 @@ fun GomokuBoard(ses: Session<GomokuState>, version: Int, enabled: Boolean, onMov
         val m = w * 0.05f
         val step = (w - 2 * m) / (n - 1)
         // 榧(かや)のような明るい木の盤
+        val line = Color(0xFF3B2A14)
+        cachedLayer("gomoku:$n") {
         drawRoundRect(KAYA_FLAT, cornerRadius = CornerRadius(w * 0.015f))
         kayaGrain(w)
-        val line = Color(0xFF3B2A14)
         for (k in 0 until n) {
             val p = m + k * step
             drawLine(line, Offset(p, m), Offset(p, w - m), 1.4f)
             drawLine(line, Offset(m, p), Offset(w - m, p), 1.4f)
         }
         for ((x, y) in listOf(3 to 3, 3 to 11, 11 to 3, 11 to 11, 7 to 7)) drawCircle(line, step * 0.12f, Offset(m + x * step, m + y * step))
+        }
         fun at(i: Int) = Offset(m + (i % n) * step, m + (i / n) * step)
         val r = step * 0.47f
         for (i in 0 until n * n) {
@@ -651,11 +653,9 @@ fun YachtBoard(
         // ---- サイコロの皿(緑のフェルト) ----
         Column(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
-                .background(Brush.verticalGradient(listOf(Color(0xFF6A4022), Color(0xFF4A2A14))))
-                .drawBehind { grain(Grain.FLAT, Offset.Zero, size, scale = 1.5f) }
+                .drawBehind { cachedLayer("yacht-wood") { drawRect(Brush.verticalGradient(listOf(Color(0xFF6A4022), Color(0xFF4A2A14)))); grain(Grain.FLAT, Offset.Zero, size, scale = 1.5f) } }
                 .padding(8.dp).clip(RoundedCornerShape(10.dp))
-                .background(safeRadial(listOf(Color(0xFF2E8A5A), Color(0xFF1A5E3B)), radius = 900f))
-                .drawBehind { grain(Grain.FELT, Offset.Zero, size, scale = 2f) }
+                .drawBehind { cachedLayer("yacht-felt") { drawRect(safeRadial(listOf(Color(0xFF2E8A5A), Color(0xFF1A5E3B)), radius = 900f)); grain(Grain.FELT, Offset.Zero, size, scale = 2f) } }
                 .padding(horizontal = 10.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

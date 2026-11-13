@@ -7,6 +7,15 @@
 import { createSfx } from "./audio.js";
 import { createNet } from "./net.js";
 
+// ---------------------------------------------------------------- 描く細かさの上限(軽量化)
+// 画面の細かさ(devicePixelRatio)が 2 を超える端末では、2 として描く。描く画素の数が減って動きがなめらかになる
+// (字や線はほんの少しやわらかくなる)。画面(Compose)が読み込まれる前に決めておく
+const DPR_MAX = 2;
+try {
+  const real = window.devicePixelRatio || 1;
+  if (real > DPR_MAX) Object.defineProperty(window, "devicePixelRatio", { get: () => DPR_MAX, configurable: true });
+} catch { /* 変えられない時はそのまま */ }
+
 // ---------------------------------------------------------------- Worker(CPU の思考・効果音の計算)
 const worker = new Worker("./worker.js", { type: "module" });
 let seq = 1;

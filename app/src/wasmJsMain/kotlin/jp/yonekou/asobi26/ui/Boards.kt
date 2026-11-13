@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.remember
@@ -95,7 +96,13 @@ import kotlin.math.min
 // =====================================================================
 
 /** from(直前に見せていた状態)から to(いまの状態)へ。elapsed は開始からのミリ秒、done は終わったか */
-class MoveAnim<S>(val from: S, val to: S, val elapsed: Float, val done: Boolean)
+class MoveAnim<S>(val from: S, val to: S, private val elapsedOf: () -> Float, private val doneOf: () -> Boolean) {
+    constructor(from: S, to: S, elapsed: Float, done: Boolean) : this(from, to, { elapsed }, { done })
+    // Web 版の軽量化: 経過時間は読んだ時に取り出す。盤の絵(Canvas)の中だけで読めば、
+    // 動きの間は絵だけを描き直し、盤の部品全体を毎コマ作り直さない(値は前と同じ)
+    val elapsed: Float get() = elapsedOf()
+    val done: Boolean get() = doneOf()
+}
 
 /**
  * 対局が進むたびに変わる数(AppModel.tick)。盤や表示の部品はこれを読むので、
@@ -168,9 +175,9 @@ fun <S> rememberMoveAnim(
         shownCount = count
         shownCb(version)
     }
+    val doneState = remember(ses) { derivedStateOf { (if (anim.isRunning) anim.value else 0f) >= total } }
     if (!stepping) return MoveAnim(st, st, 0f, true)
-    val e = if (anim.isRunning) anim.value else 0f
-    return MoveAnim(shown, st, e / stretch, e >= total)
+    return MoveAnim(shown, st, { (if (anim.isRunning) anim.value else 0f) / stretch }, { doneState.value })
 }
 
 /** 弾みながら落ちる動き(0〜1) */
@@ -248,8 +255,9 @@ fun ReversiBoard(ses: Session<ReversiState>, version: Int, hints: Boolean, enabl
         val w = size.width
         val m = w * 0.045f
         val cell = (w - 2 * m) / 8f
+        if (w < 4f) { woodPanel(Offset.Zero, size, w * 0.03f, Color(0xFF7A4A28), Color(0xFF4A2A14)); return@Canvas }
+        cachedLayer("reversi", pad = (w * 0.03f).toInt() + 8) {
         woodPanel(Offset.Zero, size, w * 0.03f, Color(0xFF7A4A28), Color(0xFF4A2A14))
-        if (w < 4f) return@Canvas
         val felt = Rect(m, m, w - m, w - m)
         drawRect(safeRadial(listOf(Color(0xFF3C9466), Color(0xFF256A47)), center = felt.center, radius = w * 0.7f), felt.topLeft, felt.size)
         grain(Grain.FELT, felt.topLeft, felt.size, scale = 2f)
@@ -260,6 +268,7 @@ fun ReversiBoard(ses: Session<ReversiState>, version: Int, hints: Boolean, enabl
             drawLine(Color(0xFF17452E), Offset(m, p), Offset(w - m, p), strokeWidth = 2f)
         }
         for ((sx, sy) in listOf(2 to 2, 2 to 6, 6 to 2, 6 to 6)) drawCircle(Color(0xFF17452E), cell * 0.07f, Offset(m + sx * cell, m + sy * cell))
+        }
         val black = Color(0xFF23262D)
         val white = Color(0xFFF4F1E8)
         for (i in 0 until 64) {

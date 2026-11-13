@@ -3,14 +3,17 @@
 保存するファイルの一覧と、中身から計算した版(変わると古い保存を入れ替える)を書き込む。
 使い方: python3 tools/make_sw.py   (tools/build_web.sh からも呼ぶ)
 """
-import hashlib, os
-WEB = os.path.join(os.path.dirname(__file__), "..", "web")
+import hashlib, os, sys
+# 引数: 作る場所(省略時は web/)。web/next/(試験用の場所)は別の保存の名前にして、本番の保存を消し合わないようにする
+WEB = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "..", "web")
+PREFIX = "asobi30next-" if os.path.basename(os.path.normpath(WEB)) == "next" else "asobi30-"
+SUBDIRS = ("lite/", "next/")  # 別の画面(それぞれ自分で保存する)
 SKIP_EXT = {".ogg", ".map"}          # 録音は mp3 を使う(ogg は元の録音の写し)
 files = []
 for root, _, names in os.walk(WEB):
     for n in sorted(names):
         rel = os.path.relpath(os.path.join(root, n), WEB).replace(os.sep, "/")
-        if rel == "sw.js" or os.path.splitext(n)[1] in SKIP_EXT:
+        if rel == "sw.js" or rel.startswith("next/") or os.path.splitext(n)[1] in SKIP_EXT:
             continue
         files.append(rel)
 files.sort()
@@ -21,15 +24,15 @@ version = h.hexdigest()[:12]
 # 起動に要る小さいファイルだけを先に保存して、すぐ新しい版に入れ替える。
 # 大きいファイル(画面の Wasm など)と前の画面(lite/)は、読み込んだ時に保存する(2回目からはネットなしで開ける)
 BIG = 1_000_000
-first = [f for f in files if not f.startswith("lite/") and os.path.getsize(os.path.join(WEB, f)) < BIG]
-rest = [f for f in files if not f.startswith("lite/") and f not in first]
+first = [f for f in files if not f.startswith(SUBDIRS) and os.path.getsize(os.path.join(WEB, f)) < BIG]
+rest = [f for f in files if not f.startswith(SUBDIRS) and f not in first]
 lst = ",\n  ".join(f'"./{f}"' for f in first)
 rlst = ",\n  ".join(f'"./{f}"' for f in rest)
 sw = f'''// ネットが切れても遊べるように、ファイルを端末に保存する(tools/make_sw.py が作る。手で直さない)
 // ・ページ(index.html)は、ネットにつながる時はいつもネットから取る(新しい版がすぐ出る)
 // ・ほかのファイルは、この版で保存したものを先に使う(なければネットから取って保存する)
 const VERSION = "{version}";
-const CACHE = "asobi30-" + VERSION;
+const CACHE = "{PREFIX}" + VERSION;
 const FIRST = [
   "./",
   {lst},
@@ -48,7 +51,7 @@ self.addEventListener("install", (e) => {{
 self.addEventListener("activate", (e) => {{
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("asobi30-") && k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("{PREFIX}") && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 }});
