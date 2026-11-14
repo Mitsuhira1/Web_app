@@ -177,22 +177,130 @@ class Yacht(val players: Int) : Rules<YachtState> {
             return total / n
         }
 
-        /** 中級の残し方: いちばん多い目を残す(ストレートが見えたら続きを残す) */
-        fun simpleHold(dice: IntArray): Int {
+        /**
+         * 初級・中級の残し方: 空いている欄で役に立つかどうかで決める(0.5.15)。
+         * 候補ごとに「役に立つ度合い」を数えて、いちばん大きい候補を残す。どれも 0 なら全部振り直す(0)。
+         * 全部残す(31)になる時は、呼ぶ側が「すぐ書く」に切り替える。
+         */
+        fun simpleHold(dice: IntArray, sheet: IntArray): Int {
             val counts = IntArray(7)
             for (d in dice) counts[d]++
-            val distinct = (1..6).count { counts[it] > 0 }
-            if (distinct >= 4 && run(counts) >= 4) {
-                // 続きの目を1つずつ残す
-                var mask = 0
-                val kept = HashSet<Int>()
-                for (i in 0 until 5) if (dice[i] !in kept) { kept.add(dice[i]); mask = mask or (1 shl i) }
-                return mask
+            var bestMask = 0
+            var bestScore = 0.0
+            // 同じ目を n 個残す
+            for (f in 1..6) {
+                val n = counts[f]
+                if (n == 0) continue
+                var sc = 0.0
+                if (sheet[f - 1] < 0) sc = maxOf(sc, n + f / 10.0)
+                if ((sheet[7] < 0 || sheet[11] < 0) && n >= 2) sc = maxOf(sc, n * 0.9 + 0.1)
+                if (sheet[8] < 0 && n >= 2) sc = maxOf(sc, n * 0.8)
+                if (sheet[6] < 0 && f >= 4) sc = maxOf(sc, n * 0.3 + f / 10.0)
+                if (sc > bestScore) {
+                    bestScore = sc
+                    var mask = 0
+                    for (i in 0 until 5) if (dice[i] == f) mask = mask or (1 shl i)
+                    bestMask = mask
+                }
             }
-            val face = (1..6).maxWith(compareBy<Int> { counts[it] }.thenBy { it })
-            var mask = 0
-            for (i in 0 until 5) if (dice[i] == face) mask = mask or (1 shl i)
-            return mask
+            // ストレートの窓(長さ4: 1-4・2-5・3-6 / 長さ5: 1-5・2-6)。窓の目は1種類につき1個だけ残す
+            fun window(lo: Int, len: Int) {
+                var h = 0
+                var tie = 0.0
+                var mask = 0
+                for (f in lo until lo + len) if (counts[f] > 0) {
+                    h++
+                    if (f == 3 || f == 4) tie += 0.01
+                    for (i in 0 until 5) if (dice[i] == f) { mask = mask or (1 shl i); break }
+                }
+                val sc = (if (len == 4) when (h) { 4 -> 5.0; 3 -> 2.2; else -> h * 0.5 }
+                          else when (h) { 5 -> 6.0; 4 -> 3.4; 3 -> 2.2; else -> h * 0.5 }) + tie
+                if (sc > bestScore) { bestScore = sc; bestMask = mask }
+            }
+            if (sheet[9] < 0) for (lo in 1..3) window(lo, 4)
+            if (sheet[10] < 0) for (lo in 1..2) window(lo, 5)
+            return bestMask
+        }
+
+        // ---- 上級: 2回先まで読む(目は「個数の組」で数える。重みは 多項係数 ÷ 6^k) ----
+
+        /** k 個のサイコロの出目の組(昇順)と、その出る確率 */
+        private val outcomeTables: Array<Pair<List<IntArray>, DoubleArray>> by lazy {
+            Array(6) { k ->
+                val list = ArrayList<IntArray>()
+                val w = ArrayList<Double>()
+                val cur = IntArray(k)
+                fun rec(pos: Int, from: Int) {
+                    if (pos == k) {
+                        // 多項係数 k! / (c1! … c6!)
+                        val c = IntArray(7)
+                        for (v in cur) c[v]++
+                        var m = 1.0
+                        for (x in 2..k) m *= x
+                        for (v in 1..6) for (x in 2..c[v]) m /= x
+                        list.add(cur.copyOf()); w.add(m)
+                        return
+                    }
+                    for (v in from..6) { cur[pos] = v; rec(pos + 1, v) }
+                }
+                rec(0, 1)
+                var total = 1.0
+                repeat(k) { total *= 6.0 }
+                list to DoubleArray(w.size) { w[it] / total }
+            }
+        }
+
+        private const val V2_BASE = 1 shl 20 // v2 の記憶の番地は、v1 と重ならないようにずらす
+        private fun key(sorted: IntArray): Int { var k = 0; for (d in sorted) k = k * 7 + d; return k }
+
+        /** kept(残す目)に k 個を振り足した時の f の期待値 */
+        private fun expect(kept: IntArray, k: Int, budget: Budget?, f: (IntArray) -> Double): Double {
+            val (list, ws) = outcomeTables[k]
+            val all = IntArray(5)
+            var sum = 0.0
+            for (t in list.indices) {
+                val o = list[t]
+                for (a in kept.indices) all[a] = kept[a]
+                for (a in 0 until k) all[kept.size + a] = o[a]
+                val d = all.copyOf(); d.sort()
+                sum += ws[t] * f(d)
+                if (budget != null && (t and 31) == 31 && budget.over()) { return sum / ws.take(t + 1).sum() }
+            }
+            return sum
+        }
+
+        /** 同じ目の組み合わせを残す mask を1つずつ(昇順の目の並びで返す) */
+        private fun keepChoices(dice: IntArray): List<Pair<Int, IntArray>> {
+            val seen = HashSet<Int>()
+            val out = ArrayList<Pair<Int, IntArray>>()
+            for (mask in 0 until 31) {
+                val kept = (0 until 5).filter { (mask ushr it) and 1 == 1 }.map { dice[it] }.toIntArray().also { it.sort() }
+                // 残す数の違う組が同じ key にならないよう、長さも混ぜる
+                if (!seen.add(key(kept) * 8 + kept.size)) continue
+                out.add(mask to kept)
+            }
+            return out
+        }
+
+        /** 振り直さずに書く時の価値(従来の bestCategory) */
+        private fun v1(dice: IntArray, sheet: IntArray, memo: HashMap<Int, Double>): Double {
+            val sorted = dice.copyOf().also { it.sort() }
+            val k = key(sorted)
+            return memo.getOrPut(k) { bestCategory(sorted, sheet).second }
+        }
+
+        /** あと1回振れる時の価値: いま書くか、どこかを残して1回振るかの良い方 */
+        private fun v2(dice: IntArray, sheet: IntArray, memo: HashMap<Int, Double>, budget: Budget?): Double {
+            val sorted = dice.copyOf().also { it.sort() }
+            val k = key(sorted) + V2_BASE
+            memo[k]?.let { return it }
+            var best = v1(sorted, sheet, memo)
+            for ((_, kept) in keepChoices(sorted)) {
+                val e = expect(kept, 5 - kept.size, budget) { v1(it, sheet, memo) }
+                if (e > best) best = e
+            }
+            memo[k] = best
+            return best
         }
 
         val brain = Brain<YachtState> { rules, s, seat, level, rng, budget ->
@@ -203,20 +311,20 @@ class Yacht(val players: Int) : Rules<YachtState> {
             when (level) {
                 Level.EASY -> {
                     // そこそこの点が出たらすぐ書く。それ以外は多い目を残して振る(ボーナスや先の欄は考えない)
-                    if (nowV >= 10) 100 + cat else simpleHold(s.dice).let { if (it == 31) 100 + cat else it }
+                    if (nowV >= 10) 100 + cat else simpleHold(s.dice, sheet).let { if (it == 31) 100 + cat else it }
                 }
                 Level.NORMAL -> {
-                    if (nowV >= 28) 100 + cat else simpleHold(s.dice).let { if (it == 31) 100 + cat else it }
+                    if (nowV >= 28) 100 + cat else simpleHold(s.dice, sheet).let { if (it == 31) 100 + cat else it }
                 }
                 Level.HARD -> {
+                    // 上級: 2回振れる手番では2回先まで、最後の1回では1回先まで読む。いま書く価値より 0.5 以上よければ残して振る
                     var bestMask = -1
                     var bestE = nowV
-                    val seen = HashSet<String>()
-                    for (mask in 0 until 31) {
-                        // 同じ目の組み合わせを残す mask は1回だけ調べる
-                        val key = (0 until 5).filter { (mask ushr it) and 1 == 1 }.map { s.dice[it] }.sorted().joinToString(",")
-                        if (!seen.add(key)) continue
-                        val e = expected(s.dice, mask, sheet, budget)
+                    val memo = HashMap<Int, Double>()
+                    for ((mask, kept) in keepChoices(s.dice)) {
+                        val k = 5 - kept.size
+                        val e = if (s.rollsLeft >= 2) expect(kept, k, budget) { v2(it, sheet, memo, budget) }
+                                else expect(kept, k, budget) { v1(it, sheet, memo) }
                         if (e > bestE + 0.5) { bestE = e; bestMask = mask }
                         if (budget.over()) break
                     }

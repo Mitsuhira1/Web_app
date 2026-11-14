@@ -4,6 +4,7 @@ fun main(args: Array<String>) {
     when (args.firstOrNull()) {
         "crypto" -> print(cryptoCheck())
         "net" -> print(NetCheck.report())
+        "yacht" -> print(yachtCheck())
         else -> print(CrossCheck.report(seeds = 3, cpuMoves = args.firstOrNull()?.toIntOrNull() ?: 0))
     }
 }
