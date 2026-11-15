@@ -145,7 +145,7 @@ const STAMPS=[
  ['ほんとにー？',{bg:['circle','#EBDDF7'],rot:-7,ey:'side',mo:'smirk',ex:['hmouth'],t:['ほんとに〜?',18,'maru','#7A4CC2']}],
  ['いいんですかー？',{bg:['circle','#FFE3EC'],rot:8,ey:'side',mo:'smirk',ex:['brow','q'],t:['いいんですか〜?',16,'maru','#C8436A']}],
  ['強すぎる',{bg:['rrect','#1F2440'],ey:'wide',mo:'wavy',ex:['sweat','bolt'],t:['強すぎる…!',19,'dela','#FFD45C','#1F2440']}],
- ['詰んだ',{bg:['circle','#D5D9DE'],body:['#EDEBE6','#CFCBC2'],ey:'blank',mo:'flat',ex:['ghost'],t:['詰んだ',25,'wa','#4B5560']}],
+ ['詰んだ',{bg:['circle','#D5D9DE'],body:['#EDEBE6','#CFCBC2'],ey:'blank',mo:'flat',ex:['ghost'],t:['詰んだ',21,'wa','#4B5560']}],
  ['ミスった',{bg:['circle','#FFE9C2'],rot:6,ey:'gt',mo:'tongue',ex:['sweat'],t:['ミスった!',20,'dela','#D9822B']}],
  ['助けて',{bg:['circle','#D6E4F5'],ey:'teary',mo:'wavy',ex:['tears','pray'],t:['助けて…!',20,'maru','#3F78C4']}],
  ['Checkmate',{bg:['rrect','#14110e'],ey:'fire',mo:'smirk',ex:['crown'],t:['Checkmate',17,'yo','#EBDDB5','#14110e']}],
@@ -237,7 +237,7 @@ const avGrid=()=>`<div class="avgrid"><button data-av="-1" aria-pressed="${S.set
 function avatarModal(){ return `<div class="modal"><button class="mback" data-mback aria-label="閉じる"></button><div class="mbox" style="width:min(620px,100%)" role="dialog" aria-label="アイコン"><div class="mhd"><h3>アイコン</h3><button class="btn" style="height:38px" data-photo>写真を選ぶ</button><button class="btn gold" data-mclose style="height:38px;width:110px">完了</button></div><div class="mbody" style="padding-top:16px">${avGrid()}</div></div></div>`; }
 /* ---- 初回起動(表示名とアイコン。どちらも飛ばせる) ---- */
 function first(){ return `<div class="screen" style="align-items:center;justify-content:center;overflow:auto"><div class="frbox">
-   <small>日本アソビ大辞典30</small><h2>はじめまして</h2>
+   <small>遊びの箱30</small><h2>はじめまして</h2>
    <div class="frtop">${meAv('big')}<div style="flex:1;min-width:0"><label for="nameIn">表示名</label><input id="nameIn" value="${esc(S.set.name)}" maxlength="12" placeholder="あなた" autocomplete="off"></div></div>
    <div class="frlab"><span>アイコン</span><button class="btn" style="height:36px" data-photo>写真を選ぶ</button></div>${avGrid()}
    <div class="frops"><button class="btn" data-firstdone>スキップ</button><button class="btn primary" data-firstdone>はじめる</button></div></div></div>`; }

@@ -1514,3 +1514,63 @@ html.reduce .setpanel.enter{animation:none}
 /* マスの説明: ゆめ券のあるマス */
 .lsqticket{display:flex;align-items:center;gap:10px;margin:-4px 18px 6px;padding:8px 12px;border-radius:10px;background:#EFE6FF;color:#4A2390;font-weight:800;font-size:15px}
 .lbadge-t{flex:none;padding:2px 8px;border-radius:5px;background:#7A3FC4;color:#fff;font-size:12.5px;font-weight:900;transform:rotate(-4deg)}
+
+/* ---------- 2026-11-15 (9) ---------- */
+/* チャットの入力欄: 四角い枠は出さず、点滅する縦棒だけ */
+.chat input:focus,.chat input:focus-visible{outline:none;box-shadow:none}
+.chat input{caret-color:var(--gold)}
+/* 招待コード・返信コード: 長い文字は 3 行だけ薄く見せ、コピーのボタンを大きく */
+.invite .code,#replyCode{max-height:4.4em;overflow:hidden;font-size:11px;line-height:1.45;color:var(--sub);-webkit-mask-image:linear-gradient(#000 45%,transparent);mask-image:linear-gradient(#000 45%,transparent);margin:6px 0 8px;user-select:all}
+.copybig{width:100%;height:46px;font-size:15px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px}
+.copybig .ic{width:18px;height:18px}
+.copybig.done{background:#3FAE62;color:#fff;box-shadow:0 3px 0 #2B7C45}
+
+/* 設定の項目を変えても、画面全体の出てくる動きはしない(画面が変わった時だけ .enter で動かす) */
+.screen.col{animation:none}
+.screen.col.enter{animation:enterSetup .55s cubic-bezier(.2,.8,.3,1) both}
+html.reduce .screen.col.enter{animation:none}
+/* 通信対戦: 自分の番でない時の操作ボタンは灰色。自分の番は上に「あなたの番」 */
+.stage.notmine #acts button,.stage.notmine .side .ops button:not([data-rule]):not([data-list]){filter:grayscale(1);opacity:.55}
+.stagehead .myturn{margin-left:auto;font-style:normal;font-weight:900;font-size:14px;padding:5px 14px;border-radius:999px;background:var(--gold);color:#2A1E10;animation:myturn 1.6s ease-in-out infinite}
+@keyframes myturn{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--gold) 30%,transparent)}}
+html.reduce .stagehead .myturn{animation:none}
+/* Oh, No!: PASS は札の右に置く(出ても、ほかの物の位置は動かない) */
+.unoc .upass{position:absolute;left:calc(100% + 4cqh);top:0}
+/* ルールのヨットの役: サイコロの余白を px で(% だと並びの幅で決まり、目が見えなくなる) */
+.rhand .rdie{box-sizing:border-box;width:34px;height:34px;flex:none;padding:5px;gap:2px}
+/* 大富豪: 自分の札の前の名札(残りの枚数) */
+.tw .mytag{position:absolute;left:1.5cqh;bottom:calc(var(--cw,12cqh) * 1.4 + 3cqh);display:flex;align-items:center;gap:1cqh;padding:.6cqh 1.6cqh .6cqh .6cqh;border-radius:999px;background:rgba(0,0,0,.45);color:#fff;font-size:2.1cqh;z-index:3}
+.tw .mytag.turn{box-shadow:0 0 0 .4cqh var(--gold)}
+.tw .mytag .num{font-weight:900;color:var(--gold)}
+.tw .mytag em{font-style:normal;font-size:1.8cqh;padding:.2cqh 1cqh;border-radius:999px;background:rgba(255,255,255,.18)}
+.rrank{list-style:none;margin:6px 0 10px;padding:0;display:flex;flex-direction:column;gap:4px}
+.rrank li{display:flex;align-items:center;gap:10px;padding:5px 12px;border-radius:10px;background:var(--surface2);font-weight:700}
+.rrank li b{min-width:3em;color:var(--gold)}
+.rrank li.me{box-shadow:inset 0 0 0 2px var(--gold)}
+.rrank li em{margin-left:auto;font-style:normal}
+/* 通信対戦: 相手の番は、盤の中の操作ボタン(サイコロを振る・引く・パス・ルーレットなど)も灰色で、光らせない */
+.stage.notmine .yroll,.stage.notmine #boardwrap [data-roll],.stage.notmine #boardwrap [data-draw],.stage.notmine #boardwrap .upass,.stage.notmine #boardwrap .ustock,.stage.notmine .side [data-spin],.stage.notmine .side [data-lm],.stage.notmine .side [data-act]{filter:grayscale(1);opacity:.55;animation:none!important;box-shadow:none!important}
+/* そろった列を線でつなぐ(五目ならべ・コネクトフォー・ナインメンズモリス) */
+.wline{stroke-dasharray:1;stroke-dashoffset:0;filter:drop-shadow(0 0 .6px rgba(0,0,0,.6))}
+.wline.go{stroke-dashoffset:1;animation:wline .6s cubic-bezier(.3,.7,.3,1) forwards}
+@keyframes wline{to{stroke-dashoffset:0}}
+html.reduce .wline.go{animation:none;stroke-dashoffset:0}
+.c4wl{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;overflow:visible}
+/* ヨット: ほかの人が最後に書いた欄 */
+.ysheet td.ys.ylast{background:color-mix(in srgb,var(--gold) 38%,transparent);box-shadow:inset 0 0 0 2px var(--gold);font-weight:900}
+/* ドット&ボックス: 最後に引いた線(相手の手が分かるように) */
+.dl.dlast{filter:drop-shadow(0 0 1.2px #FFD94F) drop-shadow(0 0 .6px #FFD94F)}
+/* 相手のカーソル(通信対戦): 動きに遅れずついていく */
+.rcur.live{transition:transform .12s linear;opacity:1}
+/* そろった列(Android 版と同じ): 光の輪が脈打ち、白い線が端から端へ引かれる */
+.wfx .wglow{animation:wpulse .9s linear infinite alternate}
+.wfx .wring{animation:wring .9s linear infinite alternate}
+.wfx .wline2{stroke-dasharray:1;stroke-dashoffset:0;filter:drop-shadow(0 0 .25px rgba(0,0,0,.5));animation:wlpulse .9s linear infinite alternate}
+.wfx.go .wglow,.wfx.go .wring{opacity:0;animation:wfade .35s ease-out var(--wd,0ms) forwards,wpulse .9s linear calc(var(--wd,0ms) + .35s) infinite alternate}
+.wfx.go .wline2{stroke-dashoffset:1;animation:wline .55s cubic-bezier(.3,.7,.3,1) calc(var(--wd,0ms) + .15s) forwards,wlpulse .9s linear calc(var(--wd,0ms) + .7s) infinite alternate}
+@keyframes wpulse{from{opacity:.55}to{opacity:1}}
+@keyframes wring{from{opacity:.75}to{opacity:1}}
+@keyframes wlpulse{from{opacity:.7}to{opacity:1}}
+@keyframes wfade{to{opacity:1}}
+html.reduce .wfx *{animation:none!important;opacity:1!important;stroke-dashoffset:0!important}
+.wfx .wline2{filter:drop-shadow(0 0 .3px rgba(0,0,0,.7))}

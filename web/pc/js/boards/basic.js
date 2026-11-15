@@ -143,6 +143,7 @@
 
   // ---------------------------------------------------------------- コネクトフォー(見本: 木の板と台、仮置き → 決定で落ちる)
   let prevC4 = null, c4pre = null;
+  let c4WinSeen = '';
   function c4(b, A) {
     const { pair } = window.BOARDKIT;
     pair(A, '赤', '#C8362E', '青', '#2F5FAE');
@@ -165,8 +166,18 @@
     const front = Array.from({ length: 42 }, (_, k) => { const dr = Math.floor(k / 7), c = k % 7, i = (5 - dr) * 7 + c; return `<button class="c4cell ${i === b.last ? 'lastc' : ''}" data-col="${c}" ${legal.has(c) && lowest(c) * 7 + c === i ? `data-land="${c}"` : ''} ${legal.has(c) ? '' : 'disabled'} aria-label="${c + 1}列"></button>`; }).join('');
     const ghostDiscs = Array.from({ length: 7 }, (_, c) => { if (!legal.has(c)) return ''; const r = lowest(c); return `<span class="c4d ${turnCol} c4gh" data-gc="${c}" style="left:${c * 100 / 7}%;top:${(5 - r) * 100 / 6}%"></span>`; }).join('');
     if (old && old.some((v, i) => v !== b.cells[i])) { A.anim(900); const fr = b.last >= 0 ? 5 - Math.floor(b.last / 7) : 3; A.land((430 + fr * 70) * 0.5); }
+    // 4 つそろった所: 脈打つ光の輪 + 白い縁 + 結ぶ線(Android 版と同じ。盤の状態から描く)
+    let wl = '';
+    if (b.win && b.win.length >= 2) {
+      const pts = b.win.map((i) => [i % 7 + .5, 5 - Math.floor(i / 7) + .5]).sort((p, q) => p[0] - q[0] || p[1] - q[1]);
+      const k = A.handle + ':' + b.win.join(','), fresh = c4WinSeen !== k; c4WinSeen = k;
+      const delay = old && old.some((v, i) => v !== b.cells[i]) ? 900 : 0;
+      const glow = pts.map(([x, y]) => `<circle class="wglow" cx="${x}" cy="${y}" r=".62" fill="url(#c4glowG)"/>`).join(''), ring = pts.map(([x, y]) => `<circle class="wring" cx="${x}" cy="${y}" r=".4" fill="none" stroke="#fff" stroke-width=".07"/>`).join('');
+      wl = `<svg class="c4wl" viewBox="0 0 7 6" preserveAspectRatio="none"><defs><radialGradient id="c4glowG"><stop offset="0" stop-color="#FFF3B0" stop-opacity="0"/><stop offset=".55" stop-color="#FFF3B0" stop-opacity="0"/><stop offset=".72" stop-color="#FFE27A" stop-opacity=".8"/><stop offset="1" stop-color="#FFE27A" stop-opacity="0"/></radialGradient></defs><g class="wfx ${fresh ? 'go' : ''}" style="--wd:${delay * A.speed}ms">${glow}${ring}<path class="wline2" pathLength="1" d="M${pts[0][0]} ${pts[0][1]}L${pts[pts.length - 1][0]} ${pts[pts.length - 1][1]}" stroke="#fff" stroke-width=".11" stroke-linecap="round" fill="none"/></g></svg>`;
+      if (fresh) A.anim(delay * A.speed + 700);
+    }
     prevC4 = { h: A.handle, cells: b.cells.slice() };
-    A.board(`<div class="c4"><div class="c4top">${top}</div><div class="c4board"><div class="c4discs">${discs}${ghostDiscs}</div><div class="c4wood"></div><div class="c4front">${front}</div></div><div class="c4base"></div><div class="c4floor"></div></div>`, (d) => {
+    A.board(`<div class="c4"><div class="c4top">${top}</div><div class="c4board"><div class="c4discs">${discs}${ghostDiscs}</div><div class="c4wood"></div><div class="c4front">${front}</div>${wl}</div><div class="c4base"></div><div class="c4floor"></div></div>`, (d) => {
       if (d.col == null || !A.view.human) return;
       const c = +d.col; if (!legal.has(c)) return;
       c4pre = null; A.play(c);

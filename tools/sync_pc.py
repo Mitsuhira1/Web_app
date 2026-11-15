@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT.parent / "Windows-Projects" / "app"
 DST = ROOT / "web" / "pc"
 ICON512 = SRC.parent / "src-tauri" / "icons" / "icon.png"  # 角の丸いアイコン(512)
+NAME = "遊びの箱30"  # Edge のアプリ版の名前(ユーザーの指示 2026-11-15)。exe は「日本アソビ大辞典30」のまま
 
 if not (SRC / "index.html").exists():
     sys.exit(f"元が見つかりません: {SRC}")
@@ -27,8 +28,8 @@ shutil.copytree(SRC, DST)
 shutil.copyfile(ICON512, DST / "icons" / "icon-round-512.png")
 
 manifest = {
-    "name": "日本アソビ大辞典30",
-    "short_name": "日本アソビ大辞典30",
+    "name": NAME,
+    "short_name": NAME,
     "lang": "ja",
     "start_url": "./",
     "scope": "./",
@@ -45,6 +46,10 @@ manifest = {
 
 (DST / "pwa.js").write_text("""// Web 版(アプリとしてインストール)だけで使う。exe・動く見本には入らない(tools/sync_pc.py が足す)
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js', { scope: './' }).then((r) => r.update()).catch(() => {});
+// 対局中・部屋にいる時に閉じようとしたら、ブラウザの確認を出す(自分で作った窓は出せない)
+addEventListener('beforeunload', (e) => {
+  try { if ((S.screen === 'play' && view && !view.outcome) || (ost && ost.role !== 'none')) { e.preventDefault(); e.returnValue = ''; } } catch (er) {}
+});
 // ウィンドウの大きさ: アプリとして開いた時は、その大きさにする(ブラウザのタブでは変えられない)
 async function setWinSize(v) {
   const [w, h] = String(v).split('×').map(Number); if (!w) return;
@@ -81,6 +86,21 @@ self.addEventListener("fetch", (e) => {{
   }}).catch(() => caches.match(req, {{ ignoreSearch: true }}).then((hit) => hit || (req.mode === "navigate" ? caches.match("./index.html") : Response.error()))));
 }});
 """, encoding="utf-8")
+
+# 画面に出る名前と、exe・見本向けの言葉を、Edge のアプリ版向けにする(写しだけを書きかえる。元は変えない)
+def sub(rel, pairs):
+    f = DST / rel; t = f.read_text(encoding="utf-8")
+    for a, b in pairs:
+        assert a in t, (rel, a)
+        t = t.replace(a, b)
+    f.write_text(t, encoding="utf-8")
+sub("js/app.js", [
+    ("<strong>日本アソビ大辞典 <i>30</i></strong>", "<strong>遊びの箱 <i>30</i></strong>"),
+    ("ブラウザの見本では、アプリを閉じられません(exe では閉じます)", "閉じられませんでした。ウィンドウの × で閉じてください"),
+    ("ブラウザの見本では、ウィンドウの大きさは変えられません(exe では変わります)", "ブラウザのタブでは、ウィンドウの大きさは変えられません"),
+])
+sub("js/art.js", [("<small>日本アソビ大辞典30</small>", "<small>遊びの箱30</small>")])
+sub("index.html", [("<title>日本アソビ大辞典30</title>", "<title>遊びの箱30</title>")])
 
 # index.html: アプリとして入れる情報と、pwa.js(app.js の後に読む。setWinSize を Web 用に置き換える)
 p = DST / "index.html"

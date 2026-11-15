@@ -58,7 +58,9 @@
     const RANKN = ['大富豪', '富豪', '平民', '貧民', '大貧民'];
     const rankOf = (p) => t.place[p] >= 0 ? `${t.place[p] + 1}位で上がり` : t.prev[p] >= 0 ? (total === 4 ? [RANKN[0], RANKN[1], RANKN[3], RANKN[4]] : RANKN)[t.prev[p]] || '' : '';
     A.strip(b.scores.map((s, i) => `<div class="pl${s.turn ? ' turn' : ''}">${i === me ? A.face(24) : `<span class="dot face">${esc(A.name(i)[0])}</span>`}<span class="who"><span class="nm">${esc(A.name(i))}</span><span class="nt">${esc(rankOf(i) || t.pts[i] + '点')}</span></span><span class="num">${t.n[i]}</span></div>`).join(''));
-    const field = b.zones[0].cards, hand = b.zones[1].cards;
+    // 手札は弱い順(3 … A・2・ジョーカー)、同じ強さはマーク順に並べる(選ぶ札は id で持つので、並べ替えても手は変わらない)
+    const dfPow = (id) => (id === 52 ? 13 : ((id % 13) + 2 - 3 + 13) % 13) * 4 + (id === 52 ? 0 : Math.floor(id / 13));
+    const field = b.zones[0].cards, hand = b.zones[1].cards.slice().sort((x, y) => dfPow(x.id) - dfPow(y.id));
     const picked = new Set(A.sel && A.sel.ids ? A.sel.ids.filter((x) => hand.some((c) => c.id === x)) : []);
     const moves = human ? t.moves.filter(([m, cs]) => cs.length) : [];
     const usable = new Set(); moves.forEach(([, cs]) => cs.forEach((c) => usable.add(c)));
@@ -71,7 +73,9 @@
     const tags = (t.rev ? '<span class="tag2 red">革命中</span>' : '') + (t.lock ? '<span class="tag2">しばり</span>' : '');
     const center = `<div class="pile2">${field.length ? field.map((c) => pc(c.id, nf.includes(c.id) ? 'new' : '')).join('') : '<span class="none">場は空です</span>'}</div><div class="pinfo">${field.length && t.fieldOwner >= 0 ? `${esc(A.name(t.fieldOwner))} が出した札` : t.phase === 0 ? '札を交換します' : ''} ${tags}</div><div class="tround">${t.round + 1}回戦</div>`;
     const handHtml = handRow(hand, hand.map((c) => pc(c.id, `${picked.has(c.id) ? 'on' : ''} ${human && !can.has(c.id) ? 'no' : ''} ${human && can.has(c.id) ? 'tap' : ''}`, `data-card="${c.id}"`)).join(''));
-    A.board(wrap('oval', seats + center, handHtml), (d) => {
+    // 自分の札の前(卓の下の真ん中)にも、ほかの人と同じ名札と残りの枚数
+    const mine = seatHtml(A, { seat: me, x: 50, y: 93 }, { count: t.n[me], note: t.place[me] >= 0 ? `${t.place[me] + 1}位` : t.passed[me] ? 'パス' : '', dim: t.place[me] >= 0 }).replace('class="tseat', 'class="tseat myseat');
+    A.board(wrap('oval', seats + mine + center, handHtml), (d) => {
       if (d.card == null || !human) return; const id = +d.card;
       if (picked.has(id)) picked.delete(id); else if (can.has(id)) picked.add(id); else if (usable.has(id)) { picked.clear(); picked.add(id); } else return;
       A.sel = { ids: [...picked] }; A.sfx('TAP'); A.redraw();

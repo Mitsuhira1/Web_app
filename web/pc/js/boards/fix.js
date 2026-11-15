@@ -85,7 +85,7 @@
     for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) { const i = r * n + c, o = b.owner[i]; if (o >= 0) boxes += `<g class="${old && old.owner[i] < 0 ? 'dbox new' : 'dbox'}"><rect x="${M + c * K + 7}" y="${M + r * K + 7}" width="${K - 14}" height="${K - 14}" rx="6" class="p${o}"/><text x="${M + c * K + K / 2}" y="${M + r * K + K / 2 + 13}" text-anchor="middle" font-size="38" font-weight="900" class="t${o}">${esc(A.name(o)[0])}</text></g>`; }
     const line = (e, x1, y1, x2, y2) => {
       const by = b.edgeBy[e];
-      if (by >= 0) { const fresh = old && old.edgeBy[e] < 0; lines += `<path d="M${x1} ${y1}L${x2} ${y2}" class="dl p${by} ${fresh ? 'draw' : ''}" pathLength="100"/>`; }
+      if (by >= 0) { const fresh = old && old.edgeBy[e] < 0; lines += `<path d="M${x1} ${y1}L${x2} ${y2}" class="dl p${by} ${fresh ? 'draw' : ''} ${b.last === e ? 'dlast' : ''}" pathLength="100"/>`; }
       else { lines += `<path d="M${x1} ${y1}L${x2} ${y2}" class="dg" data-edge="${e}"/>`; if (legal.has(e)) taps += `<g class="dtg"><path d="M${x1} ${y1}L${x2} ${y2}" class="dgh p${A.view.toMove}"/><path d="M${x1} ${y1}L${x2} ${y2}" class="dt" data-e="${e}"/></g>`; }
     };
     for (let r = 0; r <= n; r++) for (let c = 0; c < n; c++) line(hEdge(r, c), M + c * K, M + r * K, M + (c + 1) * K, M + r * K);
@@ -183,7 +183,7 @@
     if (cat === 10) return has([1, 2, 3, 4, 5]) || has([2, 3, 4, 5, 6]) ? 30 : 0;
     return cnt.some((c) => c === 5) ? 50 : 0;
   }
-  let yPick = null, yKeep = 0, yRolling = false, yRollUntil = 0;
+  let yPick = null, yKeep = 0, yRolling = false, yRollUntil = 0, yLastCell = '';
   function yacht(b, A) {
     const me = A.mySeat, legal = new Set(A.view.human ? A.view.legal : []), turn = A.view.toMove;
     const tot = (k) => b.sheets[k].reduce((a, c) => a + Math.max(c, 0), 0) + (b.sheets[k].slice(0, 6).reduce((a, c) => a + Math.max(c, 0), 0) >= 63 ? 35 : 0);
@@ -198,14 +198,17 @@
     if (!old || old.turn !== b.turn || old.left !== b.rollsLeft) yPick = null;
     const dice = b.dice.map((v, i) => { const held = (mask >> i) & 1;
       return `<button class="yd ${held ? 'held' : ''} ${rolledNow && (old.turn !== b.turn || !((mask >> i) & 1)) ? 'roll' : ''}" data-die="${i}" data-v="${v}" ${mine && rolled ? '' : 'disabled'} aria-label="サイコロ ${v || ''}"><span class="d2 ${v > 0 ? '' : 'gray'}">${dface(v > 0 ? v : i + 1)}</span></button>`; }).join('');
+    // ほかの人が最後に書いた欄(次にだれかが書くまで光らせる)
+    if (old && old.sheets) for (let k = 0; k < b.players; k++) for (let c2 = 0; c2 < b.sheets[k].length; c2++) if (old.sheets[k][c2] < 0 && b.sheets[k][c2] >= 0) yLastCell = k !== me ? `${k}-${c2}` : '';
+    if (!old) yLastCell = '';
     const cell = (k, cat) => { const v = b.sheets[k][cat], at = `data-ycell="${k}-${cat}"`;
-      if (v >= 0) return `<td class="ys" ${at}>${v}</td>`;
+      if (v >= 0) return `<td class="ys ${yLastCell === `${k}-${cat}` ? 'ylast' : ''}" ${at}>${v}</td>`;
       if (k === me && legal.has(100 + cat) && rolled) return `<td class="yp ${yPick === cat ? 'pick' : ''}" data-cat="${cat}" ${at}>${ysc(b.dice, cat)}</td>`;
       if (k === turn && k !== me && rolled && !A.view.human) return `<td class="yp cpu" ${at}>${ysc(b.dice, cat)}</td>`;
       return `<td ${at}></td>`; };
     const rows = YN.map((nm, cat) => `<tr><th>${nm}<small>${YH[cat]}</small></th>${Array.from({ length: b.players }, (_, k) => cell(k, cat)).join('')}</tr>${cat === 5 ? `<tr class="bonus"><th>ボーナス<small>上の 6 つで 63 点以上なら +35</small></th>${Array.from({ length: b.players }, (_, k) => { const t = b.sheets[k].slice(0, 6).reduce((a, c) => a + Math.max(c, 0), 0); return `<td class="ys">${t >= 63 ? '+35' : `${t}/63`}</td>`; }).join('')}</tr>` : ''}`).join('');
     const head = Array.from({ length: b.players }, (_, k) => `<th class="${turn === k ? 'on' : ''}">${esc(A.name(k))}</th>`).join('');
-    prev.ya = { h: A.handle, left: b.rollsLeft, turn: b.turn, dice: b.dice.slice(), keepSent: prev.yaSent || 0 }; prev.yaSent = 0;
+    prev.ya = { h: A.handle, left: b.rollsLeft, turn: b.turn, dice: b.dice.slice(), keepSent: prev.yaSent || 0, sheets: b.sheets.map((r) => r.slice()) }; prev.yaSent = 0;
     if (!old || old.left !== b.rollsLeft || old.turn !== b.turn) yRolling = false;
     // 振っている間(サイコロが止まるまで)は、もう一度押せない
     if (rolledNow) yRollUntil = performance.now() + 1000 * A.speed;

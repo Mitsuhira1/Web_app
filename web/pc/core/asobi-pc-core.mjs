@@ -232,6 +232,8 @@ import {
   Default_getInstancegttbt9h1yt0q as Default_getInstance,
   first34dru09vyikub as first_0,
   sorted36owlv5kvgyz2 as sorted_0,
+  toInt5qdj874w69jh as toInt_0,
+  padStart36w1507hs626a as padStart,
 } from './kotlin-kotlin-stdlib.mjs';
 //region block: imports
 var imul = Math.imul;
@@ -525,6 +527,7 @@ initMetadataForClass(JsRtc, 'JsRtc', JsRtc);
 initMetadataForClass(JsRelay$subscribe$1);
 initMetadataForClass(JsRelay, 'JsRelay', JsRelay);
 initMetadataForClass(ChatItem, 'ChatItem');
+initMetadataForClass(CurPos, 'CurPos');
 //endregion
 var Sound_TAP_instance;
 var Sound_BACK_instance;
@@ -34408,11 +34411,11 @@ function sendCompat($this) {
   }
 }
 function Chat(seq, slot, name, kind, body) {
-  this.n27_1 = seq;
-  this.o27_1 = slot;
-  this.p27_1 = name;
-  this.q27_1 = kind;
-  this.r27_1 = body;
+  this.o27_1 = seq;
+  this.p27_1 = slot;
+  this.q27_1 = name;
+  this.r27_1 = kind;
+  this.s27_1 = body;
 }
 function hostChat($this, slot, kind, rawBody) {
   var tmp;
@@ -34510,16 +34513,16 @@ function hostChat($this, slot, kind, rawBody) {
       return false;
   }
   var body = tmp_1;
-  var now = $this.a27_1();
-  var last = $this.z26_1.l1(slot);
+  var now = $this.b27_1();
+  var last = $this.a27_1.l1(slot);
   if (!(last == null) && now.x1(last).c1(new Long(700, 0)) < 0)
     return false;
   // Inline function 'kotlin.collections.set' call
-  $this.z26_1.c3(slot, now);
-  $this.y26_1 = $this.y26_1 + 1 | 0;
-  var c = new Chat($this.y26_1, slot, $this.s27(slot), kind, body);
-  sendAll($this, 'CHAT|' + $this.l27_1 + '|' + c.n27_1 + '|' + slot + '|' + kind + '|' + body);
-  var tmp5_safe_receiver = $this.x26_1;
+  $this.a27_1.c3(slot, now);
+  $this.z26_1 = $this.z26_1 + 1 | 0;
+  var c = new Chat($this.z26_1, slot, $this.t27(slot), kind, body);
+  sendAll($this, 'CHAT|' + $this.m27_1 + '|' + c.o27_1 + '|' + slot + '|' + kind + '|' + body);
+  var tmp5_safe_receiver = $this.y26_1;
   if (tmp5_safe_receiver == null)
     null;
   else
@@ -34527,15 +34530,15 @@ function hostChat($this, slot, kind, rawBody) {
   return true;
 }
 function UndoVote(id, slot, target, name) {
-  this.t27_1 = id;
-  this.u27_1 = slot;
-  this.v27_1 = target;
-  this.w27_1 = name;
+  this.u27_1 = id;
+  this.v27_1 = slot;
+  this.w27_1 = target;
+  this.x27_1 = name;
 }
 function hostStartUndo($this, slot) {
-  if (!$this.w25_1 || !$this.a26_1.equals(Phase_PLAYING_getInstance()) || !($this.b27_1 == null))
+  if (!$this.w25_1 || !$this.a26_1.equals(Phase_PLAYING_getInstance()) || !($this.c27_1 == null))
     return Unit_instance;
-  var tmp0_safe_receiver = $this.e27_1;
+  var tmp0_safe_receiver = $this.f27_1;
   var target = tmp0_safe_receiver == null ? null : tmp0_safe_receiver(slot);
   if (target == null) {
     var tmp$ret$1;
@@ -34559,17 +34562,17 @@ function hostStartUndo($this, slot) {
     else {
       // Inline function 'kotlin.let' call
       // Inline function 'kotlin.contracts.contract' call
-      $this.v25_1.x27(tmp2_safe_receiver, 'UNDO_DONE|' + $this.l27_1 + '|0|0|' + slot + '|-3');
+      $this.v25_1.y27(tmp2_safe_receiver, 'UNDO_DONE|' + $this.m27_1 + '|0|0|' + slot + '|-3');
     }
     return Unit_instance;
   }
-  $this.c27_1 = $this.c27_1 + 1 | 0;
-  var v = new UndoVote($this.c27_1, slot, target, $this.s27(slot));
-  $this.b27_1 = v;
-  $this.d27_1.x3();
-  $this.d27_1.i(slot);
-  sendAll($this, 'UNDO_ASK|' + $this.l27_1 + '|' + v.t27_1 + '|' + slot + '|' + target);
-  var tmp3_safe_receiver = $this.g27_1;
+  $this.d27_1 = $this.d27_1 + 1 | 0;
+  var v = new UndoVote($this.d27_1, slot, target, $this.t27(slot));
+  $this.c27_1 = v;
+  $this.e27_1.x3();
+  $this.e27_1.i(slot);
+  sendAll($this, 'UNDO_ASK|' + $this.m27_1 + '|' + v.u27_1 + '|' + slot + '|' + target);
+  var tmp3_safe_receiver = $this.h27_1;
   if (tmp3_safe_receiver == null)
     null;
   else
@@ -34578,7 +34581,7 @@ function hostStartUndo($this, slot) {
   checkUndo($this);
 }
 function hostVote($this, slot, id, yes) {
-  var tmp0_elvis_lhs = $this.b27_1;
+  var tmp0_elvis_lhs = $this.c27_1;
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return Unit_instance;
@@ -34587,7 +34590,7 @@ function hostVote($this, slot, id, yes) {
   }
   var v = tmp;
   var tmp_0;
-  if (!(v.t27_1 === id)) {
+  if (!(v.u27_1 === id)) {
     tmp_0 = true;
   } else {
     var tmp1_safe_receiver = $this.g26_1;
@@ -34600,11 +34603,11 @@ function hostVote($this, slot, id, yes) {
     finishUndo($this, false, slot);
     return Unit_instance;
   }
-  $this.d27_1.i(slot);
+  $this.e27_1.i(slot);
   checkUndo($this);
 }
 function checkUndo($this) {
-  if ($this.b27_1 == null)
+  if ($this.c27_1 == null)
     return Unit_instance;
   // Inline function 'kotlin.collections.filter' call
   var tmp0_safe_receiver = $this.g26_1;
@@ -34669,7 +34672,7 @@ function checkUndo($this) {
     while (tmp0_iterator_1.l()) {
       var element_1 = tmp0_iterator_1.m();
       // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.checkUndo.<anonymous>' call
-      if (!$this.d27_1.t(element_1)) {
+      if (!$this.e27_1.t(element_1)) {
         tmp$ret$5 = false;
         break $l$block_2;
       }
@@ -34681,7 +34684,7 @@ function checkUndo($this) {
   }
 }
 function finishUndo($this, ok, by) {
-  var tmp0_elvis_lhs = $this.b27_1;
+  var tmp0_elvis_lhs = $this.c27_1;
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return Unit_instance;
@@ -34689,21 +34692,21 @@ function finishUndo($this, ok, by) {
     tmp = tmp0_elvis_lhs;
   }
   var v = tmp;
-  $this.b27_1 = null;
+  $this.c27_1 = null;
   var tmp_0;
   if (ok) {
-    var tmp1_safe_receiver = $this.f27_1;
+    var tmp1_safe_receiver = $this.g27_1;
     tmp_0 = tmp1_safe_receiver == null ? null : tmp1_safe_receiver(v);
   } else {
     tmp_0 = null;
   }
   var moves = tmp_0;
   if (!(moves == null)) {
-    sendAll($this, 'UNDO_DONE|' + $this.l27_1 + '|' + v.t27_1 + '|1|' + v.u27_1 + '|' + joinToString(moves, ','));
+    sendAll($this, 'UNDO_DONE|' + $this.m27_1 + '|' + v.u27_1 + '|1|' + v.v27_1 + '|' + joinToString(moves, ','));
   } else {
-    sendAll($this, 'UNDO_DONE|' + $this.l27_1 + '|' + v.t27_1 + '|0|' + v.u27_1 + '|' + by);
+    sendAll($this, 'UNDO_DONE|' + $this.m27_1 + '|' + v.u27_1 + '|0|' + v.v27_1 + '|' + by);
   }
-  var tmp2_safe_receiver = $this.h27_1;
+  var tmp2_safe_receiver = $this.i27_1;
   if (tmp2_safe_receiver == null)
     null;
   else {
@@ -34720,7 +34723,7 @@ function changed_1($this) {
     tmp0_safe_receiver();
 }
 function sendReady($this) {
-  sendAll($this, 'READY|' + $this.l27_1 + '|' + joinToString($this.i27_1, ','));
+  sendAll($this, 'READY|' + $this.m27_1 + '|' + joinToString($this.j27_1, ','));
 }
 function hostReceive($this, id, f) {
   switch (f.p(0)) {
@@ -34728,7 +34731,7 @@ function hostReceive($this, id, f) {
       var tmp;
       if ($this.a26_1.equals(Phase_PLAYING_getInstance()) || $this.a26_1.equals(Phase_LOBBY_getInstance())) {
         var tmp3_safe_receiver = getOrNull(f, 1);
-        tmp = (tmp3_safe_receiver == null ? null : toIntOrNull(tmp3_safe_receiver)) === $this.l27_1;
+        tmp = (tmp3_safe_receiver == null ? null : toIntOrNull(tmp3_safe_receiver)) === $this.m27_1;
       } else {
         tmp = false;
       }
@@ -34769,7 +34772,7 @@ function hostReceive($this, id, f) {
 
       break;
     case 'UNDO_REQ':
-      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.l27_1) {
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.m27_1) {
         var tmp$ret$5;
         $l$block_0: {
           // Inline function 'kotlin.collections.firstOrNull' call
@@ -34796,7 +34799,7 @@ function hostReceive($this, id, f) {
 
       break;
     case 'UNDO_VOTE':
-      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.l27_1) {
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.m27_1) {
         var tmp$ret$8;
         $l$block_1: {
           // Inline function 'kotlin.collections.firstOrNull' call
@@ -34823,7 +34826,7 @@ function hostReceive($this, id, f) {
 
       break;
     case 'RESIGN_REQ':
-      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.l27_1) {
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.m27_1) {
         var tmp$ret$11;
         $l$block_2: {
           // Inline function 'kotlin.collections.firstOrNull' call
@@ -34851,8 +34854,23 @@ function hostReceive($this, id, f) {
       }
 
       break;
-    case 'SELECT_REQ':
-      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && $this.d26_1 === 'yacht' && toInt(f.p(1)) === $this.l27_1) {
+    case 'CUR_REQ':
+      var tmp_2;
+      var tmp_3;
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance())) {
+        var tmp12_safe_receiver = getOrNull(f, 1);
+        tmp_3 = (tmp12_safe_receiver == null ? null : toIntOrNull(tmp12_safe_receiver)) === $this.m27_1;
+      } else {
+        tmp_3 = false;
+      }
+
+      if (tmp_3) {
+        tmp_2 = f.n() >= 5;
+      } else {
+        tmp_2 = false;
+      }
+
+      if (tmp_2) {
         var tmp$ret$15;
         $l$block_3: {
           // Inline function 'kotlin.collections.firstOrNull' call
@@ -34868,174 +34886,233 @@ function hostReceive($this, id, f) {
           tmp$ret$15 = null;
         }
         var tmp7_elvis_lhs = tmp$ret$15;
-        var tmp_2;
+        var tmp_4;
         if (tmp7_elvis_lhs == null) {
           return Unit_instance;
         } else {
-          tmp_2 = tmp7_elvis_lhs;
+          tmp_4 = tmp7_elvis_lhs;
         }
-        var member = tmp_2;
+        var m_0 = tmp_4;
+        var tmp8_elvis_lhs = toIntOrNull(f.p(3));
+        var tmp_5;
+        if (tmp8_elvis_lhs == null) {
+          return Unit_instance;
+        } else {
+          tmp_5 = tmp8_elvis_lhs;
+        }
+        var x = tmp_5;
+        var tmp9_elvis_lhs = toIntOrNull(f.p(4));
+        var tmp_6;
+        if (tmp9_elvis_lhs == null) {
+          return Unit_instance;
+        } else {
+          tmp_6 = tmp9_elvis_lhs;
+        }
+        var y = tmp_6;
+        var tmp10_safe_receiver = $this.v26_1;
+        if (tmp10_safe_receiver == null)
+          null;
+        else
+          tmp10_safe_receiver(m_0.k25_1, f.p(2), x, y);
+        var _iterator__ex2g4s = $this.c26_1.k();
+        while (_iterator__ex2g4s.l()) {
+          var o = _iterator__ex2g4s.m();
+          if (!(o.k25_1 === m_0.k25_1)) {
+            var tmp11_safe_receiver = o.m25_1;
+            if (tmp11_safe_receiver == null)
+              null;
+            else {
+              // Inline function 'kotlin.let' call
+              // Inline function 'kotlin.contracts.contract' call
+              $this.v25_1.y27(tmp11_safe_receiver, 'CUR|' + $this.m27_1 + '|' + m_0.k25_1 + '|' + f.p(2) + '|' + x + '|' + y);
+            }
+          }
+        }
+      }
+
+      break;
+    case 'SELECT_REQ':
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && $this.d26_1 === 'yacht' && toInt(f.p(1)) === $this.m27_1) {
+        var tmp$ret$18;
+        $l$block_4: {
+          // Inline function 'kotlin.collections.firstOrNull' call
+          var tmp0_iterator_4 = $this.c26_1.k();
+          while (tmp0_iterator_4.l()) {
+            var element_4 = tmp0_iterator_4.m();
+            // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
+            if (element_4.m25_1 === id) {
+              tmp$ret$18 = element_4;
+              break $l$block_4;
+            }
+          }
+          tmp$ret$18 = null;
+        }
+        var tmp13_elvis_lhs = tmp$ret$18;
+        var tmp_7;
+        if (tmp13_elvis_lhs == null) {
+          return Unit_instance;
+        } else {
+          tmp_7 = tmp13_elvis_lhs;
+        }
+        var member = tmp_7;
         var index = toInt(f.p(2));
         var mask = toInt(f.p(3));
-        var tmp_3;
+        var tmp_8;
         if (0 <= mask ? mask <= 31 : false) {
-          var tmp9_safe_receiver = $this.t26_1;
-          tmp_3 = (tmp9_safe_receiver == null ? null : tmp9_safe_receiver(member.k25_1, index, mask)) === true;
+          var tmp15_safe_receiver = $this.t26_1;
+          tmp_8 = (tmp15_safe_receiver == null ? null : tmp15_safe_receiver(member.k25_1, index, mask)) === true;
         } else {
-          tmp_3 = false;
+          tmp_8 = false;
         }
-        if (tmp_3) {
-          var tmp8_safe_receiver = $this.s26_1;
-          if (tmp8_safe_receiver == null)
+        if (tmp_8) {
+          var tmp14_safe_receiver = $this.s26_1;
+          if (tmp14_safe_receiver == null)
             null;
           else
-            tmp8_safe_receiver(index, mask);
-          sendAll($this, 'SELECT|' + $this.l27_1 + '|' + index + '|' + mask);
+            tmp14_safe_receiver(index, mask);
+          sendAll($this, 'SELECT|' + $this.m27_1 + '|' + index + '|' + mask);
         }
       }
 
       break;
     case 'HELLO':
-      var tmp$ret$16;
-      $l$block_5: {
+      var tmp$ret$19;
+      $l$block_6: {
         // Inline function 'kotlin.collections.any' call
         var this_0 = $this.c26_1;
-        var tmp_4;
+        var tmp_9;
         if (isInterface(this_0, Collection)) {
-          tmp_4 = this_0.q();
+          tmp_9 = this_0.q();
         } else {
-          tmp_4 = false;
+          tmp_9 = false;
         }
-        if (tmp_4) {
-          tmp$ret$16 = false;
-          break $l$block_5;
+        if (tmp_9) {
+          tmp$ret$19 = false;
+          break $l$block_6;
         }
-        var tmp0_iterator_4 = this_0.k();
-        while (tmp0_iterator_4.l()) {
-          var element_4 = tmp0_iterator_4.m();
+        var tmp0_iterator_5 = this_0.k();
+        while (tmp0_iterator_5.l()) {
+          var element_5 = tmp0_iterator_5.m();
           // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
-          if (element_4.m25_1 === id) {
-            tmp$ret$16 = true;
-            break $l$block_5;
+          if (element_5.m25_1 === id) {
+            tmp$ret$19 = true;
+            break $l$block_6;
           }
         }
-        tmp$ret$16 = false;
+        tmp$ret$19 = false;
       }
 
-      if (tmp$ret$16)
+      if (tmp$ret$19)
         return Unit_instance;
-      if ($this.a26_1.equals(Phase_PLAYING_getInstance())) {
-        $this.v25_1.x27(id, 'DENY|playing');
-        return Unit_instance;
-      } else if ($this.c26_1.n() >= 6) {
-        $this.v25_1.x27(id, 'DENY|full');
+      if ($this.c26_1.n() >= 6) {
+        $this.v25_1.y27(id, 'DENY|full');
         return Unit_instance;
       }
 
-      var tmp$ret$21;
-      $l$block_8: {
+      var tmp$ret$24;
+      $l$block_9: {
         // Inline function 'kotlin.collections.first' call
         var progression = until(1, 6);
         var inductionVariable = progression.x_1;
         var last = progression.y_1;
         if (inductionVariable <= last)
           do {
-            var element_5 = inductionVariable;
+            var element_6 = inductionVariable;
             inductionVariable = inductionVariable + 1 | 0;
             // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
-            var s = element_5;
-            var tmp$ret$18;
-            $l$block_7: {
+            var s = element_6;
+            var tmp$ret$21;
+            $l$block_8: {
               // Inline function 'kotlin.collections.none' call
               var this_1 = $this.c26_1;
-              var tmp_5;
+              var tmp_10;
               if (isInterface(this_1, Collection)) {
-                tmp_5 = this_1.q();
+                tmp_10 = this_1.q();
               } else {
-                tmp_5 = false;
+                tmp_10 = false;
               }
-              if (tmp_5) {
-                tmp$ret$18 = true;
-                break $l$block_7;
+              if (tmp_10) {
+                tmp$ret$21 = true;
+                break $l$block_8;
               }
-              var tmp0_iterator_5 = this_1.k();
-              while (tmp0_iterator_5.l()) {
-                var element_6 = tmp0_iterator_5.m();
+              var tmp0_iterator_6 = this_1.k();
+              while (tmp0_iterator_6.l()) {
+                var element_7 = tmp0_iterator_6.m();
                 // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>.<anonymous>' call
-                if (element_6.k25_1 === s) {
-                  tmp$ret$18 = false;
-                  break $l$block_7;
+                if (element_7.k25_1 === s) {
+                  tmp$ret$21 = false;
+                  break $l$block_8;
                 }
               }
-              tmp$ret$18 = true;
+              tmp$ret$21 = true;
             }
-            if (tmp$ret$18) {
-              tmp$ret$21 = element_5;
-              break $l$block_8;
+            if (tmp$ret$21) {
+              tmp$ret$24 = element_6;
+              break $l$block_9;
             }
           }
-           while (!(element_5 === last));
+           while (!(element_6 === last));
         throw NoSuchElementException_init_$Create$_0('Collection contains no element matching the predicate.');
       }
 
-      var slot = tmp$ret$21;
+      var slot = tmp$ret$24;
       // Inline function 'kotlin.text.ifBlank' call
 
-      var tmp_6 = Companion_instance_30;
+      var tmp_11 = Companion_instance_30;
       // Inline function 'kotlin.collections.getOrElse' call
 
       // Inline function 'kotlin.contracts.contract' call
 
-      var tmp_7;
+      var tmp_12;
       if (0 <= 1 ? 1 < f.n() : false) {
-        tmp_7 = f.p(1);
+        tmp_12 = f.p(1);
       } else {
         // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
-        tmp_7 = '';
+        tmp_12 = '';
       }
 
-      var tmp$ret$23 = tmp_7;
-      var this_2 = tmp_6.z27(tmp$ret$23);
+      var tmp$ret$26 = tmp_12;
+      var this_2 = tmp_11.a28(tmp$ret$26);
       // Inline function 'kotlin.contracts.contract' call
 
-      var tmp_8;
+      var tmp_13;
       if (isBlank(this_2)) {
         // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
-        tmp_8 = '\u30D7\u30EC\u30A4\u30E4\u30FC';
+        tmp_13 = '\u30D7\u30EC\u30A4\u30E4\u30FC';
       } else {
-        tmp_8 = this_2;
+        tmp_13 = this_2;
       }
 
-      var name = tmp_8;
+      var name = tmp_13;
       var k = 2;
       var base = name;
       $l$loop: while (true) {
-        var tmp$ret$26;
-        $l$block_10: {
+        var tmp$ret$29;
+        $l$block_11: {
           // Inline function 'kotlin.collections.any' call
           var this_3 = $this.c26_1;
-          var tmp_9;
+          var tmp_14;
           if (isInterface(this_3, Collection)) {
-            tmp_9 = this_3.q();
+            tmp_14 = this_3.q();
           } else {
-            tmp_9 = false;
+            tmp_14 = false;
           }
-          if (tmp_9) {
-            tmp$ret$26 = false;
-            break $l$block_10;
+          if (tmp_14) {
+            tmp$ret$29 = false;
+            break $l$block_11;
           }
-          var tmp0_iterator_6 = this_3.k();
-          while (tmp0_iterator_6.l()) {
-            var element_7 = tmp0_iterator_6.m();
+          var tmp0_iterator_7 = this_3.k();
+          while (tmp0_iterator_7.l()) {
+            var element_8 = tmp0_iterator_7.m();
             // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
-            if (element_7.l25_1 === name) {
-              tmp$ret$26 = true;
-              break $l$block_10;
+            if (element_8.l25_1 === name) {
+              tmp$ret$29 = true;
+              break $l$block_11;
             }
           }
-          tmp$ret$26 = false;
+          tmp$ret$29 = false;
         }
-        if (!tmp$ret$26) {
+        if (!tmp$ret$29) {
           break $l$loop;
         }
         var _unary__edvuaz = k;
@@ -35050,21 +35127,21 @@ function hostReceive($this, id, f) {
 
       // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
 
-      var tmp_10 = this_4;
+      var tmp_15 = this_4;
       var tmp0_safe_receiver_0 = getOrNull(f, 2);
       var tmp1_elvis_lhs = tmp0_safe_receiver_0 == null ? null : toIntOrNull(tmp0_safe_receiver_0);
-      tmp_10.n25_1 = tmp1_elvis_lhs == null ? 1 : tmp1_elvis_lhs;
-      var tmp_11 = this_4;
-      var tmp_12 = Compat_getInstance();
+      tmp_15.n25_1 = tmp1_elvis_lhs == null ? 1 : tmp1_elvis_lhs;
+      var tmp_16 = this_4;
+      var tmp_17 = Compat_getInstance();
       var tmp2_elvis_lhs_0 = getOrNull(f, 3);
-      tmp_11.o25_1 = tmp_12.ms(tmp2_elvis_lhs_0 == null ? '' : tmp2_elvis_lhs_0);
+      tmp_16.o25_1 = tmp_17.ms(tmp2_elvis_lhs_0 == null ? '' : tmp2_elvis_lhs_0);
       $this.c26_1.i(this_4);
-      $this.v25_1.x27(id, 'WELCOME|' + slot + '|2');
+      $this.v25_1.y27(id, 'WELCOME|' + slot + '|2');
       if ($this.y25_1) {
         if ($this.c26_1.n() >= 6) {
-          $this.v25_1.b28();
+          $this.v25_1.c28();
         } else {
-          $this.v25_1.a28(adInfo($this));
+          $this.v25_1.b28(adInfo($this));
         }
       }
 
@@ -35072,58 +35149,7 @@ function hostReceive($this, id, f) {
       changed_1($this);
       break;
     case 'ACTION_REQ':
-      var tmp$ret$30;
-      $l$block_11: {
-        // Inline function 'kotlin.collections.firstOrNull' call
-        var tmp0_iterator_7 = $this.c26_1.k();
-        while (tmp0_iterator_7.l()) {
-          var element_8 = tmp0_iterator_7.m();
-          // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
-          if (element_8.m25_1 === id) {
-            tmp$ret$30 = element_8;
-            break $l$block_11;
-          }
-        }
-        tmp$ret$30 = null;
-      }
-
-      var tmp10_elvis_lhs = tmp$ret$30;
-      var tmp_13;
-      if (tmp10_elvis_lhs == null) {
-        return Unit_instance;
-      } else {
-        tmp_13 = tmp10_elvis_lhs;
-      }
-
-      var member_0 = tmp_13;
-      var tmp_14;
-      if (!$this.a26_1.equals(Phase_PLAYING_getInstance())) {
-        tmp_14 = true;
-      } else {
-        var tmp11_safe_receiver = getOrNull(f, 1);
-        tmp_14 = !((tmp11_safe_receiver == null ? null : toIntOrNull(tmp11_safe_receiver)) === $this.l27_1);
-      }
-
-      if (tmp_14)
-        return Unit_instance;
-      var tmp12_safe_receiver = getOrNull(f, 2);
-      var tmp13_elvis_lhs = tmp12_safe_receiver == null ? null : toIntOrNull(tmp12_safe_receiver);
-      var tmp_15;
-      if (tmp13_elvis_lhs == null) {
-        return Unit_instance;
-      } else {
-        tmp_15 = tmp13_elvis_lhs;
-      }
-
-      var move = tmp_15;
-      var tmp14_safe_receiver = $this.l26_1;
-      if (!((tmp14_safe_receiver == null ? null : tmp14_safe_receiver(member_0.k25_1, move)) === true)) {
-        resync($this, id);
-      }
-
-      break;
-    case 'REQ':
-      var tmp$ret$32;
+      var tmp$ret$33;
       $l$block_12: {
         // Inline function 'kotlin.collections.firstOrNull' call
         var tmp0_iterator_8 = $this.c26_1.k();
@@ -35131,133 +35157,184 @@ function hostReceive($this, id, f) {
           var element_9 = tmp0_iterator_8.m();
           // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
           if (element_9.m25_1 === id) {
-            tmp$ret$32 = element_9;
+            tmp$ret$33 = element_9;
             break $l$block_12;
           }
         }
-        tmp$ret$32 = null;
+        tmp$ret$33 = null;
       }
 
-      var tmp15_elvis_lhs = tmp$ret$32;
-      var tmp_16;
-      if (tmp15_elvis_lhs == null) {
+      var tmp16_elvis_lhs = tmp$ret$33;
+      var tmp_18;
+      if (tmp16_elvis_lhs == null) {
         return Unit_instance;
       } else {
-        tmp_16 = tmp15_elvis_lhs;
+        tmp_18 = tmp16_elvis_lhs;
       }
 
-      var m_0 = tmp_16;
-      if (!(toInt(f.p(1)) === $this.l27_1) || !$this.a26_1.equals(Phase_PLAYING_getInstance()))
+      var member_0 = tmp_18;
+      var tmp_19;
+      if (!$this.a26_1.equals(Phase_PLAYING_getInstance())) {
+        tmp_19 = true;
+      } else {
+        var tmp17_safe_receiver = getOrNull(f, 1);
+        tmp_19 = !((tmp17_safe_receiver == null ? null : toIntOrNull(tmp17_safe_receiver)) === $this.m27_1);
+      }
+
+      if (tmp_19)
+        return Unit_instance;
+      var tmp18_safe_receiver = getOrNull(f, 2);
+      var tmp19_elvis_lhs = tmp18_safe_receiver == null ? null : toIntOrNull(tmp18_safe_receiver);
+      var tmp_20;
+      if (tmp19_elvis_lhs == null) {
+        return Unit_instance;
+      } else {
+        tmp_20 = tmp19_elvis_lhs;
+      }
+
+      var move = tmp_20;
+      var tmp20_safe_receiver = $this.l26_1;
+      if (!((tmp20_safe_receiver == null ? null : tmp20_safe_receiver(member_0.k25_1, move)) === true)) {
+        resync($this, id);
+      }
+
+      break;
+    case 'REQ':
+      var tmp$ret$35;
+      $l$block_13: {
+        // Inline function 'kotlin.collections.firstOrNull' call
+        var tmp0_iterator_9 = $this.c26_1.k();
+        while (tmp0_iterator_9.l()) {
+          var element_10 = tmp0_iterator_9.m();
+          // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
+          if (element_10.m25_1 === id) {
+            tmp$ret$35 = element_10;
+            break $l$block_13;
+          }
+        }
+        tmp$ret$35 = null;
+      }
+
+      var tmp21_elvis_lhs = tmp$ret$35;
+      var tmp_21;
+      if (tmp21_elvis_lhs == null) {
+        return Unit_instance;
+      } else {
+        tmp_21 = tmp21_elvis_lhs;
+      }
+
+      var m_1 = tmp_21;
+      if (!(toInt(f.p(1)) === $this.m27_1) || !$this.a26_1.equals(Phase_PLAYING_getInstance()))
         return Unit_instance;
       var index_0 = toInt(f.p(2));
       var move_0 = toInt(f.p(3));
-      var tmp_17;
-      if ($this.b27_1 == null) {
-        var tmp17_safe_receiver = $this.o26_1;
-        tmp_17 = (tmp17_safe_receiver == null ? null : tmp17_safe_receiver(m_0.k25_1, index_0, move_0)) === true;
+      var tmp_22;
+      if ($this.c27_1 == null) {
+        var tmp23_safe_receiver = $this.o26_1;
+        tmp_22 = (tmp23_safe_receiver == null ? null : tmp23_safe_receiver(m_1.k25_1, index_0, move_0)) === true;
       } else {
-        tmp_17 = false;
+        tmp_22 = false;
       }
 
-      if (tmp_17) {
-        var tmp16_safe_receiver = $this.m26_1;
-        if (tmp16_safe_receiver == null)
+      if (tmp_22) {
+        var tmp22_safe_receiver = $this.m26_1;
+        if (tmp22_safe_receiver == null)
           null;
         else
-          tmp16_safe_receiver(index_0, move_0);
+          tmp22_safe_receiver(index_0, move_0);
       } else {
         resync($this, id);
       }
 
       break;
     case 'NEED':
-      if (toInt(f.p(1)) === $this.l27_1) {
+      if (toInt(f.p(1)) === $this.m27_1) {
         resync($this, id);
       }
 
       break;
     case 'AGAIN':
-      var tmp_18;
-      var tmp_19;
+      var tmp_23;
+      var tmp_24;
       if ($this.a26_1.equals(Phase_PLAYING_getInstance())) {
-        var tmp19_safe_receiver = getOrNull(f, 1);
-        tmp_19 = (tmp19_safe_receiver == null ? null : toIntOrNull(tmp19_safe_receiver)) === $this.l27_1;
+        var tmp25_safe_receiver = getOrNull(f, 1);
+        tmp_24 = (tmp25_safe_receiver == null ? null : toIntOrNull(tmp25_safe_receiver)) === $this.m27_1;
       } else {
-        tmp_19 = false;
+        tmp_24 = false;
       }
 
-      if (tmp_19) {
-        var tmp20_safe_receiver = $this.k27_1;
-        tmp_18 = !((tmp20_safe_receiver == null ? null : tmp20_safe_receiver()) === false);
+      if (tmp_24) {
+        var tmp26_safe_receiver = $this.l27_1;
+        tmp_23 = !((tmp26_safe_receiver == null ? null : tmp26_safe_receiver()) === false);
       } else {
-        tmp_18 = false;
+        tmp_23 = false;
       }
 
-      if (tmp_18) {
-        var tmp$ret$34;
-        $l$block_13: {
+      if (tmp_23) {
+        var tmp$ret$37;
+        $l$block_14: {
           // Inline function 'kotlin.collections.firstOrNull' call
-          var tmp0_iterator_9 = $this.c26_1.k();
-          while (tmp0_iterator_9.l()) {
-            var element_10 = tmp0_iterator_9.m();
+          var tmp0_iterator_10 = $this.c26_1.k();
+          while (tmp0_iterator_10.l()) {
+            var element_11 = tmp0_iterator_10.m();
             // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
-            if (element_10.m25_1 === id) {
-              tmp$ret$34 = element_10;
-              break $l$block_13;
+            if (element_11.m25_1 === id) {
+              tmp$ret$37 = element_11;
+              break $l$block_14;
             }
           }
-          tmp$ret$34 = null;
+          tmp$ret$37 = null;
         }
-        var tmp18_elvis_lhs = tmp$ret$34;
-        var tmp_20;
-        if (tmp18_elvis_lhs == null) {
+        var tmp24_elvis_lhs = tmp$ret$37;
+        var tmp_25;
+        if (tmp24_elvis_lhs == null) {
           return Unit_instance;
         } else {
-          tmp_20 = tmp18_elvis_lhs;
+          tmp_25 = tmp24_elvis_lhs;
         }
-        var member_1 = tmp_20;
-        $this.i27_1.i(member_1.k25_1);
+        var member_1 = tmp_25;
+        $this.j27_1.i(member_1.k25_1);
         sendReady($this);
         changed_1($this);
       }
 
       break;
     case 'LOBBY_REQUEST':
-      var tmp_21;
-      var tmp21_safe_receiver = getOrNull(f, 1);
-      if ((tmp21_safe_receiver == null ? null : toIntOrNull(tmp21_safe_receiver)) === $this.l27_1) {
-        var tmp$ret$35;
-        $l$block_15: {
+      var tmp_26;
+      var tmp27_safe_receiver = getOrNull(f, 1);
+      if ((tmp27_safe_receiver == null ? null : toIntOrNull(tmp27_safe_receiver)) === $this.m27_1) {
+        var tmp$ret$38;
+        $l$block_16: {
           // Inline function 'kotlin.collections.any' call
           var this_5 = $this.c26_1;
-          var tmp_22;
+          var tmp_27;
           if (isInterface(this_5, Collection)) {
-            tmp_22 = this_5.q();
+            tmp_27 = this_5.q();
           } else {
-            tmp_22 = false;
+            tmp_27 = false;
           }
-          if (tmp_22) {
-            tmp$ret$35 = false;
-            break $l$block_15;
+          if (tmp_27) {
+            tmp$ret$38 = false;
+            break $l$block_16;
           }
-          var tmp0_iterator_10 = this_5.k();
-          while (tmp0_iterator_10.l()) {
-            var element_11 = tmp0_iterator_10.m();
+          var tmp0_iterator_11 = this_5.k();
+          while (tmp0_iterator_11.l()) {
+            var element_12 = tmp0_iterator_11.m();
             // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.hostReceive.<anonymous>' call
-            if (element_11.m25_1 === id) {
-              tmp$ret$35 = true;
-              break $l$block_15;
+            if (element_12.m25_1 === id) {
+              tmp$ret$38 = true;
+              break $l$block_16;
             }
           }
-          tmp$ret$35 = false;
+          tmp$ret$38 = false;
         }
-        tmp_21 = tmp$ret$35;
+        tmp_26 = tmp$ret$38;
       } else {
-        tmp_21 = false;
+        tmp_26 = false;
       }
 
-      if (tmp_21) {
-        $this.c28();
+      if (tmp_26) {
+        $this.d28();
       }
 
       break;
@@ -35273,7 +35350,7 @@ function resync($this, id) {
     tmp = tmp1_elvis_lhs;
   }
   var moves = tmp;
-  $this.v25_1.x27(id, 'SYNC|' + $this.l27_1 + '|' + joinToString(moves, ','));
+  $this.v25_1.y27(id, 'SYNC|' + $this.m27_1 + '|' + joinToString(moves, ','));
 }
 function guestReceive($this, id, f) {
   if (!(id === $this.x25_1))
@@ -35283,7 +35360,7 @@ function guestReceive($this, id, f) {
       var tmp;
       if ($this.a26_1.equals(Phase_PLAYING_getInstance())) {
         var tmp5_safe_receiver = getOrNull(f, 1);
-        tmp = (tmp5_safe_receiver == null ? null : toIntOrNull(tmp5_safe_receiver)) === $this.l27_1;
+        tmp = (tmp5_safe_receiver == null ? null : toIntOrNull(tmp5_safe_receiver)) === $this.m27_1;
       } else {
         tmp = false;
       }
@@ -35307,7 +35384,7 @@ function guestReceive($this, id, f) {
       break;
     case 'SELECT':
       var tmp_0;
-      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && $this.d26_1 === 'yacht' && toInt(f.p(1)) === $this.l27_1) {
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && $this.d26_1 === 'yacht' && toInt(f.p(1)) === $this.m27_1) {
         var containsArg = toInt(f.p(3));
         tmp_0 = 0 <= containsArg ? containsArg <= 31 : false;
       } else {
@@ -35323,72 +35400,123 @@ function guestReceive($this, id, f) {
       }
 
       break;
-    case 'CLOCK':
+    case 'CUR':
       var tmp_1;
-      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.l27_1) {
-        var containsArg_0 = toInt(f.p(3));
-        tmp_1 = 0 <= containsArg_0 ? containsArg_0 <= 120 : false;
+      var tmp_2;
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance())) {
+        var tmp11_safe_receiver = getOrNull(f, 1);
+        tmp_2 = (tmp11_safe_receiver == null ? null : toIntOrNull(tmp11_safe_receiver)) === $this.m27_1;
+      } else {
+        tmp_2 = false;
+      }
+
+      if (tmp_2) {
+        tmp_1 = f.n() >= 6;
       } else {
         tmp_1 = false;
       }
 
       if (tmp_1) {
-        var tmp7_safe_receiver = $this.u26_1;
-        if (tmp7_safe_receiver == null)
+        var tmp7_elvis_lhs = toIntOrNull(f.p(2));
+        var tmp_3;
+        if (tmp7_elvis_lhs == null) {
+          return Unit_instance;
+        } else {
+          tmp_3 = tmp7_elvis_lhs;
+        }
+        var slot = tmp_3;
+        var tmp8_elvis_lhs = toIntOrNull(f.p(4));
+        var tmp_4;
+        if (tmp8_elvis_lhs == null) {
+          return Unit_instance;
+        } else {
+          tmp_4 = tmp8_elvis_lhs;
+        }
+        var x = tmp_4;
+        var tmp9_elvis_lhs = toIntOrNull(f.p(5));
+        var tmp_5;
+        if (tmp9_elvis_lhs == null) {
+          return Unit_instance;
+        } else {
+          tmp_5 = tmp9_elvis_lhs;
+        }
+        var y = tmp_5;
+        if (!(slot === $this.b26_1)) {
+          var tmp10_safe_receiver = $this.v26_1;
+          if (tmp10_safe_receiver == null)
+            null;
+          else
+            tmp10_safe_receiver(slot, f.p(3), x, y);
+        }
+      }
+
+      break;
+    case 'CLOCK':
+      var tmp_6;
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.m27_1) {
+        var containsArg_0 = toInt(f.p(3));
+        tmp_6 = 0 <= containsArg_0 ? containsArg_0 <= 120 : false;
+      } else {
+        tmp_6 = false;
+      }
+
+      if (tmp_6) {
+        var tmp12_safe_receiver = $this.u26_1;
+        if (tmp12_safe_receiver == null)
           null;
         else
-          tmp7_safe_receiver(toInt(f.p(2)), toInt(f.p(3)));
+          tmp12_safe_receiver(toInt(f.p(2)), toInt(f.p(3)));
       }
 
       break;
     case 'UNDO_ASK':
-      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.l27_1) {
-        var slot = toInt(f.p(3));
-        var v = new UndoVote(toInt(f.p(2)), slot, toInt(f.p(4)), $this.s27(slot));
-        $this.b27_1 = v;
-        var tmp8_safe_receiver = $this.g27_1;
-        if (tmp8_safe_receiver == null)
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.m27_1) {
+        var slot_0 = toInt(f.p(3));
+        var v = new UndoVote(toInt(f.p(2)), slot_0, toInt(f.p(4)), $this.t27(slot_0));
+        $this.c27_1 = v;
+        var tmp13_safe_receiver = $this.h27_1;
+        if (tmp13_safe_receiver == null)
           null;
         else
-          tmp8_safe_receiver(v);
+          tmp13_safe_receiver(v);
         changed_1($this);
       }
 
       break;
     case 'UNDO_DONE':
-      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.l27_1) {
-        var slot_0 = toInt(f.p(4));
-        var tmp9_safe_receiver = $this.b27_1;
-        var tmp_2;
-        if (tmp9_safe_receiver == null) {
-          tmp_2 = null;
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.m27_1) {
+        var slot_1 = toInt(f.p(4));
+        var tmp14_safe_receiver = $this.c27_1;
+        var tmp_7;
+        if (tmp14_safe_receiver == null) {
+          tmp_7 = null;
         } else {
           // Inline function 'kotlin.takeIf' call
           // Inline function 'kotlin.contracts.contract' call
-          var tmp_3;
+          var tmp_8;
           // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.guestReceive.<anonymous>' call
-          if (tmp9_safe_receiver.t27_1 === toInt(f.p(2))) {
-            tmp_3 = tmp9_safe_receiver;
+          if (tmp14_safe_receiver.u27_1 === toInt(f.p(2))) {
+            tmp_8 = tmp14_safe_receiver;
           } else {
-            tmp_3 = null;
+            tmp_8 = null;
           }
-          tmp_2 = tmp_3;
+          tmp_7 = tmp_8;
         }
-        var tmp10_elvis_lhs = tmp_2;
-        var v_0 = tmp10_elvis_lhs == null ? new UndoVote(toInt(f.p(2)), slot_0, -1, $this.s27(slot_0)) : tmp10_elvis_lhs;
-        var tmp11_safe_receiver = $this.b27_1;
-        if ((tmp11_safe_receiver == null ? null : tmp11_safe_receiver.t27_1) === v_0.t27_1)
-          $this.b27_1 = null;
+        var tmp15_elvis_lhs = tmp_7;
+        var v_0 = tmp15_elvis_lhs == null ? new UndoVote(toInt(f.p(2)), slot_1, -1, $this.t27(slot_1)) : tmp15_elvis_lhs;
+        var tmp16_safe_receiver = $this.c27_1;
+        if ((tmp16_safe_receiver == null ? null : tmp16_safe_receiver.u27_1) === v_0.u27_1)
+          $this.c27_1 = null;
         if (f.p(3) === '1') {
-          var tmp12_safe_receiver = $this.h27_1;
-          if (tmp12_safe_receiver == null)
+          var tmp17_safe_receiver = $this.i27_1;
+          if (tmp17_safe_receiver == null)
             null;
           else {
-            var tmp_4;
+            var tmp_9;
             // Inline function 'kotlin.text.isEmpty' call
             var this_0 = f.p(5);
             if (charSequenceLength(this_0) === 0) {
-              tmp_4 = emptyList();
+              tmp_9 = emptyList();
             } else {
               // Inline function 'kotlin.collections.map' call
               var this_1 = split(f.p(5), charArrayOf([_Char___init__impl__6a9atx(44)]));
@@ -35401,66 +35529,66 @@ function guestReceive($this, id, f) {
                 var tmp$ret$3 = toInt(item);
                 destination.i(tmp$ret$3);
               }
-              tmp_4 = destination;
+              tmp_9 = destination;
             }
-            tmp12_safe_receiver(v_0, true, tmp_4, -1);
+            tmp17_safe_receiver(v_0, true, tmp_9, -1);
           }
         } else {
-          var tmp13_safe_receiver = $this.h27_1;
-          if (tmp13_safe_receiver == null)
+          var tmp18_safe_receiver = $this.i27_1;
+          if (tmp18_safe_receiver == null)
             null;
           else
-            tmp13_safe_receiver(v_0, false, emptyList(), toInt(f.p(5)));
+            tmp18_safe_receiver(v_0, false, emptyList(), toInt(f.p(5)));
         }
         changed_1($this);
       }
 
       break;
     case 'LOBBY':
-      var tmp_5;
-      var tmp15_safe_receiver = getOrNull(f, 1);
-      if ((tmp15_safe_receiver == null ? null : toIntOrNull(tmp15_safe_receiver)) === $this.l27_1) {
-        tmp_5 = $this.a26_1.equals(Phase_PLAYING_getInstance());
+      var tmp_10;
+      var tmp20_safe_receiver = getOrNull(f, 1);
+      if ((tmp20_safe_receiver == null ? null : toIntOrNull(tmp20_safe_receiver)) === $this.m27_1) {
+        tmp_10 = $this.a26_1.equals(Phase_PLAYING_getInstance());
       } else {
-        tmp_5 = false;
+        tmp_10 = false;
       }
 
-      if (tmp_5) {
+      if (tmp_10) {
         $this.a26_1 = Phase_LOBBY_getInstance();
         $this.g26_1 = null;
-        $this.b27_1 = null;
-        $this.i27_1.x3();
-        var tmp14_safe_receiver = $this.j27_1;
-        if (tmp14_safe_receiver == null)
+        $this.c27_1 = null;
+        $this.j27_1.x3();
+        var tmp19_safe_receiver = $this.k27_1;
+        if (tmp19_safe_receiver == null)
           null;
         else
-          tmp14_safe_receiver();
+          tmp19_safe_receiver();
         changed_1($this);
       }
 
       break;
     case 'READY':
-      var tmp_6;
+      var tmp_11;
       if ($this.a26_1.equals(Phase_PLAYING_getInstance())) {
-        var tmp19_safe_receiver = getOrNull(f, 1);
-        tmp_6 = (tmp19_safe_receiver == null ? null : toIntOrNull(tmp19_safe_receiver)) === $this.l27_1;
+        var tmp24_safe_receiver = getOrNull(f, 1);
+        tmp_11 = (tmp24_safe_receiver == null ? null : toIntOrNull(tmp24_safe_receiver)) === $this.m27_1;
       } else {
-        tmp_6 = false;
+        tmp_11 = false;
       }
 
-      if (tmp_6) {
-        $this.i27_1.x3();
-        var tmp16_safe_receiver = getOrNull(f, 2);
-        var tmp17_safe_receiver = tmp16_safe_receiver == null ? null : split(tmp16_safe_receiver, charArrayOf([_Char___init__impl__6a9atx(44)]));
-        var tmp_7;
-        if (tmp17_safe_receiver == null) {
-          tmp_7 = null;
+      if (tmp_11) {
+        $this.j27_1.x3();
+        var tmp21_safe_receiver = getOrNull(f, 2);
+        var tmp22_safe_receiver = tmp21_safe_receiver == null ? null : split(tmp21_safe_receiver, charArrayOf([_Char___init__impl__6a9atx(44)]));
+        var tmp_12;
+        if (tmp22_safe_receiver == null) {
+          tmp_12 = null;
         } else {
           // Inline function 'kotlin.collections.mapNotNull' call
           // Inline function 'kotlin.collections.mapNotNullTo' call
           var destination_0 = ArrayList_init_$Create$_0();
           // Inline function 'kotlin.collections.forEach' call
-          var tmp0_iterator_0 = tmp17_safe_receiver.k();
+          var tmp0_iterator_0 = tmp22_safe_receiver.k();
           while (tmp0_iterator_0.l()) {
             var element = tmp0_iterator_0.m();
             // Inline function 'kotlin.collections.mapNotNullTo.<anonymous>' call
@@ -35474,16 +35602,16 @@ function guestReceive($this, id, f) {
               destination_0.i(tmp0_safe_receiver);
             }
           }
-          tmp_7 = destination_0;
+          tmp_12 = destination_0;
         }
-        var tmp18_safe_receiver = tmp_7;
-        if (tmp18_safe_receiver == null)
+        var tmp23_safe_receiver = tmp_12;
+        if (tmp23_safe_receiver == null)
           null;
         else {
           // Inline function 'kotlin.let' call
           // Inline function 'kotlin.contracts.contract' call
           // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.guestReceive.<anonymous>' call
-          $this.i27_1.o(tmp18_safe_receiver);
+          $this.j27_1.o(tmp23_safe_receiver);
         }
         changed_1($this);
       }
@@ -35491,26 +35619,26 @@ function guestReceive($this, id, f) {
       break;
     case 'WELCOME':
       $this.b26_1 = toInt(f.p(1));
-      var tmp_8 = $this;
-      var tmp20_safe_receiver = getOrNull(f, 2);
-      var tmp21_elvis_lhs = tmp20_safe_receiver == null ? null : toIntOrNull(tmp20_safe_receiver);
-      tmp_8.v26_1 = tmp21_elvis_lhs == null ? 1 : tmp21_elvis_lhs;
+      var tmp_13 = $this;
+      var tmp25_safe_receiver = getOrNull(f, 2);
+      var tmp26_elvis_lhs = tmp25_safe_receiver == null ? null : toIntOrNull(tmp25_safe_receiver);
+      tmp_13.w26_1 = tmp26_elvis_lhs == null ? 1 : tmp26_elvis_lhs;
       if ($this.a26_1.equals(Phase_JOINING_getInstance()))
         $this.a26_1 = Phase_LOBBY_getInstance();
       changed_1($this);
       break;
     case 'COMPAT':
-      var tmp22_safe_receiver = getOrNull(f, 1);
-      var tmp23_safe_receiver = tmp22_safe_receiver == null ? null : split(tmp22_safe_receiver, charArrayOf([_Char___init__impl__6a9atx(44)]));
-      var tmp_9;
-      if (tmp23_safe_receiver == null) {
-        tmp_9 = null;
+      var tmp27_safe_receiver = getOrNull(f, 1);
+      var tmp28_safe_receiver = tmp27_safe_receiver == null ? null : split(tmp27_safe_receiver, charArrayOf([_Char___init__impl__6a9atx(44)]));
+      var tmp_14;
+      if (tmp28_safe_receiver == null) {
+        tmp_14 = null;
       } else {
         // Inline function 'kotlin.collections.mapNotNull' call
         // Inline function 'kotlin.collections.mapNotNullTo' call
         var destination_1 = ArrayList_init_$Create$_0();
         // Inline function 'kotlin.collections.forEach' call
-        var tmp0_iterator_1 = tmp23_safe_receiver.k();
+        var tmp0_iterator_1 = tmp28_safe_receiver.k();
         while (tmp0_iterator_1.l()) {
           var element_0 = tmp0_iterator_1.m();
           // Inline function 'kotlin.collections.mapNotNullTo.<anonymous>' call
@@ -35521,27 +35649,27 @@ function guestReceive($this, id, f) {
           var p = split(element_0, charArrayOf([_Char___init__impl__6a9atx(58)]));
           var tmp0_safe_receiver_0 = getOrNull(p, 0);
           var tmp1_safe_receiver_0 = tmp0_safe_receiver_0 == null ? null : toIntOrNull(tmp0_safe_receiver_0);
-          var tmp_10;
+          var tmp_15;
           if (tmp1_safe_receiver_0 == null) {
-            tmp_10 = null;
+            tmp_15 = null;
           } else {
             // Inline function 'kotlin.let' call
             // Inline function 'kotlin.contracts.contract' call
             // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.guestReceive.<anonymous>.<anonymous>.<anonymous>' call
             var tmp0_safe_receiver_1 = getOrNull(p, 1);
             var tmp1_safe_receiver_1 = tmp0_safe_receiver_1 == null ? null : toIntOrNull(tmp0_safe_receiver_1);
-            var tmp_11;
+            var tmp_16;
             if (tmp1_safe_receiver_1 == null) {
-              tmp_11 = null;
+              tmp_16 = null;
             } else {
               // Inline function 'kotlin.let' call
               // Inline function 'kotlin.contracts.contract' call
               // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.guestReceive.<anonymous>.<anonymous>.<anonymous>.<anonymous>' call
-              tmp_11 = to(tmp1_safe_receiver_0, tmp1_safe_receiver_1);
+              tmp_16 = to(tmp1_safe_receiver_0, tmp1_safe_receiver_1);
             }
-            tmp_10 = tmp_11;
+            tmp_15 = tmp_16;
           }
-          var tmp0_safe_receiver_2 = tmp_10;
+          var tmp0_safe_receiver_2 = tmp_15;
           if (tmp0_safe_receiver_2 == null)
             null;
           else {
@@ -35550,59 +35678,59 @@ function guestReceive($this, id, f) {
             destination_1.i(tmp0_safe_receiver_2);
           }
         }
-        tmp_9 = destination_1;
+        tmp_14 = destination_1;
       }
 
-      var tmp24_safe_receiver = tmp_9;
-      var tmp25_elvis_lhs = tmp24_safe_receiver == null ? null : toMap(tmp24_safe_receiver);
-      var protos = tmp25_elvis_lhs == null ? emptyMap() : tmp25_elvis_lhs;
+      var tmp29_safe_receiver = tmp_14;
+      var tmp30_elvis_lhs = tmp29_safe_receiver == null ? null : toMap(tmp29_safe_receiver);
+      var protos = tmp30_elvis_lhs == null ? emptyMap() : tmp30_elvis_lhs;
       var _iterator__ex2g4s = $this.c26_1.k();
       while (_iterator__ex2g4s.l()) {
         var m = _iterator__ex2g4s.m();
-        var tmp_12 = m;
-        var tmp_13;
+        var tmp_17 = m;
+        var tmp_18;
         if (m.k25_1 === 0) {
-          tmp_13 = $this.v26_1;
+          tmp_18 = $this.w26_1;
         } else if (m.k25_1 === $this.b26_1) {
-          tmp_13 = 2;
+          tmp_18 = 2;
         } else {
-          var tmp26_elvis_lhs = protos.l1(m.k25_1);
-          tmp_13 = tmp26_elvis_lhs == null ? 1 : tmp26_elvis_lhs;
+          var tmp31_elvis_lhs = protos.l1(m.k25_1);
+          tmp_18 = tmp31_elvis_lhs == null ? 1 : tmp31_elvis_lhs;
         }
-        tmp_12.n25_1 = tmp_13;
+        tmp_17.n25_1 = tmp_18;
       }
 
       changed_1($this);
       break;
     case 'CHAT':
-      var tmp_14;
+      var tmp_19;
       if ($this.a26_1.equals(Phase_PLAYING_getInstance()) || $this.a26_1.equals(Phase_LOBBY_getInstance())) {
-        var tmp28_safe_receiver = getOrNull(f, 1);
-        tmp_14 = (tmp28_safe_receiver == null ? null : toIntOrNull(tmp28_safe_receiver)) === $this.l27_1;
+        var tmp33_safe_receiver = getOrNull(f, 1);
+        tmp_19 = (tmp33_safe_receiver == null ? null : toIntOrNull(tmp33_safe_receiver)) === $this.m27_1;
       } else {
-        tmp_14 = false;
+        tmp_19 = false;
       }
 
-      if (tmp_14) {
+      if (tmp_19) {
         var seq = toInt(f.p(2));
-        var slot_1 = toInt(f.p(3));
+        var slot_2 = toInt(f.p(3));
         var kind = toInt(f.p(4));
         // Inline function 'kotlin.collections.getOrElse' call
         // Inline function 'kotlin.contracts.contract' call
-        var tmp_15;
+        var tmp_20;
         if (0 <= 5 ? 5 < f.n() : false) {
-          tmp_15 = f.p(5);
+          tmp_20 = f.p(5);
         } else {
           // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.guestReceive.<anonymous>' call
-          tmp_15 = '';
+          tmp_20 = '';
         }
-        var body = tmp_15;
+        var body = tmp_20;
         if (kind === 0 || kind === 1) {
-          var tmp27_safe_receiver = $this.x26_1;
-          if (tmp27_safe_receiver == null)
+          var tmp32_safe_receiver = $this.y26_1;
+          if (tmp32_safe_receiver == null)
             null;
           else
-            tmp27_safe_receiver(new Chat(seq, slot_1, $this.s27(slot_1), kind, body));
+            tmp32_safe_receiver(new Chat(seq, slot_2, $this.t27(slot_2), kind, body));
         }
       }
 
@@ -35612,8 +35740,8 @@ function guestReceive($this, id, f) {
       break;
     case 'ROSTER':
       $this.d26_1 = f.p(1);
-      $this.e26_1 = Companion_instance_30.d28(f.p(2));
-      var tmp_16 = $this;
+      $this.e26_1 = Companion_instance_30.e28(f.p(2));
+      var tmp_21 = $this;
       // Inline function 'kotlin.collections.associate' call
 
       var this_2 = $this.c26_1;
@@ -35630,18 +35758,18 @@ function guestReceive($this, id, f) {
         destination_2.c3(pair.pc_1, pair.qc_1);
       }
 
-      tmp_16.w26_1 = destination_2;
+      tmp_21.x26_1 = destination_2;
       $this.c26_1.x3();
-      var tmp_17;
+      var tmp_22;
       if (f.n() > 3) {
         // Inline function 'kotlin.text.isNotEmpty' call
         var this_3 = f.p(3);
-        tmp_17 = charSequenceLength(this_3) > 0;
+        tmp_22 = charSequenceLength(this_3) > 0;
       } else {
-        tmp_17 = false;
+        tmp_22 = false;
       }
 
-      if (tmp_17) {
+      if (tmp_22) {
         var _iterator__ex2g4s_0 = split(f.p(3), charArrayOf([_Char___init__impl__6a9atx(44)])).k();
         while (_iterator__ex2g4s_0.l()) {
           var e = _iterator__ex2g4s_0.m();
@@ -35659,28 +35787,28 @@ function guestReceive($this, id, f) {
       var _iterator__ex2g4s_1 = $this.c26_1.k();
       while (_iterator__ex2g4s_1.l()) {
         var m_0 = _iterator__ex2g4s_1.m();
-        var tmp_18 = m_0;
-        var tmp_19;
+        var tmp_23 = m_0;
+        var tmp_24;
         if (m_0.k25_1 === 0) {
-          tmp_19 = $this.v26_1;
+          tmp_24 = $this.w26_1;
         } else if (m_0.k25_1 === $this.b26_1) {
-          tmp_19 = 2;
+          tmp_24 = 2;
         } else {
-          var tmp29_elvis_lhs = $this.w26_1.l1(m_0.k25_1);
-          tmp_19 = tmp29_elvis_lhs == null ? 1 : tmp29_elvis_lhs;
+          var tmp34_elvis_lhs = $this.x26_1.l1(m_0.k25_1);
+          tmp_24 = tmp34_elvis_lhs == null ? 1 : tmp34_elvis_lhs;
         }
-        tmp_18.n25_1 = tmp_19;
+        tmp_23.n25_1 = tmp_24;
       }
 
       changed_1($this);
       break;
     case 'BEGIN':
       var incoming = toInt(f.p(1));
-      if (incoming <= $this.l27_1)
+      if (incoming <= $this.m27_1)
         return Unit_instance;
-      $this.l27_1 = incoming;
-      $this.b27_1 = null;
-      $this.i27_1.x3();
+      $this.m27_1 = incoming;
+      $this.c27_1 = null;
+      $this.j27_1.x3();
       // Inline function 'kotlin.collections.map' call
 
       var this_4 = split(f.p(5), charArrayOf([_Char___init__impl__6a9atx(44)]));
@@ -35705,9 +35833,9 @@ function guestReceive($this, id, f) {
       while (tmp0_iterator_4.l()) {
         var item_1 = tmp0_iterator_4.m();
         // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.guestReceive.<anonymous>' call
-        var tmp_20;
+        var tmp_25;
         if (item_1 < 0) {
-          tmp_20 = 'CPU';
+          tmp_25 = 'CPU';
         } else {
           var tmp$ret$34;
           $l$block: {
@@ -35725,44 +35853,44 @@ function guestReceive($this, id, f) {
           }
           var tmp0_safe_receiver_3 = tmp$ret$34;
           var tmp1_elvis_lhs = tmp0_safe_receiver_3 == null ? null : tmp0_safe_receiver_3.l25_1;
-          tmp_20 = tmp1_elvis_lhs == null ? '\u30D7\u30EC\u30A4\u30E4\u30FC' : tmp1_elvis_lhs;
+          tmp_25 = tmp1_elvis_lhs == null ? '\u30D7\u30EC\u30A4\u30E4\u30FC' : tmp1_elvis_lhs;
         }
-        var tmp$ret$35 = tmp_20;
+        var tmp$ret$35 = tmp_25;
         destination_4.i(tmp$ret$35);
       }
 
       var names = destination_4;
-      var b = new Begin($this.l27_1, f.p(2), Companion_instance_30.d28(f.p(3)), toLong_0(f.p(4)), slots, names);
+      var b = new Begin($this.m27_1, f.p(2), Companion_instance_30.e28(f.p(3)), toLong_0(f.p(4)), slots, names);
       $this.g26_1 = b;
       $this.a26_1 = Phase_PLAYING_getInstance();
-      var tmp30_safe_receiver = $this.j26_1;
-      if (tmp30_safe_receiver == null)
+      var tmp35_safe_receiver = $this.j26_1;
+      if (tmp35_safe_receiver == null)
         null;
       else
-        tmp30_safe_receiver(b);
+        tmp35_safe_receiver(b);
       changed_1($this);
       break;
     case 'MOVE':
-      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.l27_1) {
-        var tmp31_safe_receiver = $this.m26_1;
-        if (tmp31_safe_receiver == null)
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.m27_1) {
+        var tmp36_safe_receiver = $this.m26_1;
+        if (tmp36_safe_receiver == null)
           null;
         else
-          tmp31_safe_receiver(toInt(f.p(2)), toInt(f.p(3)));
+          tmp36_safe_receiver(toInt(f.p(2)), toInt(f.p(3)));
       }
 
       break;
     case 'SYNC':
-      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.l27_1) {
-        var tmp32_safe_receiver = $this.n26_1;
-        if (tmp32_safe_receiver == null)
+      if ($this.a26_1.equals(Phase_PLAYING_getInstance()) && toInt(f.p(1)) === $this.m27_1) {
+        var tmp37_safe_receiver = $this.n26_1;
+        if (tmp37_safe_receiver == null)
           null;
         else {
-          var tmp_21;
+          var tmp_26;
           // Inline function 'kotlin.text.isEmpty' call
           var this_5 = f.p(2);
           if (charSequenceLength(this_5) === 0) {
-            tmp_21 = emptyList();
+            tmp_26 = emptyList();
           } else {
             // Inline function 'kotlin.collections.map' call
             var this_6 = split(f.p(2), charArrayOf([_Char___init__impl__6a9atx(44)]));
@@ -35775,9 +35903,9 @@ function guestReceive($this, id, f) {
               var tmp$ret$39 = toInt(item_2);
               destination_5.i(tmp$ret$39);
             }
-            tmp_21 = destination_5;
+            tmp_26 = destination_5;
           }
-          tmp32_safe_receiver(tmp_21);
+          tmp37_safe_receiver(tmp_26);
         }
       }
 
@@ -35792,15 +35920,15 @@ function close($this, reason) {
     return Unit_instance;
   $this.f26_1 = reason;
   $this.a26_1 = Phase_CLOSED_getInstance();
-  if ($this.v25_1.f28() === $this) {
-    $this.v25_1.e28(null);
+  if ($this.v25_1.g28() === $this) {
+    $this.v25_1.f28(null);
   }
   changed_1($this);
 }
 function broadcastRoster($this) {
   if (!$this.w25_1)
     return Unit_instance;
-  var tmp = 'ROSTER|' + $this.d26_1 + '|' + Companion_instance_30.g28($this.e26_1) + '|';
+  var tmp = 'ROSTER|' + $this.d26_1 + '|' + Companion_instance_30.h28($this.e26_1) + '|';
   sendAll($this, tmp + joinToString($this.c26_1, ',', VOID, VOID, VOID, VOID, OnlineRoom$broadcastRoster$lambda));
   sendCompat($this);
 }
@@ -35814,7 +35942,7 @@ function sendAll($this, text) {
     else {
       // Inline function 'kotlin.let' call
       // Inline function 'kotlin.contracts.contract' call
-      $this.v25_1.x27(tmp0_safe_receiver, text);
+      $this.v25_1.y27(tmp0_safe_receiver, text);
     }
   }
 }
@@ -35822,15 +35950,15 @@ function adInfo($this) {
   return 'v1|' + $this.z25_1 + '|' + $this.d26_1 + '|' + $this.c26_1.n();
 }
 function Companion_30() {
-  this.y27_1 = 6;
+  this.z27_1 = 6;
 }
-protoOf(Companion_30).h28 = function (net, name, advertise) {
+protoOf(Companion_30).i28 = function (net, name, advertise) {
   return new OnlineRoom(net, true, name, null, advertise);
 };
-protoOf(Companion_30).i28 = function (net, name, hostLink) {
+protoOf(Companion_30).j28 = function (net, name, hostLink) {
   return new OnlineRoom(net, false, name, hostLink, false);
 };
-protoOf(Companion_30).z27 = function (name) {
+protoOf(Companion_30).a28 = function (name) {
   // Inline function 'kotlin.text.trim' call
   // Inline function 'kotlin.text.filter' call
   // Inline function 'kotlin.text.filterTo' call
@@ -35852,7 +35980,7 @@ protoOf(Companion_30).z27 = function (name) {
   var tmp$ret$3 = toString(trim(isCharSequence(this_0) ? this_0 : THROW_CCE()));
   return take_0(tmp$ret$3, 12);
 };
-protoOf(Companion_30).g28 = function (o) {
+protoOf(Companion_30).h28 = function (o) {
   // Inline function 'kotlin.collections.sortedBy' call
   var this_0 = o.ht_1.o1();
   // Inline function 'kotlin.comparisons.compareBy' call
@@ -35861,7 +35989,7 @@ protoOf(Companion_30).g28 = function (o) {
   var tmp_0 = sortedWith(this_0, tmp$ret$0);
   return joinToString(tmp_0, '^', VOID, VOID, VOID, VOID, OnlineRoom$Companion$encodeOptions$lambda_0);
 };
-protoOf(Companion_30).d28 = function (s) {
+protoOf(Companion_30).e28 = function (s) {
   var tmp;
   // Inline function 'kotlin.text.isEmpty' call
   if (charSequenceLength(s) === 0) {
@@ -35931,7 +36059,7 @@ function OnlineRoom(net, isHost, myName, hostLink, advertise) {
   this.y25_1 = advertise;
   var tmp = this;
   // Inline function 'kotlin.text.ifBlank' call
-  var this_0 = Companion_instance_30.z27(myName);
+  var this_0 = Companion_instance_30.a28(myName);
   // Inline function 'kotlin.contracts.contract' call
   var tmp_0;
   if (isBlank(this_0)) {
@@ -35962,28 +36090,29 @@ function OnlineRoom(net, isHost, myName, hostLink, advertise) {
   this.s26_1 = null;
   this.t26_1 = null;
   this.u26_1 = null;
-  this.v26_1 = 1;
-  this.w26_1 = emptyMap();
-  this.x26_1 = null;
-  this.y26_1 = 0;
-  this.z26_1 = HashMap_init_$Create$();
+  this.v26_1 = null;
+  this.w26_1 = 1;
+  this.x26_1 = emptyMap();
+  this.y26_1 = null;
+  this.z26_1 = 0;
+  this.a27_1 = HashMap_init_$Create$();
   var tmp_1 = this;
-  tmp_1.a27_1 = OnlineRoom$clock$lambda;
-  this.b27_1 = null;
-  this.c27_1 = 0;
-  this.d27_1 = HashSet_init_$Create$();
-  this.e27_1 = null;
+  tmp_1.b27_1 = OnlineRoom$clock$lambda;
+  this.c27_1 = null;
+  this.d27_1 = 0;
+  this.e27_1 = HashSet_init_$Create$();
   this.f27_1 = null;
   this.g27_1 = null;
   this.h27_1 = null;
+  this.i27_1 = null;
   var tmp_2 = this;
   // Inline function 'kotlin.collections.linkedSetOf' call
-  tmp_2.i27_1 = LinkedHashSet_init_$Create$();
-  this.j27_1 = null;
+  tmp_2.j27_1 = LinkedHashSet_init_$Create$();
   this.k27_1 = null;
-  this.l27_1 = 0;
-  this.m27_1 = HashSet_init_$Create$();
-  this.v25_1.e28(this);
+  this.l27_1 = null;
+  this.m27_1 = 0;
+  this.n27_1 = HashSet_init_$Create$();
+  this.v25_1.f28(this);
   if (this.w25_1) {
     // Inline function 'kotlin.also' call
     var this_1 = new Member(0, this.z25_1, null);
@@ -35993,13 +36122,13 @@ function OnlineRoom(net, isHost, myName, hostLink, advertise) {
     this_1.o25_1 = Compat_getInstance().es_1;
     this.c26_1.i(this_1);
     if (this.y25_1) {
-      this.v25_1.a28(adInfo(this));
+      this.v25_1.b28(adInfo(this));
     }
   } else if (!(this.x25_1 == null)) {
-    this.v25_1.j28(this.x25_1);
+    this.v25_1.k28(this.x25_1);
   }
 }
-protoOf(OnlineRoom).k28 = function () {
+protoOf(OnlineRoom).l28 = function () {
   if (!this.w25_1 && this.a26_1.equals(Phase_PLAYING_getInstance())) {
     var tmp0_safe_receiver = this.x25_1;
     if (tmp0_safe_receiver == null)
@@ -36007,11 +36136,32 @@ protoOf(OnlineRoom).k28 = function () {
     else {
       // Inline function 'kotlin.let' call
       // Inline function 'kotlin.contracts.contract' call
-      this.v25_1.x27(tmp0_safe_receiver, 'RESIGN_REQ|' + this.l27_1);
+      this.v25_1.y27(tmp0_safe_receiver, 'RESIGN_REQ|' + this.m27_1);
     }
   }
 };
-protoOf(OnlineRoom).l28 = function (feature) {
+protoOf(OnlineRoom).m28 = function (key, x, y) {
+  if (!this.a26_1.equals(Phase_PLAYING_getInstance()) || contains(key, _Char___init__impl__6a9atx(124)))
+    return Unit_instance;
+  if (this.w25_1) {
+    sendAll(this, 'CUR|' + this.m27_1 + '|' + this.b26_1 + '|' + key + '|' + x + '|' + y);
+  } else {
+    var tmp0_safe_receiver = this.x25_1;
+    if (tmp0_safe_receiver == null)
+      null;
+    else {
+      // Inline function 'kotlin.let' call
+      // Inline function 'kotlin.contracts.contract' call
+      this.v25_1.y27(tmp0_safe_receiver, 'CUR_REQ|' + this.m27_1 + '|' + key + '|' + x + '|' + y);
+    }
+  }
+};
+protoOf(OnlineRoom).n28 = function (index, seconds) {
+  if (this.w25_1 && this.a26_1.equals(Phase_PLAYING_getInstance())) {
+    sendAll(this, 'CLOCK|' + this.m27_1 + '|' + index + '|' + seconds);
+  }
+};
+protoOf(OnlineRoom).o28 = function (feature) {
   var tmp$ret$0;
   $l$block_0: {
     // Inline function 'kotlin.collections.all' call
@@ -36039,7 +36189,7 @@ protoOf(OnlineRoom).l28 = function (feature) {
   }
   return tmp$ret$0;
 };
-protoOf(OnlineRoom).m28 = function () {
+protoOf(OnlineRoom).p28 = function () {
   // Inline function 'kotlin.collections.map' call
   // Inline function 'kotlin.collections.filter' call
   // Inline function 'kotlin.collections.filterTo' call
@@ -36064,7 +36214,7 @@ protoOf(OnlineRoom).m28 = function () {
   }
   return destination_0;
 };
-protoOf(OnlineRoom).n28 = function (gameId) {
+protoOf(OnlineRoom).q28 = function (gameId) {
   var mine = Compat_getInstance().js(gameId);
   // Inline function 'kotlin.collections.map' call
   // Inline function 'kotlin.collections.filter' call
@@ -36106,10 +36256,10 @@ protoOf(OnlineRoom).n28 = function (gameId) {
   }
   return destination_0;
 };
-protoOf(OnlineRoom).o28 = function (kind, body) {
+protoOf(OnlineRoom).r28 = function (kind, body) {
   if (!this.a26_1.equals(Phase_PLAYING_getInstance()) && !this.a26_1.equals(Phase_LOBBY_getInstance()))
     return false;
-  if (!this.l28(2))
+  if (!this.o28(2))
     return false;
   var tmp;
   if (this.w25_1) {
@@ -36123,7 +36273,7 @@ protoOf(OnlineRoom).o28 = function (kind, body) {
       // Inline function 'kotlin.let' call
       // Inline function 'kotlin.contracts.contract' call
       // Inline function 'jp.yonekou.asobi26.core.net.OnlineRoom.sendChat.<anonymous>' call
-      this.v25_1.x27(tmp0_safe_receiver, 'CHAT_REQ|' + this.l27_1 + '|' + kind + '|' + (kind === 0 ? Compat_getInstance().ns(body) : body));
+      this.v25_1.y27(tmp0_safe_receiver, 'CHAT_REQ|' + this.m27_1 + '|' + kind + '|' + (kind === 0 ? Compat_getInstance().ns(body) : body));
       tmp_0 = true;
     }
     var tmp1_elvis_lhs = tmp_0;
@@ -36131,7 +36281,7 @@ protoOf(OnlineRoom).o28 = function (kind, body) {
   }
   return tmp;
 };
-protoOf(OnlineRoom).s27 = function (slot) {
+protoOf(OnlineRoom).t27 = function (slot) {
   var tmp$ret$1;
   $l$block: {
     // Inline function 'kotlin.collections.firstOrNull' call
@@ -36150,8 +36300,8 @@ protoOf(OnlineRoom).s27 = function (slot) {
   var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.l25_1;
   return tmp1_elvis_lhs == null ? '\u53C2\u52A0\u8005' : tmp1_elvis_lhs;
 };
-protoOf(OnlineRoom).p28 = function () {
-  if (!this.a26_1.equals(Phase_PLAYING_getInstance()) || !(this.b27_1 == null))
+protoOf(OnlineRoom).s28 = function () {
+  if (!this.a26_1.equals(Phase_PLAYING_getInstance()) || !(this.c27_1 == null))
     return Unit_instance;
   if (this.w25_1) {
     hostStartUndo(this, this.b26_1);
@@ -36162,12 +36312,12 @@ protoOf(OnlineRoom).p28 = function () {
     else {
       // Inline function 'kotlin.let' call
       // Inline function 'kotlin.contracts.contract' call
-      this.v25_1.x27(tmp0_safe_receiver, 'UNDO_REQ|' + this.l27_1);
+      this.v25_1.y27(tmp0_safe_receiver, 'UNDO_REQ|' + this.m27_1);
     }
   }
 };
-protoOf(OnlineRoom).q28 = function (yes) {
-  var tmp0_elvis_lhs = this.b27_1;
+protoOf(OnlineRoom).t28 = function (yes) {
+  var tmp0_elvis_lhs = this.c27_1;
   var tmp;
   if (tmp0_elvis_lhs == null) {
     return Unit_instance;
@@ -36178,7 +36328,7 @@ protoOf(OnlineRoom).q28 = function (yes) {
   if (!this.a26_1.equals(Phase_PLAYING_getInstance()))
     return Unit_instance;
   if (this.w25_1) {
-    hostVote(this, this.b26_1, v.t27_1, yes);
+    hostVote(this, this.b26_1, v.u27_1, yes);
   } else {
     var tmp1_safe_receiver = this.x25_1;
     if (tmp1_safe_receiver == null)
@@ -36186,11 +36336,11 @@ protoOf(OnlineRoom).q28 = function (yes) {
     else {
       // Inline function 'kotlin.let' call
       // Inline function 'kotlin.contracts.contract' call
-      this.v25_1.x27(tmp1_safe_receiver, 'UNDO_VOTE|' + this.l27_1 + '|' + v.t27_1 + '|' + (yes ? 1 : 0));
+      this.v25_1.y27(tmp1_safe_receiver, 'UNDO_VOTE|' + this.m27_1 + '|' + v.u27_1 + '|' + (yes ? 1 : 0));
     }
   }
 };
-protoOf(OnlineRoom).r28 = function (gameId, options) {
+protoOf(OnlineRoom).u28 = function (gameId, options) {
   if (!this.w25_1)
     return Unit_instance;
   this.d26_1 = gameId;
@@ -36198,11 +36348,11 @@ protoOf(OnlineRoom).r28 = function (gameId, options) {
   broadcastRoster(this);
   changed_1(this);
 };
-protoOf(OnlineRoom).s28 = function (seats, seed, participants) {
+protoOf(OnlineRoom).v28 = function (seats, seed, participants) {
   if (!this.w25_1 || this.a26_1.equals(Phase_CLOSED_getInstance()))
     return Unit_instance;
-  this.l27_1 = this.l27_1 + 1 | 0;
-  this.b27_1 = null;
+  this.m27_1 = this.m27_1 + 1 | 0;
+  this.c27_1 = null;
   // Inline function 'kotlin.collections.map' call
   // Inline function 'kotlin.collections.filter' call
   // Inline function 'kotlin.collections.filterTo' call
@@ -36227,7 +36377,7 @@ protoOf(OnlineRoom).s28 = function (seats, seed, participants) {
     destination_0.i(tmp$ret$6);
   }
   var humans = toMutableList(destination_0);
-  this.i27_1.x3();
+  this.j27_1.x3();
   // Inline function 'kotlin.collections.List' call
   // Inline function 'kotlin.collections.MutableList' call
   var size = seats - humans.n() | 0;
@@ -36288,13 +36438,13 @@ protoOf(OnlineRoom).s28 = function (seats, seed, participants) {
     destination_1.i(tmp$ret$14);
   }
   var names = destination_1;
-  var b = new Begin(this.l27_1, this.d26_1, this.e26_1, seed, order, names);
+  var b = new Begin(this.m27_1, this.d26_1, this.e26_1, seed, order, names);
   this.g26_1 = b;
   this.a26_1 = Phase_PLAYING_getInstance();
   if (this.y25_1) {
-    this.v25_1.b28();
+    this.v25_1.c28();
   }
-  sendAll(this, joinToString(listOf(['BEGIN', this.l27_1, this.d26_1, Companion_instance_30.g28(this.e26_1), seed, joinToString(order, ',')]), '|'));
+  sendAll(this, joinToString(listOf(['BEGIN', this.m27_1, this.d26_1, Companion_instance_30.h28(this.e26_1), seed, joinToString(order, ',')]), '|'));
   var tmp0_safe_receiver = this.j26_1;
   if (tmp0_safe_receiver == null)
     null;
@@ -36302,7 +36452,7 @@ protoOf(OnlineRoom).s28 = function (seats, seed, participants) {
     tmp0_safe_receiver(b);
   changed_1(this);
 };
-protoOf(OnlineRoom).t28 = function (seats, seed, participants, $super) {
+protoOf(OnlineRoom).w28 = function (seats, seed, participants, $super) {
   var tmp;
   if (participants === VOID) {
     // Inline function 'kotlin.collections.map' call
@@ -36323,35 +36473,35 @@ protoOf(OnlineRoom).t28 = function (seats, seed, participants, $super) {
   participants = tmp;
   var tmp_0;
   if ($super === VOID) {
-    this.s28(seats, seed, participants);
+    this.v28(seats, seed, participants);
     tmp_0 = Unit_instance;
   } else {
-    tmp_0 = $super.s28.call(this, seats, seed, participants);
+    tmp_0 = $super.v28.call(this, seats, seed, participants);
   }
   return tmp_0;
 };
-protoOf(OnlineRoom).u28 = function (index, move) {
+protoOf(OnlineRoom).x28 = function (index, move) {
   if (!this.w25_1)
     return Unit_instance;
-  sendAll(this, 'MOVE|' + this.l27_1 + '|' + index + '|' + move);
+  sendAll(this, 'MOVE|' + this.m27_1 + '|' + index + '|' + move);
 };
-protoOf(OnlineRoom).v28 = function (index, move) {
+protoOf(OnlineRoom).y28 = function (index, move) {
   if (this.w25_1 || this.x25_1 == null)
     return Unit_instance;
-  this.v25_1.x27(this.x25_1, 'REQ|' + this.l27_1 + '|' + index + '|' + move);
+  this.v25_1.y27(this.x25_1, 'REQ|' + this.m27_1 + '|' + index + '|' + move);
 };
-protoOf(OnlineRoom).w28 = function () {
+protoOf(OnlineRoom).z28 = function () {
   var tmp;
   if (!this.a26_1.equals(Phase_PLAYING_getInstance())) {
     tmp = true;
   } else {
-    var tmp0_safe_receiver = this.k27_1;
+    var tmp0_safe_receiver = this.l27_1;
     tmp = (tmp0_safe_receiver == null ? null : tmp0_safe_receiver()) === false;
   }
   if (tmp)
     return Unit_instance;
   if (this.w25_1) {
-    this.i27_1.i(this.b26_1);
+    this.j27_1.i(this.b26_1);
     sendReady(this);
     changed_1(this);
   } else {
@@ -36361,11 +36511,11 @@ protoOf(OnlineRoom).w28 = function () {
     else {
       // Inline function 'kotlin.let' call
       // Inline function 'kotlin.contracts.contract' call
-      this.v25_1.x27(tmp1_safe_receiver, 'AGAIN|' + this.l27_1);
+      this.v25_1.y27(tmp1_safe_receiver, 'AGAIN|' + this.m27_1);
     }
   }
 };
-protoOf(OnlineRoom).c28 = function () {
+protoOf(OnlineRoom).d28 = function () {
   if (!this.a26_1.equals(Phase_PLAYING_getInstance()))
     return Unit_instance;
   if (!this.w25_1) {
@@ -36375,19 +36525,19 @@ protoOf(OnlineRoom).c28 = function () {
     else {
       // Inline function 'kotlin.let' call
       // Inline function 'kotlin.contracts.contract' call
-      this.v25_1.x27(tmp0_safe_receiver, 'LOBBY_REQUEST|' + this.l27_1);
+      this.v25_1.y27(tmp0_safe_receiver, 'LOBBY_REQUEST|' + this.m27_1);
     }
     return Unit_instance;
   }
   this.a26_1 = Phase_LOBBY_getInstance();
   this.g26_1 = null;
-  this.b27_1 = null;
-  this.i27_1.x3();
-  sendAll(this, 'LOBBY|' + this.l27_1);
+  this.c27_1 = null;
+  this.j27_1.x3();
+  sendAll(this, 'LOBBY|' + this.m27_1);
   if (this.y25_1 && this.c26_1.n() < 6) {
-    this.v25_1.a28(adInfo(this));
+    this.v25_1.b28(adInfo(this));
   }
-  var tmp1_safe_receiver = this.j27_1;
+  var tmp1_safe_receiver = this.k27_1;
   if (tmp1_safe_receiver == null)
     null;
   else
@@ -36395,13 +36545,13 @@ protoOf(OnlineRoom).c28 = function () {
   broadcastRoster(this);
   changed_1(this);
 };
-protoOf(OnlineRoom).x28 = function () {
+protoOf(OnlineRoom).a29 = function () {
   if (this.a26_1.equals(Phase_CLOSED_getInstance()))
     return Unit_instance;
   if (this.w25_1) {
     sendAll(this, 'BYE');
     if (this.y25_1) {
-      this.v25_1.b28();
+      this.v25_1.c28();
     }
     var _iterator__ex2g4s = this.c26_1.k();
     while (_iterator__ex2g4s.l()) {
@@ -36412,7 +36562,7 @@ protoOf(OnlineRoom).x28 = function () {
       else {
         // Inline function 'kotlin.let' call
         // Inline function 'kotlin.contracts.contract' call
-        this.v25_1.y28(tmp0_safe_receiver);
+        this.v25_1.b29(tmp0_safe_receiver);
       }
     }
   } else {
@@ -36422,25 +36572,25 @@ protoOf(OnlineRoom).x28 = function () {
     else {
       // Inline function 'kotlin.let' call
       // Inline function 'kotlin.contracts.contract' call
-      this.v25_1.y28(tmp1_safe_receiver);
+      this.v25_1.b29(tmp1_safe_receiver);
     }
   }
   this.a26_1 = Phase_CLOSED_getInstance();
-  if (this.v25_1.f28() === this) {
-    this.v25_1.e28(null);
+  if (this.v25_1.g28() === this) {
+    this.v25_1.f28(null);
   }
 };
-protoOf(OnlineRoom).z28 = function (id) {
-  if (!this.w25_1 && id === this.x25_1 && this.m27_1.i(id)) {
-    this.v25_1.x27(id, 'HELLO|' + this.z25_1 + '|2|' + Compat_getInstance().ls());
+protoOf(OnlineRoom).c29 = function (id) {
+  if (!this.w25_1 && id === this.x25_1 && this.n27_1.i(id)) {
+    this.v25_1.y27(id, 'HELLO|' + this.z25_1 + '|2|' + Compat_getInstance().ls());
   }
 };
-protoOf(OnlineRoom).a29 = function (id) {
+protoOf(OnlineRoom).d29 = function (id) {
   if (!this.w25_1 && id === this.x25_1) {
     close(this, '\u30DB\u30B9\u30C8\u306B\u3064\u306A\u304C\u308A\u307E\u305B\u3093\u3067\u3057\u305F');
   }
 };
-protoOf(OnlineRoom).b29 = function (id) {
+protoOf(OnlineRoom).e29 = function (id) {
   if (!this.w25_1) {
     if (id === this.x25_1) {
       close(this, '\u30DB\u30B9\u30C8\u3068\u306E\u63A5\u7D9A\u304C\u5207\u308C\u307E\u3057\u305F');
@@ -36470,26 +36620,26 @@ protoOf(OnlineRoom).b29 = function (id) {
   }
   var m = tmp;
   this.c26_1.d3(m);
-  this.i27_1.d3(m.k25_1);
+  this.j27_1.d3(m.k25_1);
   if (this.a26_1.equals(Phase_PLAYING_getInstance())) {
     var tmp1_safe_receiver = this.q26_1;
     if (tmp1_safe_receiver == null)
       null;
     else
       tmp1_safe_receiver(m.k25_1);
-    var tmp2_safe_receiver = this.b27_1;
-    if ((tmp2_safe_receiver == null ? null : tmp2_safe_receiver.u27_1) === m.k25_1) {
+    var tmp2_safe_receiver = this.c27_1;
+    if ((tmp2_safe_receiver == null ? null : tmp2_safe_receiver.v27_1) === m.k25_1) {
       finishUndo(this, false, m.k25_1);
     } else {
       checkUndo(this);
     }
   } else if (this.y25_1) {
-    this.v25_1.a28(adInfo(this));
+    this.v25_1.b28(adInfo(this));
   }
   broadcastRoster(this);
   changed_1(this);
 };
-protoOf(OnlineRoom).c29 = function (id, text) {
+protoOf(OnlineRoom).f29 = function (id, text) {
   try {
     var f = split(text, charArrayOf([_Char___init__impl__6a9atx(124)]));
     if (this.w25_1) {
@@ -36505,9 +36655,9 @@ protoOf(OnlineRoom).c29 = function (id, text) {
     }
   }
 };
-protoOf(OnlineRoom).d29 = function () {
+protoOf(OnlineRoom).g29 = function () {
   if (!this.w25_1 && !(this.x25_1 == null)) {
-    this.v25_1.x27(this.x25_1, 'NEED|' + this.l27_1);
+    this.v25_1.y27(this.x25_1, 'NEED|' + this.m27_1);
   }
 };
 function ensure($this, extra) {
@@ -36534,9 +36684,9 @@ protoOf(ByteSink).w22 = function (b) {
   tmp[_unary__edvuaz] = toByte(b);
 };
 protoOf(ByteSink).x22 = function (a) {
-  return this.e29(a, 0, a.length);
+  return this.h29(a, 0, a.length);
 };
-protoOf(ByteSink).e29 = function (a, off, len) {
+protoOf(ByteSink).h29 = function (a, off, len) {
   ensure(this, len);
   // Inline function 'kotlin.collections.copyInto' call
   var destination = this.u22_1;
@@ -36550,7 +36700,7 @@ protoOf(ByteSink).e29 = function (a, off, len) {
   arrayCopy(tmp, destination, destinationOffset, off, endIndex);
   this.v22_1 = this.v22_1 + len | 0;
 };
-protoOf(ByteSink).f29 = function () {
+protoOf(ByteSink).i29 = function () {
   return this.v22_1;
 };
 protoOf(ByteSink).y22 = function () {
@@ -36680,24 +36830,24 @@ function B64_getInstance() {
   return B64_instance;
 }
 function Huff(lengths) {
-  this.g29_1 = new Int32Array(16);
-  this.h29_1 = new Int32Array(lengths.length);
+  this.j29_1 = new Int32Array(16);
+  this.k29_1 = new Int32Array(lengths.length);
   var inductionVariable = 0;
   var last = lengths.length;
   while (inductionVariable < last) {
     var l = lengths[inductionVariable];
     inductionVariable = inductionVariable + 1 | 0;
-    var _array__4zh2yp = this.g29_1;
+    var _array__4zh2yp = this.j29_1;
     _array__4zh2yp[l] = _array__4zh2yp[l] + 1 | 0;
   }
-  this.g29_1[0] = 0;
+  this.j29_1[0] = 0;
   var offs = new Int32Array(16);
   var inductionVariable_0 = 1;
   if (inductionVariable_0 < 15)
     do {
       var i = inductionVariable_0;
       inductionVariable_0 = inductionVariable_0 + 1 | 0;
-      offs[i + 1 | 0] = offs[i] + this.g29_1[i] | 0;
+      offs[i + 1 | 0] = offs[i] + this.j29_1[i] | 0;
     }
      while (inductionVariable_0 < 15);
   var inductionVariable_1 = 0;
@@ -36709,39 +36859,39 @@ function Huff(lengths) {
     if (!(l_0 === 0)) {
       var _unary__edvuaz = offs[l_0];
       offs[l_0] = _unary__edvuaz + 1 | 0;
-      this.h29_1[_unary__edvuaz] = s;
+      this.k29_1[_unary__edvuaz] = s;
     }
   }
 }
 function Bits(d) {
-  this.i29_1 = d;
-  this.j29_1 = 0;
-  this.k29_1 = 0;
+  this.l29_1 = d;
+  this.m29_1 = 0;
+  this.n29_1 = 0;
 }
-protoOf(Bits).l29 = function () {
-  if (this.j29_1 >= this.i29_1.length)
+protoOf(Bits).o29 = function () {
+  if (this.m29_1 >= this.l29_1.length)
     throw IllegalStateException_init_$Create$('eof');
-  var v = this.i29_1[this.j29_1] >> this.k29_1 & 1;
-  this.k29_1 = this.k29_1 + 1 | 0;
-  if (this.k29_1 === 8) {
-    this.k29_1 = 0;
-    this.j29_1 = this.j29_1 + 1 | 0;
+  var v = this.l29_1[this.m29_1] >> this.n29_1 & 1;
+  this.n29_1 = this.n29_1 + 1 | 0;
+  if (this.n29_1 === 8) {
+    this.n29_1 = 0;
+    this.m29_1 = this.m29_1 + 1 | 0;
   }
   return v;
 };
-protoOf(Bits).m29 = function (n) {
+protoOf(Bits).p29 = function (n) {
   var v = 0;
   var inductionVariable = 0;
   if (inductionVariable < n)
     do {
       var i = inductionVariable;
       inductionVariable = inductionVariable + 1 | 0;
-      v = v | this.l29() << i;
+      v = v | this.o29() << i;
     }
      while (inductionVariable < n);
   return v;
 };
-protoOf(Bits).n29 = function (h) {
+protoOf(Bits).q29 = function (h) {
   var code = 0;
   var first = 0;
   var index = 0;
@@ -36750,10 +36900,10 @@ protoOf(Bits).n29 = function (h) {
     do {
       var len = inductionVariable;
       inductionVariable = inductionVariable + 1 | 0;
-      code = code | this.l29();
-      var c = h.g29_1[len];
+      code = code | this.o29();
+      var c = h.j29_1[len];
       if ((code - c | 0) < first)
-        return h.h29_1[index + (code - first | 0) | 0];
+        return h.k29_1[index + (code - first | 0) | 0];
       index = index + c | 0;
       first = first + c | 0;
       first = first << 1;
@@ -36767,22 +36917,22 @@ function inflate($this, src, maxOut) {
   var out = new ByteSink(imul(src.length, 3));
   var last;
   do {
-    last = br.l29();
-    switch (br.m29(2)) {
+    last = br.o29();
+    switch (br.p29(2)) {
       case 0:
-        br.k29_1 = 0;
-        br.j29_1 = br.j29_1 + 1 | 0;
-        if ((br.j29_1 + 4 | 0) > src.length)
+        br.n29_1 = 0;
+        br.m29_1 = br.m29_1 + 1 | 0;
+        if ((br.m29_1 + 4 | 0) > src.length)
           return null;
-        var len = src[br.j29_1] & 255 | (src[br.j29_1 + 1 | 0] & 255) << 8;
-        var nlen = src[br.j29_1 + 2 | 0] & 255 | (src[br.j29_1 + 3 | 0] & 255) << 8;
+        var len = src[br.m29_1] & 255 | (src[br.m29_1 + 1 | 0] & 255) << 8;
+        var nlen = src[br.m29_1 + 2 | 0] & 255 | (src[br.m29_1 + 3 | 0] & 255) << 8;
         if (!(len === (~nlen & 65535)))
           return null;
-        br.j29_1 = br.j29_1 + 4 | 0;
-        if ((br.j29_1 + len | 0) > src.length)
+        br.m29_1 = br.m29_1 + 4 | 0;
+        if ((br.m29_1 + len | 0) > src.length)
           return null;
-        out.e29(src, br.j29_1, len);
-        br.j29_1 = br.j29_1 + len | 0;
+        out.h29(src, br.m29_1, len);
+        br.m29_1 = br.m29_1 + len | 0;
         break;
       case 1:
         var tmp = 0;
@@ -36805,22 +36955,22 @@ function inflate($this, src, maxOut) {
         codes($this, br, out, tmp_2, new Huff(tmp_4));
         break;
       case 2:
-        var nlen_0 = br.m29(5) + 257 | 0;
-        var ndist = br.m29(5) + 1 | 0;
-        var ncode = br.m29(4) + 4 | 0;
+        var nlen_0 = br.p29(5) + 257 | 0;
+        var ndist = br.p29(5) + 1 | 0;
+        var ncode = br.p29(4) + 4 | 0;
         var lengths = new Int32Array(320);
         var inductionVariable = 0;
         if (inductionVariable < ncode)
           do {
             var i = inductionVariable;
             inductionVariable = inductionVariable + 1 | 0;
-            lengths[$this.m22_1[i]] = br.m29(3);
+            lengths[$this.m22_1[i]] = br.p29(3);
           }
            while (inductionVariable < ncode);
         var lencode = new Huff(copyOf_0(lengths, 19));
         var idx = 0;
         while (idx < (nlen_0 + ndist | 0)) {
-          var sym = br.n29(lencode);
+          var sym = br.q29(lencode);
           if (sym < 16) {
             var _unary__edvuaz = idx;
             idx = _unary__edvuaz + 1 | 0;
@@ -36833,13 +36983,13 @@ function inflate($this, src, maxOut) {
                 if (idx === 0)
                   return null;
                 len_0 = lengths[idx - 1 | 0];
-                rep = 3 + br.m29(2) | 0;
+                rep = 3 + br.p29(2) | 0;
                 break;
               case 17:
-                rep = 3 + br.m29(3) | 0;
+                rep = 3 + br.p29(3) | 0;
                 break;
               default:
-                rep = 11 + br.m29(7) | 0;
+                rep = 11 + br.p29(7) | 0;
                 break;
             }
             if ((idx + rep | 0) > (nlen_0 + ndist | 0))
@@ -36866,7 +37016,7 @@ function inflate($this, src, maxOut) {
       default:
         return null;
     }
-    if (out.f29() > maxOut)
+    if (out.i29() > maxOut)
       return null;
   }
    while (last === 0);
@@ -36881,7 +37031,7 @@ function codes($this, br, out, lc, dc) {
   var tmp$ret$0 = Math.max(a, 1024);
   hist._v = copyOf_4(tmp, tmp$ret$0);
   while (true) {
-    var sym = br.n29(lc);
+    var sym = br.q29(lc);
     if (sym < 256) {
       codes$put(histLen, hist, out, sym);
     } else if (sym === 256)
@@ -36890,11 +37040,11 @@ function codes($this, br, out, lc, dc) {
       var s = sym - 257 | 0;
       if (s >= 29)
         throw IllegalStateException_init_$Create$('bad len');
-      var len = $this.i22_1[s] + br.m29($this.j22_1[s]) | 0;
-      var ds = br.n29(dc);
+      var len = $this.i22_1[s] + br.p29($this.j22_1[s]) | 0;
+      var ds = br.q29(dc);
       if (ds >= 30)
         throw IllegalStateException_init_$Create$('bad dist');
-      var dist = $this.k22_1[ds] + br.m29($this.l22_1[ds]) | 0;
+      var dist = $this.k22_1[ds] + br.p29($this.l22_1[ds]) | 0;
       if (dist > histLen._v)
         throw IllegalStateException_init_$Create$('too far');
       // Inline function 'kotlin.repeat' call
@@ -36962,7 +37112,7 @@ protoOf(Zlib).c23 = function (b) {
     out.w22(n >> 8);
     out.w22(~n & 255);
     out.w22(~n >> 8 & 255);
-    out.e29(b, pos, n);
+    out.h29(b, pos, n);
     pos = pos + n | 0;
   }
   return out.y22();
@@ -37164,11 +37314,11 @@ function expand($this, key) {
       var t = w[i_0 - 1 | 0];
       if ((i_0 % nk | 0) === 0) {
         t = t << 8 | (t >>> 24 | 0);
-        t = $this.o29_1[(t >>> 24 | 0) & 255] << 24 | $this.o29_1[(t >>> 16 | 0) & 255] << 16 | $this.o29_1[(t >>> 8 | 0) & 255] << 8 | $this.o29_1[t & 255];
+        t = $this.r29_1[(t >>> 24 | 0) & 255] << 24 | $this.r29_1[(t >>> 16 | 0) & 255] << 16 | $this.r29_1[(t >>> 8 | 0) & 255] << 8 | $this.r29_1[t & 255];
         t = t ^ rcon << 24;
         rcon = xtime($this, rcon);
       } else if (nk > 6 && (i_0 % nk | 0) === 4) {
-        t = $this.o29_1[(t >>> 24 | 0) & 255] << 24 | $this.o29_1[(t >>> 16 | 0) & 255] << 16 | $this.o29_1[(t >>> 8 | 0) & 255] << 8 | $this.o29_1[t & 255];
+        t = $this.r29_1[(t >>> 24 | 0) & 255] << 24 | $this.r29_1[(t >>> 16 | 0) & 255] << 16 | $this.r29_1[(t >>> 8 | 0) & 255] << 8 | $this.r29_1[t & 255];
       }
       w[i_0] = w[i_0 - nk | 0] ^ t;
     }
@@ -37212,7 +37362,7 @@ function encryptBlock($this, rk, input) {
         do {
           var i = inductionVariable_0;
           inductionVariable_0 = inductionVariable_0 + 1 | 0;
-          s[i] = $this.o29_1[s[i]];
+          s[i] = $this.r29_1[s[i]];
         }
          while (inductionVariable_0 < 16);
       // Inline function 'kotlin.collections.copyOf' call
@@ -37452,16 +37602,16 @@ function AesGcm() {
   }
    while (!(p === 1));
   this_0[0] = 99;
-  tmp.o29_1 = this_0;
+  tmp.r29_1 = this_0;
 }
-protoOf(AesGcm).p29 = function (key, nonce, aad, plain) {
+protoOf(AesGcm).s29 = function (key, nonce, aad, plain) {
   var rk = expand(this, key);
   var ct = ctr(this, rk, nonce, plain);
   // Inline function 'kotlin.collections.plus' call
   var elements = tag(this, rk, nonce, aad, ct);
   return primitiveArrayConcat([ct, elements]);
 };
-protoOf(AesGcm).q29 = function (key, nonce, aad, sealed) {
+protoOf(AesGcm).t29 = function (key, nonce, aad, sealed) {
   if (sealed.length < 16)
     return null;
   var rk = expand(this, key);
@@ -37523,7 +37673,7 @@ protoOf(RelayCrypto).y24 = function (key, plain) {
   return this.f25(key, plain, secureRandomBytes(12));
 };
 protoOf(RelayCrypto).f25 = function (key, plain, nonce) {
-  var ct = AesGcm_getInstance().p29(Sha256_getInstance().i25(key, encodeToByteArray('asobi26/relay/enc')), nonce, aad(this, key), encodeToByteArray(plain));
+  var ct = AesGcm_getInstance().s29(Sha256_getInstance().i25(key, encodeToByteArray('asobi26/relay/enc')), nonce, aad(this, key), encodeToByteArray(plain));
   var packed = new Int8Array(13 + ct.length | 0);
   packed[0] = 1;
   // Inline function 'kotlin.collections.copyInto' call
@@ -37562,7 +37712,7 @@ protoOf(RelayCrypto).d24 = function (key, sealed) {
     if (packed.length < 29 || !(packed[0] === 1))
       return null;
     var nonce = copyOfRange(packed, 1, 13);
-    var tmp0_elvis_lhs = AesGcm_getInstance().q29(Sha256_getInstance().i25(key, encodeToByteArray('asobi26/relay/enc')), nonce, aad(this, key), copyOfRange(packed, 13, packed.length));
+    var tmp0_elvis_lhs = AesGcm_getInstance().t29(Sha256_getInstance().i25(key, encodeToByteArray('asobi26/relay/enc')), nonce, aad(this, key), copyOfRange(packed, 13, packed.length));
     var tmp_1;
     if (tmp0_elvis_lhs == null) {
       return null;
@@ -37652,34 +37802,34 @@ function CCard(t, red, m, back, hi, opts, tog, empty, id) {
   tog = tog === VOID ? -1 : tog;
   empty = empty === VOID ? false : empty;
   id = id === VOID ? -1 : id;
-  this.r29_1 = t;
-  this.s29_1 = red;
-  this.t29_1 = m;
-  this.u29_1 = back;
-  this.v29_1 = hi;
-  this.w29_1 = opts;
-  this.x29_1 = tog;
-  this.y29_1 = empty;
-  this.z29_1 = id;
+  this.u29_1 = t;
+  this.v29_1 = red;
+  this.w29_1 = m;
+  this.x29_1 = back;
+  this.y29_1 = hi;
+  this.z29_1 = opts;
+  this.a2a_1 = tog;
+  this.b2a_1 = empty;
+  this.c2a_1 = id;
 }
 function CZone(label, cards, cols) {
   cols = cols === VOID ? 0 : cols;
-  this.a2a_1 = label;
-  this.b2a_1 = cards;
-  this.c2a_1 = cols;
+  this.d2a_1 = label;
+  this.e2a_1 = cards;
+  this.f2a_1 = cols;
 }
 function CBtn(label, m, base, en) {
   base = base === VOID ? false : base;
   en = en === VOID ? true : en;
-  this.d2a_1 = label;
-  this.e2a_1 = m;
-  this.f2a_1 = base;
-  this.g2a_1 = en;
+  this.g2a_1 = label;
+  this.h2a_1 = m;
+  this.i2a_1 = base;
+  this.j2a_1 = en;
 }
 function CScore(name, value, turn) {
-  this.h2a_1 = name;
-  this.i2a_1 = value;
-  this.j2a_1 = turn;
+  this.k2a_1 = name;
+  this.l2a_1 = value;
+  this.m2a_1 = turn;
 }
 function qs(s) {
   _init_properties_CardViews_kt__xgv9e4();
@@ -37981,7 +38131,7 @@ function cardsView(st, rules, me, legal, human) {
         while (tmp0_iterator_2.l()) {
           var element_1 = tmp0_iterator_2.m();
           // Inline function 'cardsView.<anonymous>' call
-          if (L.t(element_1.e2a_1)) {
+          if (L.t(element_1.h2a_1)) {
             destination_9.i(element_1);
           }
         }
@@ -38633,15 +38783,15 @@ function cardsView$bits(x) {
 }
 function cardsJson$lambda(zone) {
   _init_properties_CardViews_kt__xgv9e4();
-  var cs = joinToString(zone.b2a_1, ',', '[', ']', VOID, VOID, cardsJson$lambda$lambda);
-  return '{"label":' + qs(zone.a2a_1) + ',"cols":' + zone.c2a_1 + ',"cards":' + cs + '}';
+  var cs = joinToString(zone.e2a_1, ',', '[', ']', VOID, VOID, cardsJson$lambda$lambda);
+  return '{"label":' + qs(zone.d2a_1) + ',"cols":' + zone.f2a_1 + ',"cards":' + cs + '}';
 }
 function cardsJson$lambda$lambda(c) {
   _init_properties_CardViews_kt__xgv9e4();
-  var o = joinToString(c.w29_1, ',', '[', ']', VOID, VOID, cardsJson$lambda$lambda$lambda);
-  var tmp = qs(c.r29_1);
-  var tmp0_elvis_lhs = c.t29_1;
-  return '{"t":' + tmp + ',"red":' + c.s29_1 + ',"m":' + toString(tmp0_elvis_lhs == null ? 'null' : tmp0_elvis_lhs) + ',"back":' + c.u29_1 + ',"hi":' + c.v29_1 + ',"opts":' + o + ',"tog":' + c.x29_1 + ',"empty":' + c.y29_1 + ',"id":' + c.z29_1 + '}';
+  var o = joinToString(c.z29_1, ',', '[', ']', VOID, VOID, cardsJson$lambda$lambda$lambda);
+  var tmp = qs(c.u29_1);
+  var tmp0_elvis_lhs = c.w29_1;
+  return '{"t":' + tmp + ',"red":' + c.v29_1 + ',"m":' + toString(tmp0_elvis_lhs == null ? 'null' : tmp0_elvis_lhs) + ',"back":' + c.x29_1 + ',"hi":' + c.y29_1 + ',"opts":' + o + ',"tog":' + c.a2a_1 + ',"empty":' + c.b2a_1 + ',"id":' + c.c2a_1 + '}';
 }
 function cardsJson$lambda$lambda$lambda(it) {
   _init_properties_CardViews_kt__xgv9e4();
@@ -38649,11 +38799,11 @@ function cardsJson$lambda$lambda$lambda(it) {
 }
 function cardsJson$lambda_0(it) {
   _init_properties_CardViews_kt__xgv9e4();
-  return '{"label":' + qs(it.d2a_1) + ',"m":' + it.e2a_1 + ',"base":' + it.f2a_1 + ',"en":' + it.g2a_1 + '}';
+  return '{"label":' + qs(it.g2a_1) + ',"m":' + it.h2a_1 + ',"base":' + it.i2a_1 + ',"en":' + it.j2a_1 + '}';
 }
 function cardsJson$lambda_1(it) {
   _init_properties_CardViews_kt__xgv9e4();
-  return '{"name":' + qs(it.h2a_1) + ',"v":' + qs(it.i2a_1) + ',"turn":' + it.j2a_1 + '}';
+  return '{"name":' + qs(it.k2a_1) + ',"v":' + qs(it.l2a_1) + ',"turn":' + it.m2a_1 + '}';
 }
 function cardsView$lambda(c) {
   _init_properties_CardViews_kt__xgv9e4();
@@ -39338,20 +39488,7 @@ function ints(a) {
 }
 function catalogJson$lambda(g) {
   _init_properties_Engine_kt__fnrbfm();
-  // Inline function 'kotlin.collections.filter' call
-  // Inline function 'kotlin.collections.filterTo' call
-  var this_0 = g.gh_1;
-  var destination = ArrayList_init_$Create$_0();
-  var tmp0_iterator = this_0.k();
-  while (tmp0_iterator.l()) {
-    var element = tmp0_iterator.m();
-    // Inline function 'catalogJson.<anonymous>.<anonymous>' call
-    if (!(element.sg_1 === 'time')) {
-      destination.i(element);
-    }
-  }
-  var tmp = destination;
-  var opts = joinToString(tmp, ',', '[', ']', VOID, VOID, catalogJson$lambda$lambda);
+  var opts = joinToString(g.gh_1, ',', '[', ']', VOID, VOID, catalogJson$lambda$lambda);
   var seatNames = joinToString(g.fh_1, ',', '[', ']', VOID, VOID, catalogJson$lambda$lambda_0);
   return '{"id":' + q(g.xg_1) + ',"no":' + g.yg_1 + ',"name":' + q(g.zg_1) + ',"category":' + q(g.ah_1.p1_1) + ',"players":' + q(g.bh_1) + ',"intro":' + q(g.ch_1) + ',"playable":' + g.nh() + ',"options":' + opts + ',"seatNames":' + seatNames + '}';
 }
@@ -39885,16 +40022,16 @@ function lifeView(st, g, me) {
   return tmp_3 + ('"log":' + joinToString(st.h1i_1, ',', '[', ']', VOID, VOID, lifeView$lambda_1) + ',"players":' + players + ',"title":' + xq(title) + ',"text":' + xq(text) + ',"choices":' + joinToString(ch, ',', '[', ']') + ',"guessing":' + guessing + ',"bet":' + (st.x1h_1 === 8) + ',') + ('"canRepay":' + contains_0(legal, 3) + ',"canSpin":' + contains_0(legal, 0) + ',"long":' + g.p1k_1 + '}');
 }
 function sam$kotlin_Comparator$0_24(function_0) {
-  this.k2a_1 = function_0;
+  this.n2a_1 = function_0;
 }
 protoOf(sam$kotlin_Comparator$0_24).pa = function (a, b) {
-  return this.k2a_1(a, b);
+  return this.n2a_1(a, b);
 };
 protoOf(sam$kotlin_Comparator$0_24).compare = function (a, b) {
   return this.pa(a, b);
 };
 protoOf(sam$kotlin_Comparator$0_24).n2 = function () {
-  return this.k2a_1;
+  return this.n2a_1;
 };
 protoOf(sam$kotlin_Comparator$0_24).equals = function (other) {
   var tmp;
@@ -40134,6 +40271,29 @@ function get_undoAsk() {
   return undoAsk;
 }
 var undoAsk;
+function set_clockIndex(_set____db54di) {
+  _init_properties_WebNet_kt__y4rdrr();
+  clockIndex = _set____db54di;
+}
+function get_clockIndex() {
+  _init_properties_WebNet_kt__y4rdrr();
+  return clockIndex;
+}
+var clockIndex;
+function get_cursors() {
+  _init_properties_WebNet_kt__y4rdrr();
+  return cursors;
+}
+var cursors;
+function set_clockLeft(_set____db54di) {
+  _init_properties_WebNet_kt__y4rdrr();
+  clockLeft = _set____db54di;
+}
+function get_clockLeft() {
+  _init_properties_WebNet_kt__y4rdrr();
+  return clockLeft;
+}
+var clockLeft;
 function get_undoUsed() {
   _init_properties_WebNet_kt__y4rdrr();
   return undoUsed;
@@ -40170,46 +40330,46 @@ function netInit(rtcB, relayB, h) {
 }
 function netLinked(id) {
   _init_properties_WebNet_kt__y4rdrr();
-  var tmp0_safe_receiver = get_rtc().l2a_1;
+  var tmp0_safe_receiver = get_rtc().o2a_1;
   if (tmp0_safe_receiver == null)
     null;
   else {
-    tmp0_safe_receiver.z28(id);
+    tmp0_safe_receiver.c29(id);
   }
   changed_2();
 }
 function netUnlinked(id) {
   _init_properties_WebNet_kt__y4rdrr();
-  var tmp0_safe_receiver = get_rtc().l2a_1;
+  var tmp0_safe_receiver = get_rtc().o2a_1;
   if (tmp0_safe_receiver == null)
     null;
   else {
-    tmp0_safe_receiver.b29(id);
+    tmp0_safe_receiver.e29(id);
   }
   changed_2();
 }
 function netLinkFailed(id) {
   _init_properties_WebNet_kt__y4rdrr();
-  var tmp0_safe_receiver = get_rtc().l2a_1;
+  var tmp0_safe_receiver = get_rtc().o2a_1;
   if (tmp0_safe_receiver == null)
     null;
   else {
-    tmp0_safe_receiver.a29(id);
+    tmp0_safe_receiver.d29(id);
   }
   changed_2();
 }
 function netText(id, text) {
   _init_properties_WebNet_kt__y4rdrr();
-  var tmp0_safe_receiver = get_rtc().l2a_1;
+  var tmp0_safe_receiver = get_rtc().o2a_1;
   if (tmp0_safe_receiver == null)
     null;
   else {
-    tmp0_safe_receiver.c29(id, text);
+    tmp0_safe_receiver.f29(id, text);
   }
 }
 function netInviteEvent() {
   _init_properties_WebNet_kt__y4rdrr();
-  var tmp0_safe_receiver = get_rtc().m2a_1;
+  var tmp0_safe_receiver = get_rtc().p2a_1;
   if (tmp0_safe_receiver == null)
     null;
   else
@@ -40263,7 +40423,7 @@ function onlineHost(name) {
   _init_properties_WebNet_kt__y4rdrr();
   onlineLeave();
   // Inline function 'kotlin.text.ifBlank' call
-  var this_0 = Companion_instance_30.z27(name);
+  var this_0 = Companion_instance_30.a28(name);
   // Inline function 'kotlin.contracts.contract' call
   var tmp;
   if (isBlank(this_0)) {
@@ -40274,9 +40434,9 @@ function onlineHost(name) {
   }
   var tmp$ret$1 = tmp;
   set_myName(tmp$ret$1);
-  var r = Companion_instance_30.h28(get_rtc(), get_myName(), false);
+  var r = Companion_instance_30.i28(get_rtc(), get_myName(), false);
   setup(r);
-  r.r28('reversi', new GameOptions());
+  r.u28('reversi', new GameOptions());
   var tmp_0 = get_rtc();
   var tmp_1 = get_relay();
   var tmp_2 = onlineHost$lambda;
@@ -40337,7 +40497,7 @@ function onlineInviteCancel(index) {
 function onlineJoin(name, code) {
   _init_properties_WebNet_kt__y4rdrr();
   // Inline function 'kotlin.text.ifBlank' call
-  var this_0 = Companion_instance_30.z27(name);
+  var this_0 = Companion_instance_30.a28(name);
   // Inline function 'kotlin.contracts.contract' call
   var tmp;
   if (isBlank(this_0)) {
@@ -40384,7 +40544,7 @@ function onlineChoose(gameId, options) {
   if (tmp0_safe_receiver == null)
     null;
   else {
-    tmp0_safe_receiver.r28(gameId, Companion_instance_1.ft(options));
+    tmp0_safe_receiver.u28(gameId, Companion_instance_1.ft(options));
   }
 }
 function onlineStart(seed) {
@@ -40412,9 +40572,9 @@ function onlineStart(seed) {
   if (r.c26_1.n() > seats)
     return false;
   // Inline function 'kotlin.collections.isNotEmpty' call
-  if (!r.n28(r.d26_1).q())
+  if (!r.q28(r.d26_1).q())
     return false;
-  r.t28(seats, toLong_0(seed));
+  r.w28(seats, toLong_0(seed));
   return true;
 }
 function onlineAgain() {
@@ -40423,7 +40583,7 @@ function onlineAgain() {
   if (tmp0_safe_receiver == null)
     null;
   else {
-    tmp0_safe_receiver.w28();
+    tmp0_safe_receiver.z28();
   }
 }
 function onlineBackToLobby() {
@@ -40432,7 +40592,7 @@ function onlineBackToLobby() {
   if (tmp0_safe_receiver == null)
     null;
   else {
-    tmp0_safe_receiver.c28();
+    tmp0_safe_receiver.d28();
   }
 }
 function onlineLeave() {
@@ -40442,7 +40602,7 @@ function onlineLeave() {
     if (tmp0_safe_receiver == null)
       null;
     else {
-      tmp0_safe_receiver.x28();
+      tmp0_safe_receiver.a29();
     }
   } catch ($p) {
     if ($p instanceof Error) {
@@ -40495,7 +40655,7 @@ function onlinePlay(h, move) {
   if (r.w25_1) {
     var tmp_2;
     if (ses.cv() && ses.xu(move)) {
-      r.u28(index, move);
+      r.x28(index, move);
       tmp_2 = true;
     } else {
       tmp_2 = false;
@@ -40504,7 +40664,7 @@ function onlinePlay(h, move) {
   } else {
     var tmp_3;
     if (ses.cv() && ses.ku_1.rs(ses.nu_1, move)) {
-      r.v28(index, move);
+      r.y28(index, move);
       tmp_3 = true;
     } else {
       tmp_3 = false;
@@ -40536,7 +40696,7 @@ function onlineCpuPlay(h, move) {
   var index = ses.yu().n();
   var tmp_1;
   if (ses.xu(move)) {
-    r.u28(index, move);
+    r.x28(index, move);
     tmp_1 = true;
   } else {
     tmp_1 = false;
@@ -40591,13 +40751,13 @@ function onlineState() {
   var tmp_11 = qq(tmp24_safe_receiver == null ? null : tmp24_safe_receiver.s23_1);
   var tmp_12 = qq(r == null ? null : r.f26_1);
   var tmp_13 = tmp_10 + ('"bookError":' + tmp_11 + ',"join":' + join + ',"closed":' + tmp_12 + ',"transportError":' + qq(r == null ? null : r.h26_1) + ',"beginSeq":' + get_beginSeq() + ',"match":' + get_matchHandle() + ',');
-  var tmp28_safe_receiver = r == null ? null : r.i27_1;
+  var tmp28_safe_receiver = r == null ? null : r.j27_1;
   var tmp29_elvis_lhs = tmp28_safe_receiver == null ? null : joinToString(tmp28_safe_receiver, ',', '[', ']');
   var tmp_14 = tmp29_elvis_lhs == null ? '[]' : tmp29_elvis_lhs;
   var tmp31_safe_receiver = r == null ? null : r.g26_1;
   var tmp32_elvis_lhs = tmp31_safe_receiver == null ? null : tmp31_safe_receiver.p25_1;
   var tmp_15 = tmp32_elvis_lhs == null ? 0 : tmp32_elvis_lhs;
-  var tmp34_elvis_lhs = r == null ? null : r.m28();
+  var tmp34_elvis_lhs = r == null ? null : r.p28();
   var tmp_16 = tmp34_elvis_lhs == null ? emptyList() : tmp34_elvis_lhs;
   var tmp_17 = joinToString(tmp_16, ',', '[', ']', VOID, VOID, onlineState$lambda_1);
   var tmp_18;
@@ -40607,20 +40767,20 @@ function onlineState() {
     // Inline function 'kotlin.let' call
     // Inline function 'kotlin.contracts.contract' call
     // Inline function 'onlineState.<anonymous>' call
-    tmp_18 = r.n28(r.d26_1);
+    tmp_18 = r.q28(r.d26_1);
   }
   var tmp36_elvis_lhs = tmp_18;
   var tmp_19 = tmp36_elvis_lhs == null ? emptyList() : tmp36_elvis_lhs;
   var tmp_20 = joinToString(tmp_19, ',', '[', ']', VOID, VOID, onlineState$lambda_2);
   var tmp_21;
-  if (!(r == null) && r.l28(2)) {
-    var tmp37_safe_receiver = r.e27_1;
+  if (!(r == null) && r.o28(2)) {
+    var tmp37_safe_receiver = r.f27_1;
     tmp_21 = !((tmp37_safe_receiver == null ? null : tmp37_safe_receiver(r.b26_1)) == null);
   } else {
     tmp_21 = false;
   }
   var tmp_22 = tmp_21;
-  var tmp_23 = !(r == null) && r.l28(2);
+  var tmp_23 = !(r == null) && r.o28(2);
   var tmp38_safe_receiver = get_matches().l1(get_matchHandle());
   var tmp39_elvis_lhs = tmp38_safe_receiver == null ? null : tmp38_safe_receiver.zu();
   var tmp_24 = tmp39_elvis_lhs == null ? false : tmp39_elvis_lhs;
@@ -40635,9 +40795,9 @@ function onlineState() {
     // Inline function 'kotlin.let' call
     // Inline function 'kotlin.contracts.contract' call
     // Inline function 'onlineState.<anonymous>' call
-    var tmp_28 = qq(tmp41_safe_receiver.w27_1);
+    var tmp_28 = qq(tmp41_safe_receiver.x27_1);
     var tmp1_elvis_lhs = r == null ? null : r.b26_1;
-    tmp_27 = '{"id":' + tmp41_safe_receiver.t27_1 + ',"name":' + tmp_28 + ',"mine":' + equals(tmp41_safe_receiver.u27_1, tmp1_elvis_lhs == null ? -9 : tmp1_elvis_lhs) + '}';
+    tmp_27 = '{"id":' + tmp41_safe_receiver.u27_1 + ',"name":' + tmp_28 + ',"mine":' + equals(tmp41_safe_receiver.v27_1, tmp1_elvis_lhs == null ? -9 : tmp1_elvis_lhs) + '}';
   }
   var tmp42_elvis_lhs = tmp_27;
   var tmp_29 = tmp42_elvis_lhs == null ? 'null' : tmp42_elvis_lhs;
@@ -40667,13 +40827,126 @@ function onlineResign() {
   if (r.w25_1) {
     resignSlot(r, r.b26_1);
   } else {
-    r.k28();
+    r.l28();
   }
+}
+function onlineMoveSeconds() {
+  _init_properties_WebNet_kt__y4rdrr();
+  var tmp0_elvis_lhs = get_matches().l1(get_matchHandle());
+  var tmp;
+  if (tmp0_elvis_lhs == null) {
+    return 0;
+  } else {
+    tmp = tmp0_elvis_lhs;
+  }
+  var ses = tmp;
+  var tmp_0 = ses.ku_1;
+  if (isInterface(tmp_0, ConcurrentRules))
+    return 0;
+  // Inline function 'kotlin.takeIf' call
+  var this_0 = ses.iu_1.it('moveSeconds', 0);
+  // Inline function 'kotlin.contracts.contract' call
+  var tmp_1;
+  // Inline function 'onlineMoveSeconds.<anonymous>' call
+  if (listOf([15, 30, 60, 120]).t(this_0)) {
+    tmp_1 = this_0;
+  } else {
+    tmp_1 = null;
+  }
+  var tmp1_elvis_lhs = tmp_1;
+  return tmp1_elvis_lhs == null ? 0 : tmp1_elvis_lhs;
+}
+function onlineClockLeft() {
+  _init_properties_WebNet_kt__y4rdrr();
+  var tmp0_elvis_lhs = get_matches().l1(get_matchHandle());
+  var tmp;
+  if (tmp0_elvis_lhs == null) {
+    return -1;
+  } else {
+    tmp = tmp0_elvis_lhs;
+  }
+  var ses = tmp;
+  return get_clockIndex() === ses.yu().n() ? get_clockLeft() : -1;
+}
+function onlineMovesFrom(h, from) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var tmp0_safe_receiver = get_matches().l1(h);
+  var tmp1_safe_receiver = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.yu();
+  var tmp2_safe_receiver = tmp1_safe_receiver == null ? null : drop(tmp1_safe_receiver, coerceAtLeast_0(from, 0));
+  var tmp3_elvis_lhs = tmp2_safe_receiver == null ? null : joinToString(tmp2_safe_receiver, ',');
+  return tmp3_elvis_lhs == null ? '' : tmp3_elvis_lhs;
+}
+function onlineSendCursor(key, x, y) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var tmp0_safe_receiver = get_room();
+  if (tmp0_safe_receiver == null)
+    null;
+  else {
+    tmp0_safe_receiver.m28(key, x, y);
+  }
+}
+function onlineCursors() {
+  _init_properties_WebNet_kt__y4rdrr();
+  var tmp0_elvis_lhs = get_room();
+  var tmp;
+  if (tmp0_elvis_lhs == null) {
+    return '[]';
+  } else {
+    tmp = tmp0_elvis_lhs;
+  }
+  var r = tmp;
+  var now = currentTimeMillis();
+  var b = r.g26_1;
+  var tmp_0 = get_cursors().o1();
+  return joinToString(tmp_0, ',', '[', ']', VOID, VOID, onlineCursors$lambda(b, now));
+}
+function onlineShareClock(index, seconds) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var tmp0_safe_receiver = get_room();
+  if (tmp0_safe_receiver == null)
+    null;
+  else {
+    tmp0_safe_receiver.n28(index, seconds);
+  }
+}
+function onlineTimeoutPlay(h, index) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var tmp0_elvis_lhs = get_room();
+  var tmp;
+  if (tmp0_elvis_lhs == null) {
+    return false;
+  } else {
+    tmp = tmp0_elvis_lhs;
+  }
+  var r = tmp;
+  if (!r.w25_1)
+    return false;
+  var tmp_0 = get_matches().l1(h);
+  var tmp1_elvis_lhs = tmp_0 instanceof Session ? tmp_0 : null;
+  var tmp_1;
+  if (tmp1_elvis_lhs == null) {
+    return false;
+  } else {
+    tmp_1 = tmp1_elvis_lhs;
+  }
+  var ses = tmp_1;
+  if (!(ses.bv() == null) || !(ses.yu().n() === index) || ses.av() < 0)
+    return false;
+  var move = TimeoutPolicy_instance.ry(ses);
+  var tmp_2;
+  if (ses.xu(move)) {
+    r.x28(index, move);
+    changed_2();
+    tmp_2 = true;
+  } else {
+    tmp_2 = false;
+  }
+  return tmp_2;
 }
 function onlineSendChat(kind, body) {
   _init_properties_WebNet_kt__y4rdrr();
   var tmp0_safe_receiver = get_room();
-  var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.o28(kind, body);
+  var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.r28(kind, body);
   return tmp1_elvis_lhs == null ? false : tmp1_elvis_lhs;
 }
 function onlineRequestUndo() {
@@ -40682,7 +40955,7 @@ function onlineRequestUndo() {
   if (tmp0_safe_receiver == null)
     null;
   else {
-    tmp0_safe_receiver.p28();
+    tmp0_safe_receiver.s28();
   }
 }
 function onlineVoteUndo(yes) {
@@ -40691,7 +40964,7 @@ function onlineVoteUndo(yes) {
   if (tmp0_safe_receiver == null)
     null;
   else {
-    tmp0_safe_receiver.q28(yes);
+    tmp0_safe_receiver.t28(yes);
   }
   set_undoAsk(null);
   changed_2();
@@ -40699,7 +40972,7 @@ function onlineVoteUndo(yes) {
 function onlineMismatch(gameId) {
   _init_properties_WebNet_kt__y4rdrr();
   var tmp0_safe_receiver = get_room();
-  var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.n28(gameId);
+  var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.q28(gameId);
   var tmp = tmp1_elvis_lhs == null ? emptyList() : tmp1_elvis_lhs;
   return joinToString(tmp, ',', '[', ']', VOID, VOID, onlineMismatch$lambda);
 }
@@ -40725,19 +40998,68 @@ function onlineStartReady(seed) {
   }
   var def = tmp_0;
   var seats = def.lh_1(r.e26_1);
-  var who = plus_1(toSet(r.i27_1), r.b26_1);
-  r.s28(seats, toLong_0(seed), who);
+  var who = plus_1(toSet(r.j27_1), r.b26_1);
+  r.v28(seats, toLong_0(seed), who);
   return true;
+}
+function relayNewKeyHex() {
+  _init_properties_WebNet_kt__y4rdrr();
+  return hexOf(RelayCrypto_instance.z23());
+}
+function relayTopicHex(k) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var tmp0_safe_receiver = bytesOf(k);
+  var tmp;
+  if (tmp0_safe_receiver == null) {
+    tmp = null;
+  } else {
+    // Inline function 'kotlin.let' call
+    // Inline function 'kotlin.contracts.contract' call
+    // Inline function 'relayTopicHex.<anonymous>' call
+    tmp = RelayCrypto_instance.a24(tmp0_safe_receiver);
+  }
+  var tmp1_elvis_lhs = tmp;
+  return tmp1_elvis_lhs == null ? '' : tmp1_elvis_lhs;
+}
+function relaySealHex(k, plain) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var tmp0_safe_receiver = bytesOf(k);
+  var tmp;
+  if (tmp0_safe_receiver == null) {
+    tmp = null;
+  } else {
+    // Inline function 'kotlin.let' call
+    // Inline function 'kotlin.contracts.contract' call
+    // Inline function 'relaySealHex.<anonymous>' call
+    tmp = RelayCrypto_instance.y24(tmp0_safe_receiver, plain);
+  }
+  var tmp1_elvis_lhs = tmp;
+  return tmp1_elvis_lhs == null ? '' : tmp1_elvis_lhs;
+}
+function relayOpenHex(k, sealed) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var tmp0_safe_receiver = bytesOf(k);
+  var tmp;
+  if (tmp0_safe_receiver == null) {
+    tmp = null;
+  } else {
+    // Inline function 'kotlin.let' call
+    // Inline function 'kotlin.contracts.contract' call
+    // Inline function 'relayOpenHex.<anonymous>' call
+    tmp = RelayCrypto_instance.d24(tmp0_safe_receiver, sealed);
+  }
+  var tmp1_elvis_lhs = tmp;
+  return tmp1_elvis_lhs == null ? '' : tmp1_elvis_lhs;
 }
 function JsRtc$connect$lambda(this$0, $id) {
   return function () {
     var tmp;
     if (this$0.m24($id).equals(LinkState_OPEN_getInstance())) {
-      var tmp0_safe_receiver = this$0.l2a_1;
+      var tmp0_safe_receiver = this$0.o2a_1;
       if (tmp0_safe_receiver == null)
         null;
       else {
-        tmp0_safe_receiver.z28($id);
+        tmp0_safe_receiver.c29($id);
       }
       tmp = Unit_instance;
     }
@@ -40763,27 +41085,27 @@ function JsRtc$acceptInvite$lambda($done) {
   };
 }
 function JsRtc() {
-  this.l2a_1 = null;
-  this.m2a_1 = null;
+  this.o2a_1 = null;
+  this.p2a_1 = null;
 }
-protoOf(JsRtc).e28 = function (_set____db54di) {
-  this.l2a_1 = _set____db54di;
+protoOf(JsRtc).f28 = function (_set____db54di) {
+  this.o2a_1 = _set____db54di;
 };
-protoOf(JsRtc).f28 = function () {
-  return this.l2a_1;
+protoOf(JsRtc).g28 = function () {
+  return this.o2a_1;
 };
-protoOf(JsRtc).a28 = function (info) {
+protoOf(JsRtc).b28 = function (info) {
 };
-protoOf(JsRtc).b28 = function () {
+protoOf(JsRtc).c28 = function () {
 };
-protoOf(JsRtc).j28 = function (id) {
+protoOf(JsRtc).k28 = function (id) {
   var st = setTimeout;
   st(JsRtc$connect$lambda(this, id), 0);
 };
-protoOf(JsRtc).x27 = function (id, text) {
+protoOf(JsRtc).y27 = function (id, text) {
   get_rtcBackend().sendTo(id, text);
 };
-protoOf(JsRtc).y28 = function (id) {
+protoOf(JsRtc).b29 = function (id) {
   get_rtcBackend().disconnect(id);
 };
 protoOf(JsRtc).n24 = function () {
@@ -40837,10 +41159,10 @@ function JsRelay$subscribe$lambda_0($onMessage) {
   };
 }
 function JsRelay$subscribe$1($sub) {
-  this.n2a_1 = $sub;
+  this.q2a_1 = $sub;
 }
 protoOf(JsRelay$subscribe$1).c24 = function () {
-  this.n2a_1.close();
+  this.q2a_1.close();
 };
 function JsRelay() {
 }
@@ -40853,11 +41175,17 @@ protoOf(JsRelay).b24 = function (topic, onStatus, onMessage) {
   return new JsRelay$subscribe$1(sub);
 };
 function ChatItem(seq, slot, name, kind, body) {
-  this.o2a_1 = seq;
-  this.p2a_1 = slot;
-  this.q2a_1 = name;
-  this.r2a_1 = kind;
-  this.s2a_1 = body;
+  this.r2a_1 = seq;
+  this.s2a_1 = slot;
+  this.t2a_1 = name;
+  this.u2a_1 = kind;
+  this.v2a_1 = body;
+}
+function CurPos(key, x, y, at) {
+  this.w2a_1 = key;
+  this.x2a_1 = x;
+  this.y2a_1 = y;
+  this.z2a_1 = at;
 }
 function flashMsg(t) {
   _init_properties_WebNet_kt__y4rdrr();
@@ -40896,21 +41224,27 @@ function setup(r) {
   var tmp_4 = r;
   tmp_4.r26_1 = setup$lambda_4(r);
   var tmp_5 = r;
-  tmp_5.x26_1 = setup$lambda_5;
+  tmp_5.v26_1 = setup$lambda_5;
   var tmp_6 = r;
-  tmp_6.e27_1 = setup$lambda_6(r);
+  tmp_6.u26_1 = setup$lambda_6;
   var tmp_7 = r;
-  tmp_7.g27_1 = setup$lambda_7;
+  tmp_7.k26_1 = setup$lambda_7;
   var tmp_8 = r;
-  tmp_8.f27_1 = setup$lambda_8;
+  tmp_8.y26_1 = setup$lambda_8;
   var tmp_9 = r;
-  tmp_9.h27_1 = setup$lambda_9(r);
+  tmp_9.f27_1 = setup$lambda_9(r);
   var tmp_10 = r;
-  tmp_10.p26_1 = setup$lambda_10;
+  tmp_10.h27_1 = setup$lambda_10;
   var tmp_11 = r;
-  tmp_11.q26_1 = setup$lambda_11(r);
+  tmp_11.g27_1 = setup$lambda_11;
   var tmp_12 = r;
-  tmp_12.j27_1 = setup$lambda_12;
+  tmp_12.i27_1 = setup$lambda_12(r);
+  var tmp_13 = r;
+  tmp_13.p26_1 = setup$lambda_13;
+  var tmp_14 = r;
+  tmp_14.q26_1 = setup$lambda_14(r);
+  var tmp_15 = r;
+  tmp_15.k27_1 = setup$lambda_15;
 }
 function beginOnline(r, b) {
   _init_properties_WebNet_kt__y4rdrr();
@@ -40966,6 +41300,9 @@ function beginOnline(r, b) {
   get_undoUsed().x3();
   get_undoDeclinedAt().x3();
   set_undoAsk(null);
+  set_clockIndex(-1);
+  set_clockLeft(-1);
+  get_cursors().x3();
   changed_2();
 }
 function syncTo(moves) {
@@ -41070,7 +41407,7 @@ function reconcile() {
   var id = tmp_0;
   switch (f.c25().q1_1) {
     case 1:
-      var r = Companion_instance_30.i28(get_rtc(), get_myName(), id);
+      var r = Companion_instance_30.j28(get_rtc(), get_myName(), id);
       setup(r);
       set_room(r);
       set_flow(null);
@@ -41137,9 +41474,56 @@ function resignSlot(r, slot) {
   var index = ses.yu().n();
   var m = Companion_getInstance_4().su(seat);
   if (ses.xu(m)) {
-    r.u28(index, m);
+    r.x28(index, m);
     changed_2();
   }
+}
+function hexOf(b) {
+  _init_properties_WebNet_kt__y4rdrr();
+  return joinToString_1(b, '', VOID, VOID, VOID, VOID, hexOf$lambda);
+}
+function bytesOf(h) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var tmp;
+  var tmp_0;
+  if (!((h.length % 2 | 0) === 0)) {
+    tmp_0 = true;
+  } else {
+    // Inline function 'kotlin.text.isEmpty' call
+    tmp_0 = charSequenceLength(h) === 0;
+  }
+  if (tmp_0) {
+    tmp = null;
+  } else {
+    var tmp_1;
+    try {
+      var tmp_2 = 0;
+      var tmp_3 = h.length / 2 | 0;
+      var tmp_4 = new Int8Array(tmp_3);
+      while (tmp_2 < tmp_3) {
+        var tmp_5 = tmp_2;
+        // Inline function 'kotlin.text.substring' call
+        var startIndex = imul(tmp_5, 2);
+        var endIndex = imul(tmp_5, 2) + 2 | 0;
+        // Inline function 'kotlin.js.asDynamic' call
+        var tmp$ret$2 = h.substring(startIndex, endIndex);
+        tmp_4[tmp_5] = toByte(toInt_0(tmp$ret$2, 16));
+        tmp_2 = tmp_2 + 1 | 0;
+      }
+      tmp_1 = tmp_4;
+    } catch ($p) {
+      var tmp_6;
+      if ($p instanceof Error) {
+        var e = $p;
+        tmp_6 = null;
+      } else {
+        throw $p;
+      }
+      tmp_1 = tmp_6;
+    }
+    tmp = tmp_1;
+  }
+  return tmp;
 }
 function onlineHost$lambda() {
   _init_properties_WebNet_kt__y4rdrr();
@@ -41185,11 +41569,23 @@ function onlineState$lambda_2(it) {
 }
 function onlineState$lambda_3(it) {
   _init_properties_WebNet_kt__y4rdrr();
-  return '{"seq":' + it.o2a_1 + ',"slot":' + it.p2a_1 + ',"name":' + qq(it.q2a_1) + ',"kind":' + it.r2a_1 + ',"body":' + qq(it.s2a_1) + '}';
+  return '{"seq":' + it.r2a_1 + ',"slot":' + it.s2a_1 + ',"name":' + qq(it.t2a_1) + ',"kind":' + it.u2a_1 + ',"body":' + qq(it.v2a_1) + '}';
 }
 function onlineState$lambda_4(it) {
   _init_properties_WebNet_kt__y4rdrr();
   return qq(it);
+}
+function onlineCursors$lambda($b, $now) {
+  return function (_destruct__k2r9zo) {
+    // Inline function 'kotlin.collections.component1' call
+    var s = _destruct__k2r9zo.h1();
+    // Inline function 'kotlin.collections.component2' call
+    var c = _destruct__k2r9zo.i1();
+    var tmp0_safe_receiver = $b;
+    var tmp1_safe_receiver = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.t25_1;
+    var tmp2_elvis_lhs = tmp1_safe_receiver == null ? null : tmp1_safe_receiver.g1(s);
+    return '{"s":' + s + ',"seat":' + (tmp2_elvis_lhs == null ? -1 : tmp2_elvis_lhs) + ',"k":' + qq(c.w2a_1) + ',"x":' + c.x2a_1 + ',"y":' + c.y2a_1 + ',"age":' + $now.x1(c.z2a_1).toString() + '}';
+  };
 }
 function onlineMismatch$lambda(it) {
   _init_properties_WebNet_kt__y4rdrr();
@@ -41212,12 +41608,12 @@ function setup$lambda_1($r) {
     var tmp;
     if (!(ses == null) && index === ses.yu().n() && ses.xu(move)) {
       if ($r.w25_1) {
-        $r.u28(index, move);
+        $r.x28(index, move);
       }
       changed_2();
       tmp = Unit_instance;
     } else if (!(ses == null) && index > ses.yu().n() && !$r.w25_1) {
-      $r.d29();
+      $r.g29();
       tmp = Unit_instance;
     }
     return Unit_instance;
@@ -41258,16 +41654,46 @@ function setup$lambda_4($r) {
     return Unit_instance;
   };
 }
-function setup$lambda_5(c) {
+function setup$lambda_5(slot, key, x, y) {
   _init_properties_WebNet_kt__y4rdrr();
-  get_chatLog().i(new ChatItem(c.n27_1, c.o27_1, c.p27_1, c.q27_1, c.r27_1));
+  // Inline function 'kotlin.collections.set' call
+  var this_0 = get_cursors();
+  var value = new CurPos(key, x, y, currentTimeMillis());
+  this_0.c3(slot, value);
+  return Unit_instance;
+}
+function setup$lambda_6(index, seconds) {
+  _init_properties_WebNet_kt__y4rdrr();
+  set_clockIndex(index);
+  set_clockLeft(seconds);
+  return Unit_instance;
+}
+function setup$lambda_7(index, seat, seconds) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var ses = get_matches().l1(get_matchHandle());
+  var tmp;
+  if (!(ses == null)) {
+    var tmp0_safe_receiver = getOrNull(ses.ju_1, seat);
+    tmp = (tmp0_safe_receiver == null ? null : tmp0_safe_receiver.yt_1) === true;
+  } else {
+    tmp = false;
+  }
+  if (tmp) {
+    set_clockIndex(index);
+    set_clockLeft(seconds);
+  }
+  return Unit_instance;
+}
+function setup$lambda_8(c) {
+  _init_properties_WebNet_kt__y4rdrr();
+  get_chatLog().i(new ChatItem(c.o27_1, c.p27_1, c.q27_1, c.r27_1, c.s27_1));
   while (get_chatLog().n() > 100) {
     get_chatLog().k3(0);
   }
   changed_2();
   return Unit_instance;
 }
-function setup$lambda_6($r) {
+function setup$lambda_9($r) {
   return function (slot) {
     var ses = get_matches().l1(get_matchHandle());
     var b = $r.g26_1;
@@ -41315,21 +41741,21 @@ function setup$lambda_6($r) {
     return tmp;
   };
 }
-function setup$lambda_7(v) {
+function setup$lambda_10(v) {
   _init_properties_WebNet_kt__y4rdrr();
   set_undoAsk(v);
   changed_2();
   return Unit_instance;
 }
-function setup$lambda_8(v) {
+function setup$lambda_11(v) {
   _init_properties_WebNet_kt__y4rdrr();
   var ses = get_matches().l1(get_matchHandle());
   var tmp;
-  if (!(ses == null) && ses.fv(v.v27_1)) {
+  if (!(ses == null) && ses.fv(v.w27_1)) {
     // Inline function 'kotlin.collections.set' call
     var this_0 = get_undoUsed();
-    var key = v.u27_1;
-    var tmp0_elvis_lhs = get_undoUsed().l1(v.u27_1);
+    var key = v.v27_1;
+    var tmp0_elvis_lhs = get_undoUsed().l1(v.v27_1);
     var value = (tmp0_elvis_lhs == null ? 0 : tmp0_elvis_lhs) + 1 | 0;
     this_0.c3(key, value);
     tmp = toList(ses.yu());
@@ -41338,21 +41764,21 @@ function setup$lambda_8(v) {
   }
   return tmp;
 }
-function setup$lambda_9($r) {
+function setup$lambda_12($r) {
   return function (v, ok, moves, by) {
     var tmp;
     var tmp0_safe_receiver = get_undoAsk();
-    if ((tmp0_safe_receiver == null ? null : tmp0_safe_receiver.t27_1) === v.t27_1) {
+    if ((tmp0_safe_receiver == null ? null : tmp0_safe_receiver.u27_1) === v.u27_1) {
       set_undoAsk(null);
       tmp = Unit_instance;
     }
-    var mine = v.u27_1 === $r.b26_1;
+    var mine = v.v27_1 === $r.b26_1;
     var tmp_0;
     if (ok) {
       if (!$r.w25_1) {
         syncTo(moves);
       }
-      flashMsg('\u5168\u54E1\u304C\u4E86\u627F\u3057\u305F\u306E\u3067\u3001' + (mine ? '\u3042\u306A\u305F' : v.w27_1) + '\u306E\u300C\u5F85\u3063\u305F\u300D\u3067\u623B\u3057\u307E\u3057\u305F');
+      flashMsg('\u5168\u54E1\u304C\u4E86\u627F\u3057\u305F\u306E\u3067\u3001' + (mine ? '\u3042\u306A\u305F' : v.x27_1) + '\u306E\u300C\u5F85\u3063\u305F\u300D\u3067\u623B\u3057\u307E\u3057\u305F');
       tmp_0 = Unit_instance;
     } else if (by === -3) {
       flashMsg('\u3044\u307E\u306F\u300C\u5F85\u3063\u305F\u300D\u3067\u304D\u307E\u305B\u3093');
@@ -41367,35 +41793,39 @@ function setup$lambda_9($r) {
         if ($r.w25_1) {
           // Inline function 'kotlin.collections.set' call
           var this_0 = get_undoDeclinedAt();
-          var key = v.u27_1;
+          var key = v.v27_1;
           var value = tmp1_safe_receiver.yu().n();
           this_0.c3(key, value);
         }
       }
-      flashMsg(by === -2 ? '\u8FD4\u4E8B\u304C\u305D\u308D\u308F\u306A\u304B\u3063\u305F\u306E\u3067\u3001\u305D\u306E\u307E\u307E\u7D9A\u3051\u307E\u3059' : by === v.u27_1 ? '\u300C\u5F85\u3063\u305F\u300D\u306F\u53D6\u308A\u6D88\u3055\u308C\u307E\u3057\u305F' : by === $r.b26_1 ? '\u4E86\u627F\u3057\u306A\u304B\u3063\u305F\u306E\u3067\u3001\u305D\u306E\u307E\u307E\u7D9A\u3051\u307E\u3059' : $r.s27(by) + '\u304C\u4E86\u627F\u3057\u306A\u304B\u3063\u305F\u306E\u3067\u3001\u305D\u306E\u307E\u307E\u7D9A\u3051\u307E\u3059');
+      flashMsg(by === -2 ? '\u8FD4\u4E8B\u304C\u305D\u308D\u308F\u306A\u304B\u3063\u305F\u306E\u3067\u3001\u305D\u306E\u307E\u307E\u7D9A\u3051\u307E\u3059' : by === v.v27_1 ? '\u300C\u5F85\u3063\u305F\u300D\u306F\u53D6\u308A\u6D88\u3055\u308C\u307E\u3057\u305F' : by === $r.b26_1 ? '\u4E86\u627F\u3057\u306A\u304B\u3063\u305F\u306E\u3067\u3001\u305D\u306E\u307E\u307E\u7D9A\u3051\u307E\u3059' : $r.t27(by) + '\u304C\u4E86\u627F\u3057\u306A\u304B\u3063\u305F\u306E\u3067\u3001\u305D\u306E\u307E\u307E\u7D9A\u3051\u307E\u3059');
       tmp_0 = Unit_instance;
     }
     changed_2();
     return Unit_instance;
   };
 }
-function setup$lambda_10() {
+function setup$lambda_13() {
   _init_properties_WebNet_kt__y4rdrr();
   var tmp0_safe_receiver = get_matches().l1(get_matchHandle());
   var tmp1_safe_receiver = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.yu();
   var tmp2_elvis_lhs = tmp1_safe_receiver == null ? null : toList(tmp1_safe_receiver);
   return tmp2_elvis_lhs == null ? emptyList() : tmp2_elvis_lhs;
 }
-function setup$lambda_11($r) {
+function setup$lambda_14($r) {
   return function (slot) {
     onLeft($r, slot);
     return Unit_instance;
   };
 }
-function setup$lambda_12() {
+function setup$lambda_15() {
   _init_properties_WebNet_kt__y4rdrr();
   changed_2();
   return Unit_instance;
+}
+function hexOf$lambda(it) {
+  _init_properties_WebNet_kt__y4rdrr();
+  return padStart(toString_3(it & 255, 16), 2, _Char___init__impl__6a9atx(48));
 }
 var properties_initialized_WebNet_kt_eot5px;
 function _init_properties_WebNet_kt__y4rdrr() {
@@ -41415,6 +41845,9 @@ function _init_properties_WebNet_kt__y4rdrr() {
     cpuLevel = 1;
     chatLog = ArrayList_init_$Create$_0();
     undoAsk = null;
+    clockIndex = -1;
+    cursors = HashMap_init_$Create$();
+    clockLeft = -1;
     undoUsed = HashMap_init_$Create$();
     undoDeclinedAt = HashMap_init_$Create$();
     flash = null;
@@ -41521,11 +41954,22 @@ export {
   onlineCpuPlay as onlineCpuPlay,
   onlineState as onlineState,
   onlineResign as onlineResign,
+  onlineMoveSeconds as onlineMoveSeconds,
+  onlineClockLeft as onlineClockLeft,
+  onlineMovesFrom as onlineMovesFrom,
+  onlineSendCursor as onlineSendCursor,
+  onlineCursors as onlineCursors,
+  onlineShareClock as onlineShareClock,
+  onlineTimeoutPlay as onlineTimeoutPlay,
   onlineSendChat as onlineSendChat,
   onlineRequestUndo as onlineRequestUndo,
   onlineVoteUndo as onlineVoteUndo,
   onlineMismatch as onlineMismatch,
   onlineStartReady as onlineStartReady,
+  relayNewKeyHex as relayNewKeyHex,
+  relayTopicHex as relayTopicHex,
+  relaySealHex as relaySealHex,
+  relayOpenHex as relayOpenHex,
 };
 //endregion
 

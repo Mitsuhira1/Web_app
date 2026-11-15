@@ -56,6 +56,15 @@
   const q = (sel) => document.querySelector('#boardwrap ' + sel);
 
   // ---------------------------------------------------------------- 五目ならべ
+  const lineSeen = {};
+  // そろった列の見せ方(Android 版と同じ: 脈打つ光の輪・白い縁・端から端への白い線)。pts = 中心の座標、u = 1 マスの大きさ
+  function winFx(pts, u, fresh, delay = 0, col = '#F5B83D') {
+    const glow = pts.map(([x, y]) => `<circle class="wglow" cx="${x}" cy="${y}" r="${u * .62}" fill="url(#wglowG)"/>`).join('');
+    const ring = pts.map(([x, y]) => `<circle class="wring" cx="${x}" cy="${y}" r="${u * .42}" fill="none" stroke="${col}" stroke-width="${u * .08}"/>`).join('');
+    const [a, z] = [pts[0], pts[pts.length - 1]];
+    return `<defs><radialGradient id="wglowG"><stop offset="0" stop-color="#FFF3B0" stop-opacity=".55"/><stop offset=".6" stop-color="#FFE27A" stop-opacity=".45"/><stop offset="1" stop-color="#FFE27A" stop-opacity="0"/></radialGradient></defs>`
+      + `<g class="wfx ${fresh ? 'go' : ''}" style="--wd:${delay}ms" pointer-events="none">${glow}${ring}<path class="wline2" pathLength="1" d="M${a[0]} ${a[1]}L${z[0]} ${z[1]}" stroke="${col}" stroke-width="${u * .2}" stroke-linecap="round" fill="none"/></g>`;
+  }
   function gomoku(b, A) {
     pair(A, '黒', '#15151A', '白', '#F6F2E8;border:1px solid #B9AC8C');
     const legal = new Set(A.view.human ? A.view.legal : []), win = new Set(b.win);
@@ -68,10 +77,17 @@
     for (let i = 0; i < N * N; i++) {
       const x = M + (i % N) * G, y = M + Math.floor(i / N) * G, v = b.cells[i];
       if (v) st += `<g data-pc="${i}">${stoneG(x, y, 2.5, v === 1 ? 'kB' : 'kW')}${b.last === i ? lastMark(x, y, .85) : ''}</g>`;
-      if (win.has(i)) st += `<circle cx="${x}" cy="${y}" r="2.9" fill="none" stroke="${GOLD}" stroke-width=".6"/>`;
       taps += tapG(x, y, G, i, legal.has(i), stoneG(x, y, 2.5, A.view.toMove === 0 ? 'kB' : 'kW'));
     }
-    A.board(s + st + taps + '</svg>', (e) => { if (e.i != null && legal.has(+e.i)) A.play(+e.i); });
+    // そろった 5 つ: 脈打つ光の輪 + 白い縁 + 結ぶ線(Android 版と同じ。盤の状態から描くので、描き直しても消えない)
+    let wl = '';
+    if (b.win && b.win.length >= 2) {
+      const P = (i) => [M + (i % N) * G, M + Math.floor(i / N) * G], pts = b.win.map(P).sort((p, q) => p[0] - q[0] || p[1] - q[1]);
+      const k = A.handle + ':' + b.win.join(','), fresh = lineSeen.gomoku !== k; lineSeen.gomoku = k;
+      wl = winFx(pts, G, fresh, 260 * A.speed);
+      if (fresh) A.anim(260 * A.speed + 700);
+    }
+    A.board(s + st + wl + taps + '</svg>', (e) => { if (e.i != null && legal.has(+e.i)) A.play(+e.i); });
     d.adds.forEach((i) => animPlace(q(`[data-pc="${i}"]`), 230 * A.speed));
     if (d.adds.length) { A.land(200); A.anim(260); }
   }
@@ -127,7 +143,21 @@
       taps += `<circle cx="${X(i)}" cy="${Y(i)}" r="6" fill="transparent" data-i="${i}"/>`;
     }
     const ghosts = d.gone.map(([j, v]) => `<g data-gh="${j}">${stoneG(X(j), Y(j), 4.6, v === 1 ? 'kW' : 'kB')}</g>`).join('');
-    A.board(s + st + ghosts + taps + '</svg>', (e) => {
+    // 3 つそろった(ミル): 最後に置いた・動かした駒を含む列を、光と線で見せる(盤の状態から描くので、通信対戦の描き直しでも消えない)
+    let ml = '';
+    const dest = b.last >= 0 && b.last < 24 ? b.last : b.last >= 100 && b.last < 1000 ? (b.last - 100) % 24 : -1;
+    let shown = false;
+    if (dest >= 0 && b.board[dest]) for (const tri of ML) if (tri.includes(dest) && tri.every((j) => b.board[j] === b.board[dest])) {
+      const k = A.handle + ':' + tri.join(',') + ':' + b.last, fresh = lineSeen.morris !== k; lineSeen.morris = k;
+      lineSeen.morrisTri = { h: A.handle, tri, v: b.board[dest] }; shown = true;
+      ml += winFx(tri.map((j) => [X(j), Y(j)]), K * .75, fresh, 280 * A.speed);
+      if (fresh) A.anim(280 * A.speed + 700);
+    }
+    // 駒を取った直後も、取るきっかけになった 3 つの列を出したままにする(次の手まで)
+    const mt = lineSeen.morrisTri;
+    if (!shown && b.last >= 1000 && mt && mt.h === A.handle && mt.tri.every((j) => b.board[j] === mt.v)) ml += winFx(mt.tri.map((j) => [X(j), Y(j)]), K * .75, false);
+    else if (!shown) lineSeen.morrisTri = null;
+    A.board(s + st + ml + ghosts + taps + '</svg>', (e) => {
       if (e.i == null) return; const i = +e.i;
       if (legal.has(1000 + i)) return A.play(1000 + i);
       if (legal.has(i)) return A.play(i);
