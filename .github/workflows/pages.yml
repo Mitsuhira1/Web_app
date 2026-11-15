@@ -2,7 +2,7 @@ name: Web を公開する(GitHub Pages)
 # web/ の中身をそのまま公開する(規則・CPU の JS は tools/build_web.sh で作って web/core/ に入れてある)。
 on:
   push:
-    branches: [ccr-efc07031-6exjqs, ccr-f5dc7098-o8xhf3, main]
+    branches: [ccr-efc07031-6exjqs, main]
   workflow_dispatch:
 permissions:
   contents: read
