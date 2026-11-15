@@ -237,7 +237,7 @@ const avGrid=()=>`<div class="avgrid"><button data-av="-1" aria-pressed="${S.set
 function avatarModal(){ return `<div class="modal"><button class="mback" data-mback aria-label="閉じる"></button><div class="mbox" style="width:min(620px,100%)" role="dialog" aria-label="アイコン"><div class="mhd"><h3>アイコン</h3><button class="btn" style="height:38px" data-photo>写真を選ぶ</button><button class="btn gold" data-mclose style="height:38px;width:110px">完了</button></div><div class="mbody" style="padding-top:16px">${avGrid()}</div></div></div>`; }
 /* ---- 初回起動(表示名とアイコン。どちらも飛ばせる) ---- */
 function first(){ return `<div class="screen" style="align-items:center;justify-content:center;overflow:auto"><div class="frbox">
-   <small>遊びの箱30</small><h2>はじめまして</h2>
+   <small>あそび箱30</small><h2>はじめまして</h2>
    <div class="frtop">${meAv('big')}<div style="flex:1;min-width:0"><label for="nameIn">表示名</label><input id="nameIn" value="${esc(S.set.name)}" maxlength="12" placeholder="あなた" autocomplete="off"></div></div>
    <div class="frlab"><span>アイコン</span><button class="btn" style="height:36px" data-photo>写真を選ぶ</button></div>${avGrid()}
    <div class="frops"><button class="btn" data-firstdone>スキップ</button><button class="btn primary" data-firstdone>はじめる</button></div></div></div>`; }

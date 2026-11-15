@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT.parent / "Windows-Projects" / "app"
 DST = ROOT / "web" / "pc"
 ICON512 = SRC.parent / "src-tauri" / "icons" / "icon.png"  # 角の丸いアイコン(512)
-NAME = "遊びの箱30"  # Edge のアプリ版の名前(ユーザーの指示 2026-11-15)。exe は「日本アソビ大辞典30」のまま
+NAME = "あそび箱30"  # Edge のアプリ版の名前(ユーザーの指示 2026-11-15。WEB 版と同じ表記)。exe は「日本アソビ大辞典30」のまま
 
 if not (SRC / "index.html").exists():
     sys.exit(f"元が見つかりません: {SRC}")
@@ -95,12 +95,12 @@ def sub(rel, pairs):
         t = t.replace(a, b)
     f.write_text(t, encoding="utf-8")
 sub("js/app.js", [
-    ("<strong>日本アソビ大辞典 <i>30</i></strong>", "<strong>遊びの箱 <i>30</i></strong>"),
+    ("<strong>日本アソビ大辞典 <i>30</i></strong>", "<strong>あそび箱 <i>30</i></strong>"),
     ("ブラウザの見本では、アプリを閉じられません(exe では閉じます)", "閉じられませんでした。ウィンドウの × で閉じてください"),
     ("ブラウザの見本では、ウィンドウの大きさは変えられません(exe では変わります)", "ブラウザのタブでは、ウィンドウの大きさは変えられません"),
 ])
-sub("js/art.js", [("<small>日本アソビ大辞典30</small>", "<small>遊びの箱30</small>")])
-sub("index.html", [("<title>日本アソビ大辞典30</title>", "<title>遊びの箱30</title>")])
+sub("js/art.js", [("<small>日本アソビ大辞典30</small>", "<small>あそび箱30</small>")])
+sub("index.html", [("<title>日本アソビ大辞典30</title>", "<title>あそび箱30</title>")])
 
 # index.html: アプリとして入れる情報と、pwa.js(app.js の後に読む。setWinSize を Web 用に置き換える)
 p = DST / "index.html"

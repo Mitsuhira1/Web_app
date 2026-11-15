@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipc-9e09a8f36e27";
+const CACHE = "asobipc-3de2b39226fc";
 const FILES = [
 "./",
 "./audio/go_stone_1.mp3",

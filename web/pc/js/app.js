@@ -57,7 +57,7 @@ const QUIT_IC = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d=
 function rail(cur) {
   const t = [['menu', 'games', 'ゲーム'], ['room', 'room', 'みんなで遊ぶ'], ['records', 'rec', '成績'], ['settings', 'set', '設定']];
   return `<nav class="rail">
-    <div class="brand"><strong>遊びの箱 <i>30</i></strong></div>
+    <div class="brand"><strong>あそび箱 <i>30</i></strong></div>
     <div class="tabs">${t.map(([s, i, n]) => `<button data-go="${s}" ${cur === s ? 'aria-current="page"' : ''}>${ic(i)}${n}</button>`).join('')}</div>
     ${cur === 'menu' ? `<div><h4>人数</h4>${seg('filter', ['すべて', '1人', '2人', '3人以上'], S.filter, 'col')}</div>` : ''}
     <button class="quitbtn" data-quitapp>${QUIT_IC}終了する</button>
