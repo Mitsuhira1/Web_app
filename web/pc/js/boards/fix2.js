@@ -58,12 +58,21 @@
   // ---------------------------------------------------------------- 五目ならべ
   const lineSeen = {};
   // そろった列の見せ方(Android 版と同じ: 脈打つ光の輪・白い縁・端から端への白い線)。pts = 中心の座標、u = 1 マスの大きさ
-  function winFx(pts, u, fresh, delay = 0, col = '#F5B83D') {
-    const glow = pts.map(([x, y]) => `<circle class="wglow" cx="${x}" cy="${y}" r="${u * .62}" fill="url(#wglowG)"/>`).join('');
-    const ring = pts.map(([x, y]) => `<circle class="wring" cx="${x}" cy="${y}" r="${u * .42}" fill="none" stroke="${col}" stroke-width="${u * .08}"/>`).join('');
-    const [a, z] = [pts[0], pts[pts.length - 1]];
-    return `<defs><radialGradient id="wglowG"><stop offset="0" stop-color="#FFF3B0" stop-opacity=".55"/><stop offset=".6" stop-color="#FFE27A" stop-opacity=".45"/><stop offset="1" stop-color="#FFE27A" stop-opacity="0"/></radialGradient></defs>`
-      + `<g class="wfx ${fresh ? 'go' : ''}" style="--wd:${delay}ms" pointer-events="none">${glow}${ring}<path class="wline2" pathLength="1" d="M${a[0]} ${a[1]}L${z[0]} ${z[1]}" stroke="${col}" stroke-width="${u * .2}" stroke-linecap="round" fill="none"/></g>`;
+  // そろった列の見せ方(ユーザーが見本から選んだ形。2026-11-15)
+  //  'run' (五目ならべ・B): 金の線が一気に走り、石が順にはねて、線の上を光が流れ続ける
+  //  'pop' (モリス・A): 端から順に金の輪がポンと広がって残り、最後に金の線が端から端へ伸びる
+  function winFx(pts, u, fresh, delay, kind) {
+    const [a, z] = [pts[0], pts[pts.length - 1]], d = `M${a[0]} ${a[1]}L${z[0]} ${z[1]}`, gap = kind === 'pop' ? 160 : 80;
+    if (kind === 'run') return `<g class="wfx run ${fresh ? 'go' : ''}" style="--wd:${delay}ms" pointer-events="none"><path class="wl" pathLength="1" d="${d}" stroke="#F5B83D" stroke-width="${u * .26}" stroke-linecap="round" fill="none"/><path class="wsh" pathLength="1" d="${d}" stroke="#FFF6D0" stroke-width="${u * .12}" stroke-linecap="round" fill="none"/></g>`;
+    const rings = pts.map(([x, y], k) => `<circle class="wpop" cx="${x}" cy="${y}" r="${u * .45}" fill="none" stroke="#FFD94F" stroke-width="${u * .2}" style="--k:${k * gap}ms"/><circle class="wrg" cx="${x}" cy="${y}" r="${u * .98}" fill="none" stroke="#F5B83D" stroke-width="${u * .17}" style="--k:${k * gap}ms"/>`).join('');
+    return `<g class="wfx pop ${fresh ? 'go' : ''}" style="--wd:${delay}ms;--wl:${(pts.length - 1) * gap + 300}ms" pointer-events="none">${rings}<path class="wl" pathLength="1" d="${d}" stroke="#F5B83D" stroke-width="${u * .36}" stroke-linecap="round" fill="none"/></g>`;
+  }
+  // そろった石を順にはねさせる / ふくらませる(初めて見た時だけ)
+  function winBounce(sel, n, kind, delay) {
+    requestAnimationFrame(() => n.forEach((i, k) => { const e = document.querySelector(sel(i)); if (!e) return;
+      e.style.transformBox = 'fill-box'; e.style.transformOrigin = 'center';
+      e.animate(kind === 'run' ? [{ transform: 'translateY(0)' }, { transform: 'translateY(-22%)', offset: .4 }, { transform: 'translateY(0)' }] : [{ transform: 'scale(1)' }, { transform: 'scale(1.28)', offset: .4 }, { transform: 'scale(.94)', offset: .7 }, { transform: 'scale(1)' }],
+        { duration: kind === 'run' ? 350 : 450, delay: delay + (kind === 'run' ? 120 + k * 80 : k * 160), easing: 'ease-out' }); }));
   }
   function gomoku(b, A) {
     pair(A, '黒', '#15151A', '白', '#F6F2E8;border:1px solid #B9AC8C');
@@ -84,8 +93,8 @@
     if (b.win && b.win.length >= 2) {
       const P = (i) => [M + (i % N) * G, M + Math.floor(i / N) * G], pts = b.win.map(P).sort((p, q) => p[0] - q[0] || p[1] - q[1]);
       const k = A.handle + ':' + b.win.join(','), fresh = lineSeen.gomoku !== k; lineSeen.gomoku = k;
-      wl = winFx(pts, G, fresh, 260 * A.speed);
-      if (fresh) A.anim(260 * A.speed + 700);
+      wl = winFx(pts, G, fresh, 260 * A.speed, 'run');
+      if (fresh) { A.anim(260 * A.speed + 900); winBounce((i) => `[data-pc="${i}"]`, b.win.slice().sort((x, y) => P(x)[0] - P(y)[0] || P(x)[1] - P(y)[1]), 'run', 260 * A.speed); }
     }
     A.board(s + st + wl + taps + '</svg>', (e) => { if (e.i != null && legal.has(+e.i)) A.play(+e.i); });
     d.adds.forEach((i) => animPlace(q(`[data-pc="${i}"]`), 230 * A.speed));
@@ -136,7 +145,7 @@
       s += `<circle cx="${X(i)}" cy="${Y(i)}" r="1.3" fill="#6b4e25"/>`;
       const v = b.board[i];
       if (v) st += `<g data-pc="${i}">${stoneG(X(i), Y(i), 4.6, v === 1 ? 'kW' : 'kB')}</g>`;
-      if (b.last >= 0 && (b.last === i || (b.last >= 100 && b.last < 1000 && (b.last - 100) % 24 === i))) st += `<circle cx="${X(i)}" cy="${Y(i)}" r="5.3" fill="none" stroke="${GOLD}" stroke-width=".7"/>`;
+      if (v && b.last >= 0 && (b.last === i || (b.last >= 100 && b.last < 1000 && (b.last - 100) % 24 === i))) st += lastMark(X(i), Y(i), 1.25);
       if (selFrom === i) st += `<circle cx="${X(i)}" cy="${Y(i)}" r="5.4" fill="none" stroke="#B98318" stroke-width="1.1"/>`;
       if (targets.has(i) || (legal.has(i) && !v)) st += `<circle cx="${X(i)}" cy="${Y(i)}" r="1.9" fill="#B98318"/>`;
       if (legal.has(1000 + i)) st += `<circle cx="${X(i)}" cy="${Y(i)}" r="5.4" fill="none" stroke="#C8463C" stroke-width="1.1" stroke-dasharray="1.6 1.2"/>`;
@@ -150,13 +159,16 @@
     if (dest >= 0 && b.board[dest]) for (const tri of ML) if (tri.includes(dest) && tri.every((j) => b.board[j] === b.board[dest])) {
       const k = A.handle + ':' + tri.join(',') + ':' + b.last, fresh = lineSeen.morris !== k; lineSeen.morris = k;
       lineSeen.morrisTri = { h: A.handle, tri, v: b.board[dest] }; shown = true;
-      ml += winFx(tri.map((j) => [X(j), Y(j)]), K * .75, fresh, 280 * A.speed);
-      if (fresh) A.anim(280 * A.speed + 700);
+      ml += winFx(tri.map((j) => [X(j), Y(j)]), K * .38, fresh, 280 * A.speed, 'pop');
+      if (fresh) { A.anim(280 * A.speed + 1400); winBounce((i) => `[data-pc="${i}"]`, tri, 'pop', 280 * A.speed); }
     }
     // 駒を取った直後も、取るきっかけになった 3 つの列を出したままにする(次の手まで)
     const mt = lineSeen.morrisTri;
-    if (!shown && b.last >= 1000 && mt && mt.h === A.handle && mt.tri.every((j) => b.board[j] === mt.v)) ml += winFx(mt.tri.map((j) => [X(j), Y(j)]), K * .75, false);
-    else if (!shown) lineSeen.morrisTri = null;
+    // 取る駒を選んだら(駒を取った手)、列の印は駒が消えるのに合わせて、ゆっくり消す(1 回だけ。描き直しでは出し直さない)
+    if (!shown && b.last >= 1000 && mt && mt.h === A.handle && mt.tri.every((j) => b.board[j] === mt.v)) {
+      const k = A.handle + ':out:' + b.last;
+      if (lineSeen.morrisOut !== k) { lineSeen.morrisOut = k; ml += winFx(mt.tri.map((j) => [X(j), Y(j)]), K * .38, false, 0, 'pop').replace('class="wfx pop ', 'class="wfx pop wout '); }
+    } else if (!shown) lineSeen.morrisTri = null;
     A.board(s + st + ml + ghosts + taps + '</svg>', (e) => {
       if (e.i == null) return; const i = +e.i;
       if (legal.has(1000 + i)) return A.play(1000 + i);
@@ -231,7 +243,7 @@
     for (let i = 0; i < 64; i++) {
       const [r, c] = D(i), x = 2 + c * 10, y = 2 + r * 10, dark = (Math.floor(i / 8) + (i % 8)) % 2 === 1;
       s += `<rect x="${x}" y="${y}" width="10" height="10" fill="${dark ? '#769656' : '#EEEED2'}"/>`;
-      if (i === lastF || i === lastT) s += `<rect x="${x}" y="${y}" width="10" height="10" fill="${GOLD}" opacity=".4"/>`;
+      if (i === lastF || i === lastT) s += `<rect x="${x}" y="${y}" width="10" height="10" fill="#F7D046" opacity=".62"/>`;
       if (b.board[i] === 6 * (b.turn === 0 ? 1 : -1) && b.check) s += `<rect x="${x}" y="${y}" width="10" height="10" fill="#C8463C" opacity=".5"/>`;
     }
     const piece = (v, x, y) => { const white = v > 0, p = window.CHESS_PATHS[CHK[Math.abs(v)]]; return `<ellipse cx="${x + 5.3}" cy="${y + 9}" rx="3.4" ry="1" fill="#000" opacity=".3"/><g transform="translate(${x + 5},${y + 5.3}) scale(.235)" filter="url(#xSh)"><path d="${p}" fill-rule="evenodd" fill="url(#${white ? 'xPw' : 'xPb'})" stroke="${white ? '#8d7c58' : '#0c0806'}" stroke-width="1.2" stroke-linejoin="round"/><path d="M-11.5 13.5H11.5" stroke="${white ? '#6b5a3c' : '#000'}" stroke-opacity=".45" stroke-width="1.2"/><path d="${p}" fill-rule="evenodd" fill="url(#xPh)" opacity="${white ? .55 : .3}"/>${window.CHESS_SLIT[CHK[Math.abs(v)]] ? `<path d="${window.CHESS_SLIT[CHK[Math.abs(v)]]}" fill="none" stroke="${white ? '#8d7c58' : '#6a5a48'}" stroke-width="1.5" stroke-linecap="round"/>` : ''}</g>`; };
@@ -284,7 +296,7 @@
       if (sel === i) st += `<circle cx="${x}" cy="${y}" r="2.6" fill="none" stroke="#FFF6D8" stroke-width=".55"/>`;
       else if (!sel && A.view.human && movable.has(i) && A.hints) st += `<circle cx="${x}" cy="${y}" r="2.45" fill="none" stroke="rgba(255,246,216,.55)" stroke-width=".3"/>`;
       if (tg.has(i)) st += `<circle cx="${x}" cy="${y}" r=".85" fill="#FFF6D8"/>`;
-      if (b.last >= 0 && b.last % 128 === i) st += `<circle cx="${x}" cy="${y}" r="2.6" fill="none" stroke="${GOLD}" stroke-width=".45"/>`;
+      if (b.last >= 0 && b.last % 128 === i && v) st += lastMark(x, y, .62);
       taps += `<circle cx="${x}" cy="${y}" r="2.6" fill="transparent" data-i="${i}"/>`;
     }
     A.board(s + st + taps + '</svg>', (e) => {

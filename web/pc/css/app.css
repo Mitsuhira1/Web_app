@@ -1574,3 +1574,24 @@ html.reduce .wline.go{animation:none;stroke-dashoffset:0}
 @keyframes wfade{to{opacity:1}}
 html.reduce .wfx *{animation:none!important;opacity:1!important;stroke-dashoffset:0!important}
 .wfx .wline2{filter:drop-shadow(0 0 .3px rgba(0,0,0,.7))}
+/* そろった列(ユーザーが見本から選んだ形 2026-11-15)
+   run: 線が一気に走る → 線の上を光が流れ続ける(五目ならべ) / pop: 輪が順にポンと広がって残る → 線が伸びる(コネクトフォー・モリス) */
+.wfx .wl{stroke-dasharray:1;stroke-dashoffset:0;filter:drop-shadow(0 0 .35px rgba(0,0,0,.65))}
+.wfx.run .wsh{stroke-dasharray:.18 1;opacity:.9;animation:wsh 1s linear infinite}
+@keyframes wsh{from{stroke-dashoffset:1.2}to{stroke-dashoffset:0}}
+.wfx.run.go .wl{stroke-dashoffset:1;animation:draw .45s cubic-bezier(.5,0,.3,1) var(--wd,0ms) forwards}
+.wfx.run.go .wsh{opacity:0;animation:wfade .2s linear calc(var(--wd,0ms) + .6s) forwards,wsh 1s linear calc(var(--wd,0ms) + .6s) infinite}
+.wfx.pop .wpop{display:none}
+.wfx.pop.go .wpop{display:inline;opacity:0;animation:wring2 .7s ease-out calc(var(--wd,0ms) + var(--k,0ms)) both}
+.wfx.pop.go .wrg{opacity:0;animation:wfade .3s ease-out calc(var(--wd,0ms) + var(--k,0ms)) forwards}
+.wfx.pop.go .wl{stroke-dashoffset:1;animation:draw .5s cubic-bezier(.3,.7,.3,1) calc(var(--wd,0ms) + var(--wl,600ms)) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes wring2{0%{opacity:0;transform:scale(1)}30%{opacity:1}100%{opacity:0;transform:scale(2.6)}}
+.wfx .wpop{transform-box:fill-box;transform-origin:center}
+.wfx.c4 .wl{filter:none}
+html.reduce .wfx *{animation:none!important;opacity:1!important;stroke-dashoffset:0!important}
+html.reduce .wfx .wpop{display:none!important}
+/* 将棋: 最後に動いた升(木の色にまぎれない赤み) */
+.scell.lastto{background:rgba(226,85,58,.26);box-shadow:inset 0 0 0 2px rgba(200,48,30,.55)}
+.wfx.wout{animation:wout .6s ease-in .15s forwards}
+@keyframes wout{to{opacity:0}}

@@ -160,21 +160,33 @@
       if (!v) return;
       const r = Math.floor(i / 7), c = i % 7, dr = 5 - r;
       const fresh = old && !old[i] && i === b.last;
-      discs += `<span class="c4d ${col(v)} ${fresh ? 'fresh' : ''} ${win.has(i) ? 'win' : ''}" data-r="${dr}" style="left:${c * 100 / 7}%;top:${dr * 100 / 6}%"></span>`;
+      discs += `<span class="c4d ${col(v)} ${fresh ? 'fresh' : ''} ${win.has(i) ? 'win' : ''}" data-ci="${i}" data-r="${dr}" style="left:${c * 100 / 7}%;top:${dr * 100 / 6}%"></span>`;
     });
     const top = Array.from({ length: 7 }, (_, c) => `<div class="c4slot" data-col="${c}">${legal.has(c) ? `<span class="c4d ${turnCol} hov"></span>` : ''}</div>`).join('');
     const front = Array.from({ length: 42 }, (_, k) => { const dr = Math.floor(k / 7), c = k % 7, i = (5 - dr) * 7 + c; return `<button class="c4cell ${i === b.last ? 'lastc' : ''}" data-col="${c}" ${legal.has(c) && lowest(c) * 7 + c === i ? `data-land="${c}"` : ''} ${legal.has(c) ? '' : 'disabled'} aria-label="${c + 1}列"></button>`; }).join('');
     const ghostDiscs = Array.from({ length: 7 }, (_, c) => { if (!legal.has(c)) return ''; const r = lowest(c); return `<span class="c4d ${turnCol} c4gh" data-gc="${c}" style="left:${c * 100 / 7}%;top:${(5 - r) * 100 / 6}%"></span>`; }).join('');
     if (old && old.some((v, i) => v !== b.cells[i])) { A.anim(900); const fr = b.last >= 0 ? 5 - Math.floor(b.last / 7) : 3; A.land((430 + fr * 70) * 0.5); }
-    // 4 つそろった所: 脈打つ光の輪 + 白い縁 + 結ぶ線(Android 版と同じ。盤の状態から描く)
-    let wl = '';
+    // 4 つそろった所(ユーザーが見本から選んだ A): 端から順に金の輪がポンと広がって残り、最後に線が端から端へ。札(円盤)も順にふくらむ
+    let wl = '', winOrder = [], winFill = null;
     if (b.win && b.win.length >= 2) {
-      const pts = b.win.map((i) => [i % 7 + .5, 5 - Math.floor(i / 7) + .5]).sort((p, q) => p[0] - q[0] || p[1] - q[1]);
+      winOrder = b.win.slice().sort((x, y) => (x % 7) - (y % 7) || Math.floor(y / 7) - Math.floor(x / 7));
       const k = A.handle + ':' + b.win.join(','), fresh = c4WinSeen !== k; c4WinSeen = k;
-      const delay = old && old.some((v, i) => v !== b.cells[i]) ? 900 : 0;
-      const glow = pts.map(([x, y]) => `<circle class="wglow" cx="${x}" cy="${y}" r=".62" fill="url(#c4glowG)"/>`).join(''), ring = pts.map(([x, y]) => `<circle class="wring" cx="${x}" cy="${y}" r=".4" fill="none" stroke="#fff" stroke-width=".07"/>`).join('');
-      wl = `<svg class="c4wl" viewBox="0 0 7 6" preserveAspectRatio="none"><defs><radialGradient id="c4glowG"><stop offset="0" stop-color="#FFF3B0" stop-opacity="0"/><stop offset=".55" stop-color="#FFF3B0" stop-opacity="0"/><stop offset=".72" stop-color="#FFE27A" stop-opacity=".8"/><stop offset="1" stop-color="#FFE27A" stop-opacity="0"/></radialGradient></defs><g class="wfx ${fresh ? 'go' : ''}" style="--wd:${delay * A.speed}ms">${glow}${ring}<path class="wline2" pathLength="1" d="M${pts[0][0]} ${pts[0][1]}L${pts[pts.length - 1][0]} ${pts[pts.length - 1][1]}" stroke="#fff" stroke-width=".11" stroke-linecap="round" fill="none"/></g></svg>`;
-      if (fresh) A.anim(delay * A.speed + 700);
+      const delay = (old && old.some((v, i) => v !== b.cells[i]) ? 900 : 0) * A.speed, gap = 160;
+      wl = `<svg class="c4wl"></svg>`;
+      // 円盤の本当の位置(落ちる動きの途中でも動かない offset)から、輪と線を px で描く(ずれないように)
+      winFill = () => {
+        const bd = document.querySelector('#boardwrap .c4board'), svg = bd && bd.querySelector('.c4wl'), dz = bd && bd.querySelector('.c4discs'); if (!svg || !dz) return;
+        const pts = winOrder.map((i) => { const e = dz.querySelector(`.c4d[data-ci="${i}"]`); return e ? [dz.offsetLeft + e.offsetLeft + e.offsetWidth / 2, dz.offsetTop + e.offsetTop + e.offsetHeight / 2, e.offsetWidth / 2] : null; }).filter(Boolean);
+        if (pts.length < 2) return;
+        const rad = pts[0][2];
+        svg.setAttribute('viewBox', `0 0 ${bd.clientWidth} ${bd.clientHeight}`);
+        const rings = pts.map(([x, y], n) => `<circle class="wpop" cx="${x}" cy="${y}" r="${rad * .5}" fill="none" stroke="#FFD94F" stroke-width="${rad * .24}" style="--k:${n * gap}ms"/><circle class="wrg" cx="${x}" cy="${y}" r="${rad * 1.18}" fill="none" stroke="#FFF3B0" stroke-width="${rad * .2}" style="--k:${n * gap}ms"/>`).join('');
+        svg.innerHTML = `<g class="wfx pop c4 ${fresh ? 'go' : ''}" style="--wd:${delay}ms;--wl:${(pts.length - 1) * gap + 300}ms">${rings}<path class="wl" pathLength="1" d="M${pts[0][0]} ${pts[0][1]}L${pts[pts.length - 1][0]} ${pts[pts.length - 1][1]}" stroke="#FFF3B0" stroke-width="${rad * .32}" stroke-linecap="round" fill="none"/></g>`;
+      };
+      if (fresh) {
+        A.anim(delay + 1400);
+        requestAnimationFrame(() => winOrder.forEach((i, n) => { const e = document.querySelector(`#boardwrap .c4d[data-ci="${i}"]`); if (e) e.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.28)', offset: .4 }, { transform: 'scale(.94)', offset: .7 }, { transform: 'scale(1)' }], { duration: 450, delay: delay + n * gap, easing: 'ease-out' }); }));
+      }
     }
     prevC4 = { h: A.handle, cells: b.cells.slice() };
     A.board(`<div class="c4"><div class="c4top">${top}</div><div class="c4board"><div class="c4discs">${discs}${ghostDiscs}</div><div class="c4wood"></div><div class="c4front">${front}</div>${wl}</div><div class="c4base"></div><div class="c4floor"></div></div>`, (d) => {
@@ -182,6 +194,7 @@
       const c = +d.col; if (!legal.has(c)) return;
       c4pre = null; A.play(c);
     });
+    if (winFill) winFill();
     const root = document.querySelector('#boardwrap .c4');
     if (root && A.view.human) {
       const hov = (c) => { root.querySelectorAll('.c4slot.h,.c4cell.land,.c4gh.on').forEach((e) => e.classList.remove('h', 'land', 'on')); if (c == null || !legal.has(c)) return;

@@ -41700,33 +41700,15 @@ function setup$lambda_9($r) {
     var tmp1_safe_receiver = ses == null ? null : ses.iu_1;
     var tmp2_elvis_lhs = tmp1_safe_receiver == null ? null : tmp1_safe_receiver.it('onlineUndo', 0);
     var limit = tmp2_elvis_lhs == null ? 0 : tmp2_elvis_lhs;
+    var over = !(ses == null) && !(ses.bv() == null);
     var tmp;
     var tmp_0;
     var tmp_1;
-    var tmp_2;
-    var tmp_3;
-    if (ses == null || b == null || !(ses.bv() == null)) {
-      tmp_3 = true;
-    } else {
-      var tmp_4 = ses.ku_1;
-      tmp_3 = isInterface(tmp_4, ConcurrentRules);
-    }
-    if (tmp_3) {
-      tmp_2 = true;
-    } else {
-      tmp_2 = limit === 0;
-    }
-    if (tmp_2) {
+    if (ses == null || b == null) {
       tmp_1 = true;
     } else {
-      var tmp_5;
-      if (limit > 0) {
-        var tmp3_elvis_lhs = get_undoUsed().l1(slot);
-        tmp_5 = (tmp3_elvis_lhs == null ? 0 : tmp3_elvis_lhs) >= limit;
-      } else {
-        tmp_5 = false;
-      }
-      tmp_1 = tmp_5;
+      var tmp_2 = ses.ku_1;
+      tmp_1 = isInterface(tmp_2, ConcurrentRules);
     }
     if (tmp_1) {
       tmp_0 = true;
@@ -41736,7 +41718,62 @@ function setup$lambda_9($r) {
     if (tmp_0) {
       tmp = null;
     } else {
-      tmp = ses.ev(b.t25_1.g1(slot));
+      var tmp_3;
+      var tmp_4;
+      if (over) {
+        // Inline function 'kotlin.collections.isNotEmpty' call
+        tmp_4 = !ses.yu().q();
+      } else {
+        tmp_4 = false;
+      }
+      if (tmp_4) {
+        tmp_3 = !(Companion_getInstance_4().tu(last(ses.yu())) == null);
+      } else {
+        tmp_3 = false;
+      }
+      if (tmp_3) {
+        tmp = ses.yu().n() - 1 | 0;
+      } else {
+        if (over) {
+          var tmp3_elvis_lhs = ses.ev(b.t25_1.g1(slot));
+          var tmp_5;
+          if (tmp3_elvis_lhs == null) {
+            // Inline function 'kotlin.takeIf' call
+            var this_0 = ses.yu().n() - 1 | 0;
+            // Inline function 'kotlin.contracts.contract' call
+            var tmp_6;
+            // Inline function 'setup.<anonymous>.<anonymous>' call
+            if (this_0 >= 0) {
+              tmp_6 = this_0;
+            } else {
+              tmp_6 = null;
+            }
+            tmp_5 = tmp_6;
+          } else {
+            tmp_5 = tmp3_elvis_lhs;
+          }
+          tmp = tmp_5;
+        } else {
+          var tmp_7;
+          if (limit === 0) {
+            tmp_7 = true;
+          } else {
+            var tmp_8;
+            if (limit > 0) {
+              var tmp4_elvis_lhs = get_undoUsed().l1(slot);
+              tmp_8 = (tmp4_elvis_lhs == null ? 0 : tmp4_elvis_lhs) >= limit;
+            } else {
+              tmp_8 = false;
+            }
+            tmp_7 = tmp_8;
+          }
+          if (tmp_7) {
+            tmp = null;
+          } else {
+            tmp = ses.ev(b.t25_1.g1(slot));
+          }
+        }
+      }
     }
     return tmp;
   };
@@ -41750,14 +41787,17 @@ function setup$lambda_10(v) {
 function setup$lambda_11(v) {
   _init_properties_WebNet_kt__y4rdrr();
   var ses = get_matches().l1(get_matchHandle());
+  var wasOver = !(ses == null) && !(ses.bv() == null);
   var tmp;
   if (!(ses == null) && ses.fv(v.w27_1)) {
-    // Inline function 'kotlin.collections.set' call
-    var this_0 = get_undoUsed();
-    var key = v.v27_1;
-    var tmp0_elvis_lhs = get_undoUsed().l1(v.v27_1);
-    var value = (tmp0_elvis_lhs == null ? 0 : tmp0_elvis_lhs) + 1 | 0;
-    this_0.c3(key, value);
+    if (!wasOver) {
+      // Inline function 'kotlin.collections.set' call
+      var this_0 = get_undoUsed();
+      var key = v.v27_1;
+      var tmp0_elvis_lhs = get_undoUsed().l1(v.v27_1);
+      var value = (tmp0_elvis_lhs == null ? 0 : tmp0_elvis_lhs) + 1 | 0;
+      this_0.c3(key, value);
+    }
     tmp = toList(ses.yu());
   } else {
     tmp = null;

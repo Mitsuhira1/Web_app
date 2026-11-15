@@ -53,7 +53,7 @@
       const [x, y] = pos(i), store = i === 6 || i === 13, n = b.pits[i], rx = store ? 40 : 38, ry = store ? 118 : 38;
       s += `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="url(#fPit)" stroke="#2a180c" stroke-width="3"/><ellipse cx="${x}" cy="${y + 3}" rx="${rx}" ry="${ry}" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2.5"/>`;
       if (!store && legal.has(i)) s += `<circle cx="${x}" cy="${y}" r="44" fill="none" stroke="#FFC65C" stroke-width="4" class="mcan"/>`;
-      if (b.last === i && n === 0) s += `<circle cx="${x}" cy="${y}" r="44" fill="none" stroke="#FFFDF5" stroke-width="2" opacity=".6"/>`;
+      if (b.last === i && n === 0) s += `<circle cx="${x}" cy="${y}" r="44" fill="none" stroke="#fff" stroke-width="5" opacity=".9"/><circle cx="${x}" cy="${y}" r="44" fill="none" stroke="#E2553A" stroke-width="2.6"/>`;
       // 玉: 穴ごとに決まった並び(数が同じなら同じ場所)
       const r = rng(i * 131 + 17), was = old ? old[i] : n, add = n - was;
       for (let k = 0; k < n; k++) {
@@ -129,10 +129,10 @@
     for (let i = 0; i < 11; i++) {
       const v = b.board[i], x = px(i), y = py(i);
       s += `<circle cx="${x}" cy="${y}" r="26" fill="#D2B078" stroke="#7a5a2a" stroke-width="3"/>`;
-      if (tg.has(i)) s += `<circle cx="${x}" cy="${y}" r="12" fill="#B98318" class="pulse"/>`;
-      if (b.last >= 0 && b.last % 11 === i) s += `<circle cx="${x}" cy="${y}" r="46" fill="none" stroke="#E0AD4A" stroke-width="3" opacity=".8"/>`;
+      // 置ける所: 黒い小さな点と、うすい輪(ユーザーが見本から選んだ B)
+      if (tg.has(i)) s += `<circle cx="${x}" cy="${y}" r="16" fill="none" stroke="rgba(26,20,14,.35)" stroke-width="3"/><circle cx="${x}" cy="${y}" r="6.5" fill="#1A140E"/>`;
       if (sel === i) s += `<circle cx="${x}" cy="${y}" r="46" fill="rgba(255,198,92,.3)" stroke="#B98318" stroke-width="4"/>`;
-      if (v) { const from = old && b.last >= 0 && b.last % 11 === i && b.last !== old.last ? Math.floor(b.last / 11) : -1; pieces += `<g class="hpiece" ${from >= 0 ? `data-dx="${px(from) - x}" data-dy="${py(from) - y}"` : ''}>${v === 1 ? hHound(x, y, 30) : hHare(x, y + 2, 30)}</g>`; }
+      if (v) { const from = old && b.last >= 0 && b.last % 11 === i && b.last !== old.last ? Math.floor(b.last / 11) : -1; pieces += `<g class="hpiece" ${from >= 0 ? `data-dx="${px(from) - x}" data-dy="${py(from) - y}"` : ''}>${v === 1 ? hHound(x, y, 30) : hHare(x, y + 2, 30)}${b.last >= 0 && b.last % 11 === i ? `<circle cx="${x + 23}" cy="${y + (v === 1 ? -23 : -17)}" r="8" fill="#E2553A" stroke="#fff" stroke-width="2.8" pointer-events="none"/>` : ''}</g>`; }
     }
     for (let i = 0; i < 11; i++) s += `<circle cx="${px(i)}" cy="${py(i)}" r="52" fill="transparent" data-i="${i}" class="${movable.has(i) || tg.has(i) ? 'mtap' : ''}"/>`;
     prev.hare = { h: A.handle, last: b.last };

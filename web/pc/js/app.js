@@ -216,7 +216,7 @@ function leavePlay() { token++; stopClock(); stopConcurrent(); closeSheet(); if 
 const subText = () => online ? 'みんなで遊ぶ' : mode === 'pass' ? '手番ごとに交代' : 'CPU ' + LV[pcfg ? pcfg.level : 1];
 function play() {
   const g = cur;
-  const canUndo = view && (online ? !!(ost && ost.undoOk) && !busy && view.moves > 0 && !(ost && ost.undoAsk) : view.undoAllowed !== false && !busy && view.moves > 0 && view.seats.some((s) => !s.human) && !view.outcome);
+  const canUndo = view && (online ? !!(ost && ost.undoOk) && !busy && view.moves > 0 && !(ost && ost.undoAsk) : view.undoAllowed !== false && !busy && view.moves > 0 && (view.seats.some((s) => !s.human) || !!view.outcome));
   const listLabel = /shogi|gogo|chess/.test(g.id) ? '駒の一覧' : '役の一覧';
   return `<div class="screen"><div class="stage">
     <div class="stagehead"><button class="btn" data-go="${online ? 'room' : 'menu'}" aria-label="戻る">${ic('back')}</button><h2>${esc(g.name)}</h2><span>${esc(subText())}<b id="hround"></b></span><em class="myturn" id="myturn" hidden>あなたの番</em></div>
@@ -256,6 +256,7 @@ async function refresh() {
       view = nv;
     }
   }
+  if (!view.outcome) { const rp = $('#result'); if (rp && !rp.hidden) { rp.hidden = true; resultShown = -1; } }
   detectEvents(prevView, view);
   turnCut(prevView, view);
   prevView = view;
@@ -378,7 +379,7 @@ function drawPlay(force) {
     if (mt) mt.hidden = !(online && mine); }
   const ops = $('.side .ops');
   if (ops) {
-    const canUndo = online ? !!(ost && ost.undoOk) && !busy && view.moves > 0 && !(ost && ost.undoAsk) && !view.outcome : !busy && view.moves > 0 && view.seats.some((s) => !s.human) && !view.outcome;
+    const canUndo = online ? !!(ost && ost.undoOk) && !busy && view.moves > 0 && !(ost && ost.undoAsk) : view.undoAllowed !== false && !busy && view.moves > 0 && (view.seats.some((s) => !s.human) || !!view.outcome);
     ops.querySelector('[data-undo]').disabled = !canUndo;
     ops.querySelector('[data-resign]').disabled = !(view.canResign && view.human && !view.outcome && !busy);
   }
@@ -551,9 +552,9 @@ function showResult() {
   if (online) {
     const ready = ost ? ost.ready.length : 0, total = ost ? ost.members.length : 0;
     const mineReady = ost && ost.ready.includes(ost.mySlot);
-    p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3>${o.reason ? `<p>${esc(o.reason)}</p>` : ''}${rankHtml || sc}<p class="dimtxt">再戦の準備 ${ready}/${total}人</p><div class="rbtns"><button class="btn" data-olobby>同じ部屋でほかのゲーム</button><button class="btn primary" data-oagain ${!isHostRoom() && mineReady ? 'disabled' : ''}>${isHostRoom() ? 'もう一度' : mineReady ? '準備できました' : 'もう一度'}</button></div></div>`;
+    p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3>${o.reason ? `<p>${esc(o.reason)}</p>` : ''}${rankHtml || sc}<p class="dimtxt">再戦の準備 ${ready}/${total}人</p><div class="rbtns">${ost && ost.undoOk ? `<button class="btn" data-undo>${ic('undo')}待った(戻して調べる)</button>` : ''}<button class="btn" data-olobby>同じ部屋でほかのゲーム</button><button class="btn primary" data-oagain ${!isHostRoom() && mineReady ? 'disabled' : ''}>${isHostRoom() ? 'もう一度' : mineReady ? '準備できました' : 'もう一度'}</button></div></div>`;
   } else {
-    p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3>${o.reason ? `<p>${esc(o.reason)}</p>` : ''}${rankHtml || sc}<div class="rbtns"><button class="btn" data-go="menu">メニュー</button>${two ? `<button class="btn" data-again="${1 - lastSeat}">${mySeat === 0 ? '後手' : '先手'}でもう一度</button>` : ''}<button class="btn primary" data-again="${lastSeat}">もう一度</button></div></div>`;
+    p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3>${o.reason ? `<p>${esc(o.reason)}</p>` : ''}${rankHtml || sc}<div class="rbtns">${view.undoAllowed !== false && view.moves > 0 ? `<button class="btn" data-undo>${ic('undo')}待った(戻して調べる)</button>` : ''}<button class="btn" data-go="menu">メニュー</button>${two ? `<button class="btn" data-again="${1 - lastSeat}">${mySeat === 0 ? '後手' : '先手'}でもう一度</button>` : ''}<button class="btn primary" data-again="${lastSeat}">もう一度</button></div></div>`;
   }
   { const waitMs = Math.max(0, animUntil - performance.now(), cutBusy - performance.now()); setTimeout(() => { if ($('#result') && view && view.outcome) $('#result').hidden = false; }, (S.set.cutin && !S.set.reduce ? 2300 : 200) + waitMs); }
 }
@@ -951,7 +952,7 @@ async function doUndo() {
   if (busy || !view) return;
   token++; busy = false; stopClock();
   await call('undoMove', h);
-  sel = null; prevView = null;
+  sel = null; prevView = null; resultShown = -1;
   const p = $('#result'); if (p) p.hidden = true;
   await refresh();
 }
