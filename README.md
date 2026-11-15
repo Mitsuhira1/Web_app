@@ -41,3 +41,11 @@ gradle :core:crossCheckJvm -Pmode=crypto   # 通信部品を JDK と照らし合
 ## 守ること
 - 署名鍵・パスワード・個人のメールアドレスなどをこのリポジトリに入れない。
 - コミット・プッシュはユーザーが言った時だけ。
+
+## PC 版(日本アソビ大辞典30)を Web で
+
+- 公開ページ: https://mitsuhira1.github.io/Web_app/pc/ (Edge で開いて「アプリとしてインストール」すると、スタートメニュー・タスクバーから専用のウィンドウで開ける)
+- 中身は Windows-Projects の `app/`(exe・動く見本と同じ)。`web/pc/` は手で直さず、元を直してから `python3 tools/sync_pc.py` で写す。
+- Web 版だけで足すもの: `manifest.webmanifest`・`sw.js`(ネットにつながる時はいつも新しい版を取り、切れている時は保存した物で開く)・`pwa.js`。
+- 通信(`net.js`)は Web 版・アプリ版と同じなので、クロスプレイできる。
+
