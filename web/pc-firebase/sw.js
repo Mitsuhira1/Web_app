@@ -1,0 +1,85 @@
+// PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
+const CACHE = "asobipcfb-f2c83dd95d79";
+const FILES = [
+"./",
+"./audio/go_stone_1.mp3",
+"./audio/go_stone_1.ogg",
+"./audio/go_stone_2.mp3",
+"./audio/go_stone_2.ogg",
+"./audio/go_stone_3.mp3",
+"./audio/go_stone_3.ogg",
+"./audio/go_stone_4.mp3",
+"./audio/go_stone_4.ogg",
+"./audio/go_stone_5.mp3",
+"./audio/go_stone_5.ogg",
+"./audio/koma_piece.mp3",
+"./audio/koma_piece.ogg",
+"./core/asobi-pc-core.mjs",
+"./core/kotlin-kotlin-stdlib.mjs",
+"./core/kotlin_org_jetbrains_kotlin_kotlin_dom_api_compat.mjs",
+"./css/app.css",
+"./fonts/Cinzel.woff2",
+"./fonts/DelaGothicOne.woff2",
+"./fonts/KaiseiTokumin-ExtraBold.woff2",
+"./fonts/ShipporiMinchoB1-ExtraBold.woff2",
+"./fonts/YujiBoku-Koma.woff2",
+"./fonts/ZenAntique.woff2",
+"./fonts/ZenMaruGothic-Black.woff2",
+"./fonts/ZenMaruGothic-Bold.woff2",
+"./fonts/ZenMaruGothic-Medium.woff2",
+"./icons/icon-180.png",
+"./icons/icon-192.png",
+"./icons/icon-32.png",
+"./icons/icon-48.png",
+"./icons/icon-512.png",
+"./icons/icon-round-192.png",
+"./icons/icon-round-512.png",
+"./icons/maskable-512.png",
+"./index.html",
+"./js/app.js",
+"./js/art.js",
+"./js/bgm.js",
+"./js/boards/basic.js",
+"./js/boards/cards.js",
+"./js/boards/extra.js",
+"./js/boards/fix.js",
+"./js/boards/fix2.js",
+"./js/boards/games1.js",
+"./js/boards/games2.js",
+"./js/boards/life.js",
+"./js/boards/table.js",
+"./js/net.js",
+"./js/online.js",
+"./js/rules.js",
+"./js/sfx.js",
+"./js/state.js",
+"./js/version.js",
+"./licenses.html",
+"./licenses/YujiBoku-OFL.txt",
+"./licenses/ZenMaruGothic-OFL.txt",
+"./licenses/cinzel-OFL.txt",
+"./licenses/delagothicone-OFL.txt",
+"./licenses/kaiseitokumin-OFL.txt",
+"./licenses/kotlin.txt",
+"./licenses/shipporiminchob1-OFL.txt",
+"./licenses/sounds.txt",
+"./licenses/tauri-MIT.txt",
+"./licenses/zenantique-OFL.txt",
+"./manifest.webmanifest",
+"./pwa.js",
+"./worker.js"
+];
+self.addEventListener("install", (e) => {
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
+});
+self.addEventListener("activate", (e) => {
+  e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith("asobipcfb-") && k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+});
+self.addEventListener("fetch", (e) => {
+  const req = e.request;
+  if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
+  e.respondWith(fetch(req, { cache: "no-cache" }).then((res) => {
+    if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+    return res;
+  }).catch(() => caches.match(req, { ignoreSearch: true }).then((hit) => hit || (req.mode === "navigate" ? caches.match("./index.html") : Response.error()))));
+});
