@@ -30,6 +30,8 @@
 - 画面: `js/app.js` が中心。ビルドの仕組みなし・グローバル変数でつながる。`js/boards/fix.js`・`fix2.js` は前の関数を上書きする(読み込み順に依存)。
 
 ## 3. Firebase Realtime Database 通信仕様(`web/pc-firebase/`)
+> **詳細な技術マニュアル・引き継ぎ資料**: [`docs/FIREBASE_NET_MANUAL_FOR_AI.md`](docs/FIREBASE_NET_MANUAL_FOR_AI.md) に全体アーキテクチャ、JSON スキーマ、`js/net.js` / `js/online.js` の全 API、Kotlin `OnlineRoom` とのブリッジ、ポインター補間、自動ゴミ削除、テスト手順をまとめてあります。通信周りを触る前や他環境へ移植する際は必ず参照してください。
+
 従来の WebRTC・STUN/TURN・ntfy・長い招待コード/返信コードのやり取りと UI を廃止し、Firebase Realtime Database (`asobi-box`) による 4 桁合言葉マッチング＋リアルタイム同期に置き換えた。将来 Android アプリ版・スマホ Web 版・Windows(.exe)版とクロスプレイする際も以下の汎用 JSON 構造に合わせる:
 
 - **接続設定**: `web/pc-firebase/js/net.js` 先頭の `firebaseConfig` (プロジェクト `asobi-box`、`databaseURL: "https://asobi-box-default-rtdb.firebaseio.com"`)。
@@ -51,9 +53,14 @@
 | AI | 作業の内容 | 触るファイル | 開始 |
 |---|---|---|---|
 | Codex | (`dev/pc-web-20261117` で作業中。Codex が記入) | | |
-| Antigravity | `Web_app/web/pc-firebase/` の公開とコミット・プッシュ | `Web_app/web/pc-firebase/*` | 2026-11-16 |
 
 ## 5. 変更の記録(新しいものを上に)
+
+### 2026-11-16 23:54(PST)/ Antigravity / antigravity/firebase-net-20261117 & ccr-efc07031-6exjqs
+- 目的: ユーザーの指示。GPT の Codex（および Claude Code）に通信部分の実装を引き継ぐための詳細マニュアルを作成する。
+- 変更: [`docs/FIREBASE_NET_MANUAL_FOR_AI.md`](docs/FIREBASE_NET_MANUAL_FOR_AI.md) を新規作成し、`AGENTS.md`・`CLAUDE.md`・`README4AI_Claude_Codex_Antigravity.md` からリンクを追加。
+- ファイル: `docs/FIREBASE_NET_MANUAL_FOR_AI.md`, `AGENTS.md`, `CLAUDE.md`, `README4AI_Claude_Codex_Antigravity.md`
+- 他の AI への申し送り: 通信部分の仕組み・データベース構造・Kotlin `OnlineRoom` との連携・ポインター同期・自動クリーンアップ・変更時の注意点はすべて `docs/FIREBASE_NET_MANUAL_FOR_AI.md` にまとめてあります。
 
 ### 2026-11-16 23:48(PST)/ Antigravity / antigravity/firebase-net-20261117 & ccr-efc07031-6exjqs
 - 目的: ユーザーの指示に従い、(1) 今後の開発を `Web_app` 軸に統一(`Windows-Projects` は今後いじらない)、(2) 従来の PC Web アプリ(`web/pc/`)を無変更で残したまま、Firebase 通信版を別パス `web/pc-firebase/` (`https://mitsuhira1.github.io/Web_app/pc-firebase/`) として配置してコミット・プッシュする。
