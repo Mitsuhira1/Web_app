@@ -383,19 +383,19 @@ function room() {
     left += `<div class="panel" style="border-color:#C8463C;background:rgba(200,70,60,.08)"><h3>通信の設定案内</h3><p class="err" style="white-space:pre-wrap;margin:4px 0">${esc(fbState.authError)}</p></div>`;
   }
 
-  // 1. 部屋を作る (4桁のルームコード自動発行)
+  // 1. 部屋を作る (ルームコード自動発行)
   left += `<div class="panel" style="padding-bottom:12px"><h3>部屋を作る</h3>
      ${none ? `<button class="btn primary" style="width:100%;margin-top:6px;letter-spacing:.1em" data-mkroom ${fbState.creating || fbState.joining ? 'disabled' : ''}>${fbState.creating ? '部屋を作っています…' : '部屋を作る'}</button>` : ''}
-     ${ fbState.roomId ? `<div class="invite"><p>${host ? 'この4桁のルームコードを相手に伝えてください' : '参加中のルームコード'}</p>
+     ${ fbState.roomId ? `<div class="invite"><p>${host ? 'このルームコードを相手に伝えてください' : '参加中のルームコード'}</p>
        <div class="code" style="font-size:28px;font-weight:900;letter-spacing:.25em;text-align:center;padding:12px 10px">${esc(fbState.roomId)}</div>
-       <button class="btn gold copybig" data-copy="${esc(fbState.roomId)}">${ic('copy')}4桁のルームコードをコピー</button></div>` : '' }
+       <button class="btn gold copybig" data-copy="${esc(fbState.roomId)}">${ic('copy')}ルームコードをコピー</button></div>` : '' }
      ${fbState.error && host ? `<p class="err">${esc(fbState.error)}</p>` : ''}</div>`;
 
-  // 2. 4桁のルームコードを入力して参加する
+  // 2. ルームコードを入力して参加する
   if (none) {
     left += `<div class="panel" style="padding-bottom:10px"><h3>部屋に入る</h3>
       ${fbState.error ? `<p class="err">${esc(fbState.error)}</p>` : ''}
-      <div class="codebox"><input id="joinIn" placeholder="4桁のルームコード (例: 1234)" value="${esc(drafts.join)}" maxlength="4" inputmode="numeric" pattern="[0-9]*" aria-label="4桁のルームコード" spellcheck="false" ${fbState.joining ? 'disabled' : ''}><button class="btn primary" style="height:38px" data-join ${fbState.joining ? 'disabled' : ''}>${fbState.joining ? '入室中…' : '参加する'}</button></div></div>`;
+      <div class="codebox"><input id="joinIn" placeholder="ルームコード (例: 1234)" value="${esc(drafts.join)}" maxlength="4" inputmode="numeric" pattern="[0-9]*" aria-label="ルームコード" spellcheck="false" ${fbState.joining ? 'disabled' : ''}><button class="btn primary" style="height:38px" data-join ${fbState.joining ? 'disabled' : ''}>${fbState.joining ? '入室中…' : '参加する'}</button></div></div>`;
   }
 
   // 3. 参加者一覧と退出・解散
@@ -406,23 +406,22 @@ function room() {
     left += `<div style="height:260px;display:flex">${chatBox().replace('class="chat"', 'class="chat" style="flex:1"')}</div>`;
   }
 
-  // 4. 遊ぶゲームの選択・開始
+  // 4. 遊ぶゲームの選択・開始 ＋ 遊び方（部屋を建てた後も消さずに常時表示）
+  const howtoPanel = `<div class="panel"><h3>遊び方</h3><div class="howto"><p><b>部屋を作る人</b>: 「部屋を作る」を押して、発行された4桁のルームコードを相手に伝えます。</p><p><b>参加する人</b>: 4桁のルームコードを入力して「参加する」を押します。</p><p class="dimtxt">Webブラウザ版・Androidアプリ版・Windows版のどれからでも同じルームコードで対戦できます。</p></div></div>`;
   let right = '';
-  if (host) {
+  if (!none && st.phase === 'PLAYING') {
+    const inMatch = st.match >= 0;
+    right = `<div class="panel"><h3>対局中</h3><div class="hero" style="margin:8px 0">${g ? `<span class="art">${artOf(g.id)}</span>` : ''}<div><h2>${g ? esc(g.name) : ''}</h2><p>${inMatch ? '対局の画面から部屋に戻っています' : '次の対局から加わります。いまの対局が終わるまで待ってください'}</p></div></div>${inMatch ? '<div style="display:flex;justify-content:flex-end"><button class="btn primary" style="flex:none;width:280px" data-oreturn>対局に戻る</button></div>' : ''}</div>`;
+  } else if (host) {
     const blocked = new Set();
     for (const id of ORDER) { try { if (JSON.parse(mainCore.onlineMismatch(id)).length) blocked.add(id); } catch (e) {} }
     right = `<div class="panel"><h3>遊ぶゲーム</h3><div class="glist">${ORDER.map((id) => gInfo(id)).filter((x) => x && playable(x.id) && range(x.players)[1] >= st.members.length).map((x) => `<button data-pick="${x.id}" class="${S.roomPre === x.id ? 'pre' : ''} ${st.gameId === x.id && S.roomDecided === x.id ? 'set' : ''}" ${blocked.has(x.id) ? 'disabled title="版が違う人がいるので選べません"' : ''}><span class="mini">${artOf(x.id)}</span><span class="gn">${dispName(x)}</span><em>${st.gameId === x.id && S.roomDecided === x.id ? '決定' : ''}</em></button>`).join('')}</div>
       ${blocked.size ? `<p class="dimtxt">版が違う人がいるので、選べないゲームがあります。</p>` : ''}</div>
       <div style="display:flex;justify-content:flex-end"><button class="btn primary" style="flex:none;width:280px" data-roomnext ${S.roomPre || S.roomDecided ? '' : 'disabled'}>進む</button></div>`;
-  }
-  if (!none && st.phase === 'PLAYING') {
-    const inMatch = st.match >= 0;
-    right = `<div class="panel"><h3>対局中</h3><div class="hero" style="margin:8px 0">${g ? `<span class="art">${artOf(g.id)}</span>` : ''}<div><h2>${g ? esc(g.name) : ''}</h2><p>${inMatch ? '対局の画面から部屋に戻っています' : '次の対局から加わります。いまの対局が終わるまで待ってください'}</p></div></div>${inMatch ? '<div style="display:flex;justify-content:flex-end"><button class="btn primary" style="flex:none;width:280px" data-oreturn>対局に戻る</button></div>' : ''}</div>`;
-  } else if (host) { /* 上で作った */ } else if (guest && g) {
+  } else if (guest && g) {
     right = `<div class="panel"><h3>遊ぶゲーム</h3><div class="hero" style="margin:8px 0"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>ホストが選んでいます</p></div></div>${st.phase === 'LOBBY' ? '<p class="dimtxt">ホストが始めるのを待っています</p>' : ''}</div>`;
-  } else {
-    right = `<div class="panel"><h3>遊び方</h3><div class="howto"><p><b>部屋を作る人</b>: 「部屋を作る」を押して、発行された4桁のルームコードを相手に伝えます。</p><p><b>参加する人</b>: 4桁のルームコードを入力して「参加する」を押します。</p><p class="dimtxt">Webブラウザ版・Androidアプリ版・Windows版のどれからでも同じルームコードで対戦できます。</p></div></div>`;
   }
+  right += howtoPanel;
   return `<div class="screen">${rail('room')}<div class="main"><h2 class="pagehead">みんなで遊ぶ</h2><div class="cols"><div class="stack">${left}</div><div class="stack">${right}</div></div></div></div>`;
 }
 

@@ -56,6 +56,11 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-17 00:04(PST)/ Antigravity / antigravity/firebase-net-20261117 & ccr-efc07031-6exjqs
+- 目的: ユーザーの指示。(1) ボタンや入力欄の「4桁のルームコード」から不要な「4桁の」を外してシンプルに「ルームコード」とし（「遊び方」の説明文の中のみ「4桁のルームコード」と記載）、(2) 部屋を建てた後・入った後も「遊び方」のルームコード説明パネルが消えないように常時表示する。
+- 変更: `web/pc-firebase/js/online.js` の `room()` 内の表記修正と `howtoPanel` の常時表示化、`web/pc-firebase/sw.js` のキャッシュ名更新。
+- ファイル: `web/pc-firebase/js/online.js`, `web/pc-firebase/sw.js`, `README4AI_Claude_Codex_Antigravity.md`
+
 ### 2026-11-16 23:57(PST)/ Antigravity / antigravity/firebase-net-20261117 & ccr-efc07031-6exjqs
 - 目的: ユーザーの指示。画面や説明文の「合言葉（部屋番号）」「部屋番号」という表記をすべて「ルームコード」に統一する。
 - 変更: `web/pc-firebase/js/online.js`・`web/pc-firebase/js/net.js`・`web/pc-firebase/css/app.css`・`docs/FIREBASE_NET_MANUAL_FOR_AI.md` の表記を「ルームコード」に置き換え。
