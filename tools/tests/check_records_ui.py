@@ -6,6 +6,7 @@ with sync_playwright() as p:
  assert page.locator('[data-record-game]').count()==30
  assert page.locator('.unplayed-games [data-record-game]').count()==30
  assert page.locator('.record-art svg').count()==30
+ assert page.locator('.record-art svg').first.evaluate('e=>getComputedStyle(e).borderRadius')=='10px'
  page.evaluate("store.set('stats',{vs_reversi:[3,1,1],solo_solitaire:[2],vs_chess:[0,0,0]});render()")
  assert page.locator('.unplayed-games [data-record-game]').count()==28
  assert '60%' in page.locator('[data-record-game=reversi]').inner_text()

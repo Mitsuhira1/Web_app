@@ -9,13 +9,13 @@ with sync_playwright() as p:
  for page in [host,guest]:
   page.on('pageerror',lambda e:(errors.append(str(e)),print('PAGE ERROR',e,flush=True)));page.goto(BASE);page.wait_for_function('CAT.length===30 && netReady',polling=100,timeout=60000);page.evaluate("S.set.hover=false;S.set.cutin=false;S.set.cursor='全員'; const original=sfx.play;sfx.play=(name,opt)=>{soundCalls.push(name);original(name,opt)};playMoveSound=(m)=>soundCalls.push('MOVE:'+m);go('room')")
  host.evaluate('createFirebaseRoom()');host.wait_for_function('fbState.roomId',polling=100)
- assert host.evaluate("S.screen==='menu'");assert host.locator('[data-next]').is_disabled();guest.evaluate("joinFirebaseRoom('4829')");guest.wait_for_function('ost && ost.mySlot===1',polling=100);host.bring_to_front();host.wait_for_function('ost.members.length===2',polling=100)
+ assert host.evaluate("S.screen==='room'");assert host.get_by_role('button',name='ゲームを選ぶ',exact=True).count()==0;assert host.locator('.howto').count()==1;host.locator('.rail [data-go=menu]').click();assert host.locator('[data-next]').is_disabled();guest.evaluate("joinFirebaseRoom('4829')");guest.wait_for_function('ost && ost.mySlot===1',polling=100);host.bring_to_front();host.wait_for_function('ost.members.length===2',polling=100)
  # Lobby/menu must not display remote cursors, but keep the how-to panel.
  guest.mouse.move(300,300);host.wait_for_timeout(200)
  assert host.locator('.rcur.live').count()==0
  assert '4桁のルームコード' in host.locator('.room-howto').inner_text()
  guest.locator('[data-tile=chess]').click();host.wait_for_selector('[data-tile=chess] .wish-player');assert guest.evaluate("S.screen==='menu'");assert guest.locator('[data-next]').is_disabled();assert host.locator('[data-tile=chess] .wish-player').count()==1
- host.locator('[data-tile=chess]').click();host.wait_for_function("document.querySelectorAll('[data-tile=chess] .wish-player').length===2",polling=100);assert host.locator('[data-tile=chess] .wish-frame').count()==2;assert guest.evaluate("S.screen==='menu'")
+ host.locator('[data-tile=chess]').click();host.wait_for_function("document.querySelectorAll('[data-tile=chess] .wish-player').length===2",polling=100);assert host.locator('[data-tile=chess] .wish-frame').count()==1;assert guest.locator('[data-tile=chess] .wish-frame').count()==1;assert host.locator('[data-tile=chess] .wish-frame').evaluate('e=>getComputedStyle(e).borderRadius')=='14px';assert host.locator('[data-tile=chess] .wish-frame').evaluate('e=>getComputedStyle(e).outlineOffset')=='1px';assert guest.evaluate("S.screen==='menu'")
  host.screenshot(path='/workspace/artifacts/firebase-shared-menu.png')
  host.locator('[data-tile=reversi]').click();host.locator('[data-next]').click();assert host.evaluate("S.screen==='setup' && S.setup.online");host.evaluate('onlineChooseAndStart()')
  host.wait_for_function("S.screen==='play' && view && view.legal.length>0",timeout=15000,polling=100);guest.bring_to_front();guest.wait_for_function("S.screen==='play' && view",timeout=15000,polling=100)

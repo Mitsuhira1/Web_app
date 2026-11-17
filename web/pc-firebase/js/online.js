@@ -412,8 +412,6 @@ function room() {
   if (!none && st.phase === 'PLAYING') {
     const inMatch = st.match >= 0;
     right = `<div class="panel"><h3>対局中</h3><div class="hero" style="margin:8px 0">${g ? `<span class="art">${artOf(g.id)}</span>` : ''}<div><h2>${g ? esc(g.name) : ''}</h2><p>${inMatch ? '対局の画面から部屋に戻っています' : '次の対局から加わります。いまの対局が終わるまで待ってください'}</p></div></div>${inMatch ? '<div style="display:flex;justify-content:flex-end"><button class="btn primary" style="flex:none;width:280px" data-oreturn>対局に戻る</button></div>' : ''}</div>`;
-  } else if (!none) {
-    right = '<div class="panel"><button class="btn primary" data-go="menu">ゲームを選ぶ</button></div>';
   }
   right += howtoPanel;
   return `<div class="screen">${rail('room')}<div class="main"><h2 class="pagehead">みんなで遊ぶ</h2><div class="cols"><div class="stack">${left}</div><div class="stack">${right}</div></div></div></div>`;
@@ -481,7 +479,6 @@ async function createFirebaseRoom() {
     );
     fbState.roomId = res.roomId;
     fbState.creating = false;
-    S.screen = 'menu';
     scheduleHostSync();
     onlineChanged();
   } catch (e) {
@@ -962,7 +959,8 @@ function playerBadge(p) {
 function gameWishes(id) {
  if (!roomChoosing()) return '';
  const players=Object.values(fbState.players).filter(p=>p.choice===id);
- return players.length?`<span class="game-wishes">${players.map((p,i)=>`<span class="wish-frame" style="--player-color:${SEAT_COLORS[((p.slot||0)%6+6)%6]};--wish-inset:${i*4}px"></span>`).join('')}<span class="wish-labels">${players.map(playerBadge).join('')}</span></span>`:'';
+ const others=players.filter(p=>p.uid!==netApi?.uid);
+ return players.length?`<span class="game-wishes">${others.map((p,i)=>`<span class="wish-frame" style="--player-color:${SEAT_COLORS[((p.slot||0)%6+6)%6]};--wish-inset:${i*4}px"></span>`).join('')}<span class="wish-labels">${players.map(playerBadge).join('')}</span></span>`:'';
 }
 function roomSummary() {
  if (!roomActive()) return '';
