@@ -2,7 +2,7 @@
 
 最終更新: 2026-11-16 / 作成: Antigravity (Gemini)
 
-このドキュメントは、アソビ大辞典（あそび箱30）のオンライン通信を従来の WebRTC + STUN + ntfy（長い招待コード方式）から **Firebase Realtime Database（4桁の合言葉マッチング方式）** に置き換えた設計・データ構造・実装の詳細をまとめた引き継ぎマニュアルです。
+このドキュメントは、アソビ大辞典（あそび箱30）のオンライン通信を従来の WebRTC + STUN + ntfy（長い招待コード方式）から **Firebase Realtime Database（4桁のルームコードマッチング方式）** に置き換えた設計・データ構造・実装の詳細をまとめた引き継ぎマニュアルです。
 Codex や Claude Code が今後 PC Web 版の改修や、スマホ Web 版・Android 版・Windows (`.exe`) 版への横展開を行う際は、この仕様に従ってください。
 
 ---
@@ -27,8 +27,8 @@ Codex や Claude Code が今後 PC Web 版の改修や、スマホ Web 版・And
 | ファイル | 役割 |
 |---|---|
 | `web/pc-firebase/js/net.js` | Firebase SDK (CDN ES Modules) の読み込み、匿名ログイン(`signInAnonymously`)、4桁ルーム作成・参加、`rooms/{roomId}` の監視・書き込み、ポインター送信、3時間経過部屋の削除・`onDisconnect`・退出時クリーンアップ |
-| `web/pc-firebase/js/online.js` | 4桁の合言葉ロビー画面 UI、Kotlin コア (`OnlineRoom` / `Session`) と Firebase の `state` / `actions` をつなぐ双方向ブリッジ、ポインター座標の正規化 (`0.0`〜`1.0`)・100ms スロットル送信・`requestAnimationFrame` 線形補間描画 |
-| `web/pc-firebase/css/app.css` | 4桁の部屋番号表示 (`.invite .code`)、リモートポインターの待機時（指を離した時）半透明表示 (`.rcur.live.idle`) |
+| `web/pc-firebase/js/online.js` | 4桁のルームコードロビー画面 UI、Kotlin コア (`OnlineRoom` / `Session`) と Firebase の `state` / `actions` をつなぐ双方向ブリッジ、ポインター座標の正規化 (`0.0`〜`1.0`)・100ms スロットル送信・`requestAnimationFrame` 線形補間描画 |
+| `web/pc-firebase/css/app.css` | 4桁のルームコード表示 (`.invite .code`)、リモートポインターの待機時（指を離した時）半透明表示 (`.rcur.live.idle`) |
 | `web/pc-firebase/sw.js` | Service Worker（キャッシュ名プレフィックスを `asobipcfb-` に分離し、`web/pc/` の `asobipc-` と干渉しないように設定） |
 
 ---

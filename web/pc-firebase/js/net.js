@@ -207,7 +207,7 @@ export async function createNet(core, hooks) {
         const cand = String(Math.floor(1000 + Math.random() * 9000));
         if (!activeIds.has(cand)) { roomId = cand; break; }
       }
-      if (!roomId) throw new Error("空いている部屋番号が見つかりませんでした");
+      if (!roomId) throw new Error("空いているルームコードが見つかりませんでした");
 
       const roomRef = ref(d, `rooms/${roomId}`);
       // (a) ホストが部屋を作成した直後に onDisconnect().remove() を設定

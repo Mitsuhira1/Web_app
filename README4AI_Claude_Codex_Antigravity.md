@@ -32,7 +32,7 @@
 ## 3. Firebase Realtime Database 通信仕様(`web/pc-firebase/`)
 > **詳細な技術マニュアル・引き継ぎ資料**: [`docs/FIREBASE_NET_MANUAL_FOR_AI.md`](docs/FIREBASE_NET_MANUAL_FOR_AI.md) に全体アーキテクチャ、JSON スキーマ、`js/net.js` / `js/online.js` の全 API、Kotlin `OnlineRoom` とのブリッジ、ポインター補間、自動ゴミ削除、テスト手順をまとめてあります。通信周りを触る前や他環境へ移植する際は必ず参照してください。
 
-従来の WebRTC・STUN/TURN・ntfy・長い招待コード/返信コードのやり取りと UI を廃止し、Firebase Realtime Database (`asobi-box`) による 4 桁合言葉マッチング＋リアルタイム同期に置き換えた。将来 Android アプリ版・スマホ Web 版・Windows(.exe)版とクロスプレイする際も以下の汎用 JSON 構造に合わせる:
+従来の WebRTC・STUN/TURN・ntfy・長い招待コード/返信コードのやり取りと UI を廃止し、Firebase Realtime Database (`asobi-box`) による 4 桁ルームコードマッチング＋リアルタイム同期に置き換えた。将来 Android アプリ版・スマホ Web 版・Windows(.exe)版とクロスプレイする際も以下の汎用 JSON 構造に合わせる:
 
 - **接続設定**: `web/pc-firebase/js/net.js` 先頭の `firebaseConfig` (プロジェクト `asobi-box`、`databaseURL: "https://asobi-box-default-rtdb.firebaseio.com"`)。
 - **認証**: Firebase SDK (v11.0.1 CDN ES Modules) で起動時に `signInAnonymously` で匿名ログインし `uid` を取得。`file://` や WebView 等でストレージ制限エラーが出た場合は `inMemoryPersistence` に自動フォールバック。`auth/unauthorized-domain` 発生時は承認済みドメイン追加手順を画面とコンソールに案内。
@@ -55,6 +55,11 @@
 | Codex | (`dev/pc-web-20261117` で作業中。Codex が記入) | | |
 
 ## 5. 変更の記録(新しいものを上に)
+
+### 2026-11-16 23:57(PST)/ Antigravity / antigravity/firebase-net-20261117 & ccr-efc07031-6exjqs
+- 目的: ユーザーの指示。画面や説明文の「合言葉（部屋番号）」「部屋番号」という表記をすべて「ルームコード」に統一する。
+- 変更: `web/pc-firebase/js/online.js`・`web/pc-firebase/js/net.js`・`web/pc-firebase/css/app.css`・`docs/FIREBASE_NET_MANUAL_FOR_AI.md` の表記を「ルームコード」に置き換え。
+- ファイル: `web/pc-firebase/js/online.js`, `web/pc-firebase/js/net.js`, `web/pc-firebase/css/app.css`, `docs/FIREBASE_NET_MANUAL_FOR_AI.md`, `README4AI_Claude_Codex_Antigravity.md`
 
 ### 2026-11-16 23:54(PST)/ Antigravity / antigravity/firebase-net-20261117 & ccr-efc07031-6exjqs
 - 目的: ユーザーの指示。GPT の Codex（および Claude Code）に通信部分の実装を引き継ぐための詳細マニュアルを作成する。

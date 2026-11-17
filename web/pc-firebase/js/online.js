@@ -1,4 +1,4 @@
-/* みんなで遊ぶ(Firebase Realtime Database・4桁の合言葉マッチング)。
+/* みんなで遊ぶ(Firebase Realtime Database・4桁のルームコードマッチング)。
  * 部屋・対局状態・手・時計・待った・チャット・ポインター位置を Realtime Database で同期する。
  * 規則・局面計算は Android 版と同じ Kotlin のコード(core の OnlineRoom / Session)をそのまま使う。 */
 'use strict';
@@ -372,7 +372,7 @@ function sendChat(t, st) {
   if (st != null) render();
 }
 
-// ---------------------------------------------------------------- 部屋の画面 (4桁の合言葉マッチング)
+// ---------------------------------------------------------------- 部屋の画面 (4桁のルームコードマッチング)
 function room() {
   const st = ost || { role: 'none', members: [] };
   const host = st.role === 'host', guest = st.role === 'guest', none = st.role === 'none';
@@ -383,19 +383,19 @@ function room() {
     left += `<div class="panel" style="border-color:#C8463C;background:rgba(200,70,60,.08)"><h3>通信の設定案内</h3><p class="err" style="white-space:pre-wrap;margin:4px 0">${esc(fbState.authError)}</p></div>`;
   }
 
-  // 1. 部屋を作る (4桁のルームID自動発行)
+  // 1. 部屋を作る (4桁のルームコード自動発行)
   left += `<div class="panel" style="padding-bottom:12px"><h3>部屋を作る</h3>
      ${none ? `<button class="btn primary" style="width:100%;margin-top:6px;letter-spacing:.1em" data-mkroom ${fbState.creating || fbState.joining ? 'disabled' : ''}>${fbState.creating ? '部屋を作っています…' : '部屋を作る'}</button>` : ''}
-     ${ fbState.roomId ? `<div class="invite"><p>${host ? 'この4桁の合言葉(部屋番号)を相手に伝えてください' : '参加中の部屋番号'}</p>
+     ${ fbState.roomId ? `<div class="invite"><p>${host ? 'この4桁のルームコードを相手に伝えてください' : '参加中のルームコード'}</p>
        <div class="code" style="font-size:28px;font-weight:900;letter-spacing:.25em;text-align:center;padding:12px 10px">${esc(fbState.roomId)}</div>
-       <button class="btn gold copybig" data-copy="${esc(fbState.roomId)}">${ic('copy')}4桁の部屋番号をコピー</button></div>` : '' }
+       <button class="btn gold copybig" data-copy="${esc(fbState.roomId)}">${ic('copy')}4桁のルームコードをコピー</button></div>` : '' }
      ${fbState.error && host ? `<p class="err">${esc(fbState.error)}</p>` : ''}</div>`;
 
-  // 2. 4桁の数字を入力して参加する
+  // 2. 4桁のルームコードを入力して参加する
   if (none) {
     left += `<div class="panel" style="padding-bottom:10px"><h3>部屋に入る</h3>
       ${fbState.error ? `<p class="err">${esc(fbState.error)}</p>` : ''}
-      <div class="codebox"><input id="joinIn" placeholder="4桁の数字 (例: 1234)" value="${esc(drafts.join)}" maxlength="4" inputmode="numeric" pattern="[0-9]*" aria-label="4桁の部屋番号" spellcheck="false" ${fbState.joining ? 'disabled' : ''}><button class="btn primary" style="height:38px" data-join ${fbState.joining ? 'disabled' : ''}>${fbState.joining ? '入室中…' : '参加する'}</button></div></div>`;
+      <div class="codebox"><input id="joinIn" placeholder="4桁のルームコード (例: 1234)" value="${esc(drafts.join)}" maxlength="4" inputmode="numeric" pattern="[0-9]*" aria-label="4桁のルームコード" spellcheck="false" ${fbState.joining ? 'disabled' : ''}><button class="btn primary" style="height:38px" data-join ${fbState.joining ? 'disabled' : ''}>${fbState.joining ? '入室中…' : '参加する'}</button></div></div>`;
   }
 
   // 3. 参加者一覧と退出・解散
@@ -421,7 +421,7 @@ function room() {
   } else if (host) { /* 上で作った */ } else if (guest && g) {
     right = `<div class="panel"><h3>遊ぶゲーム</h3><div class="hero" style="margin:8px 0"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>ホストが選んでいます</p></div></div>${st.phase === 'LOBBY' ? '<p class="dimtxt">ホストが始めるのを待っています</p>' : ''}</div>`;
   } else {
-    right = `<div class="panel"><h3>遊び方</h3><div class="howto"><p><b>部屋を作る人</b>: 「部屋を作る」を押して、発行された4桁の数字を相手に伝えます。</p><p><b>参加する人</b>: 4桁の数字を入力して「参加する」を押します。</p><p class="dimtxt">Webブラウザ版・Androidアプリ版・Windows版のどれからでも同じ部屋番号で対戦できます。</p></div></div>`;
+    right = `<div class="panel"><h3>遊び方</h3><div class="howto"><p><b>部屋を作る人</b>: 「部屋を作る」を押して、発行された4桁のルームコードを相手に伝えます。</p><p><b>参加する人</b>: 4桁のルームコードを入力して「参加する」を押します。</p><p class="dimtxt">Webブラウザ版・Androidアプリ版・Windows版のどれからでも同じルームコードで対戦できます。</p></div></div>`;
   }
   return `<div class="screen">${rail('room')}<div class="main"><h2 class="pagehead">みんなで遊ぶ</h2><div class="cols"><div class="stack">${left}</div><div class="stack">${right}</div></div></div></div>`;
 }
