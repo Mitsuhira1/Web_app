@@ -14,7 +14,7 @@ export async function createNet() {
  bus.onmessage=e=>{if(e.data.type==='action'){if(role==='host')cb.onAction?.(e.data.action);}else deliver();};
  return {get uid(){return uid},get role(){return role},get roomId(){return roomId},
  async createRoom(player,state,callbacks){cb=callbacks;roomId='4829';role='host';write('room',roomId);write('players',{[uid]:{...player,uid,slot:0}});write('state',state);notify();return {roomId,uid,slot:0}},
- async joinRoom(code,player,callbacks){cb=callbacks;roomId=code;role='guest';const players=read('players');players[uid]={...player,uid,slot:1};write('players',players);notify();return {roomId,uid,slot:1}},
+ async joinRoom(code,player,callbacks){cb=callbacks;roomId=code;role='guest';const players=read('players')||{};const used=new Set(Object.values(players).map(p=>p.slot));let slot=1;while(used.has(slot))slot++;players[uid]={...player,uid,slot};write('players',players);notify();return {roomId,uid,slot}},
  async chooseGame(choice,avatar){const players=read('players');players[uid]={...players[uid],choice,avatar};write('players',players);notify()},
  async writeState(state){write('state',state);notify()},async writeCursor(c){write('cursor-'+uid,{...c,uid});notify()},
  async sendAction(a){bus.postMessage({type:'action',action:{...a,uid}})},

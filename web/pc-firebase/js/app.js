@@ -56,10 +56,12 @@ const sw = (key, on) => `<button class="switch" role="switch" aria-checked="${!!
 const QUIT_IC = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg>';
 function rail(cur) {
   const t = [['menu', 'games', 'ゲーム'], ['room', 'room', 'みんなで遊ぶ'], ['records', 'rec', '成績'], ['settings', 'set', '設定']];
+  const onMenu = cur === 'menu';
   return `<nav class="rail">
     <div class="brand"><strong>あそび箱 <i>30</i></strong></div>
     <div class="tabs">${t.map(([s, i, n]) => `<button data-go="${s}" ${cur === s ? 'aria-current="page"' : ''}>${ic(i)}${n}</button>`).join('')}</div>
-    ${cur === 'menu' ? `${roomSummary()}<div><h4>人数</h4>${seg('filter', ['すべて', '1人', '2人', '3人以上'], S.filter, 'col')}</div>` : ''}
+    <div class="rail-filter${onMenu ? '' : ' is-hidden'}"${onMenu ? '' : ' aria-hidden="true" inert'}><h4>人数</h4>${seg('filter', ['すべて', '1人', '2人', '3人以上'], S.filter, 'col')}</div>
+    ${roomSummary()}
     <button class="quitbtn" data-quitapp>${QUIT_IC}終了する</button>
     <button class="me" data-goprof aria-label="プロフィールの設定">${meAv()}<b>${esc(meName())}</b></button>
   </nav>`;
@@ -214,7 +216,7 @@ async function enterPlay() {
   refresh();
 }
 function leavePlay() { token++; stopClock(); stopConcurrent(); closeSheet(); if (online) leaveOnlinePlay(); h = -1; view = null; }
-const subText = () => online ? 'みんなで遊ぶ' : mode === 'pass' ? '手番ごとに交代' : 'CPU ' + LV[pcfg ? pcfg.level : 1];
+const subText = () => online ? (view && view.mine < 0 ? 'みんなで遊ぶ・観戦中' : 'みんなで遊ぶ') : mode === 'pass' ? '手番ごとに交代' : 'CPU ' + LV[pcfg ? pcfg.level : 1];
 function play() {
   const g = cur;
   const canUndo = view && (online ? !!(ost && ost.undoOk) && !busy && view.moves > 0 && !(ost && ost.undoAsk) : view.undoAllowed !== false && !busy && view.moves > 0 && (view.seats.some((s) => !s.human) || !!view.outcome));
@@ -339,7 +341,7 @@ function statusText() {
   }
 }
 const turnText = () => mode === 'pass' ? `${view.seats[view.toMove].name} の番です` : 'あなたの番です';
-const seatName = (seat) => seat === mySeat && mode !== 'pass' ? meName() : view.seats[seat] && (view.seats[seat].human || view.seats[seat].remote) ? view.seats[seat].name : (view.seats.filter((s) => !s.human && !s.remote).length > 1 ? 'CPU ' + (seat + 1) : 'CPU');
+const seatName = (seat) => seat === mySeat && mode !== 'pass' && (!online || (view && view.mine === seat)) ? meName() : view.seats[seat] && (view.seats[seat].human || view.seats[seat].remote) ? view.seats[seat].name : (view.seats.filter((s) => !s.human && !s.remote).length > 1 ? 'CPU ' + (seat + 1) : 'CPU');
 function api() {
   return {
     mySeat, view, handle: h, speed: SPEED(), game: cur ? cur.id : '',
@@ -370,7 +372,7 @@ function api() {
     sheet: (html, init) => { openSheet(html); if (init) init($('#sheet')); }, closeSheet,
     get sel() { return sel; }, set sel(v) { sel = v; },
     get hints() { return S.set.hints; }, get caps() { return S.set.caps; }, get pre() { return S.set.pre; },
-    face: () => meAv(),
+    face: () => (online && view && view.mine < 0 ? `<span class="dot face">${esc((seatName(mySeat) || '?')[0])}</span>` : meAv()),
     call: (fn, ...a) => call(fn, ...a), sheetOpen: () => !!$('#sheetwrap'),
   };
 }
@@ -552,14 +554,15 @@ function showResult() {
     const tb = view.board && view.board.tbl, place = tb && Array.isArray(tb.place) ? tb.place : null;
     const key = (i) => (i === o.winner ? -1e9 : 0) + (place && place[i] >= 0 ? place[i] * 1000 - 1e6 : 0) - (+view.scores[i] || 0);
     const order = view.seats.map((_, i) => i).sort((x, y) => key(x) - key(y));
-    rankHtml = `<ol class="rrank">${order.map((i, k) => `<li class="${i === mySeat ? 'me' : ''}"><b>${k + 1}位</b><span>${esc(seatName(i))}</span>${cur.id !== 'uno' && cur.id !== 'daifugo' ? `<em class="num">${view.scores[i]}</em>` : ''}</li>`).join('')}</ol>`;
+    rankHtml = `<ol class="rrank">${order.map((i, k) => `<li class="${i === mySeat && (!online || (view && view.mine === i)) ? 'me' : ''}"><b>${k + 1}位</b><span>${esc(seatName(i))}</span>${cur.id !== 'uno' && cur.id !== 'daifugo' ? `<em class="num">${view.scores[i]}</em>` : ''}</li>`).join('')}</ol>`;
   }
   const two = view.seats.length === 2 && !pass && !online;
   const p = $('#result'); if (!p) return;
   if (online) {
     const ready = ost ? ost.ready.length : 0, total = ost ? ost.members.length : 0;
     const mineReady = ost && ost.ready.includes(ost.mySlot);
-    p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3>${o.reason ? `<p>${esc(o.reason)}</p>` : ''}${rankHtml || sc}<p class="dimtxt">再戦の準備 ${ready}/${total}人</p><div class="rbtns">${ost && ost.undoOk ? `<button class="btn" data-undo>${ic('undo')}待った(戻して調べる)</button>` : ''}<button class="btn" data-olobby>同じ部屋でほかのゲーム</button><button class="btn primary" data-oagain ${!isHostRoom() && mineReady ? 'disabled' : ''}>${isHostRoom() ? 'もう一度' : mineReady ? '準備できました' : 'もう一度'}</button></div></div>`;
+    const isSpec = view && view.mine < 0;
+    p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3>${o.reason ? `<p>${esc(o.reason)}</p>` : ''}${rankHtml || sc}<p class="dimtxt">再戦の準備 ${ready}/${total}人</p><div class="rbtns">${ost && ost.undoOk && !isSpec ? `<button class="btn" data-undo>${ic('undo')}待った(戻して調べる)</button>` : ''}${isSpec ? `<button class="btn" data-go="room">部屋に戻る</button>` : `<button class="btn" data-olobby>同じ部屋でほかのゲーム</button>`}<button class="btn primary" data-oagain ${!isHostRoom() && mineReady ? 'disabled' : ''}>${isHostRoom() ? 'もう一度' : mineReady ? '準備できました' : isSpec ? '次の対局に参加する' : 'もう一度'}</button></div></div>`;
   } else {
     p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3>${o.reason ? `<p>${esc(o.reason)}</p>` : ''}${rankHtml || sc}<div class="rbtns">${view.undoAllowed !== false && view.moves > 0 ? `<button class="btn" data-undo>${ic('undo')}待った(戻して調べる)</button>` : ''}<button class="btn" data-go="menu">メニュー</button>${two ? `<button class="btn" data-again="${1 - lastSeat}">${mySeat === 0 ? '後手' : '先手'}でもう一度</button>` : ''}<button class="btn primary" data-again="${lastSeat}">もう一度</button></div></div>`;
   }
@@ -858,6 +861,7 @@ function render() {
   if (lastScreen !== S.screen && S.screen === 'menu' && S.sel) { const t = $(`[data-tile="${S.sel}"]`); if (t) t.scrollIntoView({ block: 'nearest' }); }
   if (lastScreen !== S.screen) { const sc = app.querySelector('.screen.col'); if (sc) sc.classList.add('enter'); }
   if (lastScreen !== S.screen && /^(menu|room|records|settings)$/.test(S.screen) && lastScreen && lastScreen !== 'first') { const m = $('.main'); if (m) m.classList.add('enter'); }
+  if (S.filterChanged && S.screen === 'menu') { S.filterChanged = false; const m = $('.main'); if (m) m.classList.add('filter-enter'); const fb = $('.rail-filter .seg button[aria-pressed="true"]'); if (fb) fb.classList.add('filter-pop'); }
   lastScreen = S.screen;
   if (S.focusSel) { const f = $(S.focusSel); S.focusSel = null; if (f) f.focus({ preventScroll: true }); }
   else if (fKey && lastScreenFocus === S.screen) { const f = $(fKey); if (f) f.focus({ preventScroll: true }); }
@@ -951,7 +955,7 @@ app.addEventListener('click', async (e) => {
   const sg = b.closest('[data-seg]');
   if (sg) {
     const k = sg.dataset.seg, v = d.v;
-    if (k === 'filter') S.filter = v;
+    if (k === 'filter') { if (S.filter !== v) { S.filter = v; S.filterChanged = true; } }
     else if (k === 'theme') { S.theme = v; saveSet(); }
     else if (k.startsWith('c:')) { const c = cfg(S.setup.id), f = k.slice(2); c[f] = /^(level|seat|limit)$/.test(f) ? +v : v; saveCfg(S.setup.id, c); }
     else if (k.startsWith('o:')) { const c = cfg(S.setup.id); c.opts[k.slice(2)] = v; saveCfg(S.setup.id, c); syncOnlineOptions(); }
@@ -981,8 +985,9 @@ async function doUndo() {
 }
 function quitSound() { if (!cur || (view && view.outcome)) return; (cur.category === 'BOARD' && cur.id !== 'mahjong' ? sfxCrumble : sfxCardsFall)(); }
 function askQuit() {
-  setTimeout(focusPrimary, 0); openSheet(`<h2>対局を終了しますか</h2><p>${!online ? '途中の対局は「続きから」で再開できます。' : view && view.outcome ? '部屋に戻ります(部屋からは抜けません)。' : isHostRoom() ? '対局を終えて、全員で部屋に戻ります。' : '降参して、部屋に戻ります(部屋からは抜けません)。'}</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="qtYes">終了する</button></div>`);
-  $('#qtYes').onclick = () => { closeSheet(); quitSound(); go(online ? 'room' : 'menu'); };
+  const isSpec = online && view && view.mine < 0;
+  setTimeout(focusPrimary, 0); openSheet(`<h2>${isSpec ? '観戦を終了しますか' : '対局を終了しますか'}</h2><p>${!online ? '途中の対局は「続きから」で再開できます。' : view && view.outcome || isSpec ? '部屋に戻ります(部屋からは抜けません)。' : isHostRoom() ? '対局を終えて、全員で部屋に戻ります。' : '降参して、部屋に戻ります(部屋からは抜けません)。'}</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="qtYes">${isSpec ? '部屋に戻る' : '終了する'}</button></div>`);
+  $('#qtYes').onclick = () => { closeSheet(); if (!isSpec) quitSound(); go(online ? 'room' : 'menu'); };
 }
 function askResign() {
   setTimeout(focusPrimary, 0); openSheet('<h2>降参しますか</h2><p>この対局はあなたの負けになります。</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="rgYes">降参する</button></div>');
@@ -1035,6 +1040,7 @@ function goBack() {
   if (S.modal) { snd(); S.modal = null; return render(); }
   if (S.screen !== 'menu' && S.screen !== 'first') snd();
   if (S.screen === 'play') {
+    if (online && view && view.mine < 0) return go('room');
     // 対局中は確かめてから終わる(まだ 1 手も指していない時は、そのまま戻る。通信対戦はいつも確かめる)
     if (online || (view && view.moves > 0 && !view.outcome)) return askQuit();
     quitSound(); return go(online ? 'room' : 'menu');
@@ -1047,7 +1053,7 @@ window.addEventListener('mouseup', (e) => { if (e.button === 3) { e.preventDefau
 // 矢印キーで、押せる所を移る(Enter で押す)
 function navMove(key) {
   const scope = $('#sheetwrap') || $('.modal') || app;
-  const all = [...scope.querySelectorAll('button:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([type=hidden])')].filter((x) => { const r = x.getBoundingClientRect(); return r.width > 2 && r.height > 2 && !x.closest('[hidden]') && !x.matches('.mback,.cutin,.switch[aria-hidden]'); });
+  const all = [...scope.querySelectorAll('button:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([type=hidden])')].filter((x) => { const r = x.getBoundingClientRect(); return r.width > 2 && r.height > 2 && !x.closest('[hidden],[inert],.is-hidden') && !x.matches('.mback,.cutin,.switch[aria-hidden]'); });
   if (!all.length) return;
   let curEl = document.activeElement;
   if (!curEl || !all.includes(curEl)) { const pick = (S.sel && scope.querySelector(`[data-tile="${S.sel}"]`)) || scope.querySelector('[aria-pressed="true"][data-tile]') || all[0]; return focusNav(pick); }

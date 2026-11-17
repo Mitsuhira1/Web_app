@@ -1620,3 +1620,16 @@ html.reduce .wfx .wpop{display:none!important}
 .tile:has(.game-wishes){overflow:visible}.tile:has(.game-wishes)>.art{border-radius:13px 13px 0 0;overflow:hidden}
 
 .record-art svg{width:82px;height:82px;max-width:100%;border-radius:10px;overflow:hidden}
+
+/* 左の柱: 人数フィルタは上、ルーム情報は下。ゲーム以外のタブでは .rail-filter を不可視化してルーム情報の位置を全タブで固定 */
+.rail-filter.is-hidden{visibility:hidden;pointer-events:none}
+@media (max-width:920px){.rail-filter.is-hidden{display:none}}
+/* 人数フィルタ切り替え時のアニメーション */
+.rail-filter .seg button{transition:background-color .2s ease,color .2s ease,transform .2s cubic-bezier(.22,.85,.32,1)}
+.rail-filter .seg button.filter-pop{animation:filterBtnPop .22s cubic-bezier(.22,.85,.32,1) both}
+@keyframes filterBtnPop{0%{transform:scale(.95)}60%{transform:scale(1.02)}100%{transform:scale(1)}}
+.main.filter-enter .shelfhead,.main.filter-enter .shelf{animation:filterShelfIn .26s cubic-bezier(.22,.85,.32,1) both}
+.main.filter-enter .tile{animation:filterTileIn .28s cubic-bezier(.22,.85,.32,1) both}
+@keyframes filterShelfIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes filterTileIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .shelfhead,html.reduce .main.filter-enter .shelf,html.reduce .main.filter-enter .tile{animation:none}

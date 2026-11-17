@@ -41250,11 +41250,6 @@ function beginOnline(r, b) {
   _init_properties_WebNet_kt__y4rdrr();
   var _unary__edvuaz = get_beginSeq();
   set_beginSeq(_unary__edvuaz + 1 | 0);
-  if (!b.t25_1.t(r.b26_1)) {
-    set_matchHandle(-1);
-    changed_2();
-    return Unit_instance;
-  }
   var tmp0_elvis_lhs = Catalog_getInstance().yr(b.q25_1);
   var tmp;
   if (tmp0_elvis_lhs == null) {
@@ -41704,7 +41699,7 @@ function setup$lambda_9($r) {
     var tmp;
     var tmp_0;
     var tmp_1;
-    if (ses == null || b == null) {
+    if (ses == null || b == null || !b.t25_1.t(slot)) {
       tmp_1 = true;
     } else {
       var tmp_2 = ses.ku_1;

@@ -56,6 +56,14 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-17 01:07(PST)/ Antigravity / antigravity/firebase-net-20261117
+- 目的: ユーザーの指示。左側ナビゲーション(`.rail`)のルーム情報(`.room-summary`)が「ゲーム」タブ(`menu`)でしか表示されず、タブを切り替えるたびに出たり消えたりして不自然だったため、すべての画面(`ゲーム`・`みんなで遊ぶ`・`成績`・`設定`)で同じ位置に表示するようにする。
+- 変更:
+  1. `web/pc-firebase/js/app.js` の `rail(cur)` で `${roomSummary()}` を `cur === 'menu'` の条件分岐の外（`.tabs` の直下）に出し、全タブ共通で同じ座標に表示。
+  2. `web/pc-firebase/js/online.js` の `onlineChanged()` で `records`・`settings` 画面表示中もルーム状態・参加者の変化に応じて再描画されるよう更新し、`onlineClick` のコピーボタン反応をクリック対象ボタン優先に調整。
+  3. `web/pc-firebase/sw.js` のキャッシュ名を更新し、`tools/tests/check_firebase_ui.py` に全タブでの `.room-summary` 表示と座標一致の検証を追加。
+- ファイル: `web/pc-firebase/js/app.js`, `web/pc-firebase/js/online.js`, `web/pc-firebase/sw.js`, `tools/tests/check_firebase_ui.py`, `docs/FIREBASE_NET_MANUAL_FOR_AI.md`, `README4AI_Claude_Codex_Antigravity.md`
+
 ### 2026-11-17 / Codex / ブラウザのタブアイコンを角丸へ統一
 - 目的: ブラウザに表示されるアプリアイコンも真四角を避ける。
 - 変更: `web/pc-firebase/index.html` のfavicon参照を、既存の透過角丸素材 `icons/icon-round-192.png` へ変更。ホーム画面用・PWA用アイコンはすでに同じ角丸素材を使っているため、そのまま共用する。
@@ -112,6 +120,22 @@
 - ファイル: `Web_app/web/pc-firebase/**`, `README4AI_Claude_Codex_Antigravity.md`, `AGENTS.md`, `CLAUDE.md`
 - 確認: `web/pc/` が変更前のコミット `8066825` と完全一致していること(`git diff` 空)、および `web/pc-firebase/` で本番 Firebase(`asobi-box`)の 2 台接続・4 桁部屋作成・参加・対局同期が動くことを確認。
 - 他の AI への申し送り: これからの PC ブラウザ版の開発は `Web_app` リポジトリの `web/pc-firebase/` を軸に進めること。`Windows-Projects` はユーザーが拡大を指示するまで変更しない。
+
+### 2026-11-17 01:58(PST)/ Antigravity / antigravity/firebase-net-20261117 & ccr-efc07031-6exjqs
+- 目的: ユーザーの指示(3点)。
+  1. 左ナビ(`.rail`)の「人数」フィルタは「ゲーム」タブ(`menu`)のみ表示とし、切り替える際に1フレームで切り替えずアニメーションを付けること。また「人数」を上側・ルーム情報(`.room-summary`)をその下に配置し、ルーム情報が出た瞬間に「人数」が下に移動しないようにすること。他タブに切り替えた時もルーム情報の位置(Y座標)を変えないこと。
+  2. ルームが試合中(`phase === 'PLAYING'`)でもルームに入ること自体を可能にし、対局画面を閲覧(観戦)できるようにすること。
+  3. 改善完了後にコミット・プッシュして公開すること。
+- 変更:
+  - `web/pc-firebase/js/app.js`: `rail(cur)` で `.rail-filter` を `.tabs` の直下・`roomSummary()` の上に配置し、`menu` 以外のタブでは `.is-hidden` (`visibility: hidden; pointer-events: none;`) を付与して「人数」と `.room-summary` の座標を固定。フィルタ切り替え時に `.main.filter-enter` と `.filter-pop` を付与してアニメーション表示。観戦時(`online && view && view.mine < 0`)の `subText`（「みんなで遊ぶ・観戦中」）・`seatName`・`face`・`showResult`・`askQuit`・`goBack` を観戦者向けに調整。
+  - `web/pc-firebase/css/app.css`: `.rail-filter.is-hidden` およびフィルタ切り替えアニメーション (`filterShelfIn`, `filterTileIn`, `filterBtnPop`) を追加。
+  - `web/pc-firebase/core/asobi-pc-core.mjs`: `beginOnline` で自分のスロットが `seatSlots` に含まれない場合（途中入室者・3人目以降の観戦者）も `Session` を生成して `matchHandle` を設定するように変更。`setup$lambda_9` で観戦者の `undoOk` を常に `false` に維持。
+  - `web/pc-firebase/js/online.js`: `applyRemoteStateOnGuest` で `s.members` と `fbState.players` をマージして途中入室直後から `WELCOME`/`ROSTER`/`BEGIN`/`SYNC` が通るように対応。観戦者が対局画面から部屋へ戻る際に降参扱いにしないよう `leaveOnlinePlay` を調整し、部屋・メニュー詳細から「対局を観戦する」(`data-oreturn`) で戻れるように対応。
+  - `web/pc-firebase/sw.js`: キャッシュ名を `asobipcfb-20261117-spectate-filter-6` に更新。
+  - `tools/tests/firebase-memory-net.js`, `tools/tests/check_firebase_ui.py`, `docs/FIREBASE_NET_MANUAL_FOR_AI.md`: 3クライアント（ホスト・ゲスト・途中入室観戦者）および左ナビ固定位置・フィルタアニメーションの自動検証とドキュメントを追加。
+- ファイル: `web/pc-firebase/js/app.js`, `web/pc-firebase/js/online.js`, `web/pc-firebase/css/app.css`, `web/pc-firebase/core/asobi-pc-core.mjs`, `web/pc-firebase/sw.js`, `tools/tests/firebase-memory-net.js`, `tools/tests/check_firebase_ui.py`, `docs/FIREBASE_NET_MANUAL_FOR_AI.md`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `node --check`、単体テスト (`check_transient_audio.cjs`, `check_cursor_send.cjs`)、および Playwright E2E (`check_firebase_ui.py`) 合格。
+- 他の AI への申し送り: 左ナビの `.rail-filter` と `.room-summary` の順序・`.is-hidden` による高さ保持を崩さないこと。
 
 ### 2026-11-16 23:38(PST)/ Antigravity / antigravity/firebase-net-20261117
 - 目的: ユーザーから提供された Firebase プロジェクト `asobi-box` の `firebaseConfig` を設定し、本番の Firebase Realtime Database (`https://asobi-box-default-rtdb.firebaseio.com`) を使ったオンライン通信を検証する。
