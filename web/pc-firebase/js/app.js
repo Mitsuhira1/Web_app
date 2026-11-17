@@ -59,7 +59,7 @@ function rail(cur) {
   return `<nav class="rail">
     <div class="brand"><strong>あそび箱 <i>30</i></strong></div>
     <div class="tabs">${t.map(([s, i, n]) => `<button data-go="${s}" ${cur === s ? 'aria-current="page"' : ''}>${ic(i)}${n}</button>`).join('')}</div>
-    ${cur === 'menu' ? `<div><h4>人数</h4>${seg('filter', ['すべて', '1人', '2人', '3人以上'], S.filter, 'col')}</div>` : ''}
+    ${cur === 'menu' ? `${roomSummary()}<div><h4>人数</h4>${seg('filter', ['すべて', '1人', '2人', '3人以上'], S.filter, 'col')}</div>` : ''}
     <button class="quitbtn" data-quitapp>${QUIT_IC}終了する</button>
     <button class="me" data-goprof aria-label="プロフィールの設定">${meAv()}<b>${esc(meName())}</b></button>
   </nav>`;
@@ -84,10 +84,10 @@ function bgmGenreFor() {
 const savedList = () => store.get('saved', []).filter((s) => s.moves > 0 && gInfo(s.id)).slice(0, 3);
 function menu() {
   const tiles = (c) => ORDER.map((id) => gInfo(id)).filter((g) => g && (g.category === 'BOARD') === (c === 'b') && fits(g.players))
-    .map((g) => `<button class="tile ${playable(g.id) ? '' : 'soon'}" data-tile="${g.id}" aria-pressed="${S.sel === g.id}"><span class="art">${artOf(g.id)}</span><span class="cap"><b>${dispName(g)}</b><small>${esc(g.players)}${playable(g.id) ? '' : '・準備中'}</small></span></button>`).join('');
+    .map((g) => `<button class="tile ${playable(g.id) ? '' : 'soon'}" data-tile="${g.id}" aria-pressed="${S.sel === g.id}"><span class="art">${artOf(g.id)}</span>${gameWishes(g.id)}<span class="cap"><b>${dispName(g)}</b><small>${esc(g.players)}${playable(g.id) ? '' : '・準備中'}</small></span></button>`).join('');
   const nb = ORDER.filter((id) => gInfo(id) && gInfo(id).category === 'BOARD' && fits(gInfo(id).players)).length;
   const nc = ORDER.filter((id) => gInfo(id) && gInfo(id).category !== 'BOARD' && fits(gInfo(id).players)).length;
-  const sv = savedList();
+  const sv = roomActive() ? [] : savedList();
   const cont = sv.length ? `<div class="conts"><h3>続きから</h3>${sv.map((s, k) => `<button class="resume" data-resume="${k}"><span class="th">${artOf(s.id)}</span><b>${esc(gInfo(s.id).name)}</b><span class="mv">${s.moves}手目</span><span class="go">${ic('play')}</span></button>`).join('')}</div>` : '';
   return `<div class="screen">${rail('menu')}
    <div class="main">${cont}
@@ -96,6 +96,7 @@ function menu() {
    </div>${detail()}</div>`;
 }
 function detail() {
+  if (roomActive()) return onlineMenuDetail();
   const g = S.sel && gInfo(S.sel);
   if (!g) return '<aside class="detail"><div class="empty">ゲームを選んでください</div></aside>';
   const c = cfg(g.id);
@@ -208,7 +209,7 @@ async function enterPlay() {
   concurrent = online ? false : await callW('isConcurrent', h); S.screen = 'play'; S.modal = null;
   bgCtx(); render();
   dealPending = SHUFFLE_GAMES.has(cur.id) && (!view || !view.moves) && !online ? 1 : 0;
-  if (SHUFFLE_GAMES.has(cur.id) && (!view || !view.moves)) setTimeout(sfxShuffle, 250);
+  if (SHUFFLE_GAMES.has(cur.id) && (!view || !view.moves)) transientAudio.later(sfxShuffle, 250);
   if (!view || !view.moves) setTimeout(() => cut({ text: '対局開始', tone: 'gold', ms: 1200 }), 150);
   refresh();
 }
@@ -223,6 +224,7 @@ function play() {
     <div class="boardwrap" id="boardwrap"></div>
     <div class="acts" id="acts"></div>
     <div class="countbar" id="countbar"></div><div class="countline"><i id="cline" style="width:0"></i></div>
+    <button class="btn play-settings" data-playsettings aria-label="設定">${ic('set')}</button>
     <div class="cutlayer" id="cutlayer"></div>
     <div class="resultlayer" id="result" hidden></div>
    </div>
@@ -235,30 +237,34 @@ function play() {
    </aside></div>`;
 }
 const hasList = (id) => /shogi|gogo|chess|poker|holdem|hanafuda|yacht|daifugo|mahjong/.test(id);
+let refreshRevision = 0;
 async function refresh() {
+  const revision = ++refreshRevision;
   if (h < 0) return;
   const my = token;
   const v = JSON.parse(await call('viewJson', h, mySeat));
-  if (my !== token) return;
+  if (my !== token || revision !== refreshRevision) return;
+  const previous = prevView;
+  if (online) prevView = v;
   view = v;
   if (!online) lastRecord = await call('matchRecord', h);
   if (mode === 'pass' && view.human && view.toMove >= 0 && view.toMove !== mySeat) { mySeat = view.toMove; view = JSON.parse(await call('viewJson', h, mySeat)); }
   // 通信対戦: ほかの人の手(サイコロ・札など)も、自分の手と同じように音を鳴らす
-  if (online && prevView && view.moves > prevView.moves && pendSnd == null) {
+  if (online && previous && view.moves > previous.moves && pendSnd == null) {
     let ms = [];
-    try { ms = mainCore.onlineMovesFrom(h, prevView.moves).split(',').filter((x) => x !== '').map(Number); if (ms.length) { pendSnd = ms[ms.length - 1]; lastPlayed = pendSnd; } } catch (e) {}
+    try { ms = mainCore.onlineMovesFrom(h, previous.moves).split(',').filter((x) => x !== '').map(Number); if (ms.length) { pendSnd = ms[ms.length - 1]; lastPlayed = pendSnd; } } catch (e) {}
     // 相手(通信の人)の手も、CPU と同じカーソルの動きで見せる(前の盤の上で動かしてから、新しい盤を描く)
     // (PC 版どうしで、相手のカーソルがいつも見えている時は、この動きは出さない)
-    if (ms.length === 1 && !prevView.human && prevView.toMove >= 0 && cursorOn() && !NO_CURSOR.has(cur.id) && S.screen === 'play' && !liveCursorOf(prevView.toMove)) {
-      const nv = view; view = prevView;
+    if (ms.length === 1 && !previous.human && previous.toMove >= 0 && cursorOn() && !NO_CURSOR.has(cur.id) && S.screen === 'play' && !liveCursorOf(previous.toMove)) {
+      const nv = view; view = previous;
       try { await runCursor(ms[0], my); } catch (e) {}
-      if (my !== token) return;
+      if (my !== token || revision !== refreshRevision) return;
       view = nv;
     }
   }
   if (!view.outcome) { const rp = $('#result'); if (rp && !rp.hidden) { rp.hidden = true; resultShown = -1; } }
-  detectEvents(prevView, view);
-  turnCut(prevView, view);
+  detectEvents(previous, view);
+  turnCut(previous, view);
   prevView = view;
   if (S.screen !== 'play') return;
   drawPlay();
@@ -270,9 +276,10 @@ async function refresh() {
     if (pm != null && view.legal.length === 1 && view.legal[0] === pm) {
       setStatus('動かせないので、パスします');
       await new Promise((r) => setTimeout(r, 1100));
-      if (my !== token) return;
+      if (my !== token || revision !== refreshRevision) return;
       if (online) mainCore.onlinePlay(h, pm); else await call('playMove', h, pm);
-      pendSnd = pm; return refresh();
+      if (!online) pendSnd = pm;
+      return refresh();
     }
     startClock(my); return;
   }
@@ -298,7 +305,7 @@ async function cpuTurn(my) {
   busy = false;
   const quiet = view.board && view.board.kind === 'hitblow' && view.board.setting;
   if (online) mainCore.onlineCpuPlay(h, mv); else await call('playMove', h, mv);
-  pendSnd = quiet ? null : mv; lastPlayed = mv; hideCursor();
+  if (!online) pendSnd = quiet ? null : mv; lastPlayed = mv; hideCursor();
   await refresh();
 }
 let turnPending = 0; // 「あなたの番です」が出終わるまでは操作しない(出る前の待ち時間も含む)
@@ -309,7 +316,7 @@ async function humanMove(m) {
   sel = null; stopClock();
   const my = token;
   const ok = online ? mainCore.onlinePlay(h, m) : await call('playMove', h, m);
-  if (ok) { pendSnd = m; lastPlayed = m; }
+  if (ok) { if (!online) pendSnd = m; lastPlayed = m; }
   if (my === token) await refresh();
 }
 function playMoveSound(m) { const r = moveSound(cur.id, m); if (r) sfx.play(r[0], r[1] || {}); }
@@ -353,7 +360,7 @@ function api() {
       box.onclick = (e) => { const b = e.target.closest('[data-act]'); if (!b || b.disabled || b.classList.contains('waiting') || cutOn()) return; const a = list[+b.dataset.act]; if (a.fn) a.fn(); else humanMove(a.move); };
     },
     play: humanMove, redraw: () => drawPlay(true), anim: (ms) => { animUntil = Math.max(animUntil, performance.now() + ms * SPEED()); },
-    land: (ms) => { landMs = ms; }, sfx: (name, ms = 0, o) => setTimeout(() => sfx.play(name, o || {}), ms * SPEED()),
+    land: (ms) => { landMs = ms; }, sfx: (name, ms = 0, o) => transientAudio.later(() => sfx.play(name, o || {}), ms * SPEED()),
     key: (fn) => { boardKey = fn; }, round: (t) => { const e = $('#hround'); if (e) e.innerHTML = t ? String(t).split('・').map((x) => `<span class="hchip">${esc(x)}</span>`).join('') : ''; },
     side: (html, onTap) => { const n = $('#sidenote'); if (!n) return; sideCustom = true; n.classList.add('custom'); n.innerHTML = html; n.onclick = (e) => { const t = e.target.closest('[data-lm],[data-spin],[data-repay],[data-act]'); if (!t || t.disabled || t.classList.contains('waiting') || cutOn()) return; onTap(t.dataset, t); }; },
     get isOnline() { return online; },
@@ -392,7 +399,7 @@ function drawPlay(force) {
     if (r) r(b, api());
     else $('#boardwrap').innerHTML = '<div class="empty">この盤はまだ描けません</div>';
   }
-  if (pendSnd != null) { const m = pendSnd; pendSnd = null; if (landMs >= 0) { if (landMs > 0) setTimeout(() => playMoveSound(m), landMs * SPEED()); else playMoveSound(m); } }
+  if (pendSnd != null) { const m = pendSnd; pendSnd = null; if (landMs >= 0) { if (landMs > 0) transientAudio.later(() => playMoveSound(m), landMs * SPEED()); else playMoveSound(m); } }
   if (dealPending) { dealPending = 0; dealIntro(); }
   setStatus(statusText());
   drawClock();
@@ -608,6 +615,7 @@ function detectEvents(a, b) {
 const FONT_OF = (id) => (['shogi', 'gogo', 'go', 'gomoku', 'hanafuda'].includes(id) ? 'wa' : id === 'mahjong' ? 'china' : ['uno', 'sevens', 'memory', 'speed', 'daifugo', 'solitaire'].includes(id) ? 'mo' : 'yo');
 let cutBusy = 0; const cutQ = [];
 function cut(c) {
+  if (c.onShow && !c._soundGuarded) { c.onShow = transientAudio.guard(c.onShow); c._soundGuarded = true; }
   if (!S.set.cutin || S.set.reduce) { if (c.onEnd) c.onEnd(); return; }
   const o = $('#cutlayer'); if (!o) return;
   // 前のカットインや、駒・札の動きが終わってから出す
@@ -636,7 +644,7 @@ function sfxYourTurn() {
   const ax = uiCtx(); if (!ax) return;
   const v = Math.max(0, Math.min(1, (S.set.master / 100) * (S.set.sfxVol / 100)));
   [[784, 0], [1175, 0.13], [1568, 0.26]].forEach(([f, d]) => {
-    const t = ax.currentTime + 0.02 + d, o = ax.createOscillator(), g = ax.createGain();
+    const t = ax.currentTime + 0.02 + d, o = transientAudio.track(ax.createOscillator()), g = ax.createGain();
     o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.55 * v, t + 0.012); g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
     o.connect(g); g.connect(ax.destination); o.start(t); o.stop(t + 0.35);
   });
@@ -647,10 +655,10 @@ function turnCut(a, b) {
   if (a && a.toMove === b.toMove && !(online && b.moves - a.moves >= 2)) return;
   const multi = online || mode === 'pass' || b.seats.length >= 3;
   if (!multi) return;
-  if (!S.set.cutin || S.set.reduce) { setTimeout(() => { if (view && view.toMove === b.toMove && view.human && !view.outcome) sfxYourTurn(); }, a ? 120 : 1450); return; }
+  if (!S.set.cutin || S.set.reduce) { transientAudio.later(() => { if (view && view.toMove === b.toMove && view.human && !view.outcome) sfxYourTurn(); }, a ? 120 : 1450); return; }
   const text = mode === 'pass' ? `${b.seats[b.toMove].name} の番です` : 'あなたの番です';
   turnPending = performance.now() + 6000;
-  setTimeout(() => { if (view && view.toMove === b.toMove && view.human && !view.outcome) { cut({ text, tone: 'gold', ms: 900, soft: true, afterAnim: true, _tok: token, onShow: sfxYourTurn, onEnd: () => { turnPending = 0; } }); } else turnPending = 0; }, a ? 120 : 1450);
+  transientAudio.later(() => { if (view && view.toMove === b.toMove && view.human && !view.outcome) { cut({ text, tone: 'gold', ms: 900, soft: true, afterAnim: true, _tok: token, onShow: sfxYourTurn, onEnd: () => { turnPending = 0; } }); } else turnPending = 0; }, a ? 120 : 1450);
 }
 // カードを切る音のあとに、札を配る(卓の真ん中から順に)
 function dealIntro() {
@@ -668,7 +676,7 @@ function dealIntro() {
     // 神経衰弱は横 1 列で 1 回だけ鳴らす
     const newRow = mem && (rowTop == null || Math.abs(r.top - rowTop) > r.height / 2); if (newRow) rowTop = r.top;
     const firstInPile = cur.id === 'solitaire' ? e.parentElement && e.parentElement.firstElementChild === e : mem ? newRow : i % 3 === 0;
-    if (firstInPile) setTimeout(() => sfx.play('DEAL', { volume: mem ? 0.4 : 0.55 }), start + i * step);
+    if (firstInPile) transientAudio.later(() => sfx.play('DEAL', { volume: mem ? 0.4 : 0.55 }), start + i * step);
   });
   animUntil = Math.max(animUntil, performance.now() + start + list.length * step + 300);
 }
@@ -729,20 +737,21 @@ async function runCursor(mv, my) {
     await wait((k === steps.length - 1 ? 160 : el.matches('.yd') ? 90 : 230) * f); if (my !== token) return;
   }
 }
-function sfxClick() { if (!S.set.sound || !S.set.hover || !AX) return; try { const t = AX.currentTime, o = AX.createOscillator(), g = AX.createGain(); o.type = 'square'; o.frequency.setValueAtTime(2200, t); o.frequency.exponentialRampToValueAtTime(1400, t + 0.012); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.035 * S.set.master / 100 * S.set.sfxVol / 100 + 0.0002, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03); o.connect(g); g.connect(AX.destination); o.start(t); o.stop(t + 0.04); } catch (e) {} }
+function sfxClick() { if (!S.set.sound || !S.set.hover || !AX || !transientAudio.allowed()) return; try { const t = AX.currentTime, o = transientAudio.track(AX.createOscillator()), g = AX.createGain(); o.type = 'square'; o.frequency.setValueAtTime(2200, t); o.frequency.exponentialRampToValueAtTime(1400, t + 0.012); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.035 * S.set.master / 100 * S.set.sfxVol / 100 + 0.0002, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03); o.connect(g); g.connect(AX.destination); o.start(t); o.stop(t + 0.04); } catch (e) {} }
 const hideCursor = () => { const c = $('#cpuCur'); if (c) c.remove(); document.querySelectorAll('.aimring').forEach((e) => e.remove()); };
 const rcurHtml = (id, name, color, turn) => `<div class="rcur ${turn ? 'turn' : ''}" id="${id}" style="--cc:${color}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3l15 8.500-6.500 1.800L9.500 20z" fill="${color}" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg><span class="tag"><i>${esc(name[0])}</i>${esc(name)}</span></div>`;
 
 // ---------------------------------------------------------------- 成績
 function records() {
-  const st = store.get('stats', {});
-  const rows = ORDER.map((id) => [gInfo(id), st['vs_' + id], st['solo_' + id]]).filter(([g, a, b]) => g && (a || b));
-  return `<div class="screen">${rail('records')}<div class="main"><h2 class="pagehead">成績</h2>
-   ${rows.length ? `<div class="panel tablescroll" style="max-width:760px"><table class="rec"><tr><th>ゲーム</th><th>勝ち</th><th>負け</th><th>引き分け</th><th>勝率</th></tr>${rows.map(([g, a, b]) => {
-     if (b && !a) return `<tr><td><b>${esc(g.name)}</b></td><td colspan="4" class="num">${b[0]}回 遊んだ</td></tr>`;
-     const n = a[0] + a[1] + a[2]; return `<tr><td><b>${esc(g.name)}</b></td><td class="num">${a[0]}</td><td class="num">${a[1]}</td><td class="num">${a[2]}</td><td class="num">${n ? Math.round(a[0] / n * 100) : 0}%</td></tr>`; }).join('')}</table></div>`
-     : '<div class="panel" style="max-width:760px"><div class="row"><span class="dimtxt">まだ記録がありません(CPUとの対戦の結果を記録します)</span></div></div>'}
-  </div></div>`;
+  const stats = store.get('stats', {});
+  const games = ORDER.map(id => ({g:gInfo(id), vs:stats['vs_'+id] || [0,0,0], solo:stats['solo_'+id] || [0]})).filter(row=>row.g);
+  const played = row => row.vs.reduce((a,b)=>a+b,0) + row.solo[0] > 0;
+  const rows = list => list.map(({g,vs,solo})=>{
+    const total=vs[0]+vs[1]+vs[2], count=total+solo[0];
+    return `<tr data-record-game="${g.id}"><th scope="row"><div class="record-game"><span class="record-art" aria-hidden="true">${artOf(g.id)}</span><span>${esc(g.name)}${solo[0]?`<small>ひとりで ${solo[0]}回</small>`:''}</span></div></th>${count?`<td class="num">${vs[0]}</td><td class="num">${vs[1]}</td><td class="num">${vs[2]}</td><td class="num">${total?Math.round(vs[0]/total*100)+'%':'—'}</td>`:'<td colspan="4" class="unplayed-label">未プレイ</td>'}</tr>`;
+  }).join('');
+  const done=games.filter(played),fresh=games.filter(row=>!played(row));
+  return `<div class="screen">${rail('records')}<div class="main"><h2 class="pagehead">成績</h2><div class="panel tablescroll record-list"><table class="rec"><thead><tr><th>ゲーム</th><th>勝ち</th><th>負け</th><th>引き分け</th><th>勝率</th></tr></thead>${done.length?`<tbody>${rows(done)}</tbody>`:''}${fresh.length?`<tbody class="unplayed-games"><tr class="record-group"><th colspan="5" scope="colgroup">未プレイ (${fresh.length})</th></tr>${rows(fresh)}</tbody>`:''}</table></div></div></div>`;
 }
 
 // ---------------------------------------------------------------- 設定
@@ -777,6 +786,12 @@ function setRow([l, t, k, x]) {
 }
 if (window.__TAURI__) window.__TAURI__.core.invoke('data_folder_path').then((p) => { S.dataPath = p; if (S.screen === 'settings') render(); }).catch(() => {});
 const keyLabel = (k) => String(k).replace('Escape', 'Esc');
+function openPlaySettings() {
+  if (S.screen !== 'play') return;
+  openSheet(`<div id="playsettings"><div class="mhd"><h3>設定</h3><button class="btn" data-playsettingsclose aria-label="設定を閉じる">閉じる</button></div><div class="setwrap"><div class="setcats">${SCAT.map(([k,n])=>`<button data-scat="${k}" ${S.scat===k?'aria-current="true"':''}>${n}</button>`).join('')}</div><div class="panel setpanel"><h3>${SCAT.find(c=>c[0]===S.scat)[1]}</h3>${SDEF[S.scat].map(setRow).join('')}</div></div></div>`);
+  $('#sheet').classList.add('play-settings-dialog');
+  $('#sheet').setAttribute('aria-label','設定');
+}
 function settings() {
   return `<div class="screen">${rail('settings')}<div class="main"><div class="pagehead2"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button><h2 class="pagehead">設定</h2></div><div class="setwrap">
    <div class="setcats">${SCAT.map(([k, n]) => `<button data-scat="${k}" ${S.scat === k ? 'aria-current="true"' : ''}>${n}</button>`).join('')}</div>
@@ -820,6 +835,8 @@ let lastModal = null;
 let ddOpen = null;
 function ddClose(focusBtn) { const k = ddOpen; if (!k) return; ddOpen = null; const w = $(`.dd.open`); if (w) { w.classList.remove('open'); const l = w.querySelector('.ddlist'); if (l) l.remove(); const b = w.querySelector('.ddbtn'); b.setAttribute('aria-expanded', 'false'); if (focusBtn) b.focus({ preventScroll: true }); } }
 function render() {
+  if (S.screen !== 'play') document.querySelectorAll('.rcur.live').forEach(e=>e.remove());
+  const keepPlaySettings = S.screen === 'play' && !!$('#playsettings');
   document.documentElement.classList.toggle('lite', S.set.look === '軽量');
   document.documentElement.classList.toggle('reduce', !!S.set.reduce);
   { const z = S.set.scale === '100%' ? 1 : parseInt(S.set.scale, 10) / 100; document.body.style.zoom = z === 1 ? '' : z;
@@ -845,6 +862,7 @@ function render() {
   if (S.focusSel) { const f = $(S.focusSel); S.focusSel = null; if (f) f.focus({ preventScroll: true }); }
   else if (fKey && lastScreenFocus === S.screen) { const f = $(fKey); if (f) f.focus({ preventScroll: true }); }
   lastScreenFocus = S.screen;
+  if (keepPlaySettings) openPlaySettings();
   if (S.modal === 'bgmoff') app.insertAdjacentHTML('beforeend', bgmOffModal());
   if (S.modal === 'avatar') app.insertAdjacentHTML('beforeend', avatarModal());
   if (S.modal === 'license') { app.insertAdjacentHTML('beforeend', licenseModal()); fillLicenses(); }
@@ -881,6 +899,8 @@ app.addEventListener('click', async (e) => {
   const b = e.target.closest('button'); if (!b || b.disabled) return;
   const d = b.dataset;
   clickSound(b, d);
+  if (d.playsettings != null) return openPlaySettings();
+  if (d.playsettingsclose != null) { closeSheet(); return; }
   if (d.sheetback != null) return closeSheet();
   if (d.dd) { if (ddOpen === d.dd) return ddClose(true); ddOpen = d.dd; S.focusSel = `.ddopt.on`; return render(); }
   if (d.ddv != null) { const k = d.ddk; S.set[k] = d.ddv; saveSet(); if (k === 'res') setWinSize(d.ddv); ddOpen = null; S.focusSel = `[data-dd="${k}"]`; return render(); }
@@ -888,7 +908,9 @@ app.addEventListener('click', async (e) => {
   if (d.go) { if (d.go === 'room' && S.screen === 'play' && online) { leavePlay(); S.screen = 'room'; return render(); } return go(d.go); }
   if (d.quitapp != null) return askQuitApp();
   if (d.goprof != null) { S.scat = 'prof'; return go('settings'); }
+  if (d.tile && roomChoosing()) { S.sel=d.tile;chooseWish(d.tile);return render(); }
   if (d.tile) { const id = d.tile; if ((S.sel === id || e.detail === 0) && playable(id)) { if (e.detail === 0) S.focusSel = '[data-start]'; S.setup = { id, online: false }; return go('setup'); } S.sel = id; S.focusSel = `[data-tile="${id}"]`; return render(); }
+  if (d.next != null && roomChoosing()) { if (isHostRoom() && ost.members.length>=2) chooseOnline(S.sel); return; }
   if (d.next != null) { S.setup = { id: S.sel, online: false }; return go('setup'); }
   if (d.resume != null) return resume(savedList()[+d.resume]);
   if (d.start != null) return startGame();
@@ -903,6 +925,7 @@ app.addEventListener('click', async (e) => {
   if (d.modal) { S.modal = d.modal; return render(); }
   if (d.mclose != null || d.mback != null) { S.modal = null; if (PV) { PV = null; bgmStop(); if (S.set.bgm) bgmPick(); } return render(); }
   if (d.pv) { if (PV === d.pv) { PV = null; bgmStop(); if (S.set.bgm) bgmPick(); } else { PV = d.pv; bgmPlay(d.pv, 0, true); } return render(); }
+  if (d.scat && $('#playsettings')) { S.scat = d.scat; return openPlaySettings(); }
   if (d.scat) { const ch = S.scat !== d.scat; S.scat = d.scat; S.rekey = null; render(); if (ch) { const p = $('.setpanel'); if (p) p.classList.add('enter'); } return; }
   if (d.av != null) { S.set.av = d.av === 'photo' ? 'photo' : +d.av < 0 ? null : +d.av; saveSet(); return render(); }
   if (d.rekey) { S.rekey = S.rekey === d.rekey ? null : d.rekey; return render(); }
@@ -1068,8 +1091,8 @@ document.addEventListener('visibilitychange', () => {
 // ---------------------------------------------------------------- 音(カーソル音・チャットの音)
 let hvT = 0, hvEl = null;
 function sfxHover() {
-  if (!S.set.sound || !S.set.hover || !AX) return; const now = performance.now(); if (now - hvT < 45) return; hvT = now;
-  const t = AX.currentTime, o = AX.createOscillator(), g = AX.createGain(), f = AX.createBiquadFilter(); o.type = 'triangle'; o.frequency.setValueAtTime(1320, t); o.frequency.exponentialRampToValueAtTime(990, t + 0.035);
+  if (!S.set.sound || !S.set.hover || !AX || !transientAudio.allowed()) return; const now = performance.now(); if (now - hvT < 45) return; hvT = now;
+  const t = AX.currentTime, o = transientAudio.track(AX.createOscillator()), g = AX.createGain(), f = AX.createBiquadFilter(); o.type = 'triangle'; o.frequency.setValueAtTime(1320, t); o.frequency.exponentialRampToValueAtTime(990, t + 0.035);
   f.type = 'bandpass'; f.frequency.value = 1500; f.Q.value = 2; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09 * S.set.master / 100 * S.set.sfxVol / 100 + 0.0002, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
   o.connect(f); f.connect(g); g.connect(AX.destination); o.start(t); o.stop(t + 0.08);
 }
@@ -1080,15 +1103,15 @@ document.addEventListener('keydown', () => { try { if (AX && AX.state === 'suspe
 document.addEventListener('mouseover', (e) => { const b = e.target.closest && e.target.closest('button'); if (b === hvEl) return; hvEl = b; if (b && !b.disabled && !b.matches('.cell,.scell,.c4cell,.card,.cutin,.toast,.cd,.hk')) sfxHover(); });
 // 画面のボタンの音。ゲームを決めて設定へ進む時と、スタートの時だけ特別な音
 const uiGain = () => S.set.master / 100 * S.set.sfxVol / 100;
-function uiCtx() { if (!S.set.sound) return null; try { AX = AX || new (window.AudioContext || window.webkitAudioContext)(); AX.resume(); return AX; } catch (e) { return null; } }
+function uiCtx() { if (!S.set.sound || !transientAudio.allowed()) return null; try { AX = AX || new (window.AudioContext || window.webkitAudioContext)(); AX.resume(); return AX; } catch (e) { return null; } }
 function note(ax, f, t, dur, vol, type = 'sine', to) {
-  const o = ax.createOscillator(), g = ax.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+  const o = transientAudio.track(ax.createOscillator()), g = ax.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * uiGain() + 0.0002, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   o.connect(g); g.connect(ax.destination); o.start(t); o.stop(t + dur + 0.02);
 }
 function noise(ax, t, dur, vol, freq, q = 1.2) {
   const n = Math.max(1, Math.floor(ax.sampleRate * dur)), b = ax.createBuffer(1, n, ax.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
-  const src = ax.createBufferSource(), f = ax.createBiquadFilter(), g = ax.createGain(); src.buffer = b; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+  const src = transientAudio.track(ax.createBufferSource()), f = ax.createBiquadFilter(), g = ax.createGain(); src.buffer = b; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * uiGain() + 0.0002, t + Math.min(0.004, dur / 3)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   src.connect(f); f.connect(g); g.connect(ax.destination); src.start(t); src.stop(t + dur + 0.01);
 }
@@ -1114,9 +1137,9 @@ function clickSound(b, d) {
   sfx.play(b.getAttribute('aria-label') === '戻る' || d.mclose != null || d.mback != null || d.sheetback != null ? 'BACK' : 'TAP');
 }
 function sfxPop(up) {
-  if (!S.set.sound || !S.set.chatSnd) return;
+  if (!S.set.sound || !S.set.chatSnd || !transientAudio.allowed()) return;
   try {
-    AX = AX || new (window.AudioContext || window.webkitAudioContext)(); AX.resume(); const t = AX.currentTime + 0.01, o = AX.createOscillator(), g = AX.createGain();
+    AX = AX || new (window.AudioContext || window.webkitAudioContext)(); AX.resume(); const t = AX.currentTime + 0.01, o = transientAudio.track(AX.createOscillator()), g = AX.createGain();
     o.type = 'sine'; o.frequency.setValueAtTime(up ? 420 : 980, t); o.frequency.exponentialRampToValueAtTime(up ? 1250 : 520, t + 0.075); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35 * S.set.master / 100 * S.set.sfxVol / 100 + 0.0002, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
     o.connect(g); g.connect(AX.destination); o.start(t); o.stop(t + 0.16);
   } catch (e) {}

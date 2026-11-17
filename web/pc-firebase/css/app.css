@@ -1596,3 +1596,22 @@ html.reduce .wfx .wpop{display:none!important}
 .scell.lastto{background:rgba(226,85,58,.26);box-shadow:inset 0 0 0 2px rgba(200,48,30,.55)}
 .wfx.wout{animation:wout .6s ease-in .15s forwards}
 @keyframes wout{to{opacity:0}}
+
+/* Inline SVG fill must survive the room's inherited currentColor defaults too. */
+.rcur.live svg path{fill:var(--cc);stroke:#fff}
+.play-settings{position:absolute;left:16px;bottom:16px;z-index:12;width:46px;height:46px;border-radius:50%;box-shadow:0 4px 12px #0004;background:var(--surface);display:grid;place-items:center}
+.play-settings svg{width:24px;height:24px}
+.mbox.sheet.play-settings-dialog{width:min(900px,94vw);max-height:86vh;overflow:auto;animation:settingsFloat .2s ease-out}
+.play-settings-dialog .setwrap{padding:12px;min-height:0}.play-settings-dialog .setcats{flex-wrap:wrap}.play-settings-dialog .setpanel{min-width:0}
+@keyframes settingsFloat{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.play-settings-dialog{animation:none}}
+
+.rcur.live{position:fixed;z-index:45;isolation:isolate}
+
+.record-list{max-width:1040px}.record-list .rec{width:100%}.record-list .rec th[scope=row]{text-align:left;font-weight:700}.record-game{display:flex;align-items:center;gap:20px;min-height:88px;min-width:240px}.record-art{display:grid;place-items:center;flex:none;width:100px;height:82px;overflow:hidden}.record-art svg{width:100%;height:100%;object-fit:contain}.record-game small{display:block;font-size:13px;color:var(--sub);margin-top:6px}.record-list .record-group th{text-align:left;padding:22px 14px 12px;color:var(--sub)}.unplayed-label{color:var(--sub);text-align:center}
+
+.room-summary{border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px}.room-summary h4{margin:0}.room-code{font-size:24px;letter-spacing:.15em}.room-summary .btn{font-size:12px;padding:6px}.room-members{display:grid;gap:8px}.room-members>div{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.room-members small{font-size:10px;color:var(--sub)}.wish-player{display:inline-flex;align-items:center;gap:4px;color:var(--player-color);font-size:11px;font-weight:800;white-space:nowrap}.wish-avatar{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--player-color);color:white;overflow:hidden}.wish-avatar svg{width:100%;height:100%}.tile{position:relative}.game-wishes{position:absolute;inset:0;pointer-events:none;z-index:2}.wish-frame{position:absolute;inset:var(--wish-inset);border:3px solid var(--player-color);border-radius:inherit}.wish-labels{position:absolute;right:4px;top:4px;display:flex;flex-direction:column;gap:2px;align-items:flex-end;max-width:95%}.wish-labels .wish-player{background:var(--surface);padding:2px 5px;border-radius:14px;box-shadow:0 1px 4px #0004}.online-detail .chat{margin:8px 14px;min-height:220px;flex:1}.online-detail>.scroll{flex:0 1 auto;max-height:44%}.room-howto{font-size:12px;line-height:1.6;color:var(--sub);padding:10px 0}.room-howto summary{font-weight:800}.screen:has(.room-summary) .rail{overflow:auto}
+
+.play-settings-dialog .setwrap{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px}.play-settings-dialog .setcats{display:flex;flex-direction:column}.play-settings-dialog .setpanel{overflow:auto}@media(max-width:650px){.play-settings-dialog .setwrap{grid-template-columns:1fr}.play-settings-dialog .setcats{flex-direction:row}.play-settings-dialog .row{flex-wrap:wrap}}
+
+.play-settings-dialog .setcats{width:auto}

@@ -1,6 +1,6 @@
 # Firebase Realtime Database 通信マニュアル（Codex・Claude 引き継ぎ資料）
 
-最終更新: 2026-11-16 / 作成: Antigravity (Gemini)
+最終更新: 2026-11-17 / 作成: Antigravity (Gemini)、追記: Codex
 
 このドキュメントは、アソビ大辞典（あそび箱30）のオンライン通信を従来の WebRTC + STUN + ntfy（長い招待コード方式）から **Firebase Realtime Database（4桁のルームコードマッチング方式）** に置き換えた設計・データ構造・実装の詳細をまとめた引き継ぎマニュアルです。
 Codex や Claude Code が今後 PC Web 版の改修や、スマホ Web 版・Android 版・Windows (`.exe`) 版への横展開を行う際は、この仕様に従ってください。
@@ -143,7 +143,7 @@ rooms/
   - 受信側では `active: false` のポインターに `.idle` クラス（`opacity: 0.38`）を付与して半透明の待機表示にします。
 - **無料枠の節約と滑らかな補間**:
   - 送信頻度は `POINTER_INTERVAL_MS = 100`（0.1秒に1回）に制限し、かつ前回の `(x, y, active)` シグネチャから変化があった時だけ `rooms/{roomId}/cursors/{uid}` を更新します。
-  - 受信側は `requestAnimationFrame` ループ内で現在位置 `(curX, curY)` を目標位置 `(tx, ty)` へ線形補間（Lerp 係数 `0.32`）して滑らかに動かします。
+  - 受信側は `requestAnimationFrame` 内で受信時点の表示座標から目標座標まで120msで時間基準の線形補間を行います。描画のフレームレートに依存する係数は使用しません。
 
 ---
 
@@ -175,3 +175,29 @@ Codex に作業を引き継ぐ際は、以下のブロックをそのままコ�
 - 従来の PC Web アプリ（`web/pc/`）はそのまま開けるように無変更で維持してください。
 - 変更を加えたら必ず `README4AI_Claude_Codex_Antigravity.md` の「5. 変更の記録」に目的・変更内容・確認結果を追記してください。
 ```
+
+
+## 9. 2026-11-17 Codexの追記
+
+- **表示対象**: 相手ポインターは `S.screen === 'play'` の対局画面だけに表示する。ロビーを含むメニュー・設定・ゲーム選択では表示しない。ルームを維持したまま対局へ入る時は、新規の受信通知なしでも描画ループが表示を復元する。
+- **表示層と色**: `.rcur.live` はbody直下のfixed要素で、盤面と右側UIの境界にまたがっても同じ色を保つ。色はplayersのslotを優先して決め、既存要素にも毎回反映する。ルームコードの仕様やJSONキーは変更していない。
+- **送信**: 座標・activeに加えてslot/seatの変更も差分に含める。active=falseも含め、100ms以内に連続書込みしない。
+- **初期状態適用**: 初期監視通知がOnlineRoomゲスト生成より先に到着し得るため、`startGuestOnlineRoom()` で `resetGuestApplied()` し、生成後にWELCOMEを再適用する。
+- **効果音**: 通信の自分の操作は要求と確定を区別する。`humanMove`/CPUで予約せず、確定したmovesの差分で鳴らす。`refresh()` の更新世代で古い非同期結果を棄却し、前状態は待機より先に確保する。
+- **タブ復帰**: `sfx.js` の `transientAudio` で一時音源・タイマーを管理する。非表示時に停止し、古い予約音を再開しない。停止中contextにバッファ音を積まない。明示的なバックグラウンド音設定は尊重する。
+- **試験**: `tools/tests/firebase-memory-net.js` は試験用のAPI代替。製品からは読み込まない。`check_firebase_ui.py` は実際のKotlin coreを持つ2画面で手順を検証し、本番Firebaseの接続試験とは区別する。
+
+
+## 10. 共通ゲーム一覧と希望ゲーム（2026-11-17）
+
+「みんなで遊ぶ」はルーム作成・参加とルーム管理の入口。作成・参加後は `menu` の既存ゲーム一覧を共用する。左のナビゲーション内にルームコード・参加者・退出/解散を表示し、右の詳細欄にチャットと遊び方を表示する。遊び方は入室後も表示する。
+
+追加フィールド（いずれも既存クライアントが無視できる任意フィールド）:
+
+- `rooms/{roomId}/players/{uid}/choice`: 希望ゲームのID文字列。本人の希望のみ。`state/gameId` や `state/phase` は書き換えない。
+- `rooms/{roomId}/players/{uid}/avatar`: 組込みアイコン番号（整数、未指定はnull）。写真や任意HTMLを配信しない。
+- `netApi.chooseGame(gameId, avatar)`: 現在のuidのプレイヤーノードだけをupdateする。既存の切断時players削除で一緒に片付く。
+
+`gameWishes()` は同じゲームを希望する複数人を、slotに対応する複数の色枠と右上のアイコン/名前で表示する。希望の選択では設定画面へ遷移しない。`chooseOnline()` はホスト・参加人数2人以上を検査し、「対戦プレイ」から既存の設定へ進む。開始前にも2人以上を確認する。実際のゲーム設定、合法手、開始は引き続きホストのOnlineRoomが管理する。
+
+Firebase Rulesを独自に厳格化しているプロジェクトでは、本人のplayersノードの `choice`（文字列）と `avatar`（整数/null）の更新を許可すること。ホストのstate更新権限や他プレイヤーの所有権を緩める必要はない。

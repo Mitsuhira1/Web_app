@@ -412,14 +412,8 @@ function room() {
   if (!none && st.phase === 'PLAYING') {
     const inMatch = st.match >= 0;
     right = `<div class="panel"><h3>対局中</h3><div class="hero" style="margin:8px 0">${g ? `<span class="art">${artOf(g.id)}</span>` : ''}<div><h2>${g ? esc(g.name) : ''}</h2><p>${inMatch ? '対局の画面から部屋に戻っています' : '次の対局から加わります。いまの対局が終わるまで待ってください'}</p></div></div>${inMatch ? '<div style="display:flex;justify-content:flex-end"><button class="btn primary" style="flex:none;width:280px" data-oreturn>対局に戻る</button></div>' : ''}</div>`;
-  } else if (host) {
-    const blocked = new Set();
-    for (const id of ORDER) { try { if (JSON.parse(mainCore.onlineMismatch(id)).length) blocked.add(id); } catch (e) {} }
-    right = `<div class="panel"><h3>遊ぶゲーム</h3><div class="glist">${ORDER.map((id) => gInfo(id)).filter((x) => x && playable(x.id) && range(x.players)[1] >= st.members.length).map((x) => `<button data-pick="${x.id}" class="${S.roomPre === x.id ? 'pre' : ''} ${st.gameId === x.id && S.roomDecided === x.id ? 'set' : ''}" ${blocked.has(x.id) ? 'disabled title="版が違う人がいるので選べません"' : ''}><span class="mini">${artOf(x.id)}</span><span class="gn">${dispName(x)}</span><em>${st.gameId === x.id && S.roomDecided === x.id ? '決定' : ''}</em></button>`).join('')}</div>
-      ${blocked.size ? `<p class="dimtxt">版が違う人がいるので、選べないゲームがあります。</p>` : ''}</div>
-      <div style="display:flex;justify-content:flex-end"><button class="btn primary" style="flex:none;width:280px" data-roomnext ${S.roomPre || S.roomDecided ? '' : 'disabled'}>進む</button></div>`;
-  } else if (guest && g) {
-    right = `<div class="panel"><h3>遊ぶゲーム</h3><div class="hero" style="margin:8px 0"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>ホストが選んでいます</p></div></div>${st.phase === 'LOBBY' ? '<p class="dimtxt">ホストが始めるのを待っています</p>' : ''}</div>`;
+  } else if (!none) {
+    right = '<div class="panel"><button class="btn primary" data-go="menu">ゲームを選ぶ</button></div>';
   }
   right += howtoPanel;
   return `<div class="screen">${rail('room')}<div class="main"><h2 class="pagehead">みんなで遊ぶ</h2><div class="cols"><div class="stack">${left}</div><div class="stack">${right}</div></div></div></div>`;
@@ -458,7 +452,7 @@ async function createFirebaseRoom() {
     lastBeginSeq = 0;
 
     const res = await netApi.createRoom(
-      { name: meName(), proto: 2 },
+      { name: meName(), proto: 2, avatar: Number.isInteger(S.set.av) ? S.set.av : null },
       { phase: 'LOBBY', gameId: 'reversi', options: '', round: 0 },
       {
         onPlayers(players) {
@@ -487,6 +481,7 @@ async function createFirebaseRoom() {
     );
     fbState.roomId = res.roomId;
     fbState.creating = false;
+    S.screen = 'menu';
     scheduleHostSync();
     onlineChanged();
   } catch (e) {
@@ -518,7 +513,7 @@ async function joinFirebaseRoom(codeInput) {
     // OnlineRoom をゲストとして起動するためのダミー開始
     const res = await netApi.joinRoom(
       code,
-      { name: meName(), proto: 2 },
+      { name: meName(), proto: 2, avatar: Number.isInteger(S.set.av) ? S.set.av : null },
       {
         onPlayers(players) {
           fbState.players = players || {};
@@ -547,6 +542,7 @@ async function joinFirebaseRoom(codeInput) {
 
     fbState.roomId = res.roomId;
     fbState.joining = false;
+    S.screen = 'menu';
     startGuestOnlineRoom(meName());
     if (fbState.roomState) applyRemoteStateOnGuest(fbState.roomState);
     onlineChanged();
@@ -560,6 +556,7 @@ async function joinFirebaseRoom(codeInput) {
 // JoinFlow(WebRTC招待コード)を介さず、OnlineRoom.guest を直接開く
 function startGuestOnlineRoom(name) {
   if (!mainCore) return;
+  resetGuestApplied();
   const bridge = createCoreBridge();
   // acceptInvite が即座に peerId='host' を返し、linkState('host') === 'OPEN' により OnlineRoom.guest が立ち上がる
   bridge.backend.acceptInvite = (code, cb) => cb('host', 'FIREBASE', null);
@@ -606,7 +603,7 @@ function onlineClick(d) {
   return false;
 }
 function chooseOnline(id) {
-  if (!id) return;
+  if (!id || !isHostRoom() || ost.members.length < 2) return;
   S.roomPre = null;
   if (!ost || ost.gameId !== id) { mainCore.onlineChoose(id, ''); scheduleHostSync(); }
   try {
@@ -624,6 +621,7 @@ function syncOnlineOptions() {
   scheduleHostSync();
 }
 function onlineChooseAndStart() {
+  if (isHostRoom() && ost.members.length < 2) return toast({w:'お知らせ',t:'参加者を待っています'});
   if (!isHostRoom()) return toast({ w: 'お知らせ', t: 'ホストが始めるのを待っています' });
   syncOnlineOptions();
   const ok = mainCore.onlineStart(String(Math.floor(Math.random() * 2 ** 40) + 1));
@@ -660,6 +658,7 @@ function leaveOnline(skipRemoteDelete = false) {
   online = false; token++; ost = null; S.roomPre = null; S.roomDecided = null; lastBeginSeq = 0; chatSeen = 0; closeSheet();
 }
 async function startOnlinePlay(handle) {
+  pendSnd = null;
   online = true; token++; sel = null; prevView = null; view = null; drawnView = null; mode = 'online'; h = handle;
   { const p = $('#result'); if (p) p.hidden = true; }
   cur = gInfo(ost.gameId) || cur; pcfg = cfg(cur.id);
@@ -684,7 +683,7 @@ function onlineChanged() {
   if (ask && !ask.mine && askShown !== ask.id) { askShown = ask.id; showAsk(ask); }
   else if (!ask && askShown >= 0) { askShown = -1; const a = $('#askcard'); if (a) a.remove(); }
   if (ost.beginSeq !== lastBeginSeq) { lastBeginSeq = ost.beginSeq; if (ost.match >= 0) return startOnlinePlay(ost.match); }
-  if (S.screen === 'play' && online && ost.phase === 'LOBBY') { token++; online = false; h = -1; view = null; S.screen = 'room'; render(); return; }
+  if (S.screen === 'play' && online && ost.phase === 'LOBBY') { token++; online = false; h = -1; view = null; S.screen = 'menu'; render(); return; }
   if (S.screen === 'play' && online) {
     if (view && view.outcome && $('#result') && !$('#result').hidden) { showResult(); return refreshChat(); }
     if (onlineBusy) { onlinePending = true; return refreshChat(); }
@@ -692,7 +691,7 @@ function onlineChanged() {
     (async () => { try { do { onlinePending = false; await refresh(); } while (onlinePending && online && S.screen === 'play'); } finally { onlineBusy = false; } })();
     return refreshChat();
   }
-  if (S.screen === 'room' || (S.screen === 'setup' && S.setup.online)) {
+  if (S.screen === 'room' || (S.screen === 'menu' && roomActive()) || (S.screen === 'setup' && S.setup.online)) {
     const rn = $('#readyNames');
     if (rn && ost) rn.textContent = '準備ができた人: ' + ost.members.filter((m) => m.slot === ost.mySlot || ost.ready.includes(m.slot)).map((m) => m.name).join('・');
     keepInputs(render);
@@ -767,7 +766,7 @@ function computeNormalizedPointer(clientX, clientY, active) {
 
 function sendPointerNow(pt) {
   if (!netApi || !fbState.roomId || !pt) return;
-  const sig = `${pt.x.toFixed(3)}:${pt.y.toFixed(3)}:${pt.active ? 1 : 0}`;
+  const sig = `${pt.x.toFixed(3)}:${pt.y.toFixed(3)}:${pt.active ? 1 : 0}:${ost ? ost.mySlot : 0}:${online ? mySeat : -1}`;
   if (sig === lastPointerSentSig) return;
   lastPointerSentSig = sig;
   lastPointerSentAt = performance.now();
@@ -789,7 +788,7 @@ function queuePointerSend(clientX, clientY, active) {
   if (!pt) return;
   pendingPointer = pt;
   const elapsed = performance.now() - lastPointerSentAt;
-  if (elapsed >= POINTER_INTERVAL_MS || !pt.active) {
+  if (elapsed >= POINTER_INTERVAL_MS) {
     if (pointerFlushTimer) { clearTimeout(pointerFlushTimer); pointerFlushTimer = null; }
     sendPointerNow(pendingPointer);
     pendingPointer = null;
@@ -852,8 +851,11 @@ function updateRemoteTargets(cursorsObj) {
     seen.add(uid);
     const existing = remoteCursors.get(uid);
     if (existing) {
-      existing.tx = x;
-      existing.ty = y;
+      if (existing.tx !== x || existing.ty !== y) {
+        existing.fromX = existing.curX; existing.fromY = existing.curY;
+        existing.startedAt = performance.now();
+        existing.tx = x; existing.ty = y;
+      }
       existing.active = c.active !== false;
       existing.slot = typeof c.slot === 'number' ? c.slot : existing.slot;
       existing.seat = typeof c.seat === 'number' ? c.seat : existing.seat;
@@ -862,6 +864,7 @@ function updateRemoteTargets(cursorsObj) {
     } else {
       remoteCursors.set(uid, {
         uid,
+        fromX: x, fromY: y, startedAt: performance.now(),
         curX: x,
         curY: y,
         tx: x,
@@ -901,28 +904,23 @@ function startCursorLoop() {
   if (cursorAnimFrame) return;
   const step = () => {
     cursorAnimFrame = null;
-    if (!fbState.roomId || !remoteCursors.size || (S.screen === 'play' && (!cursorOn() || (cur && NO_CURSOR.has(cur.id))))) {
+    if (!fbState.roomId || !remoteCursors.size) {
       document.querySelectorAll('.rcur.live').forEach((e) => e.remove());
       return;
     }
-    const hostEl = $('.stage') || app;
+    if (S.screen !== 'play' || $('#playsettings') || !cursorOn() || (cur && NO_CURSOR.has(cur.id))) {
+      document.querySelectorAll('.rcur.live').forEach(e => e.remove());
+      cursorAnimFrame = requestAnimationFrame(step); return;
+    }
+    const hostEl = document.body;
     const box = getViewportBox();
     if (!hostEl || !box || box.width <= 0 || box.height <= 0) return;
-    const hostRect = hostEl.getBoundingClientRect();
-    let moving = false;
-
+    const hostRect = {left:0, top:0};
     for (const [uid, c] of remoteCursors.entries()) {
-      // 線形補間 (Lerp) で滑らかに追従
-      const dx = c.tx - c.curX;
-      const dy = c.ty - c.curY;
-      if (Math.abs(dx) > 0.0005 || Math.abs(dy) > 0.0005) {
-        c.curX += dx * 0.32;
-        c.curY += dy * 0.32;
-        moving = true;
-      } else {
-        c.curX = c.tx;
-        c.curY = c.ty;
-      }
+      // 100ms updates are spread over 120ms; never depend on display refresh rate.
+      const progress = Math.min(1, (performance.now() - c.startedAt) / 120);
+      c.curX = c.fromX + (c.tx - c.fromX) * progress;
+      c.curY = c.fromY + (c.ty - c.fromY) * progress;
       let rx = c.curX, ry = c.curY;
       if (online && S.screen === 'play' && curFlip(mySeat)) {
         rx = 1 - rx;
@@ -930,13 +928,17 @@ function startCursorLoop() {
       }
       const id = 'rc_' + uid;
       let el = document.getElementById(id);
-      const color = SEAT_COLORS[(c.slot || 0) % 6];
+      const member = fbState.players[uid];
+      const slot = member && Number.isInteger(member.slot) ? member.slot : c.slot;
+      const color = SEAT_COLORS[((slot || 0) % 6 + 6) % 6];
       if (!el) {
         hostEl.insertAdjacentHTML('beforeend', rcurHtml(id, c.name || 'プレイヤー', color, true));
         el = document.getElementById(id);
         if (el) el.classList.add('live');
       }
       if (el) {
+        el.style.setProperty('--cc', color);
+        el.querySelector('svg path').setAttribute('fill', color);
         const px = (box.left - hostRect.left) + rx * box.width;
         const py = (box.top - hostRect.top) + ry * box.height;
         el.style.transform = `translate(${px.toFixed(1)}px,${py.toFixed(1)}px)`;
@@ -945,7 +947,36 @@ function startCursorLoop() {
         el.classList.toggle('idle', !c.active);
       }
     }
-    if (moving) cursorAnimFrame = requestAnimationFrame(step);
+    cursorAnimFrame = requestAnimationFrame(step);
   };
   cursorAnimFrame = requestAnimationFrame(step);
+}
+
+const roomActive = () => !!(fbState.roomId && ost && ost.role !== 'none');
+const roomChoosing = () => roomActive() && ost.phase === 'LOBBY';
+function playerBadge(p) {
+ const color=SEAT_COLORS[((p.slot||0)%6+6)%6];
+ const displayName=ost?.members?.find(m=>m.slot===p.slot)?.name||p.name||'プレイヤー';
+ return `<span class="wish-player" style="--player-color:${color}"><span class="wish-avatar">${Number.isInteger(p.avatar)&&AV[p.avatar]?avSvg(p.avatar):esc(displayName[0])}</span>${esc(displayName)}</span>`;
+}
+function gameWishes(id) {
+ if (!roomChoosing()) return '';
+ const players=Object.values(fbState.players).filter(p=>p.choice===id);
+ return players.length?`<span class="game-wishes">${players.map((p,i)=>`<span class="wish-frame" style="--player-color:${SEAT_COLORS[((p.slot||0)%6+6)%6]};--wish-inset:${i*4}px"></span>`).join('')}<span class="wish-labels">${players.map(playerBadge).join('')}</span></span>`:'';
+}
+function roomSummary() {
+ if (!roomActive()) return '';
+ return `<section class="room-summary"><h4>ルームコード</h4><b class="room-code">${esc(fbState.roomId)}</b><button class="btn" data-copy="${esc(fbState.roomId)}">${ic('copy')}コピー</button><div class="room-members">${ost.members.map(m=>`<div>${playerBadge({...m,avatar:Object.values(fbState.players).find(p=>p.slot===m.slot)?.avatar})}${m.slot===0?'<small>ホスト</small>':''}</div>`).join('')}</div><button class="btn" data-leave>${isHostRoom()?'部屋を解散する':'部屋を出る'}</button></section>`;
+}
+function roomHowto() {
+ return `<details class="room-howto" open><summary>遊び方</summary><p>「部屋を作る」で発行された4桁のルームコードを相手に伝えてください。参加する人はルームコードを入力します。</p><p>このルームコードを相手に伝えてください。ゲームと設定の決定はホストが行います。</p></details>`;
+}
+function chooseWish(id) {
+ if (!roomChoosing() || !gInfo(id)) return;
+ const mine=fbState.players[netApi.uid];if(mine)mine.choice=id;
+ netApi.chooseGame(id,Number.isInteger(S.set.av)?S.set.av:null).catch(e=>toast({w:'お知らせ',t:'希望ゲームを共有できませんでした'}));
+}
+function onlineMenuDetail() {
+ const g=gInfo(S.sel),enough=ost.members.length>=2;
+ return `<aside class="detail online-detail"><div class="scroll">${g?`<div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div>`:'<div class="empty">ゲームを選んでください</div>'}<p>${isHostRoom()?(enough?'ゲームを選んで対戦プレイへ進めます':'参加者を待っています'): '遊びたいゲームを選べます。設定と開始はホストが行います'}</p>${roomHowto()}</div>${chatBox()}<div class="foot"><button class="btn" data-rule="${g?g.id:''}" ${g?'':'disabled'}>${ic('book')}ルール</button>${roomChoosing()?`<button class="btn primary" data-next ${isHostRoom()&&enough&&g&&playable(g.id)&&range(g.players)[1]>=ost.members.length?'':'disabled'}>対戦プレイ</button>`:'<button class="btn primary" data-oreturn>対局に戻る</button>'}</div></aside>`;
 }

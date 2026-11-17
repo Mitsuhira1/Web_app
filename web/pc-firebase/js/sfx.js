@@ -1,3 +1,21 @@
+const transientAudio = (() => {
+  let epoch = 0, quietUntil = 0;
+  const sources = new Set();
+  const allowed = () => (!document.hidden || S.set.bgSound) && performance.now() >= quietUntil;
+  const track = source => { sources.add(source); source.addEventListener('ended', () => sources.delete(source), {once:true}); return source; };
+  const clear = () => { epoch++; for (const source of sources) { try { source.stop(); source.disconnect(); } catch {} } sources.clear(); };
+  document.addEventListener('visibilitychange', () => {
+    if (!S.set.bgSound) { clear(); quietUntil = document.hidden ? Infinity : performance.now() + 350; }
+  });
+  window.addEventListener('pagehide', clear);
+  const later = (fn, delay = 0) => {
+    if (!allowed()) return;
+    const ownEpoch = epoch, due = performance.now() + delay;
+    return setTimeout(() => { if (ownEpoch === epoch && allowed() && performance.now() - due < 250) fn(); }, delay);
+  };
+  const guard = fn => { const ownEpoch = epoch; return (...args) => { if (ownEpoch === epoch && allowed()) return fn(...args); }; };
+  return {allowed, track, later, guard};
+})();
 // 効果音。元のアプリと同じ「計算で作る音」(Kotlin の Synth)と、本物の録音(碁石=KaTrain、将棋の駒=ShogiHome。どちらも MIT License)を鳴らす。
 const SAMPLES = {
   GO: ["go_stone_1", "go_stone_2", "go_stone_3", "go_stone_4", "go_stone_5"],
@@ -49,10 +67,10 @@ function createSfx(call) {
   }
 
   function play(name, { volume = 1, rate = 1 } = {}) {
-    if (!enabled || !ctx || !name) return;
+    if (!enabled || !ctx || ctx.state !== "running" || !name || !transientAudio.allowed()) return;
     const list = bufs[name];
     if (!list || !list.length) return;
-    const src = ctx.createBufferSource();
+    const src = transientAudio.track(ctx.createBufferSource());
     src.buffer = list[Math.floor(Math.random() * list.length)];
     src.playbackRate.value = Math.min(2, Math.max(0.5, rate));
     const g = ctx.createGain();

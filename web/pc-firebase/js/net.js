@@ -228,6 +228,7 @@ export async function createNet(core, hooks) {
             role: "host",
             proto: playerInfo.proto || 2,
             rules: playerInfo.rules || "",
+            avatar: Number.isInteger(playerInfo.avatar) ? playerInfo.avatar : null,
             joinedAt: nowTs,
           }
         },
@@ -286,6 +287,7 @@ export async function createNet(core, hooks) {
         role: "guest",
         proto: playerInfo.proto || 2,
         rules: playerInfo.rules || "",
+            avatar: Number.isInteger(playerInfo.avatar) ? playerInfo.avatar : null,
         joinedAt: serverTimestamp(),
       });
 
@@ -293,6 +295,12 @@ export async function createNet(core, hooks) {
       currentRole = "guest";
       watchRoom(roomId, callbacks);
       return { roomId, uid: myUid, slot };
+    },
+
+    // A preference is advisory; only OnlineRoom's host starts/chooses actual play.
+    async chooseGame(gameId, avatar) {
+      if (!currentRoomId || !uid) return;
+      await update(ref(getDb(), `rooms/${currentRoomId}/players/${uid}`), {choice: gameId, avatar});
     },
 
     // ホストが rooms/{roomId}/state を更新
