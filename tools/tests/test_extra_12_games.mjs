@@ -69,8 +69,10 @@ const cases = [
   ['butanoshippo', 'players=4;matchRule=suit_only;joker=take_all;handPlay=on'],
   ['oldmaid', ''],
   ['oldmaid', 'players=4;variant=jiji;drawDir=right;shuffleHand=off'],
+  ['oldmaid', 'players=4;variant=queen'],
   ['hearts', ''],
   ['hearts', 'target=100;passRule=none;jd=minus10;shootMoon=sub26'],
+  ['hearts', 'target=50;queenBreaks=on'],
   ['ginrummy', ''],
   ['ginrummy', 'target=50;knockRule=oklahoma;aceHigh=both'],
   ['ginrummy', 'target=50;knockRule=straight_gin'],
@@ -120,7 +122,49 @@ console.log('3. Checking hidden-information masking...');
 }
 console.log('   OK: Hidden information properly masked per seat.');
 
-console.log('4. Checking undoMove & restoreMatch...');
+console.log('4. Checking Old Maid shuffle and the Hearts variant...');
+{
+  const h = core.newMatch('oldmaid', 'variant=queen', '12345', '0,1,2,3', 'normal');
+  const before = JSON.parse(core.viewJson(h, 0));
+  const target = before.board.target;
+  const hand = (seat) => JSON.parse(core.viewJson(h, seat)).board.myHand.map(card => card.id);
+  const targetHand = hand(target);
+  assert.ok(before.legal.includes(100));
+  assert.ok(core.playMove(h, 100));
+  const original = before.board.myHand.map(card => card.id);
+  const shuffled = hand(0);
+  assert.notDeepEqual(shuffled, original);
+  assert.deepEqual(shuffled.slice().sort(), original.slice().sort());
+  assert.deepEqual(hand(target), targetHand);
+  assert.ok(!JSON.parse(core.viewJson(h, 0)).legal.includes(100));
+  const allCards = [0, 1, 2, 3].flatMap(hand);
+  assert.ok(allCards.includes(11));
+  assert.ok(allCards.every(c => c < 52 && ![24, 37, 50].includes(c)));
+}
+{
+  let checked = false;
+  for (let seed = 1; seed < 80 && !checked; seed++) {
+    const off = core.newMatch('hearts', 'passRule=none', String(seed), '0', 'normal');
+    const on = core.newMatch('hearts', 'passRule=none;queenBreaks=on', String(seed), '0', 'normal');
+    for (let step = 0; step < 20; step++) {
+      const st = JSON.parse(core.viewJson(off, 0));
+      if (st.board.broken) break;
+      const move = st.legal.includes(11) ? 11 : core.cpuChoose(off, 50);
+      assert.ok(core.playMove(off, move) && core.playMove(on, move));
+      if (move === 11) {
+        assert.equal(JSON.parse(core.viewJson(off, 0)).board.broken, false);
+        assert.equal(JSON.parse(core.viewJson(on, 0)).board.broken, true);
+        checked = true;
+        break;
+      }
+    }
+    core.dropMatch(off);
+    core.dropMatch(on);
+  }
+  assert.ok(checked, 'The same opening must distinguish the Queen-breaks variant');
+}
+
+console.log('5. Checking undoMove & restoreMatch...');
 {
   const hQ = core.newMatch('quarto', '', '11', '0,1', 'normal');
   let st = JSON.parse(core.viewJson(hQ, 0));
@@ -144,4 +188,21 @@ console.log('4. Checking undoMove & restoreMatch...');
   assert.equal(core.viewJson(hQ, 0), core.viewJson(hQ2, 0), 'restoreMatch viewJson mismatch');
 }
 console.log('   OK: undoMove & restoreMatch verified.');
+
+console.log('6. Checking a Goita opening that requires a redeal...');
+{
+  const humanSeats = '0,1,2,3';
+  const original = core.newMatch('goita', 'fiveShi=ignore', '12', humanSeats, 'normal');
+  const h = core.newMatch('goita', 'fiveShi=redeal', '12', humanSeats, 'normal');
+  const restored = core.restoreMatch(core.matchRecord(h));
+  const hand = (match, seat) => JSON.parse(core.viewJson(match, seat)).board.myHand;
+  assert.equal(hand(original, 0).filter(piece => piece === 0).length, 5);
+  for (const seat of [0, 1, 2, 3]) {
+    const dealt = hand(h, seat);
+    assert.equal(dealt.length, 8);
+    assert.ok(dealt.filter(piece => piece === 0).length < 5);
+    assert.deepEqual(dealt, hand(restored, seat));
+  }
+  for (const match of [original, h, restored]) core.dropMatch(match);
+}
 console.log('ALL TESTS PASSED!');

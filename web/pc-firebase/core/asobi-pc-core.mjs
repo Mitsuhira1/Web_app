@@ -39184,6 +39184,7 @@ function viewJson(h, me) {
   var tmp_23 = ses.av();
   var tmp_24 = ses.cv();
   var tmp$ret$5;
+  var hasRemoteSeat = false;
   $l$block: {
     // Inline function 'kotlin.collections.indexOfFirst' call
     var index = 0;
@@ -39195,13 +39196,17 @@ function viewJson(h, me) {
         tmp$ret$5 = index;
         break $l$block;
       }
+      if (item.bu_1) hasRemoteSeat = true;
       index = index + 1 | 0;
     }
     tmp$ret$5 = -1;
   }
   var tmp_25 = tmp$ret$5;
   var tmp_26 = ses.av() >= 0 && ses.ju_1.p(ses.av()).bu_1;
-  var tmp_27 = ints(legal);
+  // Extra-board spectators get a public view. A local CPU-only match can still request a seat's view.
+  var observerExtra = tmp_25 < 0 && (hasRemoteSeat || me < 0) && st && typeof st.__extraView === 'function';
+  if (observerExtra) board = extraGameView(st, ses.ku_1, -2);
+  var tmp_27 = observerExtra ? '[]' : ints(legal);
   var tmp_28 = ses.yu().n();
   var tmp_29 = ses.zu();
   var tmp8_safe_receiver = ses.ku_1.us(st);

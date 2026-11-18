@@ -22,17 +22,19 @@ export const HEARTS_SPEC = {
     { key: 'target', label: '終了点数', default: '100', group: 'rule', values: [['50', '50点(短縮)'], ['100', '100点(標準)']] },
     { key: 'passRule', label: '手札交換', default: 'standard', group: 'rule', values: [['standard', '左→右→対面→なし'], ['none', '交換なし']] },
     { key: 'jd', label: '♦Jの-10点ルール', default: 'off', group: 'local', hint: 'ダイヤのJを取ると-10点になる有名ルール', values: [['off', 'なし'], ['minus10', 'あり(-10点)']] },
+    { key: 'queenBreaks', label: '♠Qでハートを解禁', default: 'off', group: 'local', values: [['off', 'なし'], ['on', 'あり']] },
     { key: 'shootMoon', label: 'シュート・ザ・ムーン', default: 'add26', group: 'local', values: [['add26', '他の全員に+26点'], ['sub26', '自分から-26点']] },
   ],
   sections: [
     ['概要と目的', '4人それぞれに13枚ずつ配り、13トリックを行います。ハート(各1点)と♠Q(13点)をなるべく取らないようにし、誰かが終了点数に達した時点で最も点数が低い人が勝ちです。'],
     ['基本ルール', '・最初は ♣2 を持っている人が出します。\n・リードと同じマークがあれば必ず出します(マストフォロー)。\n・ハートが1枚出る(ハートブレイク)までは、ハートを先に出せません。\n・1トリック目はハートと♠Qを出せません(手札がそれしかない場合を除く)。'],
-    ['シュート・ザ・ムーンとローカルルール', '・1人がハート全13枚と♠Qをすべて取ると「シュート・ザ・ムーン」成功！\n・ローカルルールで「♦Jを取ると-10点」も設定できます。'],
+    ['シュート・ザ・ムーンとローカルルール', '・1人がハート全13枚と♠Qをすべて取ると「シュート・ザ・ムーン」成功！\n・ローカルルールで「♦Jを取ると-10点」「♠Qでハートを解禁」を設定できます。'],
   ],
   makeRules(opts) {
     const target = opts.it('target', 100);
     const passRule = opts.jt('passRule', 'standard');
     const useJd = opts.jt('jd', 'off') === 'minus10';
+    const queenBreaks = opts.jt('queenBreaks', 'off') === 'on';
     const moonMode = opts.jt('shootMoon', 'add26');
 
     const SUIT_CLUB = 3;
@@ -209,7 +211,7 @@ export const HEARTS_SPEC = {
 
         const trick = s.trick.slice();
         trick.push({ seat: p, card: m });
-        let broken = s.broken || cardSuit(m) === SUIT_HEART;
+        let broken = s.broken || cardSuit(m) === SUIT_HEART || (queenBreaks && m === SPADE_Q);
 
         if (trick.length < 4) {
           return attachView({ ...s, hands, trick, broken, turn: (p + 1) % 4 });

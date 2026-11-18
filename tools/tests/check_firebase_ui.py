@@ -8,7 +8,7 @@ with sync_playwright() as p:
  ctx.add_init_script('''localStorage.setItem('asobi30pc',JSON.stringify({firstDone:true}));window.soundCalls=[];window.hiddenTest=false;Object.defineProperty(document,'hidden',{get:()=>window.hiddenTest});''')
  ctx.set_default_timeout(30000);host=ctx.new_page();guest=ctx.new_page();errors=[]
  for page in [host,guest]:
-  page.on('pageerror',lambda e:(errors.append(str(e)),print('PAGE ERROR',e,flush=True)));page.goto(BASE);page.wait_for_function('ORDER.filter(id=>gInfo(id)).length===38',polling=100,timeout=60000);page.evaluate('ensureNet()');page.wait_for_function('netReady');page.evaluate("S.set.hover=false;S.set.cutin=false;S.set.cursor='全員'; const original=sfx.play;sfx.play=(name,opt)=>{soundCalls.push(name);original(name,opt)};playMoveSound=(m)=>soundCalls.push('MOVE:'+m)")
+  page.on('pageerror',lambda e:(errors.append(str(e)),print('PAGE ERROR',e,flush=True)));page.goto(BASE);page.wait_for_function('ORDER.filter(id=>gInfo(id)).length===50',polling=100,timeout=60000);page.evaluate('ensureNet()');page.wait_for_function('netReady');page.evaluate("S.set.hover=false;S.set.cutin=false;S.set.cursor='全員'; const original=sfx.play;sfx.play=(name,opt)=>{soundCalls.push(name);original(name,opt)};playMoveSound=(m)=>soundCalls.push('MOVE:'+m)")
  # Verify filter position on menu before room creation, and filter switch animation class
  filter_box_before=host.locator('.rail .rail-filter').bounding_box()
  host.locator('.rail .rail-filter [data-v="2人"]').click()
@@ -38,7 +38,7 @@ with sync_playwright() as p:
  # Mid-match spectator join: 3rd client joins while match is PLAYING and views the match screen
  spec=ctx.new_page()
  spec.on('pageerror',lambda e:(errors.append(str(e)),print('PAGE ERROR',e,flush=True)))
- spec.goto(BASE);spec.wait_for_function('ORDER.filter(id=>gInfo(id)).length===38',polling=100,timeout=60000);spec.evaluate('ensureNet()');spec.wait_for_function('netReady')
+ spec.goto(BASE);spec.wait_for_function('ORDER.filter(id=>gInfo(id)).length===50',polling=100,timeout=60000);spec.evaluate('ensureNet()');spec.wait_for_function('netReady')
  spec.evaluate("S.set.hover=false;S.set.cutin=false;S.set.name='観戦者';go('room');joinFirebaseRoom('4829')")
  spec.wait_for_function("S.screen==='play' && view && view.mine===-1",timeout=15000,polling=100)
  assert '観戦中' in spec.locator('.stagehead span').inner_text()

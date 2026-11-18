@@ -19,13 +19,13 @@ export const OLDMAID_SPEC = {
   seatsFor: (opts) => opts.it('players', 4),
   options: [
     { key: 'players', label: '人数', default: '4', group: 'rule', values: [['2', '2人'], ['3', '3人'], ['4', '4人'], ['5', '5人'], ['6', '6人']] },
-    { key: 'variant', label: 'ルール種別', default: 'baba', group: 'local', hint: 'ジジ抜きは最後に誰が余り札になるか分かりません', values: [['baba', 'ババ抜き(ジョーカーあり)'], ['jiji', 'ジジ抜き(1枚抜き)']] },
+    { key: 'variant', label: 'ルール種別', default: 'baba', group: 'local', hint: 'ジジ抜きは最後に誰が余り札になるか分かりません', values: [['baba', 'ババ抜き(ジョーカーあり)'], ['jiji', 'ジジ抜き(1枚抜き)'], ['queen', 'クイーン抜き(♠Qがババ)']] },
     { key: 'drawDir', label: '引く向き', default: 'left', group: 'local', values: [['left', '次の人から引く'], ['right', '前の人から引く']] },
     { key: 'shuffleHand', label: '手札シャッフル', default: 'on', group: 'local', values: [['on', 'あり'], ['off', 'なし']] },
   ],
   sections: [
     ['概要と目的', '同じ数字のペアを捨てながら、隣の手札から1枚ずつ引いていきます。手札がなくなった人から上がり、最後に1枚だけ残った人が負けです。'],
-    ['ローカルルール', '・ババ抜き / ジジ抜き(52枚からランダムに1枚抜いて隠す)\n・引く向き(次の人 / 前の人)\n・手札シャッフルボタン(あり / なし)'],
+    ['ローカルルール', '・ババ抜き / ジジ抜き(52枚からランダムに1枚抜いて隠す)\n・引く向き(次の人 / 前の人)\n・クイーン抜き(ジョーカーなし、♠Qだけがババ)\n・手札シャッフルボタン(あり / なし)'],
   ],
   makeRules(opts) {
     const n = opts.it('players', 4);
@@ -91,9 +91,8 @@ export const OLDMAID_SPEC = {
       initial(rng) {
         let deck = shuffle(makeDeck(variant === 'baba' ? 1 : 0), rng);
         let removed = -1;
-        if (variant === 'jiji') {
-          removed = deck.pop();
-        }
+        if (variant === 'jiji') removed = deck.pop();
+        if (variant === 'queen') deck = deck.filter((card) => card !== 24 && card !== 37 && card !== 50);
         const raw = Array.from({ length: n }, () => []);
         deck.forEach((c, idx) => raw[idx % n].push(c));
         const hands = raw.map(discardPairs);
@@ -133,7 +132,7 @@ export const OLDMAID_SPEC = {
         const cnt = s.hands[tgt].length;
         const moves = [];
         for (let i = 0; i < cnt; i++) moves.push(i);
-        if (allowShuffle && !s.shuffledThisTurn && cnt > 1) moves.push(100);
+        if (allowShuffle && !s.shuffledThisTurn && s.hands[s.turn].length > 1) moves.push(100);
         return new Int32Array(moves);
       },
       isLegal(s, m) {
@@ -146,10 +145,12 @@ export const OLDMAID_SPEC = {
         const outOrder = s.outOrder.slice();
 
         if (m === 100) {
-          // 対象の手札をシャッフル(決定論的ローテーション+反転)
-          const th = hands[tgt];
-          const k = (outOrder.length + th.length + p) % th.length;
-          hands[tgt] = th.slice(k).concat(th.slice(0, k)).reverse();
+          // 自分の手札を混ぜる。再生・同期時にも同じ並びにする。
+          const hand = hands[p];
+          const k = (outOrder.length + p) % hand.length;
+          const mixed = hand.slice(k).concat(hand.slice(0, k)).reverse();
+          hands[p] = mixed.every((card, i) => card === hand[i])
+            ? hand.slice(1).concat(hand[0]) : mixed;
           return attachView({ ...s, hands, shuffledThisTurn: true });
         }
 

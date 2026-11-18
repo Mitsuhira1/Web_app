@@ -55,61 +55,59 @@ export const GOITA_SPEC = {
       return false;
     }
 
-    function dealRound(deck, roundNo, teamScores, dealer) {
-      // 5枚し配り直し対応
-      let d = deck.slice();
-      for (let attempt = 0; attempt < 10; attempt++) {
-        const hands = [[], [], [], []];
-        for (let i = 0; i < 32; i++) hands[i % 4].push(d[i]);
-        hands.forEach((h) => h.sort((a, b) => a - b));
+    function dealHands(deck) {
+      const hands = [[], [], [], []];
+      for (let i = 0; i < deck.length; i++) hands[i % 4].push(deck[i]);
+      hands.forEach((hand) => hand.sort((a, b) => a - b));
+      return hands;
+    }
 
-        if (fiveShi) {
-          const shiCounts = hands.map((h) => h.filter((x) => x === 0).length);
+    function dealRound(deck, roundNo, teamScores, dealer) {
+      let hands = dealHands(deck);
+      if (fiveShi) {
+        const deckSeed = deck.reduce((seed, piece) => Math.imul(seed ^ piece, 16777619), 2166136261);
+        for (let retry = 1; retry <= 10; retry++) {
+          const shiCounts = hands.map((hand) => hand.filter((piece) => piece === 0).length);
           const maxShi = Math.max(...shiCounts);
-          if (maxShi === 5) {
-            // 決定論的にリシャッフル
-            d = d.slice(7).concat(d.slice(0, 7)).reverse();
-            continue;
-          }
+          if (maxShi < 5) break;
           if (maxShi >= 6) {
             const p = shiCounts.findIndex((c) => c >= 6);
             const team = p % 2;
             const bonus = maxShi === 8 ? 100 : 50;
-            const nextScores = teamScores.slice();
-            nextScores[team] += bonus;
-            if (nextScores[team] >= target) {
+            teamScores = teamScores.slice();
+            teamScores[team] += bonus;
+            if (teamScores[team] >= target) {
               return {
-                roundNo, hands, played: [[], [], [], []], teamScores: nextScores,
+                roundNo, hands, played: [[], [], [], []], teamScores,
                 turn: -1, phase: 'attack', activeAttack: -1, attacker: -1, passCount: 0,
-                winner: team, reason: `チーム${team === 0 ? 'A(1・3番)' : 'B(2・4番)'}が「し」${maxShi}枚(${bonus}点)で${nextScores[team]}点到達！`,
+                winner: team, reason: `チーム${team === 0 ? 'A(1・3番)' : 'B(2・4番)'}が「し」${maxShi}枚(${bonus}点)で${teamScores[team]}点到達！`,
               };
             }
-            d = d.slice(5).concat(d.slice(0, 5)).reverse();
-            continue;
           }
+          // 同じシードの対局で再現できるように配り直す。最後は「し」を均等に配る。
+          const seed = deckSeed + Math.imul(retry, 0x9e3779b9);
+          hands = dealHands(retry === 10 ? makeGoitaDeck() : seededDeck(seed));
         }
-
-        return {
-          roundNo,
-          hands,
-          played: [[], [], [], []], // { piece, hidden }
-          teamScores,
-          turn: dealer,
-          phase: 'attack', // 'block' | 'attack'
-          activeAttack: -1,
-          attacker: dealer,
-          passCount: 0,
-          lastRoundResult: null,
-          winner: -1,
-          reason: '',
-        };
       }
-      return null;
+      return {
+        roundNo,
+        hands,
+        played: [[], [], [], []], // { piece, hidden }
+        teamScores,
+        turn: dealer,
+        phase: 'attack', // 'block' | 'attack'
+        activeAttack: -1,
+        attacker: dealer,
+        passCount: 0,
+        lastRoundResult: null,
+        winner: -1,
+        reason: '',
+      };
     }
 
-    function nextRoundDeck(s) {
+    const roundSeed = (roundNo, scores) => roundNo * 4099 + scores[0] * 19 + scores[1] * 43;
+    function seededDeck(seed) {
       const d = makeGoitaDeck();
-      let seed = s.roundNo * 4099 + s.teamScores[0] * 19 + s.teamScores[1] * 43;
       for (let i = d.length - 1; i > 0; i--) {
         seed = (seed * 1664525 + 1013904223) >>> 0;
         const j = seed % (i + 1);
@@ -214,7 +212,7 @@ export const GOITA_SPEC = {
             });
           }
 
-          const nextDeck = nextRoundDeck({ roundNo: s.roundNo, teamScores });
+          const nextDeck = seededDeck(roundSeed(s.roundNo, teamScores));
           const nextSt = dealRound(nextDeck, s.roundNo + 1, teamScores, p);
           nextSt.lastRoundResult = lastRoundResult;
           return attachView(nextSt);

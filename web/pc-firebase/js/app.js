@@ -32,7 +32,9 @@ const sfx = (() => { try { return createSfx(call); } catch (e) { return { init: 
 
 // ---------------------------------------------------------------- ゲームの一覧
 const ORDER = ['shogi', 'gogo', 'reversi', 'connect4', 'gomoku', 'hex', 'mancala', 'morris', 'checkers', 'chess', 'dots', 'hitblow', 'hare', 'chinese', 'ludo', 'backgammon', 'go', 'yacht', 'mahjong', 'life',
-  'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mineVersus', 'mine', 'bozu', 'wolf', 'roulette'];
+  'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mineVersus', 'mine', 'bozu', 'wolf', 'roulette',
+  'war', 'takoyaki', 'butanoshippo', 'oldmaid', 'hearts', 'ginrummy', 'vulture',
+  'goita', 'quarto', 'geister', 'rummikub', 'pegsolitaire'];
 const ART_ID = { gogo: 'minishogi' };
 const BREAK = { morris: 'ナインメンズ<wbr>モリス', chinese: 'チャイニーズ<wbr>チェッカー', dots: 'ドット＆<wbr>ボックス', holdem: 'テキサス<wbr>ポーカー', yacht: 'ヨット', blackjack: 'ブラック<wbr>ジャック', backgammon: 'バック<wbr>ギャモン', hitblow: 'ヒット＆<wbr>ブロー', life: '人生<wbr>すごろく', solitaire: 'ソリティア<wbr>(クロンダイク)' };
 let CAT = [];
@@ -308,6 +310,7 @@ async function startMatch(forceSeat) {
   const g = cur = gInfo(S.setup.id); const c = pcfg = cfg(g.id);
   mode = c.mode === 'pass' && range(g.players)[1] >= 2 ? 'pass' : 'cpu';
   let seat = forceSeat != null ? forceSeat : c.seat === -1 ? (Math.random() < 0.5 ? 0 : 1) : c.seat;
+  if (range(g.players)[0]===1 && range(g.players)[1]===1) seat=0;
   const seed = String(Math.floor(Math.random() * 2 ** 40) + 1);
   if (mode === 'pass') {
     const n = c.humans; const names = [meName(), ...c.names.slice(1, n).map((x, i) => x || `プレイヤー${i + 2}`)];
@@ -385,11 +388,12 @@ function togglePlayChat(open) {
   syncChatFab();
   syncAppHistory();
 }
+const matchTitle = (g,b) => g.id==='oldmaid' && b?.variant==='jiji' ? 'ジジ抜き' : g.name;
 function play() {
   const g = cur;
   const soloMatch = online && isSoloIdleMatch();
   const autoMe = online && isMySeatAutoCpu();
-  const canUndo = view && (online ? !!(ost && ost.undoOk) && !busy && !autoMe && view.moves > 0 && !(ost && ost.undoAsk) : view.undoAllowed !== false && !busy && view.moves > 0 && (view.seats.some((s) => !s.human) || !!view.outcome));
+  const canUndo = view && (online ? !!(ost && ost.undoOk) && !busy && !autoMe && view.moves > 0 && !(ost && ost.undoAsk) : view.undoAllowed !== false && !busy && view.moves > 0 && (view.board?.kind==='pegsolitaire' || view.seats.some((s) => !s.human) || !!view.outcome));
   const listLabel = /shogi|gogo|chess/.test(g.id) ? '駒の一覧' : '役の一覧';
   const mob = isMob();
   if (!mob && S.chatOpen) S.chatOpen = false;
@@ -398,7 +402,7 @@ function play() {
   const chatBtn = online && mob ? `<button type="button" class="btn chatfab${chatOn ? '' : ' is-off'}${S.chatOpen ? ' is-open' : ''}${chatCnt ? ' has-unread' : ''}" data-chatfab aria-label="${S.chatOpen ? 'チャットを閉じる' : 'チャットを開く'}" aria-expanded="${!!S.chatOpen}" title="チャット">${ic('chat')}${chatCnt ? `<span class="chatfab-badge">${chatCnt > 99 ? '99+' : chatCnt}</span>` : ''}</button>` : '';
   const chatPop = online && mob && S.chatOpen ? playChatPopHtml() : '';
   return `<div class="screen play-screen${online ? ' is-online' : ''}"><div class="stage">
-    <div class="stagehead"><button class="btn" data-go="${online ? 'room' : 'menu'}" aria-label="戻る">${ic('back')}</button><h2>${esc(g.name)}</h2><span>${esc(subText())}<b id="hround"></b></span><em class="myturn" id="myturn" hidden>あなたの番</em></div>
+    <div class="stagehead"><button class="btn" data-go="${online ? 'room' : 'menu'}" aria-label="戻る">${ic('back')}</button><h2>${esc(matchTitle(g,view?.board))}</h2><span>${esc(subText())}<b id="hround"></b></span><em class="myturn" id="myturn" hidden>あなたの番</em></div>
     <div class="boardwrap" id="boardwrap"></div>
     <div class="acts" id="acts"></div>
     <div class="countbar" id="countbar"></div><div class="countline"><i id="cline" style="width:0"></i></div>
@@ -426,8 +430,18 @@ async function refresh() {
   const previous = prevView;
   if (online) prevView = v;
   view = v;
-  if (!online) lastRecord = await call('matchRecord', h);
-  if (mode === 'pass' && view.human && view.toMove >= 0 && view.toMove !== mySeat) { mySeat = view.toMove; view = JSON.parse(await call('viewJson', h, mySeat)); }
+  if (!online) {
+    const record = await call('matchRecord', h);
+    if (my !== token || revision !== refreshRevision) return;
+    lastRecord = record;
+  }
+  if (mode === 'pass' && view.human && view.toMove >= 0 && view.toMove !== mySeat) {
+    const nextSeat = view.toMove;
+    const nextView = JSON.parse(await call('viewJson', h, nextSeat));
+    if (my !== token || revision !== refreshRevision) return;
+    mySeat = nextSeat;
+    view = nextView;
+  }
   // 通信対戦: ほかの人の手(サイコロ・札など)も、自分の手と同じように音を鳴らす
   if (online && previous && view.moves > previous.moves && pendSnd == null) {
     let ms = [];
@@ -546,6 +560,8 @@ function statusText() {
   if (online && view.remote) return `${view.seats[view.toMove].name} の番です`;
   if (!view.human) return busy && !(b && b.kind === 'hitblow' && b.setting) ? `${seatName(view.toMove)} が考えています` : '';
   if (!b) return '';
+  const extraStatus = window.TWELVE_STATUS?.(b);
+  if (extraStatus) return extraStatus;
   switch (b.kind) {
     case 'mancala': return b.extra ? '倉に入りました。もう1回まけます' : turnText();
     case 'morris': return b.removing ? '取る相手のコマを選んでください' : b.inHand[b.turn] > 0 ? `空いている点に置いてください(あと${b.inHand[b.turn]}個)` : '動かすコマを選び、行き先を選んでください';
@@ -600,6 +616,8 @@ function drawPlay(force) {
   if (!$('#boardwrap')) render();
   const keep = !force && drawnView === view && $('#boardwrap').firstChild;
   const b = view.board;
+  const title = b?.kind==='oldmaid' && $('.stagehead h2');
+  if (title && title.textContent!==matchTitle(cur,b)) title.textContent=matchTitle(cur,b);
   // 通信対戦: 自分の番かどうか(ほかの人の番は、操作のボタンを灰色に)
   const autoMe = online && isMySeatAutoCpu();
   { const mine = !!(view.human && !view.outcome && !autoMe), st = $('.stage'), mt = $('#myturn');
@@ -607,7 +625,7 @@ function drawPlay(force) {
     if (mt) mt.hidden = !(online && mine); }
   const ops = $('.side .ops');
   if (ops) {
-    const canUndo = online ? !!(ost && ost.undoOk) && !busy && !autoMe && view.moves > 0 && !(ost && ost.undoAsk) : view.undoAllowed !== false && !busy && view.moves > 0 && (view.seats.some((s) => !s.human) || !!view.outcome);
+    const canUndo = online ? !!(ost && ost.undoOk) && !busy && !autoMe && view.moves > 0 && !(ost && ost.undoAsk) : view.undoAllowed !== false && !busy && view.moves > 0 && (view.board?.kind==='pegsolitaire' || view.seats.some((s) => !s.human) || !!view.outcome);
     ops.querySelector('[data-undo]').disabled = !canUndo;
     ops.querySelector('[data-resign]').disabled = !(view.canResign && view.human && !view.outcome && !busy && !autoMe);
   }
@@ -620,7 +638,8 @@ function drawPlay(force) {
   }
   const omBtn = $('.side [data-oomembers]');
   if (omBtn && ost && ost.members) omBtn.textContent = `メンバー (${ost.members.length})`;
-  if (keep) { setStatus(statusText()); drawClock(); return; }
+  const twelveReady = $('#boardwrap .twelve-scene')?.dataset.ready;
+  if (keep && (twelveReady == null || twelveReady === String(view.human && !view.outcome && !busy && !autoMe))) { setStatus(statusText()); drawClock(); return; }
   drawnView = view;
   $('#acts').innerHTML = ''; $('#strip').innerHTML = '';
   landMs = 0; boardKey = null; sideCustom = false; { const n = $('#sidenote'); if (n) { n.classList.remove('custom'); n.onclick = null; } }
@@ -911,7 +930,10 @@ function dealIntro() {
   let rowTop = null;
   list.forEach((e, i) => {
     const r = e.getBoundingClientRect();
-    e.animate([{ transform: `translate(${cx - (r.left + r.width / 2)}px,${cy - (r.top + r.height / 2)}px) rotate(${(i % 2 ? 1 : -1) * 25}deg) scale(.7)`, opacity: 0 }, { transform: `translate(${cx - (r.left + r.width / 2)}px,${cy - (r.top + r.height / 2)}px) scale(.7)`, opacity: 1, offset: 0.05 }, { transform: 'none', opacity: 1 }],
+    const scene = e.closest('.twelve-scene');
+    const scale = scene ? scene.getBoundingClientRect().width / 900 : 1;
+    const dx = (cx - (r.left + r.width / 2)) / scale, dy = (cy - (r.top + r.height / 2)) / scale;
+    e.animate([{ transform: `translate(${dx}px,${dy}px) rotate(${(i % 2 ? 1 : -1) * 25}deg) scale(.7)`, opacity: 0 }, { transform: `translate(${dx}px,${dy}px) scale(.7)`, opacity: 1, offset: 0.05 }, { transform: 'none', opacity: 1 }],
       { duration: 300, delay: start + i * step, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' });
     // 神経衰弱は横 1 列で 1 回だけ鳴らす
     const newRow = mem && (rowTop == null || Math.abs(r.top - rowTop) > r.height / 2); if (newRow) rowTop = r.top;
@@ -948,6 +970,7 @@ function aimSteps(mv) {
     }
     case 'yacht': if (mv >= 100) { const c = q(`[data-ycell="${seat}-${mv - 100}"]`); return [c, c]; }
       { const held = new Set([...W.querySelectorAll('.yd.held')].map((e) => +e.dataset.die)); return [...[0, 1, 2, 3, 4].filter((i) => b.rollsLeft < 3 && !!((mv >> i) & 1) !== held.has(i)).map((i) => q(`[data-die="${i}"]`)), q('[data-roll]')]; }
+    case 'oldmaid': return mv === 100 ? [btn(/手札を混ぜる/)] : [q(`[data-maid-index="${mv}"]`)];
     case 'cards': return b.tbl && b.tbl.g === 'memory' ? [q(`[data-pos="${mv}"]`)] : [];
     case 'life': return mv === 0 || (mv > 200 && mv < 211) ? [q('[data-spin]')] : [q(`[data-lm="${mv}"]`)];
     default: return [];

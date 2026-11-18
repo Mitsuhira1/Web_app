@@ -99,7 +99,7 @@ function makeRummikubRules(opts, rng) {
 
   function attach(s) {
     return withView(s, (_rules, me) => {
-      const revealAll = s.winner !== null || me < 0;
+      const revealAll = s.winner !== null || me === -1;
       return JSON.stringify({
         kind: 'rummikub',
         me,
