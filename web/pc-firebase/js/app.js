@@ -32,7 +32,7 @@ const sfx = (() => { try { return createSfx(call); } catch (e) { return { init: 
 
 // ---------------------------------------------------------------- ゲームの一覧
 const ORDER = ['shogi', 'gogo', 'reversi', 'connect4', 'gomoku', 'hex', 'mancala', 'morris', 'checkers', 'chess', 'dots', 'hitblow', 'hare', 'chinese', 'ludo', 'backgammon', 'go', 'yacht', 'mahjong', 'life',
-  'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mineVersus', 'mine', 'bozu', 'karuta', 'wolf'];
+  'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mineVersus', 'mine', 'bozu', 'wolf'];
 const ART_ID = { gogo: 'minishogi' };
 const BREAK = { morris: 'ナインメンズ<wbr>モリス', chinese: 'チャイニーズ<wbr>チェッカー', dots: 'ドット＆<wbr>ボックス', holdem: 'テキサス<wbr>ポーカー', yacht: 'ヨット', blackjack: 'ブラック<wbr>ジャック', backgammon: 'バック<wbr>ギャモン', hitblow: 'ヒット＆<wbr>ブロー', life: '人生<wbr>すごろく', solitaire: 'ソリティア<wbr>(クロンダイク)' };
 let CAT = [];
@@ -45,7 +45,7 @@ const PLAYABLE = new Set(ORDER);
 const newGameSetup = {
   slide:on=>slideGame.setup(on), bunyo:on=>bunyoGame.setup(on), pakuris:on=>pakurisGame.setup(on),
   mine:on=>minesGame.setup(on), mineVersus:()=>mineVersus.setup(), wolf:on=>wolfGame.setup(on),
-  bozu:on=>poetCards.setup('bozu',on), karuta:on=>poetCards.setup('karuta',on)
+  bozu:on=>poetCards.setup('bozu',on)
 };
 const playable = (id) => Object.hasOwn(newGameSetup,id) || (PLAYABLE.has(id) && (window.RENDER[id] || window.RENDER[KIND_OF[id] || id] || window.RENDER.cards));
 const KIND_OF = { gogo: 'shogi', connect4: 'c4', chinese: 'chinese' };
@@ -91,7 +91,7 @@ function go(screen) {
   if (S.screen === 'play' && screen !== 'play') leavePlay();
   if (S.screen === 'slidePlay' && screen !== 'slidePlay') slideGame.stop();
   if (S.screen === 'minePlay' && screen !== 'minePlay') minesGame.stop();
-  if (S.screen === 'extraPlay' && screen !== 'extraPlay') { poetCards.stopAudio(); if (!boardMatch.active()) boardMatch.reset(); }
+  if (S.screen === 'extraPlay' && screen !== 'extraPlay') { if (!boardMatch.active()) boardMatch.reset(); }
   if (S.screen === 'wolfPlay' && screen !== 'wolfPlay') wolfGame.stop();
   S.screen = screen; S.stOpen = false; S.modal = null; S.mobDetail = false; S.chatOpen = false; S.chatUnread = 0; ddOpen = null;
   bgCtx(); render();
@@ -1004,7 +1004,7 @@ const SDEF = {
   ctrl: Object.keys(KEYNAME).map((k) => [KEYNAME[k], 'key', k]).concat([['駒の動かし方', 'seg', 'drag', ['クリック', 'ドラッグ', '両方']]]),
   prof: [['表示名', 'name'], ['アイコン', 'icon']],
   data: [['途中の対局', 'btn', 'すべて消す', 'data-clear="saved"'], ['成績', 'btn', '消す', 'data-clear="stats"'], ['保存の場所', 'btn', 'フォルダを開く', 'data-openfolder'], ['設定', 'btn', '初期設定に戻す', 'data-clear="set"']],
-  about: [['版', 'txt', APP_VERSION], ['読み上げ音声', 'txt', 'VOICEVOX（制作予定）'], ['ライセンス', 'btn', '開く', 'data-modal="license"']],
+  about: [['版', 'txt', APP_VERSION], ['ライセンス', 'btn', '開く', 'data-modal="license"']],
 };
 function setRow([l, t, k, x]) {
   const th = { auto: '端末に合わせる', light: 'ライト', dark: 'ダーク' }; let c = '';
@@ -1253,7 +1253,6 @@ app.addEventListener('click', async (e) => {
   const sg = b.closest('[data-seg]');
   if (sg) {
     const k = sg.dataset.seg, v = d.v;
-    if(k==='poet:count')return poetCards.setCount(v);
     if(k==='mine-versus:level')return mineVersus.setLevel(v);
     if(k.startsWith('wolf:'))return wolfGame.setOption(k.slice(5),v);
     if(k==='slide:size'){slideGame.size=+v;return render();}
@@ -1593,7 +1592,6 @@ toastEl.addEventListener('pointercancel', () => { drag = null; toastHide(); });
     CAT.push({id:'mine',name:'マインスイーパー（協力）',intro:'地雷を避けて安全なマスを開こう。',players:'1〜6人',category:'BOARD',options:[]});
     CAT.push({id:'mineVersus',name:'マインスイーパー（対戦）',intro:'同じ配置で競い、ポイントを使って相手を妨害しよう。',players:'2〜6人',category:'BOARD',options:[]});
     CAT.push({id:'bozu',name:'坊主めくり',intro:'4つの山から札を引き、持ち札の数を競おう。',players:'1〜6人',category:'CARD',options:[]});
-    CAT.push({id:'karuta',name:'百人一首',intro:'上の句に続く取り札を見つけよう。',players:'1〜6人',category:'CARD',options:[]});
     CAT.push({id:'wolf',name:'人狼',intro:'話し合いと投票で、村に潜む人狼を探そう。',players:'1〜6人',category:'BOARD',options:[]});
     sfx.enabled = S.set.sound;
     S.screen = store.get('firstDone', false) ? 'menu' : 'first';

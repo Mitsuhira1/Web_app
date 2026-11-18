@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261118-yacht-nozoom-wip-1";
+const CACHE = "asobipcfb-20261118-remove-karuta-1";
 const FILES = [
 "./core/games/war.mjs",
 "./core/games/vulture.mjs",
@@ -21,7 +21,6 @@ const FILES = [
 "./js/mine-versus.js",
 "./js/poet-cards.js",
 "./js/poems.js",
-"./audio/karuta/manifest.json",
 "./js/falling-match.js",
 "./js/board-match.js",
 "./",

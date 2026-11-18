@@ -56,6 +56,19 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-18 08:54(UTC)/ Antigravity / ccr-efc07031-6exjqs
+- 目的: ユーザーの指示。「もう 百人一首 消して坊主めくり はそのまま」に対応し、`web/pc-firebase/` から「百人一首」(`karuta`) を完全削除し、「坊主めくり」(`bozu`) は「準備中」リボン付きのまま維持・プレイ可能にする。
+- 変更:
+  - `web/pc-firebase/js/app.js`: `ORDER` と `CAT` から `'karuta'` を削除（メニュー合計 37 種）、`newGameSetup.karuta`・`go()` 内の `poetCards.stopAudio()`・`SDEF.about` の VOICEVOX 読み上げ音声行・`poet:count` セグメント分岐を削除。
+  - `web/pc-firebase/js/art.js`: `AR.karuta` を削除（`AR.bozu` の `Iwip(...)` は維持）。
+  - `web/pc-firebase/js/poet-cards.js`: `karuta` 専用処理・読み上げ音声関連 (`audio/karuta/manifest.json` 読込・`.mp3` 再生・`stopAudio`)・枚数オプション・`boardMatch.register('karuta', ...)` を削除し、`bozu`（坊主めくり、4つの山・`hundredPoems` 利用）のみに簡素化。
+  - `web/pc-firebase/css/app.css`: コメント更新および `karuta` 専用の未使用セレクタ（`.poet-card.verse`, `.poet-reading`, `.poet-read-text`, `.poet-grid` 等）を削除（`bozu` 用の `.poet-*` スタイルはすべて維持）。
+  - `web/pc-firebase/licenses.html`: 百人一首 VOICEVOX 予定表記の `<p>` 行を削除。
+  - `web/pc-firebase/audio/karuta/manifest.json`（および `audio/karuta/` ディレクトリ）: 削除。
+  - `web/pc-firebase/sw.js`: `FILES` から `./audio/karuta/manifest.json` を削除し、キャッシュ名を `asobipcfb-20261118-remove-karuta-1` に更新（`bozu` が依存する `./js/poems.js` は維持）。
+- ファイル: `web/pc-firebase/js/app.js`, `web/pc-firebase/js/art.js`, `web/pc-firebase/js/poet-cards.js`, `web/pc-firebase/css/app.css`, `web/pc-firebase/licenses.html`, `web/pc-firebase/sw.js`, `web/pc-firebase/audio/karuta/manifest.json`（削除）, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `git diff --check`、`node --check` (`app.js`, `art.js`, `poet-cards.js`, `sw.js`)、`node tools/tests/check_transient_audio.cjs`、`node tools/tests/check_cursor_send.cjs`、`node tools/tests/test_extra_12_games.mjs`、ヘッドレス Chromium CDP 検証5種（`karuta_remove_verify.py`：メニュー37種・成績・設定「アプリについて」・`licenses.html` に百人一首/VOICEVOX なし、坊主めくり「準備中」リボン維持・4つの山配札/手番/カットイン/CPU 動作・エラー0およびスクリーンショット目視確認 + `yacht_zoom_verify.py`, `tablet_verify.py`, `mobile_ux_verify.py`, `e2e_verify.py`）すべて合格。`web/pc/`・`Android-Projects`・`Windows-Projects` は無変更。`ccr-efc07031-6exjqs` へコミット・プッシュ済み。
+
 ### 2026-11-18 07:49(UTC)/ Antigravity / ccr-efc07031-6exjqs
 - 目的: ユーザーの指示（3項目）。
   1. `web/pc-firebase/` のヨット (`yacht`) 盤面を Android アプリ版（`YachtBoard`）に合わせて刷新する。

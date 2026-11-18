@@ -2439,7 +2439,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .wolf-screen { --wolf-side:clamp(200px,28vw,340px); }
 }
 
-/* 坊主めくりと百人一首は同じ札と盤の質感を使う。 */
+/* 坊主めくりの札と盤の質感。 */
 .poet-stage { position:relative; padding-bottom:12px; }
 .poet-table { flex:1; min-height:0; overflow:auto; padding:18px; border:7px solid var(--walnut-a);
   border-radius:16px; background:radial-gradient(ellipse at top,var(--felt-a),var(--felt-b)); color:var(--on-felt); }
@@ -2459,21 +2459,12 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-lines { position:absolute; inset:7% 8%; display:flex; flex-direction:row-reverse; justify-content:space-between;
   line-height:1; letter-spacing:.08em; }
 .poet-lines > span,.poet-author { writing-mode:vertical-rl; }
-.poet-card.verse { container-type:inline-size; }
-.poet-card.verse .poet-lines { font-size:21cqw; }
 .poet-card.portrait { container-type:inline-size; }
 .poet-card.portrait .poet-lines { inset:6% 20% 40% 9%; font-size:12cqw; }
 .poet-author { position:absolute; top:5%; right:5%; font-size:9cqw; }
 .poet-card img { position:absolute; width:100%; height:62%; inset:auto 0 0; object-fit:fill; }
-.poet-reading { display:flex; min-height:80px; align-items:center; gap:18px; margin:0 0 12px; padding:10px 14px;
-  border-radius:10px; background:#143b2c82; }
-.poet-read-text { flex:1; min-width:0; display:grid; gap:6px; font-family:"Shippori Mincho B1",serif; font-size:clamp(16px,2vw,27px); }
-.poet-reading .poet-card { width:55px; }
-.poet-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(12%,68px),1fr)); gap:8px; }
-.poet-grid button { min-width:0; transition:transform .14s; }
-.poet-grid button:hover:not(:disabled) { transform:translateY(-4px); }
 .poet-flip { animation:poetFlip .36s ease-out both; }
-.poet-piles.dealing,.poet-grid.dealing { animation:poetDeal .42s ease-out both; }
+.poet-piles.dealing { animation:poetDeal .42s ease-out both; }
 @keyframes poetFlip { from { transform:translateY(-12px) scaleX(.05); opacity:.4; } }
 @keyframes poetDeal { from { opacity:0; transform:translateY(-16px); } }
 .poet-icon { display:grid; place-items:center; width:100%; height:100%; padding:6%; background:#35684b; }
