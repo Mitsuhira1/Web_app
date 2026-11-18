@@ -56,6 +56,26 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-18 06:01(UTC)/ Antigravity / ccr-efc07031-6exjqs
+- 目的: ユーザーの指示。「ゲームのアイコンがシンプルすぎるので 他のアイコンと合わせて ちゃんと作り込んでください。」に対応し、追加8ゲーム（`slide`, `bunyo`, `pakuris`, `mineVersus`, `mine`, `bozu`, `karuta`, `wolf`）のアイコンを既存30種と揃う質感・密度の `100×100` SVG へ刷新し、各所（メニュー・詳細・準備画面・成績・再開カード・公開ルーム一覧/詳細）で統一描画されるようにする。
+- 変更:
+  - `web/pc-firebase/js/art.js`:
+    - 共有 `<defs>` に他アイコンと衝突しない `x` プレフィックスのグラデーション・クリッピング（`xSlSky`, `xSlWat`, `xSlWel`, `xSlC`, `xBunBg`, `xBunR`, `xBunB`, `xBunG`, `xBunY`, `xPakBg`, `xMinBg`, `xMinTl`, `xVsB`, `xVsR`, `xWlfS`, `xWlfM`）を追加。
+    - 補助関数 `iSlideTile`, `iBunBlob`, `iTet`, `iMinCov`, `iMinOpn`, `iNavalMine`, `iMineFlag`, `iPoetFigure` と `I(bg, body)` ベースのリッチアイコン8種を `Object.assign(AR, ...)` に追加（既存の `xSh` ドロップシャドウ・`xGr` 木目・`xNo` ノイズ・`xVig` ビネットと共通質感）。
+      - `slide`: 木枠＋彫り込みスロット＋風景画（富士山・桜・コテージ・ヨット）のベベル付3×3タイルと番号バッジ・移動矢印。
+      - `bunyo`: 深紫盤面に白ハイライト＆目つきのぷっくり緑連結ぷよ・赤青黄ぷよ＋連鎖スパークル。
+      - `pakuris`: ダークバイオレット盤面にファセット（面取り立体）付きテトリミノ5種とゴースト枠・落下トレイル。
+      - `mine`: スチールティール盤面・数字掘り込みセル・立体カバー・旗・棘付き機雷・協力2色ポインター。
+      - `mineVersus`: 青対赤のスプリット背景を金色稲妻で分割し、盾・氷結結晶・赤青旗＋数字タイル・中央機雷を配置。
+      - `bozu`: フェルト地に格子裏札・扇を持つ姫札・剃髪と数珠付きの坊主札を扇状に配置。
+      - `karuta`: フェルト地に詠み手札（歌人）・金のスワイプ軌跡・桜花びら・金霞＋朱印＋縦書き「はるすぎて」の取り札を配置。
+      - `wolf`: 夜空＋星＋クレーター付き満月＋村の灯りと針葉樹林の前で月光リムライトを浴びて遠吠えする人狼シルエット。
+  - `web/pc-firebase/js/app.js`: `artOf(id)` を全38種共通の `art(ART_ID[id] || id) || ''` に簡素化し、フォールバック絵文字分岐を削除。
+  - `web/pc-firebase/js/bunyo.js`, `web/pc-firebase/js/pakuris.js`, `web/pc-firebase/js/mine-versus.js`, `web/pc-firebase/js/poet-cards.js`: それぞれの `.setuphead` で絵文字や無アイコンだった部分を `<span class="art">${artOf(...)}</span>` に統一。
+  - `web/pc-firebase/sw.js`: キャッシュ名を `asobipcfb-20261118-icons-craft-1` に更新。
+- ファイル: `web/pc-firebase/js/art.js`, `web/pc-firebase/js/app.js`, `web/pc-firebase/js/bunyo.js`, `web/pc-firebase/js/pakuris.js`, `web/pc-firebase/js/mine-versus.js`, `web/pc-firebase/js/poet-cards.js`, `web/pc-firebase/sw.js`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `git diff --check`、`node --check` (`art.js`, `app.js`, `bunyo.js`, `pakuris.js`, `mine-versus.js`, `poet-cards.js`, `sw.js`)、`node tools/tests/check_transient_audio.cjs`、`node tools/tests/check_cursor_send.cjs`、`node tools/tests/test_extra_12_games.mjs`、ヘッドレス Chromium CDP 検証（`mobile_ux_verify.py`・`tablet_verify.py`・`e2e_verify.py`、メニュー38件＋成績 `.record-art svg` 38件＋追加8ゲームの `.setuphead .art svg` 全描画・エラー0、大小アイコン目視確認）すべて合格。`web/pc/` と `Windows-Projects` は無変更。`ccr-efc07031-6exjqs` へコミット・プッシュ済み。
+
 ### 2026-11-17 21:33(PST)/ Antigravity / ccr-efc07031-6exjqs
 - 目的: ユーザーの指示（2項目）。
   1. スマホ縦画面（対局画面 `.play-screen`）で下側が空く問題に対し、Android アプリ版 / `web/lite/` 準拠の配置（上部ナビ＋設定ボタン → プレイヤー札 `#strip` → ステータス＋手数 → 中央盤面 `#boardwrap` を残り領域いっぱいに拡大 → `#acts`・`.ops`・`.online-ops` を下端固定）へ再構成して下側の空白を解消する。

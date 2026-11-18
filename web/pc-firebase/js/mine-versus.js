@@ -172,7 +172,7 @@ const mineVersus = (() => {
   function setupHtml(){
     const number=(key,label,min,max,val)=>`<label>${label} <input type="number" data-mine-vs-pref="${key}" min="${min}" max="${max}" value="${val}"></label>`;
     const check=(key,label,val)=>`<label><input type="checkbox" data-mine-vs-pref="${key}" ${val?'checked':''}> ${label}</label>`;
-    return `<div class="screen col"><div class="setuphead"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button><div class="txt"><h2>マインスイーパー（対戦）</h2></div></div>
+    return `<div class="screen col"><div class="setuphead"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button><span class="art">${artOf('mineVersus')}</span><div class="txt"><h2>マインスイーパー（対戦）</h2></div></div>
       <div class="setupbody mine-versus-setup"><div class="panel"><h3>難易度</h3><div class="row">${seg('mine-versus:level',levels.map(k=>[k,level(k).label]),selectedLevel)}</div>
       <h3>妨害</h3><div class="row">${check('sabotage','妨害あり',preferences.sabotage)}</div>
       ${attacks.map((a,i)=>`<div class="row">${check('enabled:'+i,a[1],preferences.enabled[i])}${number('cost:'+i,'必要ポイント',1,999,costs()[i])}</div>`).join('')}

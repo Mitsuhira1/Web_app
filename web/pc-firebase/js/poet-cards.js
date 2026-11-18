@@ -23,7 +23,7 @@ const poetCards = (() => {
   function setup(id,on=false) { game=id; online=on; go('poetSetup'); }
   function setupHtml() {
     return `<div class="screen col"><div class="setuphead"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button>
-      <div class="txt"><h2>${title(game)}</h2></div><span class="tagl">${online?'みんなで遊ぶ':'ひとりで遊ぶ'}</span></div>
+      <span class="art">${artOf(game)}</span><div class="txt"><h2>${title(game)}</h2></div><span class="tagl">${online?'みんなで遊ぶ':'ひとりで遊ぶ'}</span></div>
       <div class="setupbody poet-setup"><div class="panel"><div class="row">${game==='bozu'?'<b>山札</b><span>4つ</span>':
         '<b>取り札の枚数</b>'+seg('poet:count',[['10','10枚'],['20','20枚'],['30','30枚'],['100','100枚']],String(count))}</div></div></div>
       <div class="setupfoot"><button class="btn" data-go="menu">戻る</button><button class="btn primary" data-poet-start>始める</button></div></div>`;

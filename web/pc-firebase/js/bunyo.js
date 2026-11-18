@@ -12,7 +12,7 @@ const bunyoGame=(()=>{
  function fits(p){return places(p).every(([x,y])=>x>=0&&x<W&&y<H&&(y<0||!cells[y*W+x]));}
  function showSetup(){go('bunyoSetup');}
  function setup(on=false){fallingMatch.setup('bunyo',on);}
- function setupHtml(){return `<div class="screen col"><div class="setuphead"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button><span class="bunyo-art">●●</span><div class="txt"><h2>ぶにょぶにょ</h2></div></div><div class="setupbody"><div class="panel"><h3>${fallingMatch.online?'対戦':'ひとりで遊ぶ'}</h3><div class="row"><span>同じ色を4個以上つなげると消えます。</span></div></div></div><div class="setupfoot"><button class="btn" data-go="menu">戻る</button><button class="btn primary" data-bunyo-start>始める</button></div></div>`;}
+ function setupHtml(){return `<div class="screen col"><div class="setuphead"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button><span class="art">${artOf('bunyo')}</span><div class="txt"><h2>ぶにょぶにょ</h2></div></div><div class="setupbody"><div class="panel"><h3>${fallingMatch.online?'対戦':'ひとりで遊ぶ'}</h3><div class="row"><span>同じ色を4個以上つなげると消えます。</span></div></div></div><div class="setupfoot"><button class="btn" data-go="menu">戻る</button><button class="btn primary" data-bunyo-start>始める</button></div></div>`;}
  function startSolo(){fresh(crypto.getRandomValues(new Uint32Array(1))[0]);go('bunyoPlay');}
  function active(){return S.screen==='bunyoPlay'||(S.screen==='extraPlay'&&fallingMatch.linked('bunyo'));}
 

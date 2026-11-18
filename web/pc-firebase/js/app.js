@@ -37,7 +37,7 @@ const ART_ID = { gogo: 'minishogi' };
 const BREAK = { morris: 'ナインメンズ<wbr>モリス', chinese: 'チャイニーズ<wbr>チェッカー', dots: 'ドット＆<wbr>ボックス', holdem: 'テキサス<wbr>ポーカー', yacht: 'ヨット', blackjack: 'ブラック<wbr>ジャック', backgammon: 'バック<wbr>ギャモン', hitblow: 'ヒット＆<wbr>ブロー', life: '人生<wbr>すごろく', solitaire: 'ソリティア<wbr>(クロンダイク)' };
 let CAT = [];
 const gInfo = (id) => CAT.find((g) => g.id === id);
-const artOf = (id) => id === 'slide' ? '<img src="assets/slide-landscape.svg" alt="" style="width:100%;height:100%;object-fit:cover">' : id === 'bunyo' ? '<span class="bunyo-art">●●</span>' : id==='pakuris'?'<span class="pakuris-art">▦</span>':['mine','mineVersus'].includes(id)?'<span class="mine-art">✹</span>':['bozu','karuta'].includes(id)?'<span class="poet-icon">'+poetCards.face(id==='bozu'?1:0,id==='bozu')+'</span>':id==='wolf'?'<span class="wolf-art">☾</span>':art(ART_ID[id] || id) || '';
+const artOf = (id) => art(ART_ID[id] || id) || '';
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const dispName = (g) => BREAK[g.id] || esc(g.name);
 const range = (p) => { const m = String(p).match(/\d+/g).map(Number); return [m[0], m[m.length - 1]]; };

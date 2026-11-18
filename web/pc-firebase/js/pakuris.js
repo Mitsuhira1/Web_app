@@ -13,7 +13,7 @@ const pakurisGame=(()=>{
  function setup(on=false){fallingMatch.setup('pakuris',on);}
  function playing(){return S.screen==='pakurisPlay'||(S.screen==='extraPlay'&&fallingMatch.linked('pakuris'));}
 
- function setupHtml(){return `<div class="screen col"><div class="setuphead"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button><span class="pakuris-art">▦</span><div class="txt"><h2>パクリス</h2></div></div><div class="setupbody"><div class="panel"><h3>${fallingMatch.online?'対戦':'ひとりで遊ぶ'}</h3></div></div><div class="setupfoot"><button class="btn" data-go="menu">戻る</button><button class="btn primary" data-pakuris-start>始める</button></div></div>`;}
+ function setupHtml(){return `<div class="screen col"><div class="setuphead"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button><span class="art">${artOf('pakuris')}</span><div class="txt"><h2>パクリス</h2></div></div><div class="setupbody"><div class="panel"><h3>${fallingMatch.online?'対戦':'ひとりで遊ぶ'}</h3></div></div><div class="setupfoot"><button class="btn" data-go="menu">戻る</button><button class="btn primary" data-pakuris-start>始める</button></div></div>`;}
  function tryMove(dx,dy){if(ended||animating)return false;const p={...active,x:active.x+dx,y:active.y+dy};if(fits(p)){active=p;redraw();return true;}if(dy>0)lock();return false;}
  function rotate(){if(ended||animating||active.type==='O')return;const shape=active.shape.map(([x,y])=>[3-y,x]);for(const dx of [0,-1,1,-2,2]){const p={...active,x:active.x+dx,shape};if(fits(p)){active=p;redraw();return;}}}
  async function lock(){
