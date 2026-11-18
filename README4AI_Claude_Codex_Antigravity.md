@@ -56,6 +56,26 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-18 07:49(UTC)/ Antigravity / ccr-efc07031-6exjqs
+- 目的: ユーザーの指示（3項目）。
+  1. `web/pc-firebase/` のヨット (`yacht`) 盤面を Android アプリ版（`YachtBoard`）に合わせて刷新する。
+  2. スワイプ／ピンチによるブラウザの拡大縮小を無効にする（1本指のスクロール・操作は維持）。
+  3. 追加8ゲーム（`slide`, `bunyo`, `pakuris`, `mine`, `mineVersus`, `wolf`, `bozu`, `karuta`）について、選択・プレイ可能な状態を保ったまま未完成であることを伝えるためアイコンに「準備中」を表示する。
+- 変更:
+  - `web/pc-firebase/js/boards/fix.js` (`yacht`):
+    - 木枠＋放射状グリーンフェルト皿（`.ytray` > `.ytray-in`）内に横1列5個サイコロ（未振りは薄い1点 `.d2.zero`、キープは黄枠 `.held` + `aria-pressed`）、金色の手番行（`.yturn-line`）、ガイド文言（`.yguide`、Android 版の文言に統一）、`振る／振り直す` ボタン（`.yroll`、全5個キープや振り演出中は無効化）を配置。
+    - 得点表（`.ysheet`）を `役` ＋プレイヤー列（アクティブ手番 `th.on`）、1行表示の役名、`6の目` 直後の `小計 / ボーナス`（`${t}/63` または緑字 `${t} +35`）、`合計`、最後の確定セル金枠（`td.ylast .ycell-in`）、候補行アンバー強調＋**1タップ即時確定**（2段階選択 `yPick` を廃止）に変更。
+  - `web/pc-firebase/css/app.css`:
+    - Android 版の配色・構成に沿った `.yacht2` / `.ytray` / `.ytray-in` / `.ydice` / `.yturn-line` / `.yguide` / `.yroll` / `.ysheet` スタイルを実装し、旧来の `.yturn`/`.yleft` 競合スタイルを削除。
+    - スマホ縦（`max-width:680px and min-height:541px`）・省高スマホ縦4人戦（`max-height:760px`）・タブレット縦・スマホ横（`max-height:540px and max-width:960px`）で全15行（`合計` 含む）が画面内に収まるよう調整。
+    - `html, body` に `touch-action: pan-x pan-y` を設定（`.toast` / `.lview` の `touch-action: none` は維持）。
+  - `web/pc-firebase/index.html`: `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">` を設定。
+  - `web/pc-firebase/js/app.js`: `document` に `gesturestart`/`gesturechange`/`gestureend` と2本指以上の `touchstart`/`touchmove` への `preventDefault()`（`{ passive: false }`、1本指タッチは妨げない）を追加。
+  - `web/pc-firebase/js/art.js`: `<clipPath id="xSqC">` と `iWip()` / `Iwip()` を追加し、`slide`, `bunyo`, `pakuris`, `mine`, `mineVersus`, `bozu`, `karuta`, `wolf` のアイコン左上に金色斜めリボン「準備中」を表示（`.tile.soon` や操作制限は付けず選択・プレイ可能なまま維持）。
+  - `web/pc-firebase/sw.js`: キャッシュ名を `asobipcfb-20261118-yacht-nozoom-wip-1` に更新。
+- ファイル: `web/pc-firebase/js/boards/fix.js`, `web/pc-firebase/css/app.css`, `web/pc-firebase/index.html`, `web/pc-firebase/js/app.js`, `web/pc-firebase/js/art.js`, `web/pc-firebase/sw.js`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `git diff --check`、`node --check` (`art.js`, `app.js`, `fix.js`, `sw.js`)、`node tools/tests/check_transient_audio.cjs`、`node tools/tests/check_cursor_send.cjs`、`node tools/tests/test_extra_12_games.mjs`、ヘッドレス Chromium CDP 検証5種（`yacht_zoom_verify.py`、`icon_check.py` 目視確認、`tablet_verify.py`、`mobile_ux_verify.py`、`e2e_verify.py`）すべて合格。`web/pc/`・`Android-Projects`・`Windows-Projects` は無変更。`ccr-efc07031-6exjqs` へコミット・プッシュ済み。
+
 ### 2026-11-18 06:01(UTC)/ Antigravity / ccr-efc07031-6exjqs
 - 目的: ユーザーの指示。「ゲームのアイコンがシンプルすぎるので 他のアイコンと合わせて ちゃんと作り込んでください。」に対応し、追加8ゲーム（`slide`, `bunyo`, `pakuris`, `mineVersus`, `mine`, `bozu`, `karuta`, `wolf`）のアイコンを既存30種と揃う質感・密度の `100×100` SVG へ刷新し、各所（メニュー・詳細・準備画面・成績・再開カード・公開ルーム一覧/詳細）で統一描画されるようにする。
 - 変更:

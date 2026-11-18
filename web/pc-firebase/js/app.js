@@ -1449,6 +1449,9 @@ window.addEventListener('resize', () => {
 }, { passive: true });
 window.addEventListener('mousedown', (e) => { if (e.button === 3 || e.button === 4) e.preventDefault(); });
 window.addEventListener('mouseup', (e) => { if (e.button === 3) { e.preventDefault(); goBack(); } else if (e.button === 4) e.preventDefault(); });
+// スワイプ・ピンチでの拡大縮小を無効にする(1 本指の操作・スクロールはそのまま残す)
+['gesturestart', 'gesturechange', 'gestureend'].forEach((t) => document.addEventListener(t, (e) => e.preventDefault(), { passive: false }));
+['touchstart', 'touchmove'].forEach((t) => document.addEventListener(t, (e) => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false }));
 // 矢印キーで、押せる所を移る(Enter で押す)
 function navMove(key) {
   const scope = $('#sheetwrap') || $('.modal') || app;

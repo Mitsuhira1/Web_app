@@ -448,6 +448,7 @@ svg.stamp{width:100%;height:100%;--face:#F6D77A;--skin:#F2C79A;--walnut:#4A3220;
 .dtilt.flat{transform:none}
 .d2{width:100%;height:100%;border-radius:18%;background:linear-gradient(#FFFDF5,#ECE4CF);border:1.5px solid #B9AC8C;box-shadow:0 .6cqh 0 #B9AC8C;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:16%;gap:5%}
 .d2 i,.rf i{border-radius:50%}.d2 i.on,.rf i.on{background:#15151A}.d2 i.on.one,.rf i.on.one{background:#C8362E;transform:scale(1.5)}
+.d2.zero i.on,.d2.zero i.on.one{background:rgba(0,0,0,.22);transform:scale(.9)}
 .d2.slot{display:block;padding:0;overflow:hidden}
 .reel{height:800%}
 .rf{height:12.5%;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:16%;gap:5%}
@@ -603,7 +604,7 @@ kbd{font-family:ui-monospace,Consolas,monospace;font-size:12.500px;font-weight:7
 @media (max-width:680px), (max-width:960px) and (max-height:540px){ .cols2{grid-template-columns:1fr} .setupfoot .primary{width:auto;flex:1} .setupbody{overflow:visible;padding:16px} .gal{grid-template-columns:1fr} }
 
 /* ================================================================ アプリ(見本に足したもの) */
-html,body{height:100%;overflow:hidden}
+html,body{height:100%;overflow:hidden;touch-action:pan-x pan-y}
 body{user-select:none}
 input,textarea{user-select:text}
 .app{min-height:0}
@@ -1066,29 +1067,37 @@ html.reduce *,html.reduce *::before,html.reduce *::after{animation-duration:.001
 .hbpad .del{grid-column:1/6;height:6cqh;font-size:2.3cqh}
 .hbhelp{margin:0;font-size:1.9cqh;color:var(--sub);text-align:center;line-height:2.2}
 .hbhelp b{font-size:1.8cqh}
-/* ヨット */
-.yacht2{width:min(100cqw,165cqh);height:100cqh;display:grid;grid-template-columns:1fr 1.05fr;gap:3cqh;padding:1cqh 0}
-.ytray{border-radius:3cqh;background:var(--noise),radial-gradient(ellipse at 50% 38%,#34805b,#184530);border:1.8cqh solid #6a4429;box-shadow:inset 0 6px 18px rgba(0,0,0,.5),var(--sh-board);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3cqh;color:var(--on-felt)}
-.ydice{display:grid;grid-template-columns:repeat(6,5.2cqh);gap:2.4cqh 1.2cqh;justify-content:center}
-.yd{grid-column:span 2;width:13cqh;height:13cqh;position:relative;--ds:13cqh;padding:0}
-.yd:nth-child(4){grid-column:2/4}
-.yd .d2{box-shadow:0 .8cqh 0 #B9AC8C,0 1.6cqh 1.4cqh rgba(0,0,0,.4)}
-.yd.held .d2{outline:.6cqh solid var(--mark);outline-offset:.3cqh}
-.yd small{position:absolute;left:0;right:0;bottom:-2.9cqh;font-size:1.9cqh;font-weight:900;color:var(--mark)}
+/* ヨット(Android 版 YachtBoard 準拠) */
+.yacht2{width:min(100cqw,165cqh);height:100cqh;min-height:0;display:grid;grid-template-columns:1fr 1.05fr;gap:2.6cqh;padding:1cqh 0}
+.ytray{border-radius:2.6cqh;padding:1.2cqh;background:var(--noise),linear-gradient(180deg,#6A4022,#4A2A14);box-shadow:var(--sh-board);display:flex;align-self:stretch;min-height:0}
+.ytray-in{flex:1;width:100%;border-radius:1.6cqh;background:var(--noise),radial-gradient(ellipse at 50% 38%,#2E8A5A,#1A5E3B);box-shadow:inset 0 4px 16px rgba(0,0,0,.42);padding:2.2cqh 2cqh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.8cqh;color:#fff}
+.ydice{display:flex;width:100%;justify-content:space-evenly;align-items:center;gap:1cqh}
+.yd{flex:0 0 auto;width:clamp(34px,min(11.5cqh,16%),76px);aspect-ratio:1;height:auto;position:relative;--ds:clamp(34px,min(11.5cqh,16%),76px);padding:0;border-radius:20%}
+.yd .d2{box-shadow:0 .55cqh 0 #B9AC8C,0 1.2cqh 1.2cqh rgba(0,0,0,.38)}
+.yd.held .d2{outline:.55cqh solid var(--mark);outline-offset:.2cqh}
 .yd:disabled{opacity:1}
-.yd:not(:disabled):hover .d2{transform:translateY(-.5cqh)}
-.ytxt{font-size:2.5cqh;font-weight:900}.yhint{font-size:1.9cqh;color:var(--on-felt-sub)}
-.ysheet{background:#FBF6E6;color:#2A2118;border-radius:1.4cqh;padding:1.2cqh 2cqh;box-shadow:var(--sh-board);overflow:auto}
-.ysheet table{width:100%;height:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-.ysheet th{text-align:left;font-size:2.3cqh;font-weight:900;padding:.4cqh .6cqh;border-bottom:1px solid #D8CDB0}
-.ysheet th small{display:block;font-size:1.5cqh;font-weight:500;color:#7A6E58}
-.ysheet thead th{text-align:center;font-size:2cqh;color:#7A6E58;border-bottom:2px solid #2A2118}
-.ysheet thead th.on{color:#B3261C}
-.ysheet td{text-align:center;font-size:2.8cqh;font-weight:900;border-bottom:1px solid #D8CDB0;border-left:1px solid #D8CDB0;min-width:9cqh}
-.ysheet td.yp{color:#B98318;background:#FFEFC2;cursor:pointer;font-weight:700}
-.ysheet td.yp:hover{background:#FFD97A;color:#2A2118}
-.ysheet tr.bonus th,.ysheet tr.bonus td{background:#F1E8CF;font-size:2cqh}
-.ysheet tr.total th,.ysheet tr.total td{border-top:2px solid #2A2118;border-bottom:0}
+.yd:not(:disabled):hover .d2{transform:translateY(-.45cqh)}
+.yturn-line{color:var(--mark);font-size:clamp(12px,2.3cqh,20px);font-weight:900;text-align:center;line-height:1.25}
+.yguide{color:rgba(255,255,255,.9);font-size:clamp(11px,1.95cqh,16px);font-weight:700;text-align:center;min-height:1.3em;line-height:1.25}
+.yroll{width:100%;max-width:44cqh;height:clamp(34px,6.6cqh,52px);border-radius:1.6cqh;background:var(--mark);color:#3A2616;font-size:clamp(13px,2.5cqh,21px);font-weight:900;padding:0 2cqh;box-shadow:0 .45cqh 0 #9C6A12,0 .9cqh 1.4cqh rgba(0,0,0,.32);transition:transform .08s}
+.yroll:active:not(:disabled){transform:translateY(.35cqh);box-shadow:0 .1cqh 0 #9C6A12}
+.yroll:disabled{opacity:.38}
+.ysheet{background:#FBF7EC;color:#2B2118;border-radius:2.2cqh;padding:1.4cqh 1.8cqh;box-shadow:var(--sh-board);overflow:auto;min-height:0;display:flex;flex-direction:column}
+.ysheet table{width:100%;height:auto;min-height:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ysheet thead th{text-align:center;font-size:clamp(10.5px,1.85cqh,15px);font-weight:700;color:#2B2118;padding:.3cqh .4cqh .6cqh;border-bottom:1.5px solid rgba(43,33,24,.22)}
+.ysheet thead th:first-child{text-align:left;color:rgba(43,33,24,.6);width:1%;white-space:nowrap;padding-left:.6cqh}
+.ysheet thead th.on{color:#B26A00;font-weight:900}
+.ysheet tbody th{text-align:left;font-size:clamp(11.5px,2.1cqh,17px);font-weight:700;color:#2B2118;padding:.35cqh .6cqh;white-space:nowrap;border-bottom:1px solid rgba(43,33,24,.09)}
+.ysheet td{text-align:center;font-size:clamp(12px,2.25cqh,19px);font-weight:800;color:#2B2118;padding:.25cqh .35cqh;border-bottom:1px solid rgba(43,33,24,.09)}
+.ysheet td .ycell-in{display:inline-flex;align-items:center;justify-content:center;min-width:4.2cqh;padding:.15cqh .65cqh;border-radius:.8cqh;border:2px solid transparent}
+.ysheet td.ylast .ycell-in{border-color:var(--mark)}
+.ysheet td.yp{color:rgba(178,106,0,.78);font-weight:500}
+.ysheet tr.yrow.can{background:rgba(255,198,92,.22);cursor:pointer}
+.ysheet tr.yrow.can:hover{background:rgba(255,198,92,.38)}
+.ysheet tr.yrow.can:hover td.yp{color:#2B2118;font-weight:800}
+.ysheet tr.bonus th,.ysheet tr.bonus td{background:rgba(0,0,0,.07);font-size:clamp(10.5px,1.75cqh,14px);font-weight:700;color:rgba(43,33,24,.75);border-bottom:1px solid rgba(43,33,24,.12)}
+.ysheet tr.bonus td.bon{color:#2F8A55;font-weight:900}
+.ysheet tr.total th,.ysheet tr.total td{border-top:2px solid rgba(43,33,24,.28);border-bottom:0;font-size:clamp(12.5px,2.35cqh,20px);font-weight:900;color:#2B2118}
 .lsq{font:700 12.5px/1.32 var(--font);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;height:auto;max-height:100%}
 /* 麻雀: 卓を大きく、手牌は卓のすぐ下 */
 .mjwrap{gap:.6cqh}
@@ -1164,18 +1173,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--mark);outline-o
 .hbpad .ok:disabled{opacity:.35}
 .paper.light{--paper:#FDFCF8;--paper-edge:#D9D5C8;--paper-grid:#C9CFD8;--paper-dot:#2B3440;--pen-r:#D8452E;--pen-b:#2F6FD0}
 .paper.dark{--paper:#1E2B36;--paper-edge:#101A22;--paper-grid:#33454F;--paper-dot:#EEF3F6;--pen-r:#FF8A75;--pen-b:#7DB4FF}
-/* ヨット */
-.ytray{gap:2.4cqh}
-.yturn{background:var(--mark);color:#3A2616;font-weight:900;font-size:2.6cqh;border-radius:99px;padding:.6cqh 2.6cqh;box-shadow:0 2px 0 rgba(0,0,0,.3)}
-.yd small{display:none}
-.d2.gray i.on,.d2.gray i.on.one{background:#C9C2B0}
-.yroll{min-width:30cqh;height:7.4cqh;border-radius:1.6cqh;background:var(--mark);color:#3A2616;font-size:2.9cqh;font-weight:900;padding:0 3cqh;box-shadow:0 .5cqh 0 #9C6A12,0 1cqh 1.6cqh rgba(0,0,0,.35);transition:transform .08s}
-.yroll:active:not(:disabled){transform:translateY(.4cqh);box-shadow:0 .1cqh 0 #9C6A12}
-.yroll:disabled{opacity:.35}
-.yleft{display:flex;align-items:center;gap:1.2cqh;background:rgba(0,0,0,.35);border-radius:99px;padding:.5cqh 2cqh;font-size:2.1cqh;font-weight:700;color:#fff}
-.yleft b{font-size:3.6cqh;color:#FFE08A}
-.ydots{display:flex;gap:.6cqh}.ydots i{width:1.6cqh;height:1.6cqh;border-radius:50%;background:rgba(255,255,255,.2)}.ydots i.on{background:#FFE08A}
-.ysheet td.yp.pick{background:var(--mark);color:#3A2616;outline:2px solid #9C6A12;outline-offset:-2px}
 /* カードの卓: 席の札・お知らせ */
 .tw .tseat{gap:.6cqh}
 .tw .tplate{display:flex;align-items:center;gap:1cqh;background:rgba(10,20,14,.62);border:1.5px solid rgba(255,255,255,.14);border-radius:99px;padding:.5cqh 1.6cqh .5cqh .5cqh;box-shadow:0 .4cqh 1cqh rgba(0,0,0,.35)}
@@ -1657,7 +1654,7 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
 .lzoom button:hover{background:rgba(185,131,24,.18)}
 
 @media (hover:none) and (pointer:coarse){
-  button,a,summary,[role="switch"]{touch-action:manipulation}
+  html,body,button,a,summary,[role="switch"]{touch-action:pan-x pan-y}
   .tile:hover,.card:hover,.hand .card:hover,.cd.tap:hover,.hand2 .pc.tap:hover,.pcard.tap:hover,.mjt.big:hover,.stamps button:hover,.stpanel button:hover,.mgrid .pc.tap:hover,.upass:hover,.wheel.can:hover,.yd:not(:disabled):hover .d2{transform:none}
   .cell.can:hover::after{width:22%;height:22%;opacity:.85;background:var(--mark)}
   .scell.can:hover{background:transparent}
@@ -1762,27 +1759,6 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
   .boardwrap.k-shogi .hk b{right:-3px;bottom:-2px;font-size:10px;min-width:16px}
   .boardwrap.k-shogi .sboard{width:min(100%,440px);height:auto;aspect-ratio:1 / 1.06;justify-self:center;padding:2.2cqw}
   .boardwrap.k-shogi .sboard .kf{font-size:clamp(14px,4.4cqw,24px)}
-
-  /* ヨット: 縦積み(サイコロトレイ上・スコア表下) */
-  .boardwrap.k-yacht{max-width:560px;aspect-ratio:auto;height:auto;container-type:inline-size}
-  .boardwrap.k-yacht .yacht2{width:100%;height:auto;grid-template-columns:1fr;gap:12px;padding:4px 0}
-  .boardwrap.k-yacht .ytray{border-radius:16px;border-width:8px;padding:14px 12px;gap:12px}
-  .boardwrap.k-yacht .yturn{font-size:14px;padding:4px 16px}
-  .boardwrap.k-yacht .ydice{grid-template-columns:repeat(6,clamp(22px,6.2cqw,30px));gap:12px 6px}
-  .boardwrap.k-yacht .yd{width:clamp(46px,13.5cqw,64px);height:clamp(46px,13.5cqw,64px);--ds:clamp(46px,13.5cqw,64px)}
-  .boardwrap.k-yacht .yd .d2{box-shadow:0 4px 0 #B9AC8C,0 8px 8px rgba(0,0,0,.35)}
-  .boardwrap.k-yacht .yd.held .d2{outline-width:3px;outline-offset:2px}
-  .boardwrap.k-yacht .yroll{min-width:180px;height:44px;border-radius:12px;font-size:16px;padding:0 20px;box-shadow:0 3px 0 #9C6A12,0 6px 10px rgba(0,0,0,.3)}
-  .boardwrap.k-yacht .yleft{gap:8px;padding:4px 14px;font-size:13px}
-  .boardwrap.k-yacht .yleft b{font-size:18px}
-  .boardwrap.k-yacht .ydots{gap:4px}
-  .boardwrap.k-yacht .ydots i{width:10px;height:10px}
-  .boardwrap.k-yacht .ysheet{border-radius:12px;padding:8px 10px}
-  .boardwrap.k-yacht .ysheet th{font-size:13px;padding:6px 4px}
-  .boardwrap.k-yacht .ysheet th small{font-size:11px}
-  .boardwrap.k-yacht .ysheet thead th{font-size:12px}
-  .boardwrap.k-yacht .ysheet td{font-size:15px;min-width:46px;padding:6px 4px}
-  .boardwrap.k-yacht .ysheet tr.bonus th,.boardwrap.k-yacht .ysheet tr.bonus td{font-size:12.5px}
 
   /* ヒット＆ブロー: 縦積み + 押しやすいテンキー */
   .boardwrap.k-hitblow{max-width:600px;aspect-ratio:auto;height:auto;container-type:inline-size}
@@ -2064,24 +2040,26 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
   .boardwrap.k-shogi .sboard{width:min(100%,460px);height:auto;aspect-ratio:1/1.06;justify-self:center;padding:2.2cqw}
   .boardwrap.k-shogi .sboard .kf{font-size:clamp(16px,4.2cqw,24px)}
 
-  .boardwrap.k-yacht{container-type:inline-size;overflow:auto}
-  .boardwrap.k-yacht .yacht2{width:100%;height:auto;grid-template-columns:1fr;gap:12px;padding:4px 0}
-  .boardwrap.k-yacht .ytray{border-radius:18px;border-width:10px;padding:14px 12px;gap:12px}
-  .boardwrap.k-yacht .yturn{font-size:14px;padding:4px 16px}
-  .boardwrap.k-yacht .ydice{grid-template-columns:repeat(6,clamp(24px,5.5cqw,32px));gap:12px 6px}
-  .boardwrap.k-yacht .yd{width:clamp(50px,12cqw,68px);height:clamp(50px,12cqw,68px);--ds:clamp(50px,12cqw,68px)}
-  .boardwrap.k-yacht .yd .d2{box-shadow:0 4px 0 #B9AC8C,0 8px 8px rgba(0,0,0,.35)}
-  .boardwrap.k-yacht .yroll{min-width:180px;height:44px;border-radius:12px;font-size:16px;padding:0 20px;box-shadow:0 3px 0 #9C6A12,0 6px 10px rgba(0,0,0,.3)}
-  .boardwrap.k-yacht .yleft{gap:8px;padding:4px 14px;font-size:13px}
-  .boardwrap.k-yacht .yleft b{font-size:18px}
-  .boardwrap.k-yacht .ydots{gap:4px}
-  .boardwrap.k-yacht .ydots i{width:10px;height:10px}
-  .boardwrap.k-yacht .ysheet{border-radius:12px;padding:8px 12px}
-  .boardwrap.k-yacht .ysheet th{font-size:13px;padding:5px 4px}
-  .boardwrap.k-yacht .ysheet th small{font-size:11px}
-  .boardwrap.k-yacht .ysheet thead th{font-size:12px}
-  .boardwrap.k-yacht .ysheet td{font-size:15px;min-width:48px;padding:5px 4px}
-  .boardwrap.k-yacht .ysheet tr.bonus th,.boardwrap.k-yacht .ysheet tr.bonus td{font-size:12.5px}
+  .boardwrap.k-yacht{container-type:size;width:100%;height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+  .boardwrap.k-yacht .yacht2{width:100%;height:100%;min-height:0;grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);gap:10px;padding:2px 0}
+  .boardwrap.k-yacht .ytray{border-radius:16px;padding:8px}
+  .boardwrap.k-yacht .ytray-in{border-radius:10px;padding:12px;gap:8px}
+  .boardwrap.k-yacht .ydice{gap:8px}
+  .boardwrap.k-yacht .yd{width:clamp(44px,11cqw,58px);--ds:clamp(44px,11cqw,58px)}
+  .boardwrap.k-yacht .yd .d2{box-shadow:0 4px 0 #B9AC8C,0 7px 9px rgba(0,0,0,.35)}
+  .boardwrap.k-yacht .yd.held .d2{outline:3.5px solid var(--mark);outline-offset:2px}
+  .boardwrap.k-yacht .yturn-line{font-size:14px}
+  .boardwrap.k-yacht .yguide{font-size:12px}
+  .boardwrap.k-yacht .yroll{max-width:none;height:42px;border-radius:12px;font-size:15.5px;padding:0 18px;box-shadow:0 3px 0 #9C6A12,0 6px 10px rgba(0,0,0,.3)}
+  .boardwrap.k-yacht .ysheet{border-radius:16px;padding:8px 10px;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .boardwrap.k-yacht .ysheet table{height:auto;min-height:100%}
+  .boardwrap.k-yacht .ysheet thead th{font-size:11.5px;padding:3px 4px 5px}
+  .boardwrap.k-yacht .ysheet thead th:first-child{padding-left:6px}
+  .boardwrap.k-yacht .ysheet tbody th{font-size:13.5px;padding:3px 6px}
+  .boardwrap.k-yacht .ysheet td{font-size:14.5px;min-width:0;padding:2px 4px}
+  .boardwrap.k-yacht .ysheet td .ycell-in{min-width:28px;padding:1px 6px;border-radius:6px}
+  .boardwrap.k-yacht .ysheet tr.bonus th,.boardwrap.k-yacht .ysheet tr.bonus td{font-size:11.5px;padding:2px 6px}
+  .boardwrap.k-yacht .ysheet tr.total th,.boardwrap.k-yacht .ysheet tr.total td{font-size:14.5px;padding:4px 6px}
 
   .boardwrap.k-hitblow{container-type:inline-size;overflow:auto}
   .boardwrap.k-hitblow .hb2{width:100%;height:auto;grid-template-columns:1fr;gap:12px;padding:4px 0}
@@ -2281,26 +2259,38 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .play-screen .boardwrap.k-mahjong .mjhand{justify-content:flex-start;overflow-x:auto;padding:8px 4px 2px;width:100%;-webkit-overflow-scrolling:touch;gap:2px}
   .play-screen .boardwrap.k-mahjong .mjt.big{--w:clamp(21px,5.4cqw,38px)}
 
-  /* ヨット・ヒット＆ブロー (狭い画面では領域内のみスクロールし、操作バーを下端固定) */
-  .play-screen .boardwrap.k-yacht,.play-screen .boardwrap.k-hitblow{
+  /* ヨット(Android 版 YachtBoard 準拠: 上に木枠+フェルト皿・下に得点表全行) */
+  .play-screen .boardwrap.k-yacht{
+    container-type:size;
+    display:flex;flex-direction:column;align-items:stretch;
+    overflow:hidden;
+  }
+  .play-screen .boardwrap.k-yacht .yacht2{width:min(100%,560px);height:100%;min-height:0;margin:0 auto;grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);gap:8px;padding:0}
+  .play-screen .boardwrap.k-yacht .ytray{border-radius:14px;padding:6px}
+  .play-screen .boardwrap.k-yacht .ytray-in{border-radius:9px;padding:8px 10px;gap:6px}
+  .play-screen .boardwrap.k-yacht .ydice{gap:6px}
+  .play-screen .boardwrap.k-yacht .yd{width:clamp(36px,13cqw,48px);--ds:clamp(36px,13cqw,48px)}
+  .play-screen .boardwrap.k-yacht .yd .d2{box-shadow:0 3px 0 #B9AC8C,0 5px 8px rgba(0,0,0,.34)}
+  .play-screen .boardwrap.k-yacht .yd.held .d2{outline:3px solid var(--mark);outline-offset:1.5px}
+  .play-screen .boardwrap.k-yacht .yturn-line{font-size:12.5px}
+  .play-screen .boardwrap.k-yacht .yguide{font-size:11px}
+  .play-screen .boardwrap.k-yacht .yroll{max-width:none;height:34px;font-size:14px;border-radius:10px;padding:0 14px;box-shadow:0 3px 0 #9C6A12,0 5px 8px rgba(0,0,0,.28)}
+  .play-screen .boardwrap.k-yacht .ysheet{border-radius:14px;padding:5px 8px;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .play-screen .boardwrap.k-yacht .ysheet table{height:auto;min-height:100%}
+  .play-screen .boardwrap.k-yacht .ysheet thead th{font-size:10.5px;line-height:1.15;padding:1px 2px 3px}
+  .play-screen .boardwrap.k-yacht .ysheet thead th:first-child{padding-left:4px}
+  .play-screen .boardwrap.k-yacht .ysheet tbody th{font-size:12px;line-height:1.15;padding:1px 4px}
+  .play-screen .boardwrap.k-yacht .ysheet td{font-size:12.5px;line-height:1.15;min-width:0;padding:.5px 2px}
+  .play-screen .boardwrap.k-yacht .ysheet td .ycell-in{min-width:22px;padding:0 4px;border-width:1.5px;border-radius:5px;line-height:1.18}
+  .play-screen .boardwrap.k-yacht .ysheet tr.bonus th,.play-screen .boardwrap.k-yacht .ysheet tr.bonus td{font-size:10.5px;line-height:1.15;padding:1.5px 4px}
+  .play-screen .boardwrap.k-yacht .ysheet tr.total th,.play-screen .boardwrap.k-yacht .ysheet tr.total td{font-size:12.5px;line-height:1.15;padding:2px 4px}
+
+  /* ヒット＆ブロー (狭い画面では領域内のみスクロールし、操作バーを下端固定) */
+  .play-screen .boardwrap.k-hitblow{
     container-type:inline-size;
     display:flex;flex-direction:column;align-items:center;
     overflow-y:auto;-webkit-overflow-scrolling:touch;
   }
-  .play-screen .boardwrap.k-yacht .yacht2{margin:auto 0;width:min(100%,560px);height:auto;flex:none;gap:6px;padding:0}
-  .play-screen .boardwrap.k-yacht .ytray{padding:7px 10px;gap:5px;border-width:5px;border-radius:12px}
-  .play-screen .boardwrap.k-yacht .yturn{font-size:11.5px;padding:2px 10px}
-  .play-screen .boardwrap.k-yacht .ydice{gap:6px 4px;grid-template-columns:repeat(6,clamp(16px,4.6cqw,22px))}
-  .play-screen .boardwrap.k-yacht .yd{width:clamp(34px,10cqw,46px);height:clamp(34px,10cqw,46px);--ds:clamp(34px,10cqw,46px)}
-  .play-screen .boardwrap.k-yacht .yroll{height:32px;font-size:13px;min-width:140px;padding:0 14px;border-radius:10px}
-  .play-screen .boardwrap.k-yacht .yleft{font-size:11px;padding:2px 10px;gap:6px}
-  .play-screen .boardwrap.k-yacht .yleft b{font-size:14px}
-  .play-screen .boardwrap.k-yacht .ysheet{padding:4px 8px;border-radius:10px}
-  .play-screen .boardwrap.k-yacht .ysheet th{font-size:11px;padding:2px 4px;line-height:1.15}
-  .play-screen .boardwrap.k-yacht .ysheet th small{display:inline;margin-left:5px;font-size:9.5px}
-  .play-screen .boardwrap.k-yacht .ysheet thead th{font-size:10.5px;padding:2px 4px}
-  .play-screen .boardwrap.k-yacht .ysheet td{font-size:12.5px;min-width:38px;padding:2px 4px}
-  .play-screen .boardwrap.k-yacht .ysheet tr.bonus th,.play-screen .boardwrap.k-yacht .ysheet tr.bonus td{font-size:11px}
 
   .play-screen .boardwrap.k-hitblow .hb2{margin:auto 0;width:min(100%,600px);height:auto;flex:none;gap:6px;padding:0}
   .play-screen .boardwrap.k-hitblow .hbleft{gap:6px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
@@ -2331,6 +2321,23 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .play-screen .side .ops .btn svg.ic{width:14px;height:14px}
   .play-screen .side .online-ops{grid-column:1 / -1;grid-row:10;margin-top:5px;gap:6px;padding-right:54px}
   .play-screen .side .online-ops .btn{height:34px;font-size:11.5px}
+}
+
+@media (max-width:680px) and (min-height:541px) and (max-height:760px){
+  .play-screen .boardwrap.k-yacht .yacht2{gap:5px}
+  .play-screen .boardwrap.k-yacht .ytray{border-radius:12px;padding:4px}
+  .play-screen .boardwrap.k-yacht .ytray-in{border-radius:8px;padding:6px 8px;gap:4px}
+  .play-screen .boardwrap.k-yacht .yd{width:clamp(32px,11.5cqw,42px);--ds:clamp(32px,11.5cqw,42px)}
+  .play-screen .boardwrap.k-yacht .yturn-line{font-size:11.5px}
+  .play-screen .boardwrap.k-yacht .yguide{font-size:10.5px}
+  .play-screen .boardwrap.k-yacht .yroll{height:30px;font-size:13px;border-radius:8px}
+  .play-screen .boardwrap.k-yacht .ysheet{border-radius:12px;padding:4px 6px}
+  .play-screen .boardwrap.k-yacht .ysheet thead th{font-size:10px;line-height:1.1;padding:1px 2px 2px}
+  .play-screen .boardwrap.k-yacht .ysheet tbody th{font-size:11px;line-height:1.1;padding:.5px 3px}
+  .play-screen .boardwrap.k-yacht .ysheet td{font-size:11.5px;line-height:1.1;padding:.5px 2px}
+  .play-screen .boardwrap.k-yacht .ysheet td .ycell-in{min-width:20px;padding:0 3px;line-height:1.12}
+  .play-screen .boardwrap.k-yacht .ysheet tr.bonus th,.play-screen .boardwrap.k-yacht .ysheet tr.bonus td{font-size:10px;line-height:1.1;padding:1px 3px}
+  .play-screen .boardwrap.k-yacht .ysheet tr.total th,.play-screen .boardwrap.k-yacht .ysheet tr.total td{font-size:11.5px;line-height:1.1;padding:1.5px 3px}
 }
 
 @media (max-height:540px) and (max-width:960px){
@@ -2364,6 +2371,13 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .play-screen .boardwrap.k-mahjong .mjhand{justify-content:center;padding:4px 0 2px}
   .play-screen .boardwrap.k-mahjong .mjt.big{--w:clamp(22px,min(4.8cqw,10cqh),44px)}
   .play-screen .boardwrap.k-yacht .yacht2{width:min(100cqw,165cqh);height:100cqh;grid-template-columns:1fr 1.05fr;gap:2.4cqh}
+  .play-screen .boardwrap.k-yacht .ysheet{padding:6px 8px}
+  .play-screen .boardwrap.k-yacht .ysheet thead th{font-size:10px;line-height:1.15;padding:1px 3px 2px}
+  .play-screen .boardwrap.k-yacht .ysheet tbody th{font-size:11px;line-height:1.15;padding:1px 4px}
+  .play-screen .boardwrap.k-yacht .ysheet td{font-size:11.5px;line-height:1.15;padding:.5px 3px}
+  .play-screen .boardwrap.k-yacht .ysheet td .ycell-in{padding:0 4px;border-width:1.5px;line-height:1.15}
+  .play-screen .boardwrap.k-yacht .ysheet tr.bonus th,.play-screen .boardwrap.k-yacht .ysheet tr.bonus td{font-size:10px;line-height:1.15;padding:1px 4px}
+  .play-screen .boardwrap.k-yacht .ysheet tr.total th,.play-screen .boardwrap.k-yacht .ysheet tr.total td{font-size:12px;line-height:1.15;padding:1.5px 4px}
   .play-screen .boardwrap.k-hitblow .hb2{width:min(100cqw,150cqh);height:100cqh;grid-template-columns:1.25fr 1fr;gap:2.4cqh}
 
   .play-screen .side{width:236px;flex:none;height:100%;overflow-y:auto;border-left:1px solid var(--line);border-top:0;padding:8px max(10px,env(safe-area-inset-right,0px)) 8px 10px;display:flex;flex-direction:column;align-items:stretch;gap:6px}

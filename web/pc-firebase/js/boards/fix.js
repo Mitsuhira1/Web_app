@@ -171,9 +171,8 @@
     requestAnimationFrame(() => document.querySelectorAll('.hbrows').forEach((e) => (e.scrollTop = e.scrollHeight)));
   }
 
-  // ---------------------------------------------------------------- ヨット(サイコロは「ふるふる」。得点表は右)
+  // ---------------------------------------------------------------- ヨット(Android 版 YachtBoard 準拠)
   const YN = ['1の目', '2の目', '3の目', '4の目', '5の目', '6の目', 'チョイス', 'フォーダイス', 'フルハウス', 'Sストレート', 'Bストレート', 'ヨット'];
-  const YH = ['1 の目の合計', '2 の目の合計', '3 の目の合計', '4 の目の合計', '5 の目の合計', '6 の目の合計', '5 個の合計', '同じ目 4 個で合計', '3 個 + 別の 2 個で合計', '4 つ続きで 15 点', '5 つ続きで 30 点', '同じ目 5 個で 50 点'];
   function ysc(dice, cat) {
     const cnt = [0, 0, 0, 0, 0, 0, 0]; dice.forEach((v) => cnt[v]++); const sum = dice.reduce((a, c) => a + c, 0);
     if (cat <= 5) return cnt[cat + 1] * (cat + 1); if (cat === 6) return sum; if (cat === 7) return cnt.some((c) => c >= 4) ? sum : 0;
@@ -183,56 +182,83 @@
     if (cat === 10) return has([1, 2, 3, 4, 5]) || has([2, 3, 4, 5, 6]) ? 30 : 0;
     return cnt.some((c) => c === 5) ? 50 : 0;
   }
-  let yPick = null, yKeep = 0, yRolling = false, yRollUntil = 0, yLastCell = '';
+  let yKeep = 0, yRolling = false, yRollUntil = 0, yLastCell = '';
   function yacht(b, A) {
     const me = A.mySeat, legal = new Set(A.view.human ? A.view.legal : []), turn = A.view.toMove;
+    const over = !!A.view.outcome;
     const tot = (k) => b.sheets[k].reduce((a, c) => a + Math.max(c, 0), 0) + (b.sheets[k].slice(0, 6).reduce((a, c) => a + Math.max(c, 0), 0) >= 63 ? 35 : 0);
-    A.strip(Array.from({ length: b.players }, (_, k) => `<div class="pl${turn === k ? ' turn' : ''}">${k === me ? A.face(24) : `<span class="dot face">${esc(A.name(k)[0])}</span>`}<span class="who"><span class="nm">${esc(A.name(k))}</span><span class="nt">合計</span></span><span class="num">${tot(k)}</span></div>`).join(''));
+    A.strip(Array.from({ length: b.players }, (_, k) => `<div class="pl${turn === k && !over ? ' turn' : ''}">${k === me ? A.face(24) : `<span class="dot face">${esc(A.name(k)[0])}</span>`}<span class="who"><span class="nm">${esc(A.name(k))}</span><span class="nt">合計</span></span><span class="num">${tot(k)}</span></div>`).join(''));
     const old = prev.ya && prev.ya.h === A.handle ? prev.ya : null;
-    if (!old || old.turn !== b.turn || !(b.rollsLeft < 3)) yKeep = 0;
-    const rolled = b.rollsLeft < 3, mine = A.view.human;
-    // キープは、同じ番の間は残す(CPU の番は、CPU が残したサイコロを見せる)
+    const rolled = b.rollsLeft < 3, mine = A.view.human && !over;
+    if (!old || old.turn !== b.turn || !rolled) yKeep = 0;
+    // キープは、同じ番の間は残す(CPU や相手の手番では、残したサイコロを黄枠で見せる)
     const cpuMask = !mine && rolled && old && old.turn === b.turn && A.lastMove >= 0 && A.lastMove < 32 ? A.lastMove : 0;
     const mask = mine ? yKeep : cpuMask;
     const rolledNow = old && (old.left !== b.rollsLeft || old.turn !== b.turn) && rolled;
-    if (!old || old.turn !== b.turn || old.left !== b.rollsLeft) yPick = null;
-    const dice = b.dice.map((v, i) => { const held = (mask >> i) & 1;
-      return `<button class="yd ${held ? 'held' : ''} ${rolledNow && (old.turn !== b.turn || !((mask >> i) & 1)) ? 'roll' : ''}" data-die="${i}" data-v="${v}" ${mine && rolled ? '' : 'disabled'} aria-label="サイコロ ${v || ''}"><span class="d2 ${v > 0 ? '' : 'gray'}">${dface(v > 0 ? v : i + 1)}</span></button>`; }).join('');
-    // ほかの人が最後に書いた欄(次にだれかが書くまで光らせる)
-    if (old && old.sheets) for (let k = 0; k < b.players; k++) for (let c2 = 0; c2 < b.sheets[k].length; c2++) if (old.sheets[k][c2] < 0 && b.sheets[k][c2] >= 0) yLastCell = k !== me ? `${k}-${c2}` : '';
+    const dice = b.dice.map((v, i) => {
+      const held = (mask >> i) & 1;
+      const cls = ['yd', held ? 'held' : '', rolledNow && (old.turn !== b.turn || !held) ? 'roll' : ''].filter(Boolean).join(' ');
+      return `<button class="${cls}" data-die="${i}" data-v="${v}" ${mine && rolled ? '' : 'disabled'} aria-pressed="${held ? 'true' : 'false'}" aria-label="サイコロ ${v > 0 ? v : '未振り'}"><span class="d2 ${v > 0 ? '' : 'zero'}">${dface(v > 0 ? v : 1)}</span></button>`;
+    }).join('');
+    if (old && old.sheets) for (let k = 0; k < b.players; k++) for (let c2 = 0; c2 < b.sheets[k].length; c2++) if (old.sheets[k][c2] < 0 && b.sheets[k][c2] >= 0) yLastCell = `${k}-${c2}`;
     if (!old) yLastCell = '';
-    const cell = (k, cat) => { const v = b.sheets[k][cat], at = `data-ycell="${k}-${cat}"`;
-      if (v >= 0) return `<td class="ys ${yLastCell === `${k}-${cat}` ? 'ylast' : ''}" ${at}>${v}</td>`;
-      if (k === me && legal.has(100 + cat) && rolled) return `<td class="yp ${yPick === cat ? 'pick' : ''}" data-cat="${cat}" ${at}>${ysc(b.dice, cat)}</td>`;
-      if (k === turn && k !== me && rolled && !A.view.human) return `<td class="yp cpu" ${at}>${ysc(b.dice, cat)}</td>`;
-      return `<td ${at}></td>`; };
-    const rows = YN.map((nm, cat) => `<tr><th>${nm}<small>${YH[cat]}</small></th>${Array.from({ length: b.players }, (_, k) => cell(k, cat)).join('')}</tr>${cat === 5 ? `<tr class="bonus"><th>ボーナス<small>上の 6 つで 63 点以上なら +35</small></th>${Array.from({ length: b.players }, (_, k) => { const t = b.sheets[k].slice(0, 6).reduce((a, c) => a + Math.max(c, 0), 0); return `<td class="ys">${t >= 63 ? '+35' : `${t}/63`}</td>`; }).join('')}</tr>` : ''}`).join('');
-    const head = Array.from({ length: b.players }, (_, k) => `<th class="${turn === k ? 'on' : ''}">${esc(A.name(k))}</th>`).join('');
+    const canCat = (cat) => mine && rolled && legal.has(100 + cat);
+    const cell = (k, cat) => {
+      const v = b.sheets[k][cat], at = `data-ycell="${k}-${cat}"`;
+      const last = yLastCell === `${k}-${cat}` ? ' ylast' : '';
+      if (v >= 0) return `<td class="ys${last}" ${at}><span class="ycell-in">${v}</span></td>`;
+      const isTurnHuman = k === turn && !over && rolled && A.view.seats[k] && A.view.seats[k].human;
+      if ((k === me && canCat(cat)) || isTurnHuman) return `<td class="yp" ${at}><span class="ycell-in">${ysc(b.dice, cat)}</span></td>`;
+      return `<td ${at}><span class="ycell-in"></span></td>`;
+    };
+    const rows = YN.map((nm, cat) => {
+      const can = canCat(cat);
+      const row = `<tr class="yrow${can ? ' can' : ''}"${can ? ` data-cat="${cat}"` : ''}><th>${nm}</th>${Array.from({ length: b.players }, (_, k) => cell(k, cat)).join('')}</tr>`;
+      if (cat !== 5) return row;
+      const bonusRow = `<tr class="bonus"><th>小計 / ボーナス</th>${Array.from({ length: b.players }, (_, k) => {
+        const t = b.sheets[k].slice(0, 6).reduce((a, c) => a + Math.max(c, 0), 0);
+        return `<td class="ys${t >= 63 ? ' bon' : ''}">${t >= 63 ? `${t} +35` : `${t}/63`}</td>`;
+      }).join('')}</tr>`;
+      return row + bonusRow;
+    }).join('');
+    const head = Array.from({ length: b.players }, (_, k) => `<th class="${turn === k && !over ? 'on' : ''}">${esc(A.name(k))}</th>`).join('');
     prev.ya = { h: A.handle, left: b.rollsLeft, turn: b.turn, dice: b.dice.slice(), keepSent: prev.yaSent || 0, sheets: b.sheets.map((r) => r.slice()) }; prev.yaSent = 0;
     if (!old || old.left !== b.rollsLeft || old.turn !== b.turn) yRolling = false;
     // 振っている間(サイコロが止まるまで)は、もう一度押せない
     if (rolledNow) yRollUntil = performance.now() + 1000 * A.speed;
     const shaking = performance.now() < yRollUntil;
     if (shaking) setTimeout(() => { if (document.querySelector('.yroll')) A.redraw(); }, yRollUntil - performance.now() + 20);
-    const rollMove = rolled ? mask : 0, canRoll = legal.has(rollMove) && b.rollsLeft > 0 && !yRolling && !shaking;
-    const left = Array.from({ length: 3 }, (_, k) => `<i class="${k < b.rollsLeft ? 'on' : ''}"></i>`).join('');
-    A.board(`<div class="yacht2"><div class="ytray">
-        <div class="yturn">${turn >= 0 ? `${esc(A.name(turn))} の番` : ''}</div>
+    const rollMove = rolled ? mask : 0;
+    const canRoll = mine && legal.has(rollMove) && b.rollsLeft > 0 && (!rolled || mask !== 31) && !yRolling && !shaking;
+    const turnName = turn >= 0 ? A.name(turn) : '';
+    let heldCount = 0; for (let i = 0; i < 5; i++) if ((mask >> i) & 1) heldCount++;
+    const turnText = over ? '終了' : `${esc(turnName)}・${b.rollsLeft === 3 ? '初回の振り待ち(振り直し2回)' : `振り直し あと${b.rollsLeft}回`}`;
+    const guideText = over ? ''
+      : mine && !rolled ? 'サイコロを振ってください'
+      : mine && b.rollsLeft === 0 ? '書き込む欄を選んでください'
+      : mine ? '残すサイコロをタップ(黄の枠)'
+      : !rolled ? `${esc(turnName)}の番`
+      : b.rollsLeft === 2 ? `${esc(turnName)}が振りました`
+      : heldCount === 0 ? `${esc(turnName)}が全部を振り直しました`
+      : `${esc(turnName)}が${heldCount}個残して振り直しました(黄の枠)`;
+    A.board(`<div class="yacht2"><div class="ytray"><div class="ytray-in">
         <div class="ydice">${dice}</div>
-        <button class="yroll ${A.remoteTurn && b.rollsLeft > 0 ? 'waiting' : ''}" data-roll="1" ${canRoll || (A.remoteTurn && b.rollsLeft > 0) ? '' : 'disabled'} ${!mine ? 'tabindex="-1"' : ''}>サイコロを振る</button>
-        <div class="yleft"><span>残り回数</span><b class="num">${b.rollsLeft}</b><span class="ydots">${left}</span></div>
-</div>
-      <div class="ysheet"><table><thead><tr><th></th>${head}</tr></thead><tbody>${rows}<tr class="total"><th>合計</th>${Array.from({ length: b.players }, (_, k) => `<td class="ys">${tot(k)}</td>`).join('')}</tr></tbody></table></div></div>`, (d) => {
+        <div class="yturn-line">${turnText}</div>
+        <div class="yguide">${guideText}</div>
+        <button class="yroll ${A.remoteTurn && b.rollsLeft > 0 ? 'waiting' : ''}" data-roll="1" ${canRoll || (A.remoteTurn && b.rollsLeft > 0) ? '' : 'disabled'} ${!mine ? 'tabindex="-1"' : ''}>振る／振り直す</button>
+      </div></div>
+      <div class="ysheet"><table><thead><tr><th>役</th>${head}</tr></thead><tbody>${rows}<tr class="total"><th>合計</th>${Array.from({ length: b.players }, (_, k) => `<td class="ys">${tot(k)}</td>`).join('')}</tr></tbody></table></div></div>`, (d) => {
       if (d.roll != null) { if (canRoll) { yRolling = true; const rb = document.querySelector('.yroll'); if (rb) rb.disabled = true; prev.yaSent = rolled ? mask : 0; A.play(rollMove); } return; }
-      // 3 回振り切った後も、キープの印は付け外しできる(押しても反応しないのは不自然なので)
       if (d.die != null && mine && rolled) { yKeep = mask ^ (1 << +d.die); return A.redraw(); }
-      if (d.cat != null && legal.has(100 + +d.cat)) { const c = +d.cat; if (yPick === c) { yPick = null; yKeep = 0; return A.play(100 + c); } yPick = c; A.redraw(); }
+      if (d.cat != null && mine && rolled && legal.has(100 + +d.cat)) { yKeep = 0; A.play(100 + +d.cat); }
     });
     if (rolledNow) {
       // ふるふる: 左右に振ってから、目が決まる
-      document.querySelectorAll('.yd.roll').forEach((e, i) => { const d2 = e.querySelector('.d2'), v = +e.dataset.v, dl = i * 60;
+      document.querySelectorAll('.yd.roll').forEach((e, i) => {
+        const d2 = e.querySelector('.d2'), v = +e.dataset.v, dl = i * 60;
         e.animate([{ transform: 'rotate(-14deg)' }, { transform: 'rotate(14deg)' }, { transform: 'rotate(-12deg)' }, { transform: 'rotate(12deg)' }, { transform: 'rotate(-8deg)' }, { transform: 'rotate(6deg)' }, { transform: 'scale(1.18)' }, { transform: 'none' }], { duration: 700 * A.speed, delay: dl });
-        const iv = setInterval(() => (d2.innerHTML = dface(1 + Math.floor(Math.random() * 6))), 70); setTimeout(() => { clearInterval(iv); d2.innerHTML = dface(v); }, 520 * A.speed + dl); });
+        const iv = setInterval(() => (d2.innerHTML = dface(1 + Math.floor(Math.random() * 6))), 70); setTimeout(() => { clearInterval(iv); d2.innerHTML = dface(v); }, 520 * A.speed + dl);
+      });
       A.anim(1000); A.land(0);
     }
   }
