@@ -32,17 +32,22 @@ const sfx = (() => { try { return createSfx(call); } catch (e) { return { init: 
 
 // ---------------------------------------------------------------- ゲームの一覧
 const ORDER = ['shogi', 'gogo', 'reversi', 'connect4', 'gomoku', 'hex', 'mancala', 'morris', 'checkers', 'chess', 'dots', 'hitblow', 'hare', 'chinese', 'ludo', 'backgammon', 'go', 'yacht', 'mahjong', 'life',
-  'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire'];
+  'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mineVersus', 'mine', 'bozu', 'karuta', 'wolf'];
 const ART_ID = { gogo: 'minishogi' };
 const BREAK = { morris: 'ナインメンズ<wbr>モリス', chinese: 'チャイニーズ<wbr>チェッカー', dots: 'ドット＆<wbr>ボックス', holdem: 'テキサス<wbr>ポーカー', yacht: 'ヨット', blackjack: 'ブラック<wbr>ジャック', backgammon: 'バック<wbr>ギャモン', hitblow: 'ヒット＆<wbr>ブロー', life: '人生<wbr>すごろく', solitaire: 'ソリティア<wbr>(クロンダイク)' };
 let CAT = [];
 const gInfo = (id) => CAT.find((g) => g.id === id);
-const artOf = (id) => art(ART_ID[id] || id) || '';
+const artOf = (id) => id === 'slide' ? '<img src="assets/slide-landscape.svg" alt="" style="width:100%;height:100%;object-fit:cover">' : id === 'bunyo' ? '<span class="bunyo-art">●●</span>' : id==='pakuris'?'<span class="pakuris-art">▦</span>':['mine','mineVersus'].includes(id)?'<span class="mine-art">✹</span>':['bozu','karuta'].includes(id)?'<span class="poet-icon">'+poetCards.face(id==='bozu'?1:0,id==='bozu')+'</span>':id==='wolf'?'<span class="wolf-art">☾</span>':art(ART_ID[id] || id) || '';
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const dispName = (g) => BREAK[g.id] || esc(g.name);
 const range = (p) => { const m = String(p).match(/\d+/g).map(Number); return [m[0], m[m.length - 1]]; };
 const PLAYABLE = new Set(ORDER);
-const playable = (id) => PLAYABLE.has(id) && (window.RENDER[id] || window.RENDER[KIND_OF[id] || id] || window.RENDER.cards);
+const newGameSetup = {
+  slide:on=>slideGame.setup(on), bunyo:on=>bunyoGame.setup(on), pakuris:on=>pakurisGame.setup(on),
+  mine:on=>minesGame.setup(on), mineVersus:()=>mineVersus.setup(), wolf:on=>wolfGame.setup(on),
+  bozu:on=>poetCards.setup('bozu',on), karuta:on=>poetCards.setup('karuta',on)
+};
+const playable = (id) => Object.hasOwn(newGameSetup,id) || (PLAYABLE.has(id) && (window.RENDER[id] || window.RENDER[KIND_OF[id] || id] || window.RENDER.cards));
 const KIND_OF = { gogo: 'shogi', connect4: 'c4', chinese: 'chinese' };
 const LV = ['初級', '中級', '上級'];
 const lvIndex = (t) => Math.max(0, LV.indexOf(t));
@@ -74,10 +79,15 @@ function fits(p) {
 function go(screen) {
   const m = $('.main'); if (m) (S.scrollMem = S.scrollMem || {})[S.screen] = m.scrollTop;
   if (S.screen === 'play' && screen !== 'play') leavePlay();
+  if (S.screen === 'slidePlay' && screen !== 'slidePlay') slideGame.stop();
+  if (S.screen === 'minePlay' && screen !== 'minePlay') minesGame.stop();
+  if (S.screen === 'extraPlay' && screen !== 'extraPlay') { poetCards.stopAudio(); if (!boardMatch.active()) boardMatch.reset(); }
+  if (S.screen === 'wolfPlay' && screen !== 'wolfPlay') wolfGame.stop();
   S.screen = screen; S.stOpen = false; S.modal = null; ddOpen = null;
   bgCtx(); render();
 }
 function bgmGenreFor() {
+  if (['slidePlay','bunyoPlay','pakurisPlay','minePlay','wolfPlay','extraPlay'].includes(S.screen)) return 'yo';
   if (S.screen === 'play' && cur) return gameGenre(ART_ID[cur.id] || cur.id);
   return { first: 'mn', menu: 'mn', setup: 'mn', settings: 'mn', room: 'mn', records: 'mn' }[S.screen];
 }
@@ -101,6 +111,8 @@ function detail() {
   if (roomActive()) return onlineMenuDetail();
   const g = S.sel && gInfo(S.sel);
   if (!g) return '<aside class="detail"><div class="empty">ゲームを選んでください</div></aside>';
+  if (Object.hasOwn(newGameSetup,g.id)) return `<aside class="detail"><div class="scroll"><div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div></div>
+    <div class="foot">${g.id==='mineVersus'?'<button class="btn primary" data-go="room">みんなで遊ぶ</button>':'<button class="btn primary" data-next>進む</button>'}</div></aside>`;
   const c = cfg(g.id);
   const ok = playable(g.id);
   return `<aside class="detail"><div class="scroll">
@@ -839,7 +851,7 @@ const SDEF = {
   ctrl: Object.keys(KEYNAME).map((k) => [KEYNAME[k], 'key', k]).concat([['駒の動かし方', 'seg', 'drag', ['クリック', 'ドラッグ', '両方']]]),
   prof: [['表示名', 'name'], ['アイコン', 'icon']],
   data: [['途中の対局', 'btn', 'すべて消す', 'data-clear="saved"'], ['成績', 'btn', '消す', 'data-clear="stats"'], ['保存の場所', 'btn', 'フォルダを開く', 'data-openfolder'], ['設定', 'btn', '初期設定に戻す', 'data-clear="set"']],
-  about: [['版', 'txt', APP_VERSION], ['ライセンス', 'btn', '開く', 'data-modal="license"']],
+  about: [['版', 'txt', APP_VERSION], ['読み上げ音声', 'txt', 'VOICEVOX（制作予定）'], ['ライセンス', 'btn', '開く', 'data-modal="license"']],
 };
 function setRow([l, t, k, x]) {
   const th = { auto: '端末に合わせる', light: 'ライト', dark: 'ダーク' }; let c = '';
@@ -862,7 +874,7 @@ function setRow([l, t, k, x]) {
 if (window.__TAURI__) window.__TAURI__.core.invoke('data_folder_path').then((p) => { S.dataPath = p; if (S.screen === 'settings') render(); }).catch(() => {});
 const keyLabel = (k) => String(k).replace('Escape', 'Esc');
 function openPlaySettings() {
-  if (S.screen !== 'play') return;
+  if (!['play','slidePlay','bunyoPlay','pakurisPlay','minePlay','wolfPlay','extraPlay'].includes(S.screen)) return;
   openSheet(`<div id="playsettings"><div class="mhd"><h3>設定</h3><button class="btn" data-playsettingsclose aria-label="設定を閉じる">閉じる</button></div><div class="setwrap"><div class="setcats">${SCAT.map(([k,n])=>`<button data-scat="${k}" ${S.scat===k?'aria-current="true"':''}>${n}</button>`).join('')}</div><div class="panel setpanel"><h3>${SCAT.find(c=>c[0]===S.scat)[1]}</h3>${SDEF[S.scat].map(setRow).join('')}</div></div></div>`);
   $('#sheet').classList.add('play-settings-dialog');
   $('#sheet').setAttribute('aria-label','設定');
@@ -910,21 +922,21 @@ let lastModal = null;
 let ddOpen = null;
 function ddClose(focusBtn) { const k = ddOpen; if (!k) return; ddOpen = null; const w = $(`.dd.open`); if (w) { w.classList.remove('open'); const l = w.querySelector('.ddlist'); if (l) l.remove(); const b = w.querySelector('.ddbtn'); b.setAttribute('aria-expanded', 'false'); if (focusBtn) b.focus({ preventScroll: true }); } }
 function render() {
-  if (S.screen !== 'play') document.querySelectorAll('.rcur.live').forEach(e=>e.remove());
-  const keepPlaySettings = S.screen === 'play' && !!$('#playsettings');
+  if (!['play','slidePlay','bunyoPlay','pakurisPlay','minePlay','wolfPlay','extraPlay'].includes(S.screen)) document.querySelectorAll('.rcur.live').forEach(e=>e.remove());
+  const keepPlaySettings = ['play','slidePlay','bunyoPlay','pakurisPlay','minePlay','wolfPlay','extraPlay'].includes(S.screen) && !!$('#playsettings');
   document.documentElement.classList.toggle('lite', S.set.look === '軽量');
   document.documentElement.classList.toggle('reduce', !!S.set.reduce);
   { const z = S.set.scale === '100%' ? 1 : parseInt(S.set.scale, 10) / 100; document.body.style.zoom = z === 1 ? '' : z;
     // 拡大した時も、画面からはみ出さないように(ウィンドウの大きさを拡大の分だけ割る)
     document.body.style.height = z === 1 ? '' : (100 / z) + 'vh'; document.body.style.width = z === 1 ? '' : (100 / z) + 'vw'; }
   if (S.theme === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = S.theme;
-  const screens = { first, menu, setup, play, settings, records, room };
+  const screens = { first, menu, setup, play, settings, records, room, slideSetup:slideGame.setupHtml, slidePlay:slideGame.playHtml, bunyoSetup:bunyoGame.setupHtml, bunyoPlay:bunyoGame.playHtml, pakurisSetup:pakurisGame.setupHtml, pakurisPlay:pakurisGame.playHtml, mineSetup:minesGame.setupHtml, minePlay:minesGame.playHtml, wolfSetup:wolfGame.setupHtml, wolfPlay:wolfGame.playHtml, poetSetup:poetCards.setupHtml, mineVersusSetup:mineVersus.setupHtml, extraPlay:boardMatch.playHtml };
   if (S.screen === 'setup' && !gInfo(S.setup.id)) S.screen = 'menu';
   const fa = document.activeElement, fKey = fa && fa !== document.body && app.contains(fa) ? Object.entries(fa.dataset).slice(0, 2).map(([k, v]) => `[data-${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}="${CSS.escape(v)}"]`).join('') : '';
   const oldMain = $('.main'), keepTop = oldMain && lastScreen === S.screen ? oldMain.scrollTop : null;
   const oldBody = $('.setupbody'), keepBody = oldBody && lastScreen === S.screen ? oldBody.scrollTop : null;
   // 出ているカットインは、描き直しで消さない(クリックで飛ばされないように)
-  const keepCut = S.screen === 'play' && $('#cutlayer') && $('#cutlayer').firstChild ? $('#cutlayer').firstChild : null;
+  const keepCut = ['play','slidePlay','bunyoPlay','pakurisPlay','minePlay','wolfPlay','extraPlay'].includes(S.screen) && $('#cutlayer') && $('#cutlayer').firstChild ? $('#cutlayer').firstChild : null;
   app.innerHTML = (screens[S.screen] || menu)();
   if (keepCut && $('#cutlayer')) $('#cutlayer').appendChild(keepCut);
   if (typeof keepStampScroll === 'function') keepStampScroll();
@@ -948,6 +960,9 @@ function render() {
   if (S.modal && S.modal !== lastModal) { const m = app.querySelector(':scope > .modal:last-of-type'); if (m) m.classList.add('pop'); }
   lastModal = S.modal;
   if (S.screen === 'play') { if (view) drawPlay(true); if (view && view.outcome) showResult(); }
+  if (S.screen === 'slidePlay') slideGame.side();
+  if (S.screen === 'wolfPlay') wolfGame.update();
+  if (S.screen === 'extraPlay') boardMatch.draw();
   if (S.screen === 'room') afterRoom();
   const log = $('#log'); if (log) log.scrollTop = log.scrollHeight;
   bgmSync();
@@ -975,6 +990,36 @@ app.addEventListener('click', async (e) => {
   const b = e.target.closest('button'); if (!b || b.disabled) return;
   const d = b.dataset;
   clickSound(b, d);
+  if (d.extraExit != null) return boardMatch.exit();
+  if (Object.keys(d).some(key=>key.startsWith('extra'))) return boardMatch.button(d);
+  if (d.poetStart != null) return poetCards.start();
+  if (d.mineVsStart != null) return mineVersus.start();
+  if (d.mineVsReset != null) return mineVersus.reset();
+  if (d.wolfStart != null) return wolfGame.start();
+  if (d.wolfExit != null) return wolfGame.exit();
+  if (d.wolfAct != null) return wolfGame.act();
+  if (d.wolfTarget != null && S.screen==='wolfPlay') return wolfGame.chooseTarget(d.wolfTarget);
+  if (d.wolfHelp && S.screen==='wolfPlay') return wolfGame.help(d.wolfHelp);
+  if (d.wolfStamp != null && S.screen==='wolfPlay') return wolfGame.stamp(+d.wolfStamp);
+  if (d.slideTile != null) return slideGame.move(d.slideTile);
+  if (d.slideExit != null) return go('menu');
+  if (d.slideSettings != null) return openPlaySettings();
+  if (d.slideStart != null) return slideGame.start();
+  if (d.slidePicture != null) {slideGame.picture=d.slidePicture;return render();}
+  if (d.bunyoStart != null) return bunyoGame.start();
+  if (d.bunyoExit != null) return go('menu');
+  if (d.bunyoSettings != null) return openPlaySettings();
+  if (d.bunyo != null) return bunyoGame.action(d.bunyo);
+  if(d.pakurisStart!=null)return pakurisGame.start();
+  if(d.pakurisExit!=null)return go('menu');
+  if(d.pakurisSettings!=null)return openPlaySettings();
+  if(d.pakuris!=null)return pakurisGame.action(d.pakuris);
+  if(d.mineStart!=null)return minesGame.start();
+  if(d.mineExit!=null)return minesGame.exit();
+  if(d.mineSettings!=null)return openPlaySettings();
+  if(d.mineUndo!=null)return minesGame.requestUndo();
+  if(d.mineLevel!=null){minesGame.level=d.mineLevel;return render();}
+  if(d.mineCell!=null)return minesGame.move(+d.mineCell);
   if (d.playsettings != null) return openPlaySettings();
   if (d.playsettingsclose != null) { closeSheet(); return; }
   if (d.sheetback != null) return closeSheet();
@@ -984,10 +1029,26 @@ app.addEventListener('click', async (e) => {
   if (d.go) { if (d.go === 'room' && S.screen === 'play' && online) { leavePlay(); S.screen = 'room'; return render(); } return go(d.go); }
   if (d.quitapp != null) return askQuitApp();
   if (d.goprof != null) { S.scat = 'prof'; return go('settings'); }
+  if (d.tile && (wolfGame.active() || boardMatch.active())) { S.sel=d.tile; return render(); }
   if (d.tile && roomChoosing()) { S.sel=d.tile;chooseWish(d.tile);return render(); }
-  if (d.tile) { const id = d.tile; if ((S.sel === id || e.detail === 0) && playable(id)) { if (e.detail === 0) S.focusSel = '[data-start]'; S.setup = { id, online: false }; return go('setup'); } S.sel = id; S.focusSel = `[data-tile="${id}"]`; return render(); }
-  if (d.next != null && roomChoosing()) { if (isHostRoom() && (ost.members.length >= 2 || isSoloInRoom())) chooseOnline(S.sel); return; }
-  if (d.next != null) { S.setup = { id: S.sel, online: false }; return go('setup'); }
+  if (d.tile) {
+    const id=d.tile;
+    if ((S.sel===id || e.detail===0) && playable(id)) {
+      if (id==='mineVersus') return go('room');
+      if (newGameSetup[id]) return newGameSetup[id](false);
+      if (e.detail===0) S.focusSel='[data-start]';
+      S.setup={id,online:false}; return go('setup');
+    }
+    S.sel=id; S.focusSel=`[data-tile="${id}"]`; return render();
+  }
+  if (d.next != null && roomChoosing()) {
+    if (isHostRoom() && (ost.members.length>=2 || isSoloInRoom())) chooseOnline(S.sel);
+    return;
+  }
+  if (d.next != null) {
+    if (newGameSetup[S.sel]) return newGameSetup[S.sel](false);
+    S.setup={id:S.sel,online:false}; return go('setup');
+  }
   if (d.resume != null) return resume(savedList()[+d.resume]);
   if (d.start != null) return startGame();
   if (d.again != null) { const p = $('#result'); if (p) p.hidden = true; return startMatch(+d.again); }
@@ -1027,6 +1088,11 @@ app.addEventListener('click', async (e) => {
   const sg = b.closest('[data-seg]');
   if (sg) {
     const k = sg.dataset.seg, v = d.v;
+    if(k==='poet:count')return poetCards.setCount(v);
+    if(k==='mine-versus:level')return mineVersus.setLevel(v);
+    if(k.startsWith('wolf:'))return wolfGame.setOption(k.slice(5),v);
+    if(k==='slide:size'){slideGame.size=+v;return render();}
+    if(k==='mine:tap'){minesGame.flagMode=v==='flag';return render();}
     if (k === 'filter') { if (S.filter !== v) { S.filter = v; S.filterChanged = true; } }
     else if (k === 'theme') { S.theme = v; saveSet(); }
     else if (k.startsWith('c:')) { const c = cfg(S.setup.id), f = k.slice(2); c[f] = /^(level|seat|limit)$/.test(f) ? +v : v; saveCfg(S.setup.id, c); }
@@ -1035,7 +1101,26 @@ app.addEventListener('click', async (e) => {
     return render();
   }
 });
-app.addEventListener('submit', (e) => { e.preventDefault(); const i = $('#chatin'); if (i && i.value.trim()) { sendChat(i.value.trim()); i.value = ''; } });
+app.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (e.target.id==='wolfForm') {
+    const input = $('#wolfInput');
+    if (input.value.trim()) wolfGame.send('chat',{text:input.value.trim()});
+    input.value = '';
+  } else if (e.target.id==='chatf') {
+    const input = $('#chatin');
+    if (input.value.trim()) { sendChat(input.value.trim()); input.value = ''; }
+  }
+});
+app.addEventListener('change', e=>{
+  if(e.target.dataset.minePersonal)minesGame.setPersonal(e.target.dataset.minePersonal,e.target.checked);
+  if(e.target.dataset.mineVsPref)mineVersus.pref(e.target);
+  if(e.target.hasAttribute('data-mine-vs-target'))mineVersus.setTarget(e.target.value);
+});
+app.addEventListener('contextmenu', e=>{
+  const duel=e.target.closest('[data-extra-mine]');
+  if(duel){e.preventDefault();boardMatch.send('flag',{cell:+duel.dataset.extraMine});return;}
+const cell=e.target.closest('[data-mine-cell]');if(cell){e.preventDefault();minesGame.move(+cell.dataset.mineCell,true);}});
 app.addEventListener('input', (e) => {
   const t = e.target;
   if (t.id === 'nameIn') { S.set.name = t.value.trim().slice(0, 12); saveSet(); return; }
@@ -1123,6 +1208,12 @@ function goBack() {
   if (S.stOpen) { snd(); S.stOpen = false; return render(); }
   if (S.modal) { snd(); S.modal = null; return render(); }
   if (S.screen !== 'menu' && S.screen !== 'first') snd();
+  if (S.screen==='extraPlay') return boardMatch.exit();
+  if (S.screen==='minePlay') return minesGame.exit();
+  if (S.screen==='poetSetup'||S.screen==='mineVersusSetup') return go('menu');
+  if (S.screen==='wolfPlay') return wolfGame.exit();
+  if (S.screen==='wolfSetup') return go('menu');
+  if (['slidePlay','slideSetup','bunyoPlay','bunyoSetup','pakurisPlay','pakurisSetup','minePlay','mineSetup'].includes(S.screen)) return go('menu');
   if (S.screen === 'play') {
     if (online && view && view.mine < 0) return go('room');
     // 対局中は確かめてから終わる(まだ 1 手も指していない時は、そのまま戻る。通信対戦はいつも確かめる)
@@ -1161,6 +1252,9 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') ddClose(false);
   }
   const k = keyOf(e), inInput = /INPUT|TEXTAREA/.test(e.target.tagName);
+  if(!inInput&&S.screen==='slidePlay'&&!$('#sheetwrap')&&slideGame.key(e.key)){e.preventDefault();return;}
+  if(!inInput&&!$('#sheetwrap')&&bunyoGame.key(e.key)){e.preventDefault();return;}
+  if(!inInput&&!$('#sheetwrap')&&pakurisGame.key(e.key)){e.preventDefault();return;}
   if (k === S.keys.back) return goBack();
   if (k === S.keys.full) { e.preventDefault(); S.set.win = S.set.win === '全画面' ? 'ウィンドウ' : '全画面'; saveSet(); setFullscreen(S.set.win === '全画面'); if (S.screen === 'settings') render(); return; }
   if (inInput && !/^Arrow(Up|Down)$/.test(e.key)) return;
@@ -1263,6 +1357,14 @@ toastEl.addEventListener('pointercancel', () => { drag = null; toastHide(); });
 (async () => {
   try {
     CAT = JSON.parse(await callW('catalogJson'));
+    CAT.push({id:'slide',name:'スライドパズル',intro:'1枚の絵をそろえよう。',players:'1〜6人',category:'BOARD',options:[]});
+    CAT.push({id:'bunyo',name:'ぶにょぶにょ',intro:'同じ色を4個つなげて消そう。',players:'1〜6人',category:'BOARD',options:[]});
+    CAT.push({id:'pakuris',name:'パクリス',intro:'ブロックをそろえて消そう。',players:'1〜6人',category:'BOARD',options:[]});
+    CAT.push({id:'mine',name:'マインスイーパー（協力）',intro:'地雷を避けて安全なマスを開こう。',players:'1〜6人',category:'BOARD',options:[]});
+    CAT.push({id:'mineVersus',name:'マインスイーパー（対戦）',intro:'同じ配置で競い、ポイントを使って相手を妨害しよう。',players:'2〜6人',category:'BOARD',options:[]});
+    CAT.push({id:'bozu',name:'坊主めくり',intro:'4つの山から札を引き、持ち札の数を競おう。',players:'1〜6人',category:'CARD',options:[]});
+    CAT.push({id:'karuta',name:'百人一首',intro:'上の句に続く取り札を見つけよう。',players:'1〜6人',category:'CARD',options:[]});
+    CAT.push({id:'wolf',name:'人狼',intro:'話し合いと投票で、村に潜む人狼を探そう。',players:'1〜6人',category:'BOARD',options:[]});
     sfx.enabled = S.set.sound;
     S.screen = store.get('firstDone', false) ? 'menu' : 'first';
     render();
