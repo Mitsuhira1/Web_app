@@ -268,7 +268,7 @@ function yachtScore(dice, cat) {
   if (cat <= 5) return cnt[cat + 1] * (cat + 1);
   if (cat === 6) return sum;
   if (cat === 7) return cnt.some((c) => c >= 4) ? sum : 0;
-  if (cat === 8) { const v = cnt.slice(1).filter((c) => c); return v.length === 1 || (v.length === 2 && v.includes(3)) ? sum : 0; }
+  if (cat === 8) { const v = cnt.slice(1).filter((c) => c); return v.length === 2 && v.includes(3) ? sum : 0; }
   const has = (a) => a.every((x) => cnt[x] > 0);
   if (cat === 9) return has([1, 2, 3, 4]) || has([2, 3, 4, 5]) || has([3, 4, 5, 6]) ? 15 : 0;
   if (cat === 10) return has([1, 2, 3, 4, 5]) || has([2, 3, 4, 5, 6]) ? 30 : 0;

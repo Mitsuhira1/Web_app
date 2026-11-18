@@ -173,11 +173,11 @@
 
   // ---------------------------------------------------------------- ヨット(サイコロは「ふるふる」。得点表は右)
   const YN = ['1の目', '2の目', '3の目', '4の目', '5の目', '6の目', 'チョイス', 'フォーダイス', 'フルハウス', 'Sストレート', 'Bストレート', 'ヨット'];
-  const YH = ['1 の目の合計', '2 の目の合計', '3 の目の合計', '4 の目の合計', '5 の目の合計', '6 の目の合計', '5 個の合計', '同じ目 4 個で合計', '3 個 + 2 個で合計', '4 つ続きで 15 点', '5 つ続きで 30 点', '同じ目 5 個で 50 点'];
+  const YH = ['1 の目の合計', '2 の目の合計', '3 の目の合計', '4 の目の合計', '5 の目の合計', '6 の目の合計', '5 個の合計', '同じ目 4 個で合計', '3 個 + 別の 2 個で合計', '4 つ続きで 15 点', '5 つ続きで 30 点', '同じ目 5 個で 50 点'];
   function ysc(dice, cat) {
     const cnt = [0, 0, 0, 0, 0, 0, 0]; dice.forEach((v) => cnt[v]++); const sum = dice.reduce((a, c) => a + c, 0);
     if (cat <= 5) return cnt[cat + 1] * (cat + 1); if (cat === 6) return sum; if (cat === 7) return cnt.some((c) => c >= 4) ? sum : 0;
-    if (cat === 8) { const v = cnt.slice(1).filter((c) => c); return v.length === 1 || (v.length === 2 && v.includes(3)) ? sum : 0; }
+    if (cat === 8) { const v = cnt.slice(1).filter((c) => c); return v.length === 2 && v.includes(3) ? sum : 0; }
     const has = (a) => a.every((x) => cnt[x] > 0);
     if (cat === 9) return has([1, 2, 3, 4]) || has([2, 3, 4, 5]) || has([3, 4, 5, 6]) ? 15 : 0;
     if (cat === 10) return has([1, 2, 3, 4, 5]) || has([2, 3, 4, 5, 6]) ? 30 : 0;

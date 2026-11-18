@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261117-online-room-features-7";
+const CACHE = "asobipcfb-20261117-yacht-fullhouse-fix-8";
 const FILES = [
 "./",
 "./audio/go_stone_1.mp3",

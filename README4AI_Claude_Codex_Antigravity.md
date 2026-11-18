@@ -56,6 +56,17 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-17 18:18(PST)/ Antigravity / antigravity/firebase-net-20261117
+- 目的: ユーザーの指示。ヨット (`yacht`) で同じ目が5つ出たとき、プレイヤーとCPUがフルハウスとして得点・選択できていた不具合を修正する。
+- 変更:
+  - `web/pc-firebase/core/asobi-pc-core.mjs`:
+    - `Companion_29.prototype.s20` の `c === 8`（フルハウス）から `element_0 === 5`（同じ目5つ）の判定を削除し、「同じ目3つ＋別の同じ目2つ」のときのみ合計点を返すように修正（同じ目5つは `0` 点となり、CPU の評価関数 `v20` でも不成立扱い `-12.0` となる）。
+    - `Catalog()` 内のヨットの役説明「3つ+2つ(5つ同じも可)」を「3つ+2つ(別の目)」に更新。
+  - `web/pc-firebase/js/boards/fix.js`: `ysc(dice, 8)` から `v.length === 1 ||` を削除し、補助ラベル `YH[8]` を「3 個 + 別の 2 個で合計」に更新。
+  - `web/pc-firebase/js/boards/games2.js`: `yachtScore(dice, 8)` から `v.length === 1 ||` を削除。
+  - `web/pc-firebase/sw.js`: キャッシュ名を `asobipcfb-20261117-yacht-fullhouse-fix-8` に更新。
+- 確認: `node --check`、`git diff --check`、および Node 検証（1〜6 全種のゾロ目実対局・通常フルハウス `3+2`・フォーダイス `4+1`・ヨット判定、`ysc`/`yachtScore`/`rulesJson`、CPU レベル 0/1/2 選択と 150 局シミュレーション）合格。`antigravity/firebase-net-20261117` および `ccr-efc07031-6exjqs` へコミット・プッシュ済み。
+
 ### 2026-11-17 06:30(PST)/ Antigravity / antigravity/firebase-net-20261117
 - 目的: ユーザーの指示（`web/pc-firebase/` のオンライン対戦強化7点）。
   1. プレイヤーリストからメンバーをクリックして「ホストを変更」（ルームコード維持）と「キック」を行えるようにする。
