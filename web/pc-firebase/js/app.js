@@ -269,7 +269,7 @@ function setup() {
   const total = seatsCache[key] || range(g.players)[0];
   if (!seatsCache[key]) callW('seatCount', id, engineOpts(g, c)).then((n) => { seatsCache[key] = n; if (S.screen === 'setup') render(); });
   const solo = total === 1;
-  const canPass = range(g.players)[1] >= 2 && !['speed', 'solitaire'].includes(id);
+  const canPass = range(g.players)[1] >= 2 && !['speed', 'solitaire'].includes(id) && !rouletteSolo(id, c);
   const pass = c.mode === 'pass' && canPass;
   const ps = g.options.find((o) => o.key === 'players');
   const rowOpt = (o) => {
@@ -303,7 +303,7 @@ function setup() {
       <div class="row"><span>合計の人数${subParts.length ? `<small class="sub">${esc(subParts.join('・'))}</small>` : ''}</span>${ps ? `<span class="stepper"><button data-pstep="-1" aria-label="減らす" ${pidx > 0 ? '' : 'disabled'}>−</button><b class="num">${esc(ps.values[pidx][1])}</b><button data-pstep="1" aria-label="増やす" ${pidx < ps.values.length - 1 ? '' : 'disabled'}>＋</button></span>` : `<b>${total}人</b>`}</div>
       ${(on && !soloOn) || cpus===0 ? '' :
         setupRow('CPUの強さ',seg('c:level',LV.map((l,i)=>[i,l]),c.level)) +
-        (window.TWELVE_HAS(id)?setupRow('CPUの手番の長さ',seg('c:cpuLen',CPU_PACE_CHOICES,c.cpuLen||'inherit')):'')}
+        (usesExtraCpuPace(id)?setupRow('CPUの手番の長さ',seg('c:cpuLen',CPU_PACE_CHOICES,c.cpuLen||'inherit')):'')}
       ${(!on || soloOn) && !pass && total===2 ? setupRow('手番',seg('c:seat',[[0,seatNames[0]],[1,seatNames[1]],[-1,'ランダム']],c.seat)) : ''}</div>
      ${on || !pass ? '' : `<div class="panel"><h3>手番ごとに交代</h3>
       <div class="row"><span>交代する人</span><span class="stepper"><button data-hstep="-1" aria-label="減らす" ${c.humans > 2 ? '' : 'disabled'}>−</button><b class="num">${c.humans}人</b><button data-hstep="1" aria-label="増やす" ${c.humans < total ? '' : 'disabled'}>＋</button></span></div>
@@ -332,6 +332,8 @@ const EXTRA_CPU_PACE = { 短い: 1000, ふつう: 2700, 長い: 3700 };
 const CPU_PACE_CHOICES = [['inherit','共通設定'],...Object.keys(PACE).map(label=>[label,label])];
 const cpuPaceSetting = choice => Object.hasOwn(PACE,choice) ? choice : S.set.cpuLen;
 const extraCpuDelay = choice => EXTRA_CPU_PACE[cpuPaceSetting(choice)] ?? EXTRA_CPU_PACE['ふつう'];
+const usesExtraCpuPace = id => id === 'roulette' || window.TWELVE_HAS(id);
+const rouletteSolo = (id, c) => id === 'roulette' && c?.opts.players === '1';
 const cpuPaceChoice = () => cpuPaceSetting(!online || isSoloIdleMatch() ? pcfg?.cpuLen : null);
 const SPEED = () => ({ ゆっくり: 1.5, ふつう: 1, 速い: 0.6 }[S.set.speed] || 1) * (S.set.reduce ? 0.01 : 1);
 const PASS_MOVES = { reversi: 64, ludo: 99, backgammon: 999 };
@@ -339,9 +341,10 @@ async function startMatch(forceSeat) {
   online = false; token++; sel = null; prevView = null; view = null; drawnView = null; resultShown = -1; stopClock();
   { const p = $('#result'); if (p) p.hidden = true; }
   const g = cur = gInfo(S.setup.id); const c = pcfg = cfg(g.id);
-  mode = c.mode === 'pass' && range(g.players)[1] >= 2 ? 'pass' : 'cpu';
+  const single = rouletteSolo(g.id, c);
+  mode = !single && c.mode === 'pass' && range(g.players)[1] >= 2 ? 'pass' : 'cpu';
   let seat = forceSeat != null ? forceSeat : c.seat === -1 ? (Math.random() < 0.5 ? 0 : 1) : c.seat;
-  if (range(g.players)[0]===1 && range(g.players)[1]===1) seat=0;
+  if (single || (range(g.players)[0] === 1 && range(g.players)[1] === 1)) seat = 0;
   const seed = String(Math.floor(Math.random() * 2 ** 40) + 1);
   if (mode === 'pass') {
     const n = c.humans; const names = [meName(), ...c.names.slice(1, n).map((x, i) => x || `プレイヤー${i + 2}`)];
@@ -372,7 +375,7 @@ async function enterPlay() {
   refresh();
 }
 function leavePlay() { token++; busy = false; cpuTurnKey = ''; S.chatOpen = false; S.chatUnread = 0; stopClock(); stopConcurrent(); closeSheet(); if (online) leaveOnlinePlay(); h = -1; view = null; }
-const subText = () => online ? (view && view.mine < 0 ? 'みんなで遊ぶ・観戦中' : isSoloIdleMatch() ? '1人プレイ(待機中)' : 'みんなで遊ぶ') : mode === 'pass' ? '手番ごとに交代' : 'CPU ' + LV[pcfg ? pcfg.level : 1];
+const subText = () => online ? (view && view.mine < 0 ? 'みんなで遊ぶ・観戦中' : isSoloIdleMatch() ? '1人プレイ(待機中)' : 'みんなで遊ぶ') : mode === 'pass' ? '手番ごとに交代' : rouletteSolo(cur?.id, pcfg) ? 'ひとりで遊ぶ' : 'CPU ' + LV[pcfg ? pcfg.level : 1];
 function playChatPopHtml() {
   return `<button type="button" class="chatpop-back" data-chatclose aria-label="チャットを閉じる"></button>
     <div class="chatpop" id="chatpop" role="dialog" aria-label="チャット">
@@ -560,7 +563,7 @@ async function cpuTurn(my, opts = {}) {
   }
   if (my !== token) return;
   const choice = cpuPaceChoice();
-  const delay = window.TWELVE_HAS(cur.id) ? extraCpuDelay(choice) : (PACE[choice] || 450) * Math.max(0.3, SPEED());
+  const delay = usesExtraCpuPace(cur.id) ? extraCpuDelay(choice) : (PACE[choice] || 450) * Math.max(0.3, SPEED());
   const wait = delay - (performance.now() - t0);
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   if (my !== token) return;
@@ -596,6 +599,7 @@ function playMoveSound(m) { const r = moveSound(cur.id, m); if (r) sfx.play(r[0]
 const setStatus = (t) => { const e = $('#status'); if (e) e.textContent = t || ''; };
 function statusText() {
   const b = view.board;
+  if (b?.kind === 'roulette' && $('.rq-layout.is-spinning')) return 'スピン中…';
   if (view.outcome) return '終了';
   if (online && view.toMove >= 0 && isSeatAutoCpu(view.toMove)) return isMySeatAutoCpu() && view.toMove === view.mine ? 'CPUが操作中…（解除ボタンで戻れます）' : 'CPUが操作中…';
   if (online && view.remote) return `${view.seats[view.toMove].name} の番です`;
@@ -604,6 +608,7 @@ function statusText() {
   const extraStatus = window.TWELVE_STATUS?.(b);
   if (extraStatus) return extraStatus;
   switch (b.kind) {
+    case 'roulette': return b.canRebuy ? 'チップを補充できます' : 'チップを選んで、賭け枠に置いてください';
     case 'mancala': return b.extra ? '倉に入りました。もう1回まけます' : turnText();
     case 'morris': return b.removing ? '取る相手のコマを選んでください' : b.inHand[b.turn] > 0 ? `空いている点に置いてください(あと${b.inHand[b.turn]}個)` : '動かすコマを選び、行き先を選んでください';
     case 'hex': return b.turn === 0 ? '赤の番: 上と下をつなぎます' : '青の番: 左と右をつなぎます';
@@ -625,7 +630,7 @@ function api() {
     board: (html, onTap) => {
       const wrap = $('#boardwrap'); if (!wrap) return;
       wrap.className = 'boardwrap k-' + (view.board ? view.board.kind : '');
-      wrap.onpointerdown = null;
+      wrap.onpointerdown = wrap.oncontextmenu = null;
       wrap.innerHTML = html.startsWith('<svg') ? `<div class="plate">${html}</div>` : html;
       wrap.onclick = (e) => { if (busy || cutOn() || dragJust || (online && isMySeatAutoCpu())) return; const t = e.target.closest('[data-sq],[data-roll],[data-spin],[data-off],[data-tok],[data-i],[data-col],[data-hand],[data-m],[data-z],[data-k],[data-e],[data-p],[data-pt],[data-d],[data-c],[data-a],[data-s],[data-t],[data-tgt],[data-card],[data-src],[data-dest],[data-draw],[data-lm],[data-guess],[data-bet],[data-pass],[data-pit],[data-die],[data-cat],[data-seat]') || e.target; onTap(t.dataset || {}, t); };
     },
@@ -679,8 +684,8 @@ function drawPlay(force) {
   }
   const omBtn = $('.side [data-oomembers]');
   if (omBtn && ost && ost.members) omBtn.textContent = `メンバー (${ost.members.length})`;
-  const twelveReady = $('#boardwrap .twelve-scene')?.dataset.ready;
-  if (keep && (twelveReady == null || twelveReady === String(view.human && !view.outcome && !busy && !autoMe))) { setStatus(statusText()); drawClock(); return; }
+  const manualReady = $('#boardwrap .twelve-scene, #boardwrap .rq-layout')?.dataset.ready;
+  if (keep && (manualReady == null || manualReady === String(view.human && !view.outcome && !busy && !autoMe))) { setStatus(statusText()); drawClock(); return; }
   drawnView = view;
   $('#acts').innerHTML = ''; $('#strip').innerHTML = '';
   landMs = 0; boardKey = null; sideCustom = false; { const n = $('#sidenote'); if (n) { n.classList.remove('custom'); n.onclick = null; } }
@@ -1013,6 +1018,11 @@ function aimSteps(mv) {
     case 'yacht': if (mv >= 100) { const c = q(`[data-ycell="${seat}-${mv - 100}"]`); return [c, c]; }
       { const held = new Set([...W.querySelectorAll('.yd.held')].map((e) => +e.dataset.die)); return [...[0, 1, 2, 3, 4].filter((i) => b.rollsLeft < 3 && !!((mv >> i) & 1) !== held.has(i)).map((i) => q(`[data-die="${i}"]`)), q('[data-roll]')]; }
     case 'cards': return b.tbl && b.tbl.g === 'memory' ? [q(`[data-pos="${mv}"]`)] : [];
+    case 'roulette': {
+      if (mv < 1000) return [q(`[data-roulette-chip="${Math.floor(mv / 200)}"]`), q(`[data-roulette-spot="${mv % 200}"]`)];
+      if (mv < 2000) return [q(`[data-roulette-spot="${mv - 1000}"]`)];
+      return [q(`[data-roulette-action="${mv}"]`)];
+    }
     case 'life': return mv === 0 || (mv > 200 && mv < 211) ? [q('[data-spin]')] : [q(`[data-lm="${mv}"]`)];
     default: return [];
   }
@@ -1020,7 +1030,7 @@ function aimSteps(mv) {
 async function runCursor(mv, my) {
   if (!cursorOn() || !view) return;
   const choice = cpuPaceChoice();
-  const f = window.TWELVE_HAS(cur.id)
+  const f = usesExtraCpuPace(cur.id)
     ? ({短い:.75,ふつう:1,長い:1.25}[choice] || 1)
     : (PACE[choice] || 450) / 450 * Math.max(0.4, SPEED());
   await moveCpuCursor(seatName(view.toMove),aimSteps(mv),()=>my===token,f);
@@ -1036,6 +1046,11 @@ async function moveCpuCursor(name, targets, current, f = 1) {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   for (let k = 0; k < steps.length; k++) {
     const el = steps[k]; if (!el.isConnected) continue;
+    const scrollArea = el.closest('.k-roulette');
+    if (scrollArea && el.matches('[data-roulette-spot]')) {
+      const a = scrollArea.getBoundingClientRect(), t = el.getBoundingClientRect();
+      if (t.top < a.top || t.bottom > a.bottom) scrollArea.scrollTop += (t.top + t.height / 2) - (a.top + a.height / 2);
+    }
     const r = el.getBoundingClientRect();
     const quick = el.matches('.yd') ? 0.4 : 1; c.style.transitionDuration = Math.round(420 * f * quick) + 'ms';
     c.style.transform = `translate(${r.left - r0.left + r.width * 0.5}px,${r.top - r0.top + r.height * 0.55}px)`;
@@ -1668,7 +1683,8 @@ toastEl.addEventListener('pointercancel', () => { drag = null; toastHide(); });
     if (window.history && history.state && history.state.asobiGuard) {
       try { history.replaceState(null, ''); } catch (e) {}
     }
-    CAT = JSON.parse(await callW('catalogJson'));
+    const [catalog] = await Promise.all([callW('catalogJson'), window.rouletteReady]);
+    CAT = JSON.parse(catalog);
     CAT.push({id:'slide',name:'スライドパズル',intro:'1枚の絵をそろえよう。',players:'1〜6人',category:'BOARD',options:[]});
     CAT.push({id:'bunyo',name:'ぶにょぶにょ',intro:'同じ色を4個つなげて消そう。',players:'1〜6人',category:'BOARD',options:[]});
     CAT.push({id:'pakuris',name:'パクリス',intro:'ブロックをそろえて消そう。',players:'1〜6人',category:'BOARD',options:[]});

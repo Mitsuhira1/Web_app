@@ -514,7 +514,7 @@ Object.assign(AR,{
    +`<circle cx="62" cy="32" r="29" fill="#ffe49e" opacity=".13"/><circle cx="62" cy="32" r="24" fill="#ffe49e" opacity=".2"/><circle cx="62" cy="32" r="20" fill="url(#xWlfM)" filter="url(#xSh)"/><circle cx="56" cy="26" r="4" fill="#d9a53a" opacity=".24"/><circle cx="70" cy="36" r="2.8" fill="#d9a53a" opacity=".24"/><circle cx="64" cy="22" r="2" fill="#d9a53a" opacity=".22"/>`
    +`<path d="M0 90L12 72L21 90ZM8 90L24 68L36 90ZM66 90L77 70L88 90ZM77 90L90 66L100 90Z" fill="#090c18"/><path d="M0 87H100V100H0Z" fill="#090c18"/><path d="M68 89V78L78 71L88 78V89Z" fill="#0d1122"/><rect x="74" y="81" width="3.2" height="3.8" fill="#ffc65c"/><rect x="79" y="81" width="3.2" height="3.8" fill="#ffc65c"/>`
    +`<g filter="url(#xSh)"><path d="M0 100C4 82 10 68 17 57L14 53L21 46L21 39L26 24L33 33L38 21L43 32Q48 30 53 26L65 19Q68 20 66 24L56 30L61 30Q61 33 56 35L48 37Q54 45 48 53L54 59L48 67L55 78L62 100Z" fill="#12172a"/><path d="M17 57L21 46L21 39L26 24L33 33L38 21L43 32Q48 30 53 26L65 19" fill="none" stroke="#9eb8ed" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="44.5" cy="33.5" rx="2.5" ry="1.4" fill="#ffbe3b" transform="rotate(-24 44.5 33.5)"/><circle cx="44.2" cy="33.3" r=".7" fill="#fff"/></g>`),
- roulette:Iwip(bFelt(),(()=>{const cx=52,cy=49,n=18,da=2*Math.PI/n,ro=31,ri=19.5;
+ roulette:I(bFelt(),(()=>{const cx=52,cy=49,n=18,da=2*Math.PI/n,ro=31,ri=19.5;
    const secs=Array.from({length:n},(_,i)=>{const a0=i*da-Math.PI/2-da/2,a1=a0+da,col=i===0?'#1e8c45':i%2?'#c8362e':'#1a1d24';
      const x0=cx+ro*Math.cos(a0),y0=cy+ro*Math.sin(a0),x1=cx+ro*Math.cos(a1),y1=cy+ro*Math.sin(a1);
      const ix1=cx+ri*Math.cos(a1),iy1=cy+ri*Math.sin(a1),ix0=cx+ri*Math.cos(a0),iy0=cy+ri*Math.sin(a0);
