@@ -5,6 +5,14 @@
 let ost = null, lastBeginSeq = 0, onlineBusy = false, onlinePending = false, lastFlash = '0|', askShown = -1, chatSeen = 0, netReady = false;
 const drafts = { join: '' };
 let netApi = null;
+const DEFAULT_ROOM_SETTINGS = {
+  isPublic: false,
+  chatEnabled: true,
+  maxPlayers: 6,
+  locked: false,
+  vibe: 'ボチボチ',
+};
+let publicRoomsUnsub = null;
 let fbState = {
   roomId: null,
   hostUid: null,
@@ -15,6 +23,11 @@ let fbState = {
   players: {},   // uid -> { uid, name, slot, role, proto, rules, spectating, autoCpu, joinedAt }
   cursors: {},   // uid -> { uid, x, y, active, slot, name, updatedAt }
   roomState: null,
+  roomSettings: Object.assign({}, DEFAULT_ROOM_SETTINGS),
+  draftSettings: Object.assign({}, DEFAULT_ROOM_SETTINGS),
+  publicRooms: [],
+  publicRoomsLoading: false,
+  publicRoomsLoaded: false,
   soloIdle: false,
   takingOver: false,
   knownPlayerUids: new Set(),
@@ -32,6 +45,8 @@ let hostSentLog = [];
 const isHostRoom = () => !!(ost && ost.role === 'host');
 const ONLINE_STAMPS = 16;
 const SEAT_COLORS = ['#C8463C', '#3F78C4', '#3E9B63', '#E0AE36', '#7A5AC0', '#5A3A22'];
+const currentRoomSettings = () => (fbState.roomId ? fbState.roomSettings : fbState.draftSettings) || DEFAULT_ROOM_SETTINGS;
+const isChatEnabled = () => !fbState.roomId || (fbState.roomSettings && fbState.roomSettings.chatEnabled !== false);
 
 function playerByUid(uid) {
   return (uid && fbState.players && fbState.players[uid]) || null;
@@ -487,6 +502,7 @@ function handleGuestActionOnHost(act) {
   const peerId = uidToPeerId.get(act.uid);
   if (!peerId) return;
   if (act.type === 'WIRE' && typeof act.text === 'string') {
+    if (act.text.startsWith('CHAT_REQ|') && !isChatEnabled()) return;
     mainCore.netText(peerId, act.text);
     scheduleHostSync();
   }
@@ -512,6 +528,7 @@ async function ensureNet() {
     }
   });
   netReady = true;
+  syncPublicRoomsWatch();
 }
 const cpuLvForRoom = () => lvIndex(S.set.cpuLv);
 
@@ -795,7 +812,8 @@ function openMemberSheet() {
       ${canManage ? `<div style="display:flex;gap:6px"><button class="btn" data-pm-host="${esc(uid)}">ホストを変更</button><button class="btn danger" data-pm-kick="${esc(uid)}">キック</button></div>` : ''}
     </div>`;
   }).join('');
-  openSheet(`<h2>参加メンバー ${(ost.members || []).length}/6</h2><div class="seats" style="margin:8px 0">${rows}</div><div class="btns"><button class="btn" data-sheetback>閉じる</button></div>`);
+  const maxP = (fbState.roomSettings && fbState.roomSettings.maxPlayers) || 6;
+  openSheet(`<h2>参加メンバー ${(ost.members || []).length}/${maxP}</h2><div class="seats" style="margin:8px 0">${rows}</div><div class="btns"><button class="btn" data-sheetback>閉じる</button></div>`);
   document.querySelectorAll('[data-pm-host]').forEach((b) => {
     b.onclick = async () => { const u = b.dataset.pmHost; closeSheet(); await transferHostToPlayer(u); };
   });
@@ -811,23 +829,181 @@ function stampIdx(m) {
   const i = STAMPS.findIndex((x) => x[0] === k[1]); return i >= ONLINE_STAMPS ? i : -1;
 }
 function chatBox() {
+  const chatOn = isChatEnabled();
   const list = online || (ost && ost.role !== 'none') ? (ost ? ost.chat : []) : [];
-  return `<div class="chat"><div class="log" id="log">${list.length ? list.map((m) => {
-    if (m.kind === 2) return `<div class="msg sys">${esc(m.body)}</div>`;
-    const mine = ost && m.slot === ost.mySlot;
-    return `<div class="msg ${mine ? 'mine' : ''} ${stampIdx(m) >= 0 ? 'st' : ''}">${mine ? '' : `<small>${esc(m.name)}</small>`}${stampIdx(m) >= 0 ? stamp(stampIdx(m)) : esc(m.body)}</div>`;
-  }).join('') : '<div class="dimtxt">チャットはまだありません</div>'}</div>
-   ${S.stOpen ? `<div class="stpanel">${STAMPS.map((s, i) => `<button type="button" data-stamp="${i}" title="${s[0]}" aria-label="${s[0]}">${stamp(i)}</button>`).join('')}</div>` : ''}
-   <form id="chatf"><button type="button" class="stbtn" data-stopen aria-expanded="${S.stOpen}" aria-label="スタンプ" ${ost && ost.chatOk ? '' : 'disabled'}>${ic('smile')}</button><input id="chatin" placeholder="メッセージ" maxlength="40" autocomplete="off" aria-label="メッセージ" ${ost && ost.chatOk ? '' : 'disabled'}><button ${ost && ost.chatOk ? '' : 'disabled'}>送る</button></form></div>`;
+  if (!chatOn) S.stOpen = false;
+  const canSend = chatOn && !!(ost && ost.chatOk);
+  const bodyHtml = !chatOn
+    ? '<div class="dimtxt">チャットは無効になっています</div>'
+    : (list.length ? list.map((m) => {
+        if (m.kind === 2) return `<div class="msg sys">${esc(m.body)}</div>`;
+        const mine = ost && m.slot === ost.mySlot;
+        return `<div class="msg ${mine ? 'mine' : ''} ${stampIdx(m) >= 0 ? 'st' : ''}">${mine ? '' : `<small>${esc(m.name)}</small>`}${stampIdx(m) >= 0 ? stamp(stampIdx(m)) : esc(m.body)}</div>`;
+      }).join('') : '<div class="dimtxt">チャットはまだありません</div>');
+  return `<div class="chat${chatOn ? '' : ' chat-off'}"><div class="log" id="log">${bodyHtml}</div>
+   ${chatOn && S.stOpen ? `<div class="stpanel">${STAMPS.map((s, i) => `<button type="button" data-stamp="${i}" title="${s[0]}" aria-label="${s[0]}">${stamp(i)}</button>`).join('')}</div>` : ''}
+   <form id="chatf"><button type="button" class="stbtn" data-stopen aria-expanded="${chatOn ? S.stOpen : false}" aria-label="スタンプ" ${canSend ? '' : 'disabled'}>${ic('smile')}</button><input id="chatin" placeholder="${chatOn ? 'メッセージ' : 'チャット無効'}" maxlength="40" autocomplete="off" aria-label="メッセージ" ${canSend ? '' : 'disabled'}><button ${canSend ? '' : 'disabled'}>送る</button></form></div>`;
 }
 function sendChat(t, st) {
   if (!mainCore || !ost) return;
+  if (!isChatEnabled()) return toast({ w: 'お知らせ', t: 'チャットは無効になっています' });
   const ok = st != null ? (st < ONLINE_STAMPS ? mainCore.onlineSendChat(1, String(st)) : mainCore.onlineSendChat(0, `《${STAMPS[st][0]}》`)) : mainCore.onlineSendChat(0, t);
   if (ok) {
     sfxPop(true);
     if (isHostRoom()) scheduleHostSync();
   } else toast({ w: 'お知らせ', t: '少し待ってから送ってください' });
   if (st != null) render();
+}
+
+// ---------------------------------------------------------------- ルーム設定・公開ルーム一覧
+function applyRoomSettingsUpdate(partial) {
+  if (!partial) return;
+  if (fbState.roomId) {
+    if (!isHostRoom()) return;
+    const minPlayers = Math.max(2, (ost && Array.isArray(ost.members) ? ost.members.length : 1));
+    const next = Object.assign({}, fbState.roomSettings, partial);
+    next.maxPlayers = Math.max(minPlayers, Math.min(6, Number(next.maxPlayers) || 6));
+    if (next.chatEnabled === false) S.stOpen = false;
+    fbState.roomSettings = next;
+    netApi && netApi.updateRoomSettings && netApi.updateRoomSettings(next).catch(() => {});
+  } else {
+    const next = Object.assign({}, fbState.draftSettings, partial);
+    next.maxPlayers = Math.max(2, Math.min(6, Number(next.maxPlayers) || 6));
+    fbState.draftSettings = next;
+  }
+  render();
+}
+
+function roomSettingsRows(s, editable, minMax) {
+  const rseg = (key, opts, val) => `<div class="seg" data-rseg="${key}">${opts.map(([v, l]) => `<button type="button" data-rv="${esc(v)}" aria-pressed="${String(v) === String(val)}">${esc(l)}</button>`).join('')}</div>`;
+  if (!editable) {
+    return `
+      <div class="row"><span>公開設定</span><b>${s.isPublic ? '公開' : '非公開'}</b></div>
+      <div class="row"><span>チャット</span><b>${s.chatEnabled ? 'ON' : 'OFF'}</b></div>
+      <div class="row"><span>最大人数</span><b class="num">${s.maxPlayers}人</b></div>
+      <div class="row"><span>部屋のロック</span><b>${s.locked ? 'ロック中' : '開放'}</b></div>
+      <div class="row"><span>雰囲気</span><b>${esc(s.vibe)}</b></div>`;
+  }
+  const minP = Math.max(2, Math.min(6, minMax || 2));
+  return `
+    <div class="row"><span>公開設定</span>${rseg('isPublic', [['false', '非公開'], ['true', '公開']], String(!!s.isPublic))}</div>
+    <div class="row"><span>チャット</span>${rseg('chatEnabled', [['true', 'ON'], ['false', 'OFF']], String(s.chatEnabled !== false))}</div>
+    <div class="row"><span>最大人数</span><span class="stepper"><button type="button" data-rmax="-1" aria-label="減らす" ${s.maxPlayers > minP ? '' : 'disabled'}>−</button><b class="num">${s.maxPlayers}人</b><button type="button" data-rmax="1" aria-label="増やす" ${s.maxPlayers < 6 ? '' : 'disabled'}>＋</button></span></div>
+    <div class="row"><span>部屋のロック<small class="sub">これ以上入れない</small></span><button type="button" class="switch" role="switch" aria-checked="${!!s.locked}" data-rlock aria-label="部屋のロック"></button></div>
+    <div class="row"><span>雰囲気</span>${rseg('vibe', [['ガチ', 'ガチ'], ['ボチボチ', 'ボチボチ'], ['まったり', 'まったり']], s.vibe || 'ボチボチ')}</div>`;
+}
+
+function publicRoomsListHtml() {
+  const list = fbState.publicRooms || [];
+  if (!fbState.publicRoomsLoaded && fbState.publicRoomsLoading) {
+    return '<p class="dimtxt">公開ルームを読み込んでいます…</p>';
+  }
+  if (!list.length) {
+    return '<p class="dimtxt">現在公開中のルームはありません</p>';
+  }
+  return `<div class="pubrooms">${list.map((rm) => {
+    const g = gInfo(rm.gameId);
+    const full = rm.playerCount >= rm.maxPlayers;
+    const statusLabel = rm.phase === 'PLAYING' ? '対局中' : 'ロビー';
+    return `<button type="button" class="pubroom-item" data-pubroom="${esc(rm.roomId)}">
+      <span class="pubroom-art">${g ? artOf(g.id) : ''}</span>
+      <span class="pubroom-main">
+        <span class="pubroom-top"><b>${esc(g ? g.name : rm.gameId)}</b><span class="pubroom-code">#${esc(rm.roomId)}</span></span>
+        <span class="pubroom-sub">ホスト: ${esc(rm.hostName)}</span>
+        <span class="pubroom-badges">
+          <span class="badge">${rm.playerCount}/${rm.maxPlayers}人</span>
+          <span class="badge ${rm.phase === 'PLAYING' ? 'playing' : 'lobby'}">${statusLabel}</span>
+          <span class="badge vibe">${esc(rm.vibe)}</span>
+          <span class="badge ${rm.chatEnabled ? '' : 'off'}">チャット ${rm.chatEnabled ? 'ON' : 'OFF'}</span>
+          ${rm.locked ? '<span class="badge locked">ロック中</span>' : full ? '<span class="badge locked">満員</span>' : ''}
+        </span>
+      </span>
+    </button>`;
+  }).join('')}</div>`;
+}
+
+function syncPublicRoomsWatch() {
+  const shouldWatch = !!(netReady && netApi && typeof netApi.watchPublicRooms === 'function' && S.screen === 'room' && !fbState.roomId);
+  if (shouldWatch && !publicRoomsUnsub) {
+    fbState.publicRoomsLoading = true;
+    publicRoomsUnsub = netApi.watchPublicRooms((list) => {
+      fbState.publicRooms = Array.isArray(list) ? list : [];
+      fbState.publicRoomsLoading = false;
+      fbState.publicRoomsLoaded = true;
+      if (S.screen === 'room' && !fbState.roomId) {
+        const box = $('#pubroomsBox');
+        const cnt = $('#pubroomsCount');
+        if (box) {
+          box.innerHTML = publicRoomsListHtml();
+          if (cnt) cnt.textContent = String(fbState.publicRooms.length);
+        } else if (!$('#sheetwrap')) {
+          render();
+        }
+      }
+    });
+  } else if (!shouldWatch && publicRoomsUnsub) {
+    try { publicRoomsUnsub(); } catch {}
+    publicRoomsUnsub = null;
+  }
+}
+
+async function refreshPublicRooms() {
+  if (!netApi || typeof netApi.listPublicRooms !== 'function') {
+    await ensureNet();
+  }
+  if (!netApi || typeof netApi.listPublicRooms !== 'function') return;
+  fbState.publicRoomsLoading = true;
+  const btn = document.querySelector('[data-pubrefresh]');
+  if (btn) btn.disabled = true;
+  try {
+    fbState.publicRooms = await netApi.listPublicRooms();
+    fbState.publicRoomsLoaded = true;
+  } catch (e) {
+    toast({ w: 'お知らせ', t: '公開ルーム一覧を更新できませんでした' });
+  } finally {
+    fbState.publicRoomsLoading = false;
+    const box = $('#pubroomsBox');
+    const cnt = $('#pubroomsCount');
+    if (box) {
+      box.innerHTML = publicRoomsListHtml();
+      if (cnt) cnt.textContent = String(fbState.publicRooms.length);
+      if (btn) btn.disabled = false;
+    } else {
+      render();
+    }
+  }
+}
+
+function openPublicRoomSheet(roomId) {
+  const rm = (fbState.publicRooms || []).find((x) => x.roomId === roomId);
+  if (!rm) return toast({ w: 'お知らせ', t: 'このルームは見つかりませんでした' });
+  const g = gInfo(rm.gameId);
+  const full = rm.playerCount >= rm.maxPlayers;
+  const blockedReason = rm.locked
+    ? 'この部屋はロックされているため参加できません。'
+    : full
+      ? 'この部屋は満員のため参加できません。'
+      : '';
+  setTimeout(focusPrimary, 0);
+  openSheet(`<div id="pubroomDetail">
+    <h2>ルーム ${esc(rm.roomId)}</h2>
+    <div class="pubroom-detail-list">
+      <div class="row"><span>現在の人数</span><b class="num">${rm.playerCount}/${rm.maxPlayers}人</b></div>
+      <div class="row"><span>ステータス</span><b>${rm.phase === 'PLAYING' ? '対局中' : 'ロビー'}</b></div>
+      <div class="row"><span>チャット</span><b>${rm.chatEnabled ? 'ON' : 'OFF'}</b></div>
+      <div class="row"><span>雰囲気</span><b>${esc(rm.vibe)}</b></div>
+      <div class="row"><span>選択中のゲーム</span><span class="pub-detail-game">${g ? `<span class="art">${artOf(g.id)}</span>` : ''}<b>${esc(g ? g.name : rm.gameId)}</b></span></div>
+    </div>
+    ${blockedReason ? `<p class="err" style="margin:8px 0 0">${esc(blockedReason)}</p>` : ''}
+    <div class="btns" style="margin-top:14px">
+      <button type="button" class="btn" data-sheetback>キャンセル</button>
+      <button type="button" class="btn primary" id="pubJoinGo" ${blockedReason ? 'disabled' : ''}>参加</button>
+    </div>
+  </div>`);
+  $('#pubJoinGo').onclick = () => {
+    closeSheet();
+    joinFirebaseRoom(rm.roomId);
+  };
 }
 
 // ---------------------------------------------------------------- 部屋の画面 (4桁のルームコードマッチング)
@@ -838,25 +1014,29 @@ function room() {
   const hostSlot = hostSlotOfRoom();
   const myUid = netApi ? netApi.uid : null;
   const mySpec = mySpectatingOn();
+  const rSet = currentRoomSettings();
+  const maxP = rSet.maxPlayers || 6;
   let left = '';
 
   if (fbState.authError) {
     left += `<div class="panel" style="border-color:#C8463C;background:rgba(200,70,60,.08)"><h3>通信の設定案内</h3><p class="err" style="white-space:pre-wrap;margin:4px 0">${esc(fbState.authError)}</p></div>`;
   }
 
-  // 1. 部屋を作る (ルームコード自動発行)
-  left += `<div class="panel" style="padding-bottom:12px"><h3>部屋を作る</h3>
-     ${none ? `<button class="btn primary" style="width:100%;margin-top:6px;letter-spacing:.1em" data-mkroom ${fbState.creating || fbState.joining ? 'disabled' : ''}>${fbState.creating ? '部屋を作っています…' : '部屋を作る'}</button>` : ''}
+  // 1. 部屋を作る / ルームコード
+  left += `<div class="panel" style="padding-bottom:12px"><h3>${none ? '部屋を作る' : 'ルームコード'}</h3>
+     ${none ? `${roomSettingsRows(rSet, true, 2)}<button class="btn primary" style="width:100%;margin-top:10px;letter-spacing:.1em" data-mkroom ${fbState.creating || fbState.joining ? 'disabled' : ''}>${fbState.creating ? '部屋を作っています…' : '部屋を作る'}</button>` : ''}
      ${ fbState.roomId ? `<div class="invite"><p>${host ? 'このルームコードを相手に伝えてください' : '参加中のルームコード'}</p>
        <div class="code" style="font-size:28px;font-weight:900;letter-spacing:.25em;text-align:center;padding:12px 10px">${esc(fbState.roomId)}</div>
        <button class="btn gold copybig" data-copy="${esc(fbState.roomId)}">${ic('copy')}ルームコードをコピー</button></div>` : '' }
      ${fbState.error && host ? `<p class="err">${esc(fbState.error)}</p>` : ''}</div>`;
 
-  // 2. ルームコードを入力して参加する
+  // 2. ルームコードを入力して参加する (未入室時) / ルーム設定 (入室中)
   if (none) {
     left += `<div class="panel" style="padding-bottom:10px"><h3>部屋に入る</h3>
       ${fbState.error ? `<p class="err">${esc(fbState.error)}</p>` : ''}
       <div class="codebox"><input id="joinIn" placeholder="ルームコード (例: 1234)" value="${esc(drafts.join)}" maxlength="4" inputmode="numeric" pattern="[0-9]*" aria-label="ルームコード" spellcheck="false" ${fbState.joining ? 'disabled' : ''}><button class="btn primary" style="height:38px" data-join ${fbState.joining ? 'disabled' : ''}>${fbState.joining ? '入室中…' : '参加する'}</button></div></div>`;
+  } else {
+    left += `<div class="panel" style="padding-bottom:8px"><h3>ルーム設定</h3>${roomSettingsRows(rSet, host, Math.max(2, st.members.length))}</div>`;
   }
 
   // 3. 参加者一覧と退出・解散
@@ -874,7 +1054,7 @@ function room() {
         ? `<button type="button" class="seat seat-btn" data-pmenu="${esc(uid)}" title="クリックしてホスト変更・キック">${inner}<span class="seat-act">管理 ▾</span></button>`
         : `<div class="seat">${inner}</div>`;
     }).join('');
-    left += `<div class="panel" style="padding-bottom:10px"><h3>参加メンバー ${st.members.length}/6</h3>
+    left += `<div class="panel" style="padding-bottom:10px"><h3>参加メンバー ${st.members.length}/${maxP}</h3>
     <div class="seats" style="padding-top:6px">${memberRows}</div>
     ${st.transportError ? `<p class="err">${esc(st.transportError)}</p>` : ''}
     <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap">
@@ -884,9 +1064,12 @@ function room() {
     left += `<div style="height:260px;display:flex">${chatBox().replace('class="chat"', 'class="chat" style="flex:1"')}</div>`;
   }
 
-  // 4. 遊ぶゲームの選択・開始 ＋ 遊び方（部屋を建てた後も消さずに常時表示）
-  const howtoPanel = `<div class="panel"><h3>遊び方</h3><div class="howto"><p><b>部屋を作る人</b>: 「部屋を作る」を押して、発行された4桁のルームコードを相手に伝えます。他の人を待っている間も「ゲーム」タブから1人で遊べます。</p><p><b>参加する人</b>: 4桁のルームコードを入力して「参加する」を押します。</p><p><b>ホスト機能・観戦</b>: ホストは参加メンバーをクリックして「ホストを変更」「キック」ができます。次の対局を見学したい時は「観戦モード」をONにしてください。</p><p class="dimtxt">Webブラウザ版・Androidアプリ版・Windows版のどれからでも同じルームコードで対戦できます。</p></div></div>`;
+  // 4. 公開ルーム一覧(未入室時) / 対局中案内(入室時) ＋ 遊び方
+  const howtoPanel = `<div class="panel"><h3>遊び方</h3><div class="howto"><p><b>部屋を作る人</b>: 「部屋を作る」を押して、発行された4桁のルームコードを相手に伝えます。公開に設定すると一覧にも表示されます。</p><p><b>参加する人</b>: 4桁のルームコードを入力するか、公開ルーム一覧から選んで参加します。</p><p><b>ホスト機能・観戦</b>: ホストは参加メンバーをクリックして「ホストを変更」「キック」ができます。次の対局を見学したい時は「観戦モード」をONにしてください。</p><p class="dimtxt">Webブラウザ版・Androidアプリ版・Windows版のどれからでも同じルームコードで対戦できます。</p></div></div>`;
   let right = '';
+  if (none) {
+    right += `<div class="panel"><div class="pubrooms-hd"><h3>公開ルーム一覧 <span class="badge" id="pubroomsCount">${(fbState.publicRooms || []).length}</span></h3><button type="button" class="btn" data-pubrefresh style="height:32px;padding:0 12px;font-size:12.5px">更新</button></div><div id="pubroomsBox">${publicRoomsListHtml()}</div></div>`;
+  }
   if (!none && st.phase === 'PLAYING') {
     const inMatch = st.match >= 0;
     const isSpectator = fbState.roomState && Array.isArray(fbState.roomState.seatSlots) && !fbState.roomState.seatSlots.includes(st.mySlot);
@@ -928,13 +1111,14 @@ async function createFirebaseRoom() {
     uidToPeerId.clear();
     peerIdToUid.clear();
     peerNames.clear();
-  peerSlots.clear();
+    peerSlots.clear();
     hostSentLog = [];
     hostRoundInfo = { round: 0, gameId: 'reversi', options: '', seed: '0', seatSlots: [], names: [], clockIndex: -1, clockSeconds: -1, undoAsk: null, undoResult: null, undoResultSeq: 0 };
     mainCore.onlineSetLevel(cpuLvForRoom());
     mainCore.onlineHost(meName());
     lastBeginSeq = 0;
     chatSeen = 0;
+    const initSettings = Object.assign({}, fbState.draftSettings || DEFAULT_ROOM_SETTINGS);
 
     const res = await netApi.createRoom(
       { name: meName(), proto: 2, avatar: Number.isInteger(S.set.av) ? S.set.av : null },
@@ -947,6 +1131,13 @@ async function createFirebaseRoom() {
         },
         onState(s) {
           fbState.roomState = s;
+        },
+        onSettings(settings) {
+          if (settings) {
+            fbState.roomSettings = settings;
+            if (settings.chatEnabled === false) S.stOpen = false;
+            onlineChanged();
+          }
         },
         onCursors(cursors) {
           fbState.cursors = cursors || {};
@@ -977,12 +1168,15 @@ async function createFirebaseRoom() {
             render();
           }
         }
-      }
+      },
+      initSettings
     );
     fbState.roomId = res.roomId;
     fbState.hostUid = res.uid;
+    fbState.roomSettings = res.settings || initSettings;
     fbState.knownPlayerUids = new Set([res.uid]);
     fbState.creating = false;
+    syncPublicRoomsWatch();
     scheduleHostSync();
     onlineChanged();
   } catch (e) {
@@ -1036,6 +1230,13 @@ async function joinFirebaseRoom(codeInput) {
           if (netApi && netApi.role === 'guest') applyRemoteStateOnGuest(s);
           onlineChanged();
         },
+        onSettings(settings) {
+          if (settings) {
+            fbState.roomSettings = settings;
+            if (settings.chatEnabled === false) S.stOpen = false;
+            onlineChanged();
+          }
+        },
         onCursors(cursors) {
           fbState.cursors = cursors || {};
           updateRemoteTargets(fbState.cursors);
@@ -1071,7 +1272,9 @@ async function joinFirebaseRoom(codeInput) {
 
     fbState.roomId = res.roomId;
     fbState.hostUid = res.hostUid || null;
+    fbState.roomSettings = res.settings || Object.assign({}, DEFAULT_ROOM_SETTINGS);
     fbState.joining = false;
+    syncPublicRoomsWatch();
     S.screen = 'menu';
     startGuestOnlineRoom(meName());
     if (fbState.roomState) applyRemoteStateOnGuest(fbState.roomState);
@@ -1100,6 +1303,19 @@ function startGuestOnlineRoom(name) {
 function onlineClick(d, bElem) {
   if (d.mkroom != null || d.mkcode != null) { createFirebaseRoom(); return true; }
   if (d.join != null) { const v = ($('#joinIn') || {}).value || drafts.join || ''; joinFirebaseRoom(v); return true; }
+  if (d.pubrefresh != null) { refreshPublicRooms(); return true; }
+  if (d.pubroom) { openPublicRoomSheet(d.pubroom); return true; }
+  if (d.rlock != null) { applyRoomSettingsUpdate({ locked: !currentRoomSettings().locked }); return true; }
+  if (d.rmax != null) { applyRoomSettingsUpdate({ maxPlayers: (currentRoomSettings().maxPlayers || 6) + (+d.rmax || 0) }); return true; }
+  if (d.rv != null) {
+    const rsg = bElem && bElem.closest('[data-rseg]');
+    if (rsg) {
+      const k = rsg.dataset.rseg;
+      const val = k === 'isPublic' || k === 'chatEnabled' ? (d.rv === 'true') : d.rv;
+      applyRoomSettingsUpdate({ [k]: val });
+      return true;
+    }
+  }
   if (d.pmenu) { openPlayerActionSheet(d.pmenu); return true; }
   if (d.oomembers != null) { openMemberSheet(); return true; }
   if (d.toggleSpec != null) { toggleSpectating(); return true; }
@@ -1166,7 +1382,10 @@ function chooseOnline(id) {
   if (!ost || ost.gameId !== id) { mainCore.onlineChoose(id, ''); scheduleHostSync(); }
   try {
     const g = gInfo(id), ps = g && g.options.find((o) => o.key === 'players'), n = isSoloInRoom() ? 0 : activeMembers().length;
-    if (ps && n) { const v = ps.values.find(([x]) => +x === n) || ps.values.find(([x]) => +x >= n); if (v) { const c = cfg(id); c.opts.players = v[0]; saveCfg(id, c); } }
+    if (ps && n) {
+      const v = ps.values.find(([x]) => +x === n) || ps.values.find(([x]) => +x >= n) || ps.values[ps.values.length - 1];
+      if (v) { const c = cfg(id); c.opts.players = v[0]; saveCfg(id, c); }
+    }
   } catch (e) {}
   S.setup = { id, online: true };
   syncOnlineOptions();
@@ -1211,13 +1430,101 @@ async function onlineStartSolo() {
     scheduleHostSync();
   }
 }
-function onlineChooseAndStart() {
+
+function openSpectatorSelectSheet(g, total) {
+  const members = (ost && Array.isArray(ost.members)) ? ost.members.slice() : [];
+  if (!members.length) return;
+  const hostSlot = hostSlotOfRoom();
+  const selectedSpecs = new Set(members.filter((m) => isSlotSpectating(m.slot)).map((m) => m.slot));
+  const activeCount = () => members.filter((m) => !selectedSpecs.has(m.slot)).length;
+
+  const renderRows = () => members.map((m, i) => {
+    const isMe = m.slot === ost.mySlot;
+    const isH = m.slot === hostSlot;
+    const isSpec = selectedSpecs.has(m.slot);
+    return `<button type="button" class="seat seat-btn spec-row${isSpec ? ' is-spec' : ''}" data-spec-slot="${m.slot}">
+      <span class="spec-left">
+        ${isMe ? meAv() : `<span class="avatar" style="background:${SEAT_COLORS[i % 6]};color:#fff">${esc(m.name[0])}</span>`}
+        <span class="nm">${esc(m.name)}${isMe ? '(あなた)' : ''}<small>${isH ? '<span class="badge host">ホスト</span>' : ''}${isSlotSpectating(m.slot) ? '<span class="badge spec">元々観戦</span>' : ''}</small></span>
+      </span>
+      <span class="badge ${isSpec ? 'spec' : 'lobby'}">${isSpec ? '観戦者' : '対局する'}</span>
+    </button>`;
+  }).join('');
+
+  setTimeout(focusPrimary, 0);
+  openSheet(`<div id="specSelectSheet">
+    <h2>観戦者を選んでください</h2>
+    <p id="specHint"></p>
+    <div class="seats spec-list" id="specList">${renderRows()}</div>
+    <div class="btns" style="margin-top:12px">
+      <button type="button" class="btn" data-sheetback>キャンセル</button>
+      <button type="button" class="btn primary" id="specStartGo">スタート</button>
+    </div>
+  </div>`);
+
+  const syncUi = () => {
+    const actN = activeCount();
+    const need = Math.max(0, actN - total);
+    const hint = $('#specHint');
+    if (hint) {
+      if (actN === 0) hint.textContent = `「${g.name}」の最大人数は ${total}人 です。対局する人を1人以上残してください。`;
+      else if (need > 0) hint.textContent = `「${g.name}」の最大人数（${total}人）より参加者が多いため、あと ${need}人 を観戦者にしてください。（現在 対局 ${actN}人 / 観戦 ${members.length - actN}人）`;
+      else hint.textContent = `対局 ${actN}人・観戦 ${members.length - actN}人 で開始できます。`;
+    }
+    const listEl = $('#specList');
+    if (listEl) {
+      listEl.innerHTML = renderRows();
+      listEl.querySelectorAll('[data-spec-slot]').forEach((b) => {
+        b.onclick = () => {
+          const sl = +b.dataset.specSlot;
+          if (selectedSpecs.has(sl)) selectedSpecs.delete(sl);
+          else selectedSpecs.add(sl);
+          syncUi();
+        };
+      });
+    }
+    const goBtn = $('#specStartGo');
+    if (goBtn) goBtn.disabled = !(actN >= 1 && actN <= total);
+  };
+  syncUi();
+
+  $('#specStartGo').onclick = async () => {
+    const actSlots = members.filter((m) => !selectedSpecs.has(m.slot)).map((m) => m.slot);
+    if (!actSlots.length || actSlots.length > total) return;
+    closeSheet();
+    const spectatingByUid = {};
+    for (const m of members) {
+      const uid = playerUidBySlot(m.slot);
+      if (!uid) continue;
+      const val = selectedSpecs.has(m.slot);
+      spectatingByUid[uid] = val;
+      if (fbState.players[uid]) fbState.players[uid].spectating = val;
+    }
+    if (netApi && typeof netApi.setPlayersSpectating === 'function') {
+      try { await netApi.setPlayersSpectating(spectatingByUid); } catch (e) {}
+    }
+    fbState.soloIdle = false;
+    syncOnlineOptions();
+    const ok = mainCore.onlineStartParticipants(String(Math.floor(Math.random() * 2 ** 40) + 1), actSlots.join(','), '');
+    if (!ok) toast({ w: 'お知らせ', t: '参加人数がこのゲームの席数より多いか、遊べない設定です' });
+    else scheduleHostSync();
+  };
+}
+
+async function onlineChooseAndStart() {
   if (!isHostRoom()) return toast({ w: 'お知らせ', t: 'ホストが始めるのを待っています' });
   if (isSoloInRoom()) return onlineStartSolo();
   const act = activeMembers();
   if (!act.length) return toast({ w: 'お知らせ', t: '参加プレイヤーがいません（観戦モードを解除してください）' });
-  fbState.soloIdle = false;
+  const g = gInfo(S.setup.id), c = cfg(g.id);
+  const opts = engineOpts(g, c, true);
   syncOnlineOptions();
+  const total = await callW('seatCount', g.id, opts);
+  if (act.length > total) {
+    openSpectatorSelectSheet(g, total);
+    return;
+  }
+  fbState.soloIdle = false;
   const ok = mainCore.onlineStartParticipants(String(Math.floor(Math.random() * 2 ** 40) + 1), act.map((m) => m.slot).join(','), '');
   if (!ok) toast({ w: 'お知らせ', t: '参加人数がこのゲームの席数より多いか、遊べない設定です' });
   else scheduleHostSync();
@@ -1246,6 +1553,7 @@ function leaveOnline(mode = 'auto') {
   fbState.players = {};
   fbState.cursors = {};
   fbState.roomState = null;
+  fbState.roomSettings = Object.assign({}, DEFAULT_ROOM_SETTINGS);
   fbState.soloIdle = false;
   fbState.takingOver = false;
   fbState.knownPlayerUids = new Set();
@@ -1260,6 +1568,7 @@ function leaveOnline(mode = 'auto') {
   if (netApi && oldRoomId) netApi.leaveRoom(mode).catch(() => {});
   S.chat = [];
   online = false; token++; ost = null; S.roomPre = null; S.roomDecided = null; lastBeginSeq = 0; chatSeen = 0; lastFlash = '0|'; closeSheet();
+  syncPublicRoomsWatch();
 }
 async function startOnlinePlay(handle) {
   pendSnd = null;
@@ -1279,7 +1588,7 @@ function onlineChanged() {
   const nextOst = JSON.parse(mainCore.onlineState());
   if (!fbState.roomId && (!nextOst || nextOst.role === 'none')) {
     ost = null;
-    if (/^(room|menu|records|settings)$/.test(S.screen)) render();
+    if (/^(room|menu|records|settings)$/.test(S.screen) && !$('#sheetwrap')) render();
     return;
   }
   ost = nextOst;
@@ -1297,7 +1606,7 @@ function onlineChanged() {
       if (!m) continue;
       if (m.kind === 2) {
         if (ci === nChat - 1) toast({ w: 'お知らせ', t: m.body, chat: true });
-      } else if (m.slot !== ost.mySlot && ci === nChat - 1) {
+      } else if (isChatEnabled() && m.slot !== ost.mySlot && ci === nChat - 1) {
         sfxPop(false);
         const si = stampIdx(m);
         toast({ w: m.name, t: si < 0 ? m.body : null, s: si >= 0 ? si : null, chat: true });
@@ -1323,7 +1632,7 @@ function onlineChanged() {
       const exSlots = new Set(spectatorSlots());
       rn.textContent = '準備ができた人: ' + ost.members.filter((m) => !exSlots.has(m.slot) && (m.slot === ost.mySlot || ost.ready.includes(m.slot))).map((m) => m.name).join('・');
     }
-    keepInputs(render);
+    if (!$('#specSelectSheet') && !$('#pubroomDetail')) keepInputs(render);
   }
 }
 function keepInputs(fn) {
@@ -1365,6 +1674,7 @@ function showAsk(ask) {
 // 受信側は requestAnimationFrame による補間アニメーションで滑らかに動かし、active: false 時は半透明(待機表示)にする。
 const CUR_FLIP = new Set(['shogi', 'gogo', 'mancala', 'checkers', 'chess']);
 const curFlip = (seat) => !!(cur && CUR_FLIP.has(cur.id) && seat === 1);
+const isMobileCursorOff = () => (typeof isMob === 'function' && isMob()) || (typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
 const POINTER_INTERVAL_MS = 100;
 let lastPointerSentAt = 0;
 let lastPointerSentSig = '';
@@ -1395,7 +1705,7 @@ function computeNormalizedPointer(clientX, clientY, active) {
 }
 
 function sendPointerNow(pt) {
-  if (!netApi || !fbState.roomId || !pt) return;
+  if (!netApi || !fbState.roomId || !pt || isMobileCursorOff()) return;
   const sig = `${pt.x.toFixed(3)}:${pt.y.toFixed(3)}:${pt.active ? 1 : 0}:${ost ? ost.mySlot : 0}:${online ? mySeat : -1}`;
   if (sig === lastPointerSentSig) return;
   lastPointerSentSig = sig;
@@ -1412,7 +1722,7 @@ function sendPointerNow(pt) {
 }
 
 function queuePointerSend(clientX, clientY, active) {
-  if (!netApi || !fbState.roomId) return;
+  if (!netApi || !fbState.roomId || isMobileCursorOff()) return;
   if (online && S.screen === 'play' && cur && NO_CURSOR.has(cur.id)) return;
   const pt = computeNormalizedPointer(clientX, clientY, active);
   if (!pt) return;
@@ -1436,34 +1746,41 @@ function queuePointerSend(clientX, clientY, active) {
 let lastClientPos = { x: 0, y: 0 };
 // PCのマウス操作 (mousemove)
 document.addEventListener('mousemove', (e) => {
+  if (isMobileCursorOff()) return;
   lastClientPos = { x: e.clientX, y: e.clientY };
   queuePointerSend(e.clientX, e.clientY, true);
 }, { passive: true });
 document.addEventListener('mouseleave', () => {
+  if (isMobileCursorOff()) return;
   queuePointerSend(lastClientPos.x, lastClientPos.y, false);
 }, { passive: true });
 window.addEventListener('blur', () => {
+  if (isMobileCursorOff()) return;
   queuePointerSend(lastClientPos.x, lastClientPos.y, false);
 });
 
-// スマホのタッチ操作 (touchstart / touchmove / touchend)
+// タッチ操作 (モバイルプレイヤーはカーソルを送信・表示しない)
 document.addEventListener('touchstart', (e) => {
+  if (isMobileCursorOff()) return;
   const t = e.touches && e.touches[0];
   if (!t) return;
   lastClientPos = { x: t.clientX, y: t.clientY };
   queuePointerSend(t.clientX, t.clientY, true);
 }, { passive: true });
 document.addEventListener('touchmove', (e) => {
+  if (isMobileCursorOff()) return;
   const t = e.touches && e.touches[0];
   if (!t) return;
   lastClientPos = { x: t.clientX, y: t.clientY };
   queuePointerSend(t.clientX, t.clientY, true);
 }, { passive: true });
 document.addEventListener('touchend', (e) => {
+  if (isMobileCursorOff()) return;
   const t = (e.changedTouches && e.changedTouches[0]) || lastClientPos;
   queuePointerSend(t.clientX ?? lastClientPos.x, t.clientY ?? lastClientPos.y, false);
 }, { passive: true });
 document.addEventListener('touchcancel', () => {
+  if (isMobileCursorOff()) return;
   queuePointerSend(lastClientPos.x, lastClientPos.y, false);
 }, { passive: true });
 
@@ -1472,10 +1789,11 @@ const remoteCursors = new Map(); // uid -> { curX, curY, tx, ty, active, slot, s
 let cursorAnimFrame = null;
 
 function updateRemoteTargets(cursorsObj) {
+  if (isMobileCursorOff()) { clearRemoteCursors(); return; }
   const myUid = netApi ? netApi.uid : null;
   const seen = new Set();
   for (const [uid, c] of Object.entries(cursorsObj || {})) {
-    if (!c || uid === myUid) continue;
+    if (!c || c.mobile || uid === myUid) continue;
     const x = typeof c.x === 'number' ? Math.max(0, Math.min(1, c.x)) : 0.5;
     const y = typeof c.y === 'number' ? Math.max(0, Math.min(1, c.y)) : 0.5;
     seen.add(uid);
@@ -1524,6 +1842,7 @@ function clearRemoteCursors() {
 }
 
 const liveCursorOf = (seat) => {
+  if (isMobileCursorOff()) return null;
   for (const c of remoteCursors.values()) {
     if (c.seat === seat && c.active && performance.now() - c.updatedAt < 5000) return c;
   }
@@ -1534,7 +1853,7 @@ function startCursorLoop() {
   if (cursorAnimFrame) return;
   const step = () => {
     cursorAnimFrame = null;
-    if (!fbState.roomId || !remoteCursors.size) {
+    if (!fbState.roomId || !remoteCursors.size || isMobileCursorOff()) {
       document.querySelectorAll('.rcur.live').forEach((e) => e.remove());
       return;
     }
@@ -1638,11 +1957,12 @@ function onlineMenuDetail() {
  if (isHostRoom()) {
   if (soloRoom) hint = '参加者を待っている間、1人で遊べます（シングルプレイと同じ設定）';
   else if (actCount === 0) hint = '全員が観戦モードのため開始できません';
+  else if (g && actCount > range(g.players)[1]) hint = `「${g.name}」の最大人数（${range(g.players)[1]}人）より部屋の人数（${actCount}人）が多いため、スタート時に観戦者を選びます`;
   else hint = specCount > 0 ? `ゲームを選んで開始できます（対局 ${actCount}人・観戦 ${specCount}人）` : 'ゲームを選んで対戦プレイへ進めます';
  } else {
   hint = specCount > 0 ? `遊びたいゲームを選べます（対局 ${actCount}人・観戦 ${specCount}人）。開始はホストが行います` : '遊びたいゲームを選べます。設定と開始はホストが行います';
  }
- const canStart = isHostRoom() && g && playable(g.id) && (soloRoom ? true : (actCount >= 1 && range(g.players)[1] >= actCount));
+ const canStart = isHostRoom() && g && playable(g.id) && (soloRoom ? true : actCount >= 1);
  const startLabel = soloRoom ? '1人で遊ぶ' : '対戦プレイ';
  const specToggle = roomChoosing() ? `<div style="margin:6px 0 4px"><button class="btn ${mySpec ? 'gold' : ''}" data-toggle-spec style="width:100%;height:34px;font-size:12px">${mySpec ? '観戦モード: ON（クリックで参加に戻る）' : '観戦モードにする'}</button></div>` : '';
  const mobHd = `<div class="detail-mobhd"><span class="detail-handle" aria-hidden="true"></span><button type="button" class="btn" data-detailclose aria-label="閉じる">✕ 閉じる</button></div>`;

@@ -56,6 +56,33 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-17 20:22(PST)/ Antigravity / ccr-efc07031-6exjqs
+- 目的: ユーザーの指示。`web/pc-firebase/` の「みんなで遊ぶ」仕様拡張およびモバイル表示調整（7項目）。
+  1. 部屋のアクティブ人数が選択ゲームの最大席数より多い場合、ホストがスタート押下時に観戦者を選ぶ確認シート（選択してスタート / キャンセル）を表示。
+  2. 「みんなで遊ぶ」タブに公開・非公開設定を追加し、公開ルーム一覧を表示。
+  3. 同じ位置にチャット ON/OFF（無効化）設定を追加し、無効時は送受信・スタンプ・通常チャット通知を抑止。
+  4. 同じ位置に最大人数（2〜6人）・部屋のロック（これ以上入れない）設定を追加し、入室時に制御。
+  5. 雰囲気（ガチ / ボチボチ / まったり）設定を追加し、公開ルーム一覧のクリックで確認シート（現在の人数 `〇/最大人数`・ステータス `ロビー`/`対局中`・チャット `ON`/`OFF`・雰囲気・選択中のゲーム + 参加/キャンセルボタン）を表示。
+  6. スマホ版プレイヤー（幅920px以下または `(hover: none) and (pointer: coarse)`）はカーソルの送信・表示を行わない。
+  7. スマホ版では左ナビの終了ボタン (`.quitbtn`) を表示しない。
+- 変更:
+  - `web/pc-firebase/js/net.js`: `DEFAULT_ROOM_SETTINGS`, `normalizeRoomSettings`, `extractPublicRooms`, `rooms/{roomId}/settings` 監視、`createRoom` / `joinRoom` での設定保存・ロック/最大人数チェック、`listPublicRooms`, `watchPublicRooms`, `updateRoomSettings`, `setPlayersSpectating` を追加。
+  - `web/pc-firebase/js/online.js`: ルーム設定UI（作成前・作成後、ホスト編集可・ゲスト閲覧専用）、公開ルーム一覧 (`#pubroomsBox`) と詳細確認シート (`#pubroomDetail`)、チャット無効化 (`isChatEnabled()` / `.chat-off` / `CHAT_REQ|` 抑止)、スタート時観戦者選択シート (`openSpectatorSelectSheet`)、`onlineMenuDetail()` の定員超過時遷移許可と案内、`isMobileCursorOff()` によるポインター送受信・補間描画抑止、シート表示中の再描画抑止を実装。
+  - `web/pc-firebase/js/app.js`: `isTouchDevice()` 追加、`rail()` でモバイル/タッチ端末の `.quitbtn` 非表示、`cursorOn()` でのモバイル/タッチ抑止、`render()` からの `syncPublicRoomsWatch()` 連携、`resize` 時のカーソル消去とブレークポイント再描画を追加。
+  - `web/pc-firebase/css/app.css`: 公開ルーム一覧・詳細確認・無効チャット・観戦者選択用スタイルを追加し、`@media (max-width:920px)` と `@media (hover:none) and (pointer:coarse)` で `.quitbtn`, `.rcur`, `.aimring` を非表示化。
+  - `tools/tests/firebase-memory-net.js`: メモリモックを `settings` 同期・ロック/定員チェック・`listPublicRooms`・`watchPublicRooms`・`updateRoomSettings`・`setPlayersSpectating` に対応。
+  - `web/pc-firebase/sw.js`: キャッシュ名を `asobipcfb-20261117-room-pub-spec-mob-2` に更新。
+- ファイル: `web/pc-firebase/js/net.js`, `web/pc-firebase/js/online.js`, `web/pc-firebase/js/app.js`, `web/pc-firebase/css/app.css`, `web/pc-firebase/sw.js`, `tools/tests/firebase-memory-net.js`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `git diff --check`、`node --check` (`net.js`, `online.js`, `app.js`, `sw.js`, `firebase-memory-net.js`)、`node tools/tests/check_transient_audio.cjs`、`node tools/tests/check_cursor_send.cjs`、およびヘッドレス Chromium CDP 複数タブ E2E 検証（公開/非公開・チャット無効・最大人数3人制限・ロック拒否/解除・公開ルーム一覧と詳細シートのキャンセル/参加・人数超過時の観戦者選択シートとキャンセル/開始・PC間リモートカーソル送受信・スマホ幅/タッチ端末での終了ボタン非表示＆カーソル非送信/非表示・コンソールエラー0件）すべて合格。`web/pc/` と `Windows-Projects` は無変更。未コミット・未プッシュ。
+
+### 2026-11-17 20:09(PST)/ Antigravity / ccr-efc07031-6exjqs
+- 目的: ユーザーの指示。`web/pc-firebase/` でページをリロードした際、初期描画から `render()` → `bgmSync()` 実行までの間に BGM 操作部 (`#bgs`) が一瞬表示される問題を修正する。
+- 変更:
+  - `web/pc-firebase/index.html`: `<div class="bgstrip" id="bgs" role="group" aria-label="BGM" hidden></div>` のように初期状態へ `hidden` 属性を付与し、HTML 解析直後から非表示にして `#app` 描画後の `bgmSync()` で `S.set.bgm` に応じて表示制御されるように修正。
+  - `web/pc-firebase/sw.js`: キャッシュ名を `asobipcfb-20261117-bgm-hide-1` に更新。
+- ファイル: `web/pc-firebase/index.html`, `web/pc-firebase/sw.js`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `git diff --check`、`node --check web/pc-firebase/sw.js web/pc-firebase/js/bgm.js web/pc-firebase/js/app.js`、`node tools/tests/check_transient_audio.cjs`、`node tools/tests/check_cursor_send.cjs`、およびヘッドレス Chromium CDP 検証（リロード中の全 DOM/Mutation イベントで `bgm=false` 時は `#bgs` が一度も表示されないこと、`bgm=true` 時も `#app` 描画完了前に先行表示されないこと）すべて合格。未コミット・未プッシュ。
+
 ### 2026-11-17 18:50(PST)/ Antigravity / antigravity/firebase-net-20261117
 - 目的: ユーザーの指示。`web/pc-firebase/`（同一公開パス `https://mitsuhira1.github.io/Web_app/pc-firebase/`）をベースに、スマートフォン向け Web 対応（縦スクロール解禁、コンパクト上段ナビ、スライドアップ詳細シート、全30ゲームのモバイル盤面最適化、タッチ/ピンチ操作改善）を発展させる。
 - 変更:

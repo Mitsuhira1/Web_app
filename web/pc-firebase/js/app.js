@@ -50,6 +50,7 @@ const lvIndex = (t) => Math.max(0, LV.indexOf(t));
 const app = $('#app');
 const meName = () => S.set.name || 'あなた';
 const isMob = () => window.innerWidth <= 920;
+const isTouchDevice = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
 // ---------------------------------------------------------------- 共通の部品
 const seg = (key, opts, val, cls = '') => `<div class="seg ${cls}" data-seg="${key}">${opts.map((o) => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<button data-v="${esc(v)}" aria-pressed="${String(v) === String(val)}">${esc(l)}</button>`; }).join('')}</div>`;
@@ -58,12 +59,13 @@ const QUIT_IC = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d=
 function rail(cur) {
   const t = [['menu', 'games', 'ゲーム'], ['room', 'room', 'みんなで遊ぶ'], ['records', 'rec', '成績'], ['settings', 'set', '設定']];
   const onMenu = cur === 'menu';
+  const showQuit = !isMob() && !isTouchDevice();
   return `<nav class="rail">
     <div class="brand"><strong>あそび箱 <i>30</i></strong></div>
     <div class="tabs">${t.map(([s, i, n]) => `<button data-go="${s}" ${cur === s ? 'aria-current="page"' : ''}>${ic(i)}${n}</button>`).join('')}</div>
     <div class="rail-filter${onMenu ? '' : ' is-hidden'}"${onMenu ? '' : ' aria-hidden="true" inert'}><h4>人数</h4>${seg('filter', ['すべて', '1人', '2人', '3人以上'], S.filter, 'col')}</div>
     ${roomSummary()}
-    <button class="quitbtn" data-quitapp>${QUIT_IC}終了する</button>
+    ${showQuit ? `<button class="quitbtn" data-quitapp>${QUIT_IC}終了する</button>` : ''}
     <button class="me" data-goprof aria-label="プロフィールの設定">${meAv()}<b>${esc(meName())}</b></button>
   </nav>`;
 }
@@ -715,7 +717,7 @@ function cut(c) {
 }
 
 // CPU のカーソル(打つ場所へ動かしてから打つ)
-const cursorOn = () => S.set.cursor !== '表示しない' && !S.set.reduce;
+const cursorOn = () => S.set.cursor !== '表示しない' && !S.set.reduce && !isMob() && !isTouchDevice();
 // 「あなたの番です」: 3 人以上の対局・手番ごとに交代・通信対戦で出す
 // 「あなたの番です」の音: 気づきやすい、上がる 2 つの音(効果音の設定に従う)
 function sfxYourTurn() {
@@ -956,6 +958,7 @@ function render() {
   lastModal = S.modal;
   if (S.screen === 'play') { if (view) drawPlay(true); if (view && view.outcome) showResult(); }
   if (S.screen === 'room') afterRoom();
+  if (typeof syncPublicRoomsWatch === 'function') syncPublicRoomsWatch();
   const log = $('#log'); if (log) log.scrollTop = log.scrollHeight;
   bgmSync();
 }
@@ -1150,12 +1153,15 @@ function goBack() {
   if (S.screen === 'setup') return go(S.setup.online ? 'room' : 'menu');
   if (S.screen === 'settings' || S.screen === 'records' || S.screen === 'room') return go('menu');
 }
+let lastResizeMob = isMob();
 window.addEventListener('resize', () => {
   const z = S.set.scale === '100%' ? 1 : parseInt(S.set.scale, 10) / 100;
   const mob = isMob();
   document.body.style.height = (z === 1 || mob) ? '' : (100 / z) + 'vh';
   document.body.style.width = (z === 1 || mob) ? '' : (100 / z) + 'vw';
-  if (!mob && S.mobDetail) { S.mobDetail = false; if (S.screen === 'menu') render(); }
+  if (mob) { hideCursor(); document.querySelectorAll('.rcur.live').forEach((e) => e.remove()); }
+  if (!mob && S.mobDetail) { S.mobDetail = false; if (S.screen === 'menu') return render(); }
+  if (mob !== lastResizeMob) { lastResizeMob = mob; if (S.screen !== 'play') render(); }
 }, { passive: true });
 window.addEventListener('mousedown', (e) => { if (e.button === 3 || e.button === 4) e.preventDefault(); });
 window.addEventListener('mouseup', (e) => { if (e.button === 3) { e.preventDefault(); goBack(); } else if (e.button === 4) e.preventDefault(); });

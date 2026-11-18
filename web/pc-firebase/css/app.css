@@ -1661,6 +1661,7 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
   .cell.can:hover::after{width:22%;height:22%;opacity:.85;background:var(--mark)}
   .scell.can:hover{background:transparent}
   .tapg:hover .gh,.paper .dtg:hover .dgh,.c4slot:hover .ghost,.c4slot.h .hov{opacity:0}
+  .quitbtn,.rcur,.aimring{display:none!important}
 }
 
 @media (max-width:920px){
@@ -1677,9 +1678,7 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
   .me{order:2;display:flex!important;width:auto;flex:none;margin-top:0;padding:3px 10px 3px 4px;border-top:0;border:1px solid var(--line);border-radius:999px;background:var(--surface2);min-height:34px;gap:6px}
   .me .avatar{width:26px;height:26px;font-size:13px}
   .me b{font-size:13px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .quitbtn{order:3;margin-top:0;height:34px;padding:0 10px;font-size:12px;gap:5px;box-shadow:0 2px 0 #8E2017}
-  .quitbtn .ic{width:15px;height:15px}
-  .rail .quitbtn+.me{margin-top:0}
+  .quitbtn,.rcur,.aimring{display:none!important}
   .tabs{order:4;flex:0 0 100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
   .rail-filter{order:5;flex:0 0 100%;display:flex;align-items:center;gap:8px}
   .rail-filter h4{margin:0;font-size:12px;white-space:nowrap}
@@ -1925,3 +1924,37 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
   .boardwrap.k-solitaire{max-width:640px;height:clamp(320px,82dvh,440px)}
   .detail{max-height:92dvh}
 }
+
+/* ---- ルーム設定・公開ルーム一覧・チャット無効・観戦者選択 (2026-11-17) ---- */
+.pubrooms-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0 4px}
+.pubrooms-hd h3{margin:0;font-size:12px;color:var(--sub);letter-spacing:.08em;display:flex;align-items:center;gap:6px}
+.pubrooms-hd .badge,.pubroom-badges .badge,.spec-row .badge{width:auto;padding:2px 8px;line-height:1.4}
+.pubrooms{display:flex;flex-direction:column;gap:8px;padding:6px 0 10px}
+.pubroom-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--surface2);text-align:left;transition:border-color .14s ease,transform .12s ease}
+.pubroom-item:hover,.pubroom-item:focus-visible{border-color:var(--gold);transform:translateY(-1px)}
+.pubroom-art{width:46px;height:46px;border-radius:10px;overflow:hidden;flex:none;background:var(--well);display:grid;place-items:center}
+.pubroom-art svg{width:100%;height:100%;display:block}
+.pubroom-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.pubroom-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pubroom-top b{font-size:15px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pubroom-code{font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:700;color:var(--sub);flex:none}
+.pubroom-sub{font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pubroom-badges{display:flex;flex-wrap:wrap;gap:4px}
+.badge{background:var(--well);color:var(--ink)}
+.badge.lobby{background:color-mix(in srgb,#3E9B63 22%,var(--surface2));color:#3E9B63}
+.badge.playing{background:color-mix(in srgb,var(--gold) 24%,var(--surface2));color:var(--gold)}
+.badge.vibe{background:color-mix(in srgb,#3F78C4 18%,var(--surface2));color:#5b94e6}
+.badge.off{background:color-mix(in srgb,var(--red) 14%,var(--surface2));color:var(--red)}
+.badge.locked{background:color-mix(in srgb,var(--red) 22%,var(--surface2));color:var(--red)}
+.pubroom-detail-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;padding:4px 12px;background:var(--surface2);margin-top:8px}
+.pubroom-detail-list .row{min-height:40px}
+.pubroom-detail-list .row:first-child{border-top:0}
+.pub-detail-game{display:inline-flex;align-items:center;gap:8px}
+.pub-detail-game .art{width:28px;height:28px;border-radius:6px;overflow:hidden;flex:none}
+.pub-detail-game .art svg{width:100%;height:100%;display:block}
+.chat.chat-off .log{display:grid;place-items:center;text-align:center}
+.chat.chat-off form{opacity:.5}
+.spec-list{margin:10px 0;max-height:46dvh;overflow:auto}
+.spec-row{justify-content:space-between;padding:8px 12px}
+.spec-row.is-spec{opacity:.78;background:var(--surface2)}
+.spec-left{display:flex;align-items:center;gap:10px;min-width:0}

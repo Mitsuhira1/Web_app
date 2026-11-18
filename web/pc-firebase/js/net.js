@@ -207,6 +207,57 @@ export async function createNet(core, hooks) {
     }
   }
 
+  const DEFAULT_ROOM_SETTINGS = {
+    isPublic: false,
+    chatEnabled: true,
+    maxPlayers: 6,
+    locked: false,
+    vibe: "ボチボチ",
+  };
+
+  function normalizeRoomSettings(raw) {
+    const s = raw || {};
+    const maxPlayers = Math.max(2, Math.min(6, Number(s.maxPlayers) || 6));
+    const vibe = ["ガチ", "ボチボチ", "まったり"].includes(s.vibe) ? s.vibe : "ボチボチ";
+    return {
+      isPublic: !!s.isPublic,
+      chatEnabled: s.chatEnabled !== false,
+      maxPlayers,
+      locked: !!s.locked,
+      vibe,
+    };
+  }
+
+  function extractPublicRooms(all) {
+    const now = Date.now();
+    const list = [];
+    for (const [id, r] of Object.entries(all || {})) {
+      if (!r || typeof r !== "object") continue;
+      const createdAt = typeof r.createdAt === "number" ? r.createdAt : 0;
+      if (createdAt > 0 && now - createdAt >= ROOM_TTL_MS) continue;
+      const settings = normalizeRoomSettings(r.settings);
+      if (!settings.isPublic) continue;
+      const players = Object.values(r.players || {}).filter((p) => p && p.uid);
+      if (!players.length) continue;
+      const st = r.state || {};
+      const hostP = (r.hostUid && r.players && r.players[r.hostUid]) || players.find((p) => p.role === "host") || players[0];
+      list.push({
+        roomId: String(r.roomId || id),
+        playerCount: players.length,
+        maxPlayers: settings.maxPlayers,
+        phase: st.phase === "PLAYING" ? "PLAYING" : "LOBBY",
+        chatEnabled: settings.chatEnabled,
+        vibe: settings.vibe,
+        locked: settings.locked,
+        gameId: st.gameId || "reversi",
+        hostName: (hostP && hostP.name) || "ホスト",
+        createdAt,
+      });
+    }
+    list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return list;
+  }
+
   function watchRoom(roomId, callbacks) {
     const d = getDb();
     roomCallbacks = callbacks || {};
@@ -216,6 +267,9 @@ export async function createNet(core, hooks) {
     const uState = onValue(ref(d, `rooms/${roomId}/state`), (snap) => {
       callbacks.onState && callbacks.onState(snap.val());
     });
+    const uSettings = onValue(ref(d, `rooms/${roomId}/settings`), (snap) => {
+      callbacks.onSettings && callbacks.onSettings(normalizeRoomSettings(snap.val()));
+    });
     const uCursors = onValue(ref(d, `rooms/${roomId}/cursors`), (snap) => {
       callbacks.onCursors && callbacks.onCursors(snap.val() || {});
     });
@@ -223,7 +277,7 @@ export async function createNet(core, hooks) {
       if (!snap.exists()) callbacks.onRoomRemoved && callbacks.onRoomRemoved();
       else callbacks.onHostUid && callbacks.onHostUid(snap.val());
     });
-    unsubs.push(uPlayers, uState, uCursors, uRoot);
+    unsubs.push(uPlayers, uState, uSettings, uCursors, uRoot);
     if (uid) {
       const uKicked = onValue(ref(d, `rooms/${roomId}/kicked/${uid}`), (snap) => {
         if (snap.exists()) callbacks.onKicked && callbacks.onKicked(snap.val());
@@ -244,7 +298,7 @@ export async function createNet(core, hooks) {
     syncDisconnectPolicy,
 
     // ホストとして4桁の部屋を作成
-    async createRoom(playerInfo, initialState, callbacks) {
+    async createRoom(playerInfo, initialState, callbacks, initialSettings) {
       await clearListeners();
       const myUid = await ensureAuth();
       const d = getDb();
@@ -256,12 +310,14 @@ export async function createNet(core, hooks) {
       }
       if (!roomId) throw new Error("空いているルームコードが見つかりませんでした");
 
+      const settings = normalizeRoomSettings(initialSettings || DEFAULT_ROOM_SETTINGS);
       const roomRef = ref(d, `rooms/${roomId}`);
       const nowTs = serverTimestamp();
       await set(roomRef, {
         roomId,
         hostUid: myUid,
         createdAt: nowTs,
+        settings,
         players: {
           [myUid]: {
             uid: myUid,
@@ -289,7 +345,7 @@ export async function createNet(core, hooks) {
       currentRole = "host";
       await syncDisconnectPolicy(1);
       watchRoom(roomId, callbacks);
-      return { roomId, uid: myUid, slot: 0 };
+      return { roomId, uid: myUid, slot: 0, settings };
     },
 
     // 4桁の数字を入力して部屋に参加
@@ -308,10 +364,12 @@ export async function createNet(core, hooks) {
         await remove(roomRef).catch(() => {});
         throw new Error(`部屋「${roomId}」は有効期限(3時間)が切れています`);
       }
+      const settings = normalizeRoomSettings(roomVal.settings);
       const players = roomVal.players || {};
       const existing = players[myUid];
       const usedSlots = new Set(Object.values(players).map((p) => p && typeof p.slot === "number" ? p.slot : -1));
-      if (!existing && usedSlots.size >= 6) throw new Error("部屋が満員です(最大6人)");
+      if (!existing && settings.locked) throw new Error("この部屋はロックされているため参加できません");
+      if (!existing && usedSlots.size >= settings.maxPlayers) throw new Error(`部屋が満員です(最大${settings.maxPlayers}人)`);
       let slot = existing && typeof existing.slot === "number" ? existing.slot : 1;
       if (!existing) {
         for (let s = 0; s < 6; s++) { if (!usedSlots.has(s)) { slot = s; break; } }
@@ -336,7 +394,58 @@ export async function createNet(core, hooks) {
       currentRole = "guest";
       await syncDisconnectPolicy(Object.keys(players).length + (existing ? 0 : 1));
       watchRoom(roomId, callbacks);
-      return { roomId, uid: myUid, slot, hostUid: roomVal.hostUid || null };
+      return { roomId, uid: myUid, slot, hostUid: roomVal.hostUid || null, settings };
+    },
+
+    // 公開ルーム一覧の取得・監視
+    async listPublicRooms() {
+      await ensureAuth();
+      const d = getDb();
+      const snap = await get(ref(d, "rooms"));
+      return extractPublicRooms(snap.exists() ? snap.val() : {});
+    },
+
+    watchPublicRooms(callback) {
+      const d = getDb();
+      let stopped = false;
+      let unsub = null;
+      ensureAuth().then(() => {
+        if (stopped) return;
+        unsub = onValue(ref(d, "rooms"), (snap) => {
+          callback && callback(extractPublicRooms(snap.exists() ? snap.val() : {}));
+        }, () => {
+          callback && callback([]);
+        });
+      }).catch(() => {});
+      return () => {
+        stopped = true;
+        if (unsub) { try { unsub(); } catch {} unsub = null; }
+      };
+    },
+
+    // ホストがルーム設定(公開/チャット/最大人数/ロック/雰囲気)を更新
+    async updateRoomSettings(partialSettings) {
+      if (!currentRoomId || currentRole !== "host" || !partialSettings) return;
+      const d = getDb();
+      const next = {};
+      if ("isPublic" in partialSettings) next.isPublic = !!partialSettings.isPublic;
+      if ("chatEnabled" in partialSettings) next.chatEnabled = partialSettings.chatEnabled !== false;
+      if ("maxPlayers" in partialSettings) next.maxPlayers = Math.max(2, Math.min(6, Number(partialSettings.maxPlayers) || 6));
+      if ("locked" in partialSettings) next.locked = !!partialSettings.locked;
+      if ("vibe" in partialSettings) next.vibe = ["ガチ", "ボチボチ", "まったり"].includes(partialSettings.vibe) ? partialSettings.vibe : "ボチボチ";
+      if (!Object.keys(next).length) return;
+      await update(ref(d, `rooms/${currentRoomId}/settings`), next);
+    },
+
+    // ホストが複数プレイヤーの観戦フラグを一括更新
+    async setPlayersSpectating(spectatingByUid) {
+      if (!currentRoomId || currentRole !== "host" || !spectatingByUid) return;
+      const d = getDb();
+      const updates = {};
+      for (const [targetUid, val] of Object.entries(spectatingByUid)) {
+        if (targetUid) updates[`players/${targetUid}/spectating`] = !!val;
+      }
+      if (Object.keys(updates).length) await update(ref(d, `rooms/${currentRoomId}`), updates);
     },
 
     // A preference is advisory; only OnlineRoom's host starts/chooses actual play.
