@@ -49,6 +49,7 @@ const lvIndex = (t) => Math.max(0, LV.indexOf(t));
 
 const app = $('#app');
 const meName = () => S.set.name || 'あなた';
+const isMob = () => window.innerWidth <= 920;
 
 // ---------------------------------------------------------------- 共通の部品
 const seg = (key, opts, val, cls = '') => `<div class="seg ${cls}" data-seg="${key}">${opts.map((o) => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<button data-v="${esc(v)}" aria-pressed="${String(v) === String(val)}">${esc(l)}</button>`; }).join('')}</div>`;
@@ -74,7 +75,7 @@ function fits(p) {
 function go(screen) {
   const m = $('.main'); if (m) (S.scrollMem = S.scrollMem || {})[S.screen] = m.scrollTop;
   if (S.screen === 'play' && screen !== 'play') leavePlay();
-  S.screen = screen; S.stOpen = false; S.modal = null; ddOpen = null;
+  S.screen = screen; S.stOpen = false; S.modal = null; S.mobDetail = false; ddOpen = null;
   bgCtx(); render();
 }
 function bgmGenreFor() {
@@ -91,19 +92,23 @@ function menu() {
   const nc = ORDER.filter((id) => gInfo(id) && gInfo(id).category !== 'BOARD' && fits(gInfo(id).players)).length;
   const sv = roomActive() ? [] : savedList();
   const cont = sv.length ? `<div class="conts"><h3>続きから</h3>${sv.map((s, k) => `<button class="resume" data-resume="${k}"><span class="th">${artOf(s.id)}</span><b>${esc(gInfo(s.id).name)}</b><span class="mv">${s.moves}手目</span><span class="go">${ic('play')}</span></button>`).join('')}</div>` : '';
+  const roomBar = roomActive() ? `<div class="mob-roombar"><button type="button" class="btn gold" data-detailopen>${S.sel && gInfo(S.sel) ? `${esc(gInfo(S.sel).name)}・` : ''}ルーム詳細・チャットを開く</button></div>` : '';
+  const backdrop = S.mobDetail ? `<button type="button" class="detail-backdrop" data-detailclose aria-label="詳細を閉じる"></button>` : '';
   return `<div class="screen">${rail('menu')}
-   <div class="main">${cont}
+   <div class="main">${roomBar}${cont}
     ${nb ? `<h3 class="shelfhead">ボードゲーム <i>${nb}</i></h3><div class="shelf">${tiles('b')}</div>` : ''}
     ${nc ? `<h3 class="shelfhead">カードゲーム <i>${nc}</i></h3><div class="shelf">${tiles('c')}</div>` : ''}
-   </div>${detail()}</div>`;
+   </div>${backdrop}${detail()}</div>`;
 }
 function detail() {
   if (roomActive()) return onlineMenuDetail();
   const g = S.sel && gInfo(S.sel);
-  if (!g) return '<aside class="detail"><div class="empty">ゲームを選んでください</div></aside>';
+  const mobHd = `<div class="detail-mobhd"><span class="detail-handle" aria-hidden="true"></span><button type="button" class="btn" data-detailclose aria-label="閉じる">✕ 閉じる</button></div>`;
+  const openCls = S.mobDetail ? ' open' : '';
+  if (!g) return `<aside class="detail${openCls}">${mobHd}<div class="empty">ゲームを選んでください</div></aside>`;
   const c = cfg(g.id);
   const ok = playable(g.id);
-  return `<aside class="detail"><div class="scroll">
+  return `<aside class="detail${openCls}">${mobHd}<div class="scroll">
     <div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span><span class="tag">${g.category === 'BOARD' ? 'ボード' : 'カード'}</span></div></div>
     <div class="panel"><h3>前回の設定</h3>
       <div class="row"><span>遊び方</span><b>${c.mode === 'pass' ? '手番ごとに交代' : 'CPUと対戦'}</b></div>
@@ -488,13 +493,13 @@ function setupDrag(o) {
       if (over !== d) { if (over) over.classList.remove('dropover'); over = d && wrap.contains(d) ? d : null; if (over) over.classList.add('dropover'); }
     };
     const up = () => {
-      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
       if (!ghost) return;
       ghost.remove(); src.classList.remove('dragsrc'); if (over) over.classList.remove('dropover');
       dragJust = true; setTimeout(() => (dragJust = false), 0);
       if (over) { o.drop(src, over); } else sfx.play('CARD', { volume: .35, rate: .9 });
     };
-    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
   };
 }
 
@@ -915,8 +920,9 @@ function render() {
   document.documentElement.classList.toggle('lite', S.set.look === '軽量');
   document.documentElement.classList.toggle('reduce', !!S.set.reduce);
   { const z = S.set.scale === '100%' ? 1 : parseInt(S.set.scale, 10) / 100; document.body.style.zoom = z === 1 ? '' : z;
-    // 拡大した時も、画面からはみ出さないように(ウィンドウの大きさを拡大の分だけ割る)
-    document.body.style.height = z === 1 ? '' : (100 / z) + 'vh'; document.body.style.width = z === 1 ? '' : (100 / z) + 'vw'; }
+    // 拡大した時も、画面からはみ出さないように(モバイル幅ではスクロールを妨げない)
+    const mob = isMob();
+    document.body.style.height = (z === 1 || mob) ? '' : (100 / z) + 'vh'; document.body.style.width = (z === 1 || mob) ? '' : (100 / z) + 'vw'; }
   if (S.theme === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = S.theme;
   const screens = { first, menu, setup, play, settings, records, room };
   if (S.screen === 'setup' && !gInfo(S.setup.id)) S.screen = 'menu';
@@ -930,7 +936,8 @@ function render() {
   if (typeof keepStampScroll === 'function') keepStampScroll();
   const newMain = $('.main'); if (newMain) newMain.scrollTop = keepTop != null ? keepTop : ((S.scrollMem || {})[S.screen] || 0);
   const newBody = $('.setupbody'); if (newBody && keepBody != null) newBody.scrollTop = keepBody;
-  if (lastScreen !== S.screen && S.screen === 'menu' && S.sel) { const t = $(`[data-tile="${S.sel}"]`); if (t) t.scrollIntoView({ block: 'nearest' }); }
+  if (lastScreen !== S.screen && isMob()) window.scrollTo(0, 0);
+  if (lastScreen !== S.screen && S.screen === 'menu' && S.sel && !isMob()) { const t = $(`[data-tile="${S.sel}"]`); if (t) t.scrollIntoView({ block: 'nearest' }); }
   if (lastScreen !== S.screen) { const sc = app.querySelector('.screen.col'); if (sc) sc.classList.add('enter'); }
   if (lastScreen !== S.screen && /^(menu|room|records|settings)$/.test(S.screen) && lastScreen && lastScreen !== 'first') { const m = $('.main'); if (m) m.classList.add('enter'); }
   if (S.filterChanged && S.screen === 'menu') { S.filterChanged = false; const m = $('.main'); if (m) m.classList.add('filter-enter'); const fb = $('.rail-filter .seg button[aria-pressed="true"]'); if (fb) fb.classList.add('filter-pop'); }
@@ -978,14 +985,24 @@ app.addEventListener('click', async (e) => {
   if (d.playsettings != null) return openPlaySettings();
   if (d.playsettingsclose != null) { closeSheet(); return; }
   if (d.sheetback != null) return closeSheet();
+  if (d.detailopen != null) { S.mobDetail = true; return render(); }
+  if (d.detailclose != null) { S.mobDetail = false; return render(); }
   if (d.dd) { if (ddOpen === d.dd) return ddClose(true); ddOpen = d.dd; S.focusSel = `.ddopt.on`; return render(); }
   if (d.ddv != null) { const k = d.ddk; S.set[k] = d.ddv; saveSet(); if (k === 'res') setWinSize(d.ddv); ddOpen = null; S.focusSel = `[data-dd="${k}"]`; return render(); }
   if (d.go && S.screen === 'play' && !b.closest('.rbox')) return goBack();
-  if (d.go) { if (d.go === 'room' && S.screen === 'play' && online) { leavePlay(); S.screen = 'room'; return render(); } return go(d.go); }
+  if (d.go) { if (d.go === 'room' && S.screen === 'play' && online) { leavePlay(); S.screen = 'room'; S.mobDetail = false; return render(); } return go(d.go); }
   if (d.quitapp != null) return askQuitApp();
   if (d.goprof != null) { S.scat = 'prof'; return go('settings'); }
-  if (d.tile && roomChoosing()) { S.sel=d.tile;chooseWish(d.tile);return render(); }
-  if (d.tile) { const id = d.tile; if ((S.sel === id || e.detail === 0) && playable(id)) { if (e.detail === 0) S.focusSel = '[data-start]'; S.setup = { id, online: false }; return go('setup'); } S.sel = id; S.focusSel = `[data-tile="${id}"]`; return render(); }
+  if (d.tile && roomChoosing()) { S.sel = d.tile; chooseWish(d.tile); if (isMob()) S.mobDetail = true; return render(); }
+  if (d.tile) {
+    const id = d.tile;
+    if (isMob()) {
+      if (S.sel === id && S.mobDetail && playable(id)) { S.mobDetail = false; S.setup = { id, online: false }; return go('setup'); }
+      S.sel = id; S.mobDetail = true; return render();
+    }
+    if ((S.sel === id || e.detail === 0) && playable(id)) { if (e.detail === 0) S.focusSel = '[data-start]'; S.setup = { id, online: false }; return go('setup'); }
+    S.sel = id; S.focusSel = `[data-tile="${id}"]`; return render();
+  }
   if (d.next != null && roomChoosing()) { if (isHostRoom() && (ost.members.length >= 2 || isSoloInRoom())) chooseOnline(S.sel); return; }
   if (d.next != null) { S.setup = { id: S.sel, online: false }; return go('setup'); }
   if (d.resume != null) return resume(savedList()[+d.resume]);
@@ -1122,6 +1139,7 @@ function goBack() {
   if ($('#sheetwrap')) { snd(); return closeSheet(); }
   if (S.stOpen) { snd(); S.stOpen = false; return render(); }
   if (S.modal) { snd(); S.modal = null; return render(); }
+  if (S.screen === 'menu' && S.mobDetail) { snd(); S.mobDetail = false; return render(); }
   if (S.screen !== 'menu' && S.screen !== 'first') snd();
   if (S.screen === 'play') {
     if (online && view && view.mine < 0) return go('room');
@@ -1132,6 +1150,13 @@ function goBack() {
   if (S.screen === 'setup') return go(S.setup.online ? 'room' : 'menu');
   if (S.screen === 'settings' || S.screen === 'records' || S.screen === 'room') return go('menu');
 }
+window.addEventListener('resize', () => {
+  const z = S.set.scale === '100%' ? 1 : parseInt(S.set.scale, 10) / 100;
+  const mob = isMob();
+  document.body.style.height = (z === 1 || mob) ? '' : (100 / z) + 'vh';
+  document.body.style.width = (z === 1 || mob) ? '' : (100 / z) + 'vw';
+  if (!mob && S.mobDetail) { S.mobDetail = false; if (S.screen === 'menu') render(); }
+}, { passive: true });
 window.addEventListener('mousedown', (e) => { if (e.button === 3 || e.button === 4) e.preventDefault(); });
 window.addEventListener('mouseup', (e) => { if (e.button === 3) { e.preventDefault(); goBack(); } else if (e.button === 4) e.preventDefault(); });
 // 矢印キーで、押せる所を移る(Enter で押す)
@@ -1222,7 +1247,7 @@ function sfxShuffle() {
 function clickSound(b, d) {
   if (b.closest('#boardwrap') || b.closest('#acts') || b.matches('.cutin') || b.classList.contains('off')) return;
   if (d.start != null) return sfxStart();
-  if (d.next != null || (d.tile && S.sel === d.tile)) return sfxGo();
+  if (d.next != null || (d.tile && S.sel === d.tile && (!isMob() || S.mobDetail))) return sfxGo();
   if (d.again != null || d.resume != null) return sfxStart();
   sfx.play(b.getAttribute('aria-label') === '戻る' || d.mclose != null || d.mback != null || d.sheetback != null ? 'BACK' : 'TAP');
 }

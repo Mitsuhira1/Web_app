@@ -56,6 +56,19 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-17 18:50(PST)/ Antigravity / antigravity/firebase-net-20261117
+- 目的: ユーザーの指示。`web/pc-firebase/`（同一公開パス `https://mitsuhira1.github.io/Web_app/pc-firebase/`）をベースに、スマートフォン向け Web 対応（縦スクロール解禁、コンパクト上段ナビ、スライドアップ詳細シート、全30ゲームのモバイル盤面最適化、タッチ/ピンチ操作改善）を発展させる。
+- 変更:
+  - `web/pc-firebase/index.html`: `viewport-fit=cover`、`mobile-web-app-capable`、`apple-mobile-web-app-capable`、`apple-mobile-web-app-status-bar-style` を追加。
+  - `web/pc-firebase/js/app.js`: `isMob()` (`<= 920px`)、画面遷移関数 `go()` での `S.mobDetail = false` リセット、モバイル上段ルームバー(`.mob-roombar`)とスライドアップ詳細シート(`.detail.open` / `.detail-backdrop` / `.detail-mobhd`)、タイル単押しでシートを開きモバイル時は不要な再タップ音を抑制 (`clickSound()`)、`render()` 内でモバイル時は `body.style.height`/`width` 固定を解除（125%/150% 拡大時も縦スクロール可能に）、`setupDrag()` の `pointercancel` cleanup、ブラウザバック・リサイズ対応を追加。
+  - `web/pc-firebase/js/online.js`: ルーム待機時の詳細シート `onlineMenuDetail()` にも `.detail-mobhd` 閉じるヘッダーと `.open` 状態を反映。
+  - `web/pc-firebase/js/boards/life.js`: 人生すごろく盤面 `#lview` にタッチ向けズームオーバーレイ(`.lzoom`: `＋` / `－` / `◎`)と2本指ピンチズーム＋`pointercancel` cleanup を追加。
+  - `web/pc-firebase/css/app.css`: `@media (hover:none) and (pointer:coarse)` の hover 抑止・`touch-action: manipulation`、`@media (max-width:920px)`・`(max-width:640px)`・`(max-height:540px) and (max-width:960px)` のレスポンシブスタイルを追加（`html, body { overflow-x: clip; overflow-y: visible }` で `.setupfoot` の `position: sticky` を有効化、4列ナビ、横並びフィルタ、対局右上設定ボタン、将棋/ヨット/ヒット＆ブロー縦積みレイアウト、カード卓/スピード/ソリティア/麻雀の手牌・卓サイズ調整、成績表・ルーム入力欄・すごろく/ルドーの座席バッジ最適化）。
+  - `web/pc-firebase/sw.js`: キャッシュ名を `asobipcfb-20261117-mobile-web-1` に更新。
+- ファイル: `web/pc-firebase/index.html`, `web/pc-firebase/css/app.css`, `web/pc-firebase/js/app.js`, `web/pc-firebase/js/online.js`, `web/pc-firebase/js/boards/life.js`, `web/pc-firebase/sw.js`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `node --check`（編集JS4ファイル）、`git diff --check`、およびヘッドレス Chrome モバイル検証（390×844 初回画面・メニュー縦スクロール・詳細ボトムシート・設定sticky下部・ルーム・成績・設定全7カテゴリ・150%表示・ルールモーダル・全30ゲーム盤面、360×740主要12ゲーム、844×390横画面将棋、1280×800 PC版回帰）すべて `overflow: 0`・`ERRORS: NONE` で合格。主要画面と配布完了後の花札・ソリティア・麻雀・すごろく等のスクリーンショットを目視確認済み。`antigravity/firebase-net-20261117` および `ccr-efc07031-6exjqs` へコミット・プッシュ済み（`web/pc/`・`Windows-Projects` は無変更）。
+- 他の AI への申し送り: `web/pc-firebase/` 側のモバイルレイアウトは `css/app.css` 末尾の `@media` 群と `app.js` の `isMob()` / `S.mobDetail` で管理している。`html, body` に `overflow-y: auto` を付けると `.setupfoot` の `position: sticky` が効かなくなるため `overflow-x: clip; overflow-y: visible` を維持すること。
+
 ### 2026-11-17 18:18(PST)/ Antigravity / antigravity/firebase-net-20261117
 - 目的: ユーザーの指示。ヨット (`yacht`) で同じ目が5つ出たとき、プレイヤーとCPUがフルハウスとして得点・選択できていた不具合を修正する。
 - 変更:

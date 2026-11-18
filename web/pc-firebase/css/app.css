@@ -1648,3 +1648,280 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
 .msg.sys{align-self:center;max-width:96%;background:transparent;color:var(--sub);font-size:12px;font-weight:700;padding:2px 8px;text-align:center}
 .online-ops{display:flex;gap:8px;flex-wrap:wrap}
 .online-ops .btn{flex:1;min-width:0;height:36px;font-size:12.5px;padding:0 10px}
+
+/* ---- スマホ Web 向け最適化 (2026-11-17) ---- */
+.mob-roombar,.detail-mobhd,.detail-backdrop{display:none}
+.lzoom{position:absolute;right:12px;top:12px;z-index:4;display:flex;gap:4px;padding:3px;border-radius:999px;background:rgba(255,248,220,.92);border:2px solid #4A3520;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.lzoom button{width:32px;height:32px;border-radius:50%;font-weight:900;font-size:15px;color:#2B1D10;display:grid;place-items:center}
+.lzoom button:hover{background:rgba(185,131,24,.18)}
+
+@media (hover:none) and (pointer:coarse){
+  button,a,summary,[role="switch"]{touch-action:manipulation}
+  .tile:hover,.card:hover,.hand .card:hover,.cd.tap:hover,.hand2 .pc.tap:hover,.pcard.tap:hover,.mjt.big:hover,.stamps button:hover,.stpanel button:hover,.mgrid .pc.tap:hover,.upass:hover,.wheel.can:hover,.yd:not(:disabled):hover .d2{transform:none}
+  .cell.can:hover::after{width:22%;height:22%;opacity:.85;background:var(--mark)}
+  .scell.can:hover{background:transparent}
+  .tapg:hover .gh,.paper .dtg:hover .dgh,.c4slot:hover .ghost,.c4slot.h .hov{opacity:0}
+}
+
+@media (max-width:920px){
+  html,body{height:auto;min-height:100dvh;overflow-x:clip;overflow-y:visible;-webkit-overflow-scrolling:touch}
+  body{overscroll-behavior-y:contain}
+  .app{flex:1 0 auto;min-height:0}
+  .screen{flex:1 0 auto;flex-direction:column;min-height:0;overflow:visible}
+
+  /* 上部ナビゲーション・プロフ・人数フィルタ・ルーム要約 */
+  .rail{width:auto;border-right:0;border-bottom:1px solid var(--line);flex-direction:row;flex-wrap:wrap;align-items:center;
+    padding:max(8px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 10px max(12px,env(safe-area-inset-left,0px));gap:8px 10px;overflow:visible}
+  .brand{order:1;margin-right:auto}
+  .brand strong{font-size:18px}
+  .me{order:2;display:flex!important;width:auto;flex:none;margin-top:0;padding:3px 10px 3px 4px;border-top:0;border:1px solid var(--line);border-radius:999px;background:var(--surface2);min-height:34px;gap:6px}
+  .me .avatar{width:26px;height:26px;font-size:13px}
+  .me b{font-size:13px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .quitbtn{order:3;margin-top:0;height:34px;padding:0 10px;font-size:12px;gap:5px;box-shadow:0 2px 0 #8E2017}
+  .quitbtn .ic{width:15px;height:15px}
+  .rail .quitbtn+.me{margin-top:0}
+  .tabs{order:4;flex:0 0 100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+  .rail-filter{order:5;flex:0 0 100%;display:flex;align-items:center;gap:8px}
+  .rail-filter h4{margin:0;font-size:12px;white-space:nowrap}
+  .rail-filter .seg.col{flex-direction:row;flex:1;min-width:0}
+  .rail-filter .seg button{padding:6px 4px;font-size:12.5px}
+  .room-summary{order:6;flex:0 0 100%;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 8px;padding:8px 10px}
+  .room-code{font-size:18px}
+  .room-members{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:6px}
+  .room-summary>[data-leave]{grid-column:1 / -1}
+
+  /* メニュー本体 + モバイル下側スライドシート(.detail) */
+  .main{flex:1 0 auto;overflow:visible;padding:14px max(12px,env(safe-area-inset-right,0px)) 22px max(12px,env(safe-area-inset-left,0px))}
+  .mob-roombar{display:block;margin-bottom:12px}
+  .mob-roombar .btn{width:100%}
+  .detail-backdrop{display:block;position:fixed;inset:0;z-index:21;background:rgba(0,0,0,.48);animation:fxfade .18s both}
+  .detail{position:fixed;left:0;right:0;bottom:0;z-index:22;width:auto;max-height:84dvh;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:0 -10px 32px rgba(0,0,0,.38);
+    transform:translateY(105%);visibility:hidden;pointer-events:none;transition:transform .22s cubic-bezier(.22,.85,.32,1),visibility .22s}
+  .detail.open{transform:translateY(0);visibility:visible;pointer-events:auto}
+  .detail-mobhd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px 4px;flex:none;position:relative}
+  .detail-handle{position:absolute;left:50%;top:7px;transform:translateX(-50%);width:40px;height:4px;border-radius:999px;background:var(--line)}
+  .detail-mobhd .btn{margin-left:auto;height:32px;padding:0 12px;font-size:12px;border-radius:999px}
+  .detail .scroll{padding:8px 14px 12px}
+  .detail .foot{padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px))}
+  .online-detail>.scroll{max-height:36dvh;flex:0 1 auto}
+  .online-detail .chat{min-height:165px;max-height:32dvh;margin:6px 12px}
+
+  /* 設定・部屋・成績・モーダル */
+  .setuphead{padding:10px max(12px,env(safe-area-inset-right,0px)) 10px max(12px,env(safe-area-inset-left,0px));gap:8px 10px}
+  .setuphead .art{width:44px;height:44px}
+  .setuphead .txt{min-width:0;flex:1 1 160px}
+  .setuphead h2{font-size:17px}
+  .setupbody{flex:1 0 auto;overflow:visible;padding:12px max(12px,env(safe-area-inset-right,0px)) 18px max(12px,env(safe-area-inset-left,0px))}
+  .setupfoot{position:sticky;bottom:0;z-index:10;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));gap:8px}
+  .setupfoot .btn{flex:1;min-width:0}
+  .cols{grid-template-columns:1fr}
+  .modal{padding:max(12px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));overflow-y:auto}
+  .mbox.wide{width:100%;height:min(88dvh,100%)}
+  .rcols{columns:1}
+
+  /* 対局画面全体 */
+  .stage{flex:none;padding:8px max(10px,env(safe-area-inset-right,0px)) 4px max(10px,env(safe-area-inset-left,0px));position:relative}
+  .stagehead{margin-bottom:6px;padding-right:46px;flex-wrap:wrap;gap:6px 8px}
+  .stagehead .btn{height:36px;padding:0 10px;font-size:13px}
+  .stagehead h2{font-size:16px}
+  .stagehead #hround{margin-left:0;flex-wrap:wrap}
+  .play-settings{top:6px;right:max(10px,env(safe-area-inset-right,0px));left:auto;bottom:auto;width:38px;height:38px}
+  .play-settings svg{width:20px;height:20px}
+  .acts,.acts:empty{min-height:0;padding:6px 0 2px;gap:6px}
+  .acts .btn{min-width:0;flex:1 1 auto;max-width:220px;height:42px;font-size:14px;padding:0 12px}
+  .countbar{height:30px;font-size:13px}
+  .countbar b{font-size:22px}
+  .countline{margin-bottom:6px}
+  .side{width:auto;border-left:0;border-top:1px solid var(--line);padding:10px max(12px,env(safe-area-inset-right,0px)) 16px max(12px,env(safe-area-inset-left,0px));gap:10px}
+  .side #strip:not(.seatlist){display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:6px}
+  .side .chat{min-height:200px;max-height:320px}
+  .lside .lwheel svg{max-height:170px}
+  .rbox{min-width:0;width:min(440px,calc(100vw - 24px));padding:18px 16px}
+  .rbox h3{font-size:22px}
+  .rbtns .btn{min-width:0;flex:1 1 130px}
+  .askcard{top:10px;width:min(400px,calc(100% - 16px))}
+  .askops .btn{width:auto;flex:1}
+
+  /* 全30ゲームの盤面サイズ最適化 */
+  .boardwrap{width:100%;max-width:540px;margin:0 auto;aspect-ratio:1;container-type:size}
+  .boardwrap.k-c4{aspect-ratio:1 / 1.06}
+  .boardwrap.k-hex{max-width:680px;aspect-ratio:1.58}
+  .boardwrap.k-mancala{max-width:700px;aspect-ratio:1.85}
+  .boardwrap.k-hare{max-width:680px;aspect-ratio:1.72}
+  .boardwrap.k-backgammon{max-width:680px;aspect-ratio:1.4}
+  .boardwrap.k-life{max-width:none;aspect-ratio:auto;height:clamp(360px,60dvh,520px);container-type:size}
+
+  /* 将棋・五々将棋: 縦積み + 横並び駒台 */
+  .boardwrap.k-shogi{max-width:520px;aspect-ratio:auto;height:auto;container-type:inline-size}
+  .boardwrap.k-shogi .shwrap{grid-template-columns:1fr;grid-template-rows:auto auto auto;height:auto;width:100%;gap:8px}
+  .boardwrap.k-shogi .komadai{width:100%;height:auto;min-height:50px;margin:0!important;align-self:stretch;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:6px 4px;padding:8px 10px;border-radius:10px}
+  .boardwrap.k-shogi .komadai::after{display:none}
+  .boardwrap.k-shogi .komadai .none{font-size:12px;padding:4px 0}
+  .boardwrap.k-shogi .hk{width:clamp(32px,10cqw,46px);height:clamp(36px,11cqw,52px)}
+  .boardwrap.k-shogi .hk .kf{font-size:clamp(13px,4cqw,20px)}
+  .boardwrap.k-shogi .hk b{right:-3px;bottom:-2px;font-size:10px;min-width:16px}
+  .boardwrap.k-shogi .sboard{width:min(100%,440px);height:auto;aspect-ratio:1 / 1.06;justify-self:center;padding:2.2cqw}
+  .boardwrap.k-shogi .sboard .kf{font-size:clamp(14px,4.4cqw,24px)}
+
+  /* ヨット: 縦積み(サイコロトレイ上・スコア表下) */
+  .boardwrap.k-yacht{max-width:560px;aspect-ratio:auto;height:auto;container-type:inline-size}
+  .boardwrap.k-yacht .yacht2{width:100%;height:auto;grid-template-columns:1fr;gap:12px;padding:4px 0}
+  .boardwrap.k-yacht .ytray{border-radius:16px;border-width:8px;padding:14px 12px;gap:12px}
+  .boardwrap.k-yacht .yturn{font-size:14px;padding:4px 16px}
+  .boardwrap.k-yacht .ydice{grid-template-columns:repeat(6,clamp(22px,6.2cqw,30px));gap:12px 6px}
+  .boardwrap.k-yacht .yd{width:clamp(46px,13.5cqw,64px);height:clamp(46px,13.5cqw,64px);--ds:clamp(46px,13.5cqw,64px)}
+  .boardwrap.k-yacht .yd .d2{box-shadow:0 4px 0 #B9AC8C,0 8px 8px rgba(0,0,0,.35)}
+  .boardwrap.k-yacht .yd.held .d2{outline-width:3px;outline-offset:2px}
+  .boardwrap.k-yacht .yroll{min-width:180px;height:44px;border-radius:12px;font-size:16px;padding:0 20px;box-shadow:0 3px 0 #9C6A12,0 6px 10px rgba(0,0,0,.3)}
+  .boardwrap.k-yacht .yleft{gap:8px;padding:4px 14px;font-size:13px}
+  .boardwrap.k-yacht .yleft b{font-size:18px}
+  .boardwrap.k-yacht .ydots{gap:4px}
+  .boardwrap.k-yacht .ydots i{width:10px;height:10px}
+  .boardwrap.k-yacht .ysheet{border-radius:12px;padding:8px 10px}
+  .boardwrap.k-yacht .ysheet th{font-size:13px;padding:6px 4px}
+  .boardwrap.k-yacht .ysheet th small{font-size:11px}
+  .boardwrap.k-yacht .ysheet thead th{font-size:12px}
+  .boardwrap.k-yacht .ysheet td{font-size:15px;min-width:46px;padding:6px 4px}
+  .boardwrap.k-yacht .ysheet tr.bonus th,.boardwrap.k-yacht .ysheet tr.bonus td{font-size:12.5px}
+
+  /* ヒット＆ブロー: 縦積み + 押しやすいテンキー */
+  .boardwrap.k-hitblow{max-width:600px;aspect-ratio:auto;height:auto;container-type:inline-size}
+  .boardwrap.k-hitblow .hb2{width:100%;height:auto;grid-template-columns:1fr;gap:12px;padding:4px 0}
+  .boardwrap.k-hitblow .hbleft{grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+  .boardwrap.k-hitblow .hbcol{padding:10px 12px;border-radius:12px}
+  .boardwrap.k-hitblow .hbcol h4{margin:0 0 8px;font-size:13px}
+  .boardwrap.k-hitblow .hbrows{max-height:165px;gap:6px}
+  .boardwrap.k-hitblow .hbrow{gap:8px}
+  .boardwrap.k-hitblow .hbn{width:18px;font-size:12px}
+  .boardwrap.k-hitblow .hbt{gap:4px}
+  .boardwrap.k-hitblow .hbt i{width:26px;height:32px;border-radius:5px;font-size:18px}
+  .boardwrap.k-hitblow .hbr{gap:5px}
+  .boardwrap.k-hitblow .hbr b{min-width:46px;padding:2px 8px;font-size:13px}
+  .boardwrap.k-hitblow .hbr small{font-size:10px}
+  .boardwrap.k-hitblow .hbe{font-size:13px;padding:6px 0}
+  .boardwrap.k-hitblow .hbright{padding:14px 12px;gap:12px;border-radius:14px}
+  .boardwrap.k-hitblow .hbs{gap:8px}
+  .boardwrap.k-hitblow .hbs small{font-size:12px}
+  .boardwrap.k-hitblow .hbl{font-size:16px}
+  .boardwrap.k-hitblow .hbentry{gap:8px}
+  .boardwrap.k-hitblow .hbentry span{width:44px;height:54px;border-radius:8px;font-size:26px}
+  .boardwrap.k-hitblow .hbpad{grid-template-columns:repeat(5,minmax(44px,58px));gap:8px}
+  .boardwrap.k-hitblow .hbpad button{height:44px;border-radius:8px;font-size:20px}
+  .boardwrap.k-hitblow .hbpad .del{height:38px;font-size:14px}
+  .boardwrap.k-hitblow .hbpad .clr,.boardwrap.k-hitblow .hbpad .ok{height:42px;font-size:15px}
+  .boardwrap.k-hitblow .hbhelp{font-size:12px;line-height:1.6}
+  .boardwrap.k-hitblow .hbhelp b{font-size:12px;padding:1px 7px}
+
+  /* カード卓系 9ゲーム(大富豪・7ならべ・神経衰弱・ババ抜き・OhNo・花札・ポーカー2種・BJ) */
+  .boardwrap.k-cards{max-width:680px;aspect-ratio:auto;height:clamp(390px,110vw,520px);container-type:size}
+  .boardwrap.k-cards .sgrid7{gap:4px 2px;--cw:min(6.4cqh,6.4cqw)}
+  .boardwrap.k-cards .mgrid{inset:10px;gap:5px;--cw:min(calc((78cqh / var(--rows) - 6px) * 5 / 7),calc(90cqw / var(--cols) - 6px))}
+  .boardwrap.k-cards .unoc{gap:3.5cqw;--cw:min(11cqh,19cqw)}
+  .boardwrap.k-cards .upass{width:clamp(48px,15cqw,66px);height:clamp(48px,15cqw,66px);font-size:clamp(13px,3.6cqw,18px);border-width:3px}
+  .boardwrap.k-cards .upass small{font-size:clamp(8px,2.2cqw,10px)}
+  .boardwrap.k-cards .tw.hanat{--cw:min(7.8cqh,10.8cqw)}
+  .boardwrap.k-cards .hmid{gap:10px;top:48%}
+  .boardwrap.k-cards .hfield{padding-left:0;gap:4px;min-width:0}
+  .boardwrap.k-cards .hcap{gap:6px;right:8px}
+  .boardwrap.k-cards .hcap.bottom{left:8px;right:auto}
+  .boardwrap.k-cards .hgrp>div{min-width:26px;min-height:32px}
+  .boardwrap.k-cards .tw .mytag{left:8px;font-size:11px;padding:3px 8px}
+
+  /* スピード */
+  .boardwrap.k-speed{max-width:640px;aspect-ratio:auto;height:clamp(300px,78vw,400px);container-type:size}
+  .boardwrap.k-speed .felt-table.speed{width:100%;height:100%;justify-content:space-between;padding:10px 8px;border-width:8px;border-radius:16px}
+  .boardwrap.k-speed .srow{gap:6px}
+  .boardwrap.k-speed .srow.mid{gap:18px;padding:6px 0}
+  .boardwrap.k-speed .pcard{--w:min(8.4cqh,13cqw)}
+  .boardwrap.k-speed .pcard.sm{--w:min(6.4cqh,10cqw)}
+  .boardwrap.k-speed .pcard.big{--w:min(10.5cqh,16cqw)}
+
+  /* ソリティア */
+  .boardwrap.k-solitaire{max-width:680px;aspect-ratio:auto;height:clamp(440px,70dvh,620px);container-type:size}
+  .boardwrap.k-solitaire .felt-table.sol{width:100%;height:100%;border-width:8px;border-radius:16px;padding:10px 8px;gap:10px}
+  .boardwrap.k-solitaire .sol .soltop{gap:4px}
+  .boardwrap.k-solitaire .sol .soltop .pcard{--w:min(64px,calc((100cqw - 56px) / 7 * .94))}
+  .boardwrap.k-solitaire .sol .soltab{gap:4px}
+  .boardwrap.k-solitaire .sol .redo{font-size:18px}
+
+  /* 麻雀: 正方形卓 + 横スクロール対応手牌 */
+  .boardwrap.k-mahjong{max-width:560px;aspect-ratio:auto;height:auto;container-type:inline-size}
+  .boardwrap.k-mahjong .mjwrap{width:100%;min-width:0;height:auto;gap:8px}
+  .boardwrap.k-mahjong .mjtable{width:min(100%,440px);max-width:100%;height:auto;aspect-ratio:1;flex:none;border-width:6px;border-radius:14px}
+  .boardwrap.k-mahjong .mjinfo{font-size:13px;text-align:center}
+  .boardwrap.k-mahjong .mjhand{justify-content:flex-start;overflow-x:auto;padding:14px 4px 6px;width:100%;-webkit-overflow-scrolling:touch;gap:2px}
+  .boardwrap.k-mahjong .mjt.big{--w:clamp(22px,5.8cqw,44px)}
+  .boardwrap.k-mahjong .mjt.drawn{margin-left:8px}
+  .boardwrap.k-mahjong .mjt.pick{transform:translateY(-8px)!important}
+}
+
+@media (max-width:640px){
+  .tabs button{flex-direction:column;justify-content:center;text-align:center;gap:2px;padding:7px 2px;font-size:11px;line-height:1.15}
+  .tabs button svg.ic{width:18px;height:18px}
+  .shelf{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin-bottom:20px}
+  .tile .cap{padding:7px 8px 8px}
+  .tile .cap b{font-size:13px}
+  .tile .cap small{font-size:11px}
+  .conts .resume,.conts .resume.small{grid-template-columns:40px minmax(0,1fr) auto 34px;gap:10px;padding:8px 12px;height:auto;min-height:54px}
+
+  .row{padding:10px 0;gap:8px;min-height:44px}
+  .row>span:first-child{white-space:normal;flex:1 1 120px}
+  .row .seg,.row .field,.row .ctl{width:100%;flex:1 0 100%;margin-left:0;max-width:100%}
+  .row .stepper{width:auto;margin-left:auto}
+  .row .seg{flex-wrap:wrap}
+  .row .seg button{font-size:12.5px;padding:7px 6px;min-height:36px}
+
+  .frbox{margin:12px;padding:18px 14px}
+  .frtop{flex-direction:column;align-items:stretch;gap:12px}
+  .frtop .avatar.big{align-self:center}
+  .frops{flex-direction:column-reverse}
+  .frops .btn,.frops .primary{width:100%}
+  .avgrid{grid-template-columns:repeat(4,1fr);gap:8px}
+
+  .pguide{grid-template-columns:1fr;grid-template-areas:"tabs" "grid" "text"}
+  .pguide .pgrid{margin:0 auto}
+  .llegend>div{grid-template-columns:1fr;gap:4px}
+  .rkings{flex-wrap:wrap;justify-content:center;gap:12px}
+  .rcards{grid-template-columns:repeat(auto-fill,minmax(124px,1fr));gap:10px}
+  .record-list .rec th,.record-list .rec td{padding:8px 4px;font-size:11.5px;white-space:nowrap}
+  .record-list .rec th:first-child,.record-list .rec td:first-child{white-space:normal}
+  .record-game{gap:8px;min-width:0;min-height:50px}
+  .record-art{width:38px;height:34px}
+  .record-art svg{width:34px;height:34px}
+  .codebox input{padding:0 10px;font-size:13px}
+  .codebox .btn{padding:0 12px}
+  .pl{padding:7px 8px;gap:7px;min-width:0}
+  .pl .nt{white-space:normal}
+  .lbadge{font-size:12px;padding:1px 6px 1px 3px}
+  .lbadge i{width:11px;height:11px}
+  .lchips{flex-wrap:wrap;gap:2px}
+  .lc{padding:0 4px 0 3px;font-size:10.5px;gap:2px}
+  .lc b{font-size:11.5px}
+  .lc i{width:9px;height:9px}
+  .glist{grid-template-columns:repeat(auto-fill,minmax(136px,1fr))}
+  .offl{grid-template-columns:1fr}
+  .online-ops .btn{white-space:normal;line-height:1.2;padding:4px 8px}
+
+  .lcard,.lstopcard{width:92%;max-height:86%;overflow-y:auto}
+  .lcard-h{font-size:17px;padding:8px 12px}
+  .lcard p,.lstopcard p{margin:10px 12px;font-size:15px;line-height:1.55}
+  .lcard .lchoices .btn{min-width:110px;height:40px;font-size:14px}
+  .llog{max-width:calc(100% - 120px);left:8px;top:8px}
+
+  .bgstrip{padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));gap:4px 6px}
+  .bgstrip .bgname{order:1;width:auto;flex:1 1 80px;margin:0 4px;font-size:12px}
+  .bgstrip .bggen{order:2;width:auto;min-width:60px;padding:3px 9px;font-size:11.5px}
+  #bgSeek{order:3;flex:1 1 120px;min-width:80px;max-width:none;margin:0 4px}
+  .bgstrip .bgtime{order:4;width:auto;font-size:11px}
+  #bgMute{order:5;margin-left:2px}
+  #bgVol{order:6;width:64px}
+}
+
+@media (max-height:540px) and (max-width:960px){
+  .boardwrap{max-width:min(100%,82dvh)}
+  .boardwrap.k-shogi{max-width:min(100%,82dvh)}
+  .boardwrap.k-cards{max-width:680px;height:clamp(300px,82dvh,410px)}
+  .boardwrap.k-life{max-width:none;height:clamp(260px,76dvh,380px)}
+  .boardwrap.k-solitaire{max-width:640px;height:clamp(320px,82dvh,440px)}
+  .detail{max-height:92dvh}
+}

@@ -226,7 +226,7 @@
       ${b.bet && A.view.human ? `<div class="lgrid">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => `<button class="btn ${bet.includes(n) ? 'gold' : ''}" data-bet="${n}">${n}</button>`).join('')}</div><div class="lchoices"><button class="btn gold" data-betgo="1" ${bet.length === 2 ? '' : 'disabled'}>この 2 つで回す</button></div>` : ''}</div>` : '';
     const gcard = b.guessing && A.view.human ? `<div class="lcard"><div class="lcard-h" style="background:${YEL}">夢の山の頂上</div><p>数を 1 つ決めて、ルーレットを回します。当たれば <b>$20,000</b>。</p><div class="lgrid">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => `<button class="btn ${guess === n ? 'gold' : ''}" data-guess="${n}">${n}</button>`).join('')}</div></div>` : '';
     const log = b.log.length ? `<div class="llog">${b.log.slice(-3).map((l, k, a) => `<div class="${k === a.length - 1 ? 'new' : ''}">${money(nm(l)).replace(/&amp;/g, '&')}</div>`).join('')}</div>` : '';
-    A.board(`<div class="lifewrap2"><div class="lview" id="lview"><div class="linner">${svg}</div></div>${card}${gcard}<div class="lstopcard" id="lstop" hidden></div><div class="lstopcard lsqcard" id="lsq" hidden></div></div>`, (d) => {
+    A.board(`<div class="lifewrap2"><div class="lview" id="lview"><div class="linner">${svg}</div></div><div class="lzoom" id="lzoom" aria-label="拡大縮小"><button type="button" data-zf="1.25" aria-label="拡大">＋</button><button type="button" data-zf="0.8" aria-label="縮小">－</button><button type="button" data-zf="0" aria-label="現在位置へ">◎</button></div>${card}${gcard}<div class="lstopcard" id="lstop" hidden></div><div class="lstopcard lsqcard" id="lsq" hidden></div></div>`, (d) => {
       if (d.sqclose != null) { const e = document.getElementById('lsq'); if (e && !e.hidden) { e.hidden = true; A.sfx('BACK'); } return; }
       if (d.stopok != null) { const sEl = document.getElementById('lstop'); if (sEl) sEl.classList.add('out'); stopState = null; A.animClear(); return; }
       if (!A.view.human) return;
@@ -246,15 +246,53 @@
     // 初めて: 幅に合わせて、番の人の所へ
     if (view.h !== A.handle) { view.h = A.handle; view.z = Math.max(el.clientWidth / W, Math.min(el.clientWidth / W, el.clientHeight / H)); view.follow = -1; }
     apply(el, inner, W, H);
+    // 拡大・縮小・現在位置へボタン(スマホ向け)
+    const lz = document.getElementById('lzoom');
+    if (lz) lz.onclick = (e) => {
+      const btn = e.target.closest('[data-zf]'); if (!btn) return;
+      e.stopPropagation();
+      const f = +btn.dataset.zf, zmin = Math.min(el.clientWidth / W, el.clientHeight / H), z0 = view.z;
+      if (f === 0) {
+        view.z = Math.max(el.clientWidth / W, zmin);
+        const curP = b.players[b.turn];
+        if (curP) { const [x, y] = curP.village ? sc.village : P(curP.pos); centerOn(el, inner, W, H, x, y, true); return; }
+      } else {
+        const mx = el.clientWidth / 2, my = el.clientHeight / 2;
+        view.z = Math.min(2.2, Math.max(zmin, z0 * f));
+        view.tx = mx - (mx - view.tx) * view.z / z0; view.ty = my - (my - view.ty) * view.z / z0;
+      }
+      inner.style.transition = ''; view.live = false; apply(el, inner, W, H);
+    };
     // ホイールで拡大・縮小(カーソルの所が中心)
     el.onwheel = (e) => { e.preventDefault(); const r = el.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top, z0 = view.z; const zmin = Math.min(el.clientWidth / W, el.clientHeight / H);
       view.z = Math.min(2.2, Math.max(zmin, z0 * (e.deltaY < 0 ? 1.12 : 1 / 1.12))); view.tx = mx - (mx - view.tx) * view.z / z0; view.ty = my - (my - view.ty) * view.z / z0; inner.style.transition = '';
       view.live = true; if (!view.raf) view.raf = requestAnimationFrame(() => { view.raf = 0; apply(el, inner, W, H); });
       clearTimeout(view.idle); view.idle = setTimeout(() => { view.live = false; apply(el, inner, W, H); }, 180); };
-    // ドラッグで移動
-    el.onpointerdown = (e) => { if (e.button !== 0) return; const sx = e.clientX, sy = e.clientY, tx0 = view.tx, ty0 = view.ty; let moved = false; try { el.setPointerCapture(e.pointerId); } catch (er) {}
-      el.onpointermove = (ev) => { const dx = ev.clientX - sx, dy = ev.clientY - sy; if (!moved && Math.hypot(dx, dy) < 4) return; moved = true; el.classList.add('drag'); view.tx = tx0 + dx; view.ty = ty0 + dy; inner.style.transition = ''; apply(el, inner, W, H); };
-      el.onpointerup = (ev) => { el.onpointermove = null; el.classList.remove('drag'); if (moved) return;
+    // ドラッグで移動 + ピンチ拡大縮小
+    const pts = new Map();
+    let pinch0 = null;
+    el.onpointerdown = (e) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { el.setPointerCapture(e.pointerId); } catch (er) {}
+      if (pts.size === 2) {
+        const [p1, p2] = [...pts.values()], r = el.getBoundingClientRect();
+        pinch0 = { d: Math.max(10, Math.hypot(p2.x - p1.x, p2.y - p1.y)), z: view.z, tx: view.tx, ty: view.ty, mx: (p1.x + p2.x) / 2 - r.left, my: (p1.y + p2.y) / 2 - r.top };
+        el.onpointermove = (ev) => {
+          pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+          if (pts.size < 2 || !pinch0) return;
+          const [q1, q2] = [...pts.values()], d = Math.hypot(q2.x - q1.x, q2.y - q1.y), zmin = Math.min(el.clientWidth / W, el.clientHeight / H);
+          view.z = Math.min(2.2, Math.max(zmin, pinch0.z * (d / pinch0.d)));
+          view.tx = pinch0.mx - (pinch0.mx - pinch0.tx) * view.z / pinch0.z;
+          view.ty = pinch0.my - (pinch0.my - pinch0.ty) * view.z / pinch0.z;
+          view.live = true; inner.style.transition = ''; apply(el, inner, W, H);
+        };
+        el.onpointerup = el.onpointercancel = (ev) => { pts.delete(ev.pointerId); if (pts.size < 2) { pinch0 = null; view.live = false; apply(el, inner, W, H); el.onpointermove = null; } };
+        return;
+      }
+      const sx = e.clientX, sy = e.clientY, tx0 = view.tx, ty0 = view.ty; let moved = false;
+      el.onpointermove = (ev) => { if (pts.size > 1) return; const dx = ev.clientX - sx, dy = ev.clientY - sy; if (!moved && Math.hypot(dx, dy) < 4) return; moved = true; el.classList.add('drag'); view.tx = tx0 + dx; view.ty = ty0 + dy; inner.style.transition = ''; apply(el, inner, W, H); };
+      el.onpointerup = el.onpointercancel = (ev) => { pts.delete(ev.pointerId); if (pts.size) return; el.onpointermove = null; el.classList.remove('drag'); if (ev.type === 'pointercancel' || moved) return;
         // 説明が出ている時は、盤のどこを押しても(ほかのマスでも)閉じるだけ
         const open = document.getElementById('lsq'); if (open && !open.hidden) { open.hidden = true; A.sfx('BACK'); return; }
         const t = document.elementsFromPoint(ev.clientX, ev.clientY).map((x) => x.closest && x.closest('[data-sq]')).find(Boolean); if (t) { A.sfx('TAP'); showSquare(+t.dataset.sq); } }; };
