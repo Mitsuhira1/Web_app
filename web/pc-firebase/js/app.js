@@ -383,6 +383,7 @@ function togglePlayChat(open) {
     }
   }
   syncChatFab();
+  syncAppHistory();
 }
 function play() {
   const g = cur;
@@ -1121,6 +1122,7 @@ function render() {
   if (typeof syncPublicRoomsWatch === 'function') syncPublicRoomsWatch();
   const log = $('#log'); if (log) log.scrollTop = log.scrollHeight;
   bgmSync();
+  syncAppHistory();
 }
 
 // ---------------------------------------------------------------- シート(小さな確認の窓)
@@ -1130,10 +1132,14 @@ function askQuitApp() {
   setTimeout(focusPrimary, 0); openSheet('<h2>アプリを終了しますか</h2><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn danger" id="qaYes">終了する</button></div>'); $('#qaYes').onclick = () => { closeSheet(); if (window.__TAURI__) window.__TAURI__.core.invoke('quit_app').catch(() => window.close()); else { window.close(); setTimeout(() => toast({ w: 'お知らせ', t: '閉じられませんでした。ウィンドウの × で閉じてください' }), 300); } };
 }
 function openSheet(html) {
-  closeSheet();
+  const prev = $('#sheetwrap'); if (prev) prev.remove();
   app.insertAdjacentHTML('beforeend', `<div class="modal pop" id="sheetwrap"><button class="mback" data-sheetback aria-label="閉じる"></button><div class="mbox sheet" id="sheet" role="dialog">${html}</div></div>`);
+  syncAppHistory();
 }
-function closeSheet() { const s = $('#sheetwrap'); if (s) s.remove(); }
+function closeSheet() {
+  const s = $('#sheetwrap');
+  if (s) { s.remove(); syncAppHistory(); }
+}
 function focusPrimary() { setTimeout(() => { const b = $('#sheet .btns .btn:last-child') || $('#sheet .btn.gold'); if (b) b.focus({ preventScroll: true }); }, 0); }
 
 // ---------------------------------------------------------------- 操作
@@ -1360,13 +1366,34 @@ async function setFullscreen(on) {
 }
 
 // キー
-// 戻る(Esc・マウスの戻るボタン)
+// 戻る(Esc・マウスの戻るボタン・ブラウザ/Android の戻るボタン)
+let pendingGuardPop = 0;
+function canGoBackInApp() {
+  if ($('#sheetwrap')) return true;
+  if (S.stOpen) return true;
+  if (S.screen === 'play' && S.chatOpen) return true;
+  if (S.modal) return true;
+  if (S.screen === 'menu' && S.mobDetail) return true;
+  return !!(S.screen && S.screen !== 'menu' && S.screen !== 'first');
+}
+function syncAppHistory() {
+  if (!window.history || typeof history.pushState !== 'function') return;
+  if (pendingGuardPop > 0) return;
+  const need = canGoBackInApp();
+  const has = !!(history.state && history.state.asobiGuard);
+  if (need && !has) {
+    try { history.pushState({ asobiGuard: 1 }, ''); } catch (e) {}
+  } else if (!need && has) {
+    pendingGuardPop++;
+    try { history.back(); } catch (e) { pendingGuardPop = Math.max(0, pendingGuardPop - 1); }
+  }
+}
 function goBack() {
   const snd = () => sfx.play('BACK');
   if ($('#sheetwrap')) { snd(); return closeSheet(); }
   if (S.stOpen) { snd(); S.stOpen = false; if (S.screen === 'play' && typeof refreshChat === 'function') return refreshChat(); return render(); }
   if (S.screen === 'play' && S.chatOpen) { snd(); return togglePlayChat(false); }
-  if (S.modal) { snd(); S.modal = null; return render(); }
+  if (S.modal) { snd(); S.modal = null; if (PV) { PV = null; bgmStop(); if (S.set.bgm) bgmPick(); } return render(); }
   if (S.screen === 'menu' && S.mobDetail) { snd(); S.mobDetail = false; return render(); }
   if (S.screen !== 'menu' && S.screen !== 'first') snd();
   if (S.screen==='extraPlay') return boardMatch.exit();
@@ -1384,6 +1411,31 @@ function goBack() {
   if (S.screen === 'setup') return go(S.setup.online ? 'room' : 'menu');
   if (S.screen === 'settings' || S.screen === 'records' || S.screen === 'room') return go('menu');
 }
+window.addEventListener('popstate', (e) => {
+  if (pendingGuardPop > 0) {
+    pendingGuardPop--;
+    if (e.state && e.state.asobiGuard && !canGoBackInApp()) {
+      pendingGuardPop++;
+      try { history.back(); } catch (err) { pendingGuardPop = Math.max(0, pendingGuardPop - 1); }
+      return;
+    }
+    syncAppHistory();
+    return;
+  }
+  if (e.state && e.state.asobiGuard) {
+    syncAppHistory();
+    return;
+  }
+  if (canGoBackInApp()) {
+    goBack();
+    syncAppHistory();
+  }
+});
+const ensureGuardOnGesture = () => {
+  if (!pendingGuardPop && canGoBackInApp() && !(history.state && history.state.asobiGuard)) syncAppHistory();
+};
+document.addEventListener('pointerdown', ensureGuardOnGesture, { capture: true, passive: true });
+document.addEventListener('keydown', ensureGuardOnGesture, { capture: true, passive: true });
 let lastResizeMob = isMob();
 window.addEventListener('resize', () => {
   const z = S.set.scale === '100%' ? 1 : parseInt(S.set.scale, 10) / 100;
@@ -1528,6 +1580,9 @@ toastEl.addEventListener('pointercancel', () => { drag = null; toastHide(); });
 // ---------------------------------------------------------------- 起動
 (async () => {
   try {
+    if (window.history && history.state && history.state.asobiGuard) {
+      try { history.replaceState(null, ''); } catch (e) {}
+    }
     CAT = JSON.parse(await callW('catalogJson'));
     CAT.push({id:'slide',name:'スライドパズル',intro:'1枚の絵をそろえよう。',players:'1〜6人',category:'BOARD',options:[]});
     CAT.push({id:'bunyo',name:'ぶにょぶにょ',intro:'同じ色を4個つなげて消そう。',players:'1〜6人',category:'BOARD',options:[]});

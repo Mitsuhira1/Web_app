@@ -2152,51 +2152,142 @@ html.reduce .chatpop,html.reduce .chatpop-back,html.reduce .chatfab.has-unread{a
 body:has(#bgs:not([hidden])) .chatfab{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
 body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bottom,0px))}
 
-@media (max-width:680px){
-  .screen.play-screen{min-height:100dvh}
-  .play-screen .stage{padding:6px max(10px,env(safe-area-inset-right,0px)) 4px max(10px,env(safe-area-inset-left,0px))}
-  .play-screen .stagehead{margin-bottom:4px;min-height:32px;padding-right:40px;gap:4px 8px}
+@media (max-width:640px){
+  body:has(#bgs:not([hidden])) .chatfab{bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+  body:has(#bgs:not([hidden])) .chatpop{bottom:calc(144px + env(safe-area-inset-bottom,0px))}
+}
+
+@media (max-width:680px), (max-width:960px) and (max-height:540px){
+  .play-screen .side .pl{padding:4px 8px;min-height:34px;gap:6px;border-radius:10px}
+  .play-screen .side .pl .dot{width:16px;height:16px}
+  .play-screen .side .pl .face{width:24px;height:24px;font-size:12px}
+  .play-screen .side .pl .nm{font-size:12.5px;line-height:1.2}
+  .play-screen .side .pl .nt{font-size:10.5px;line-height:1.15}
+  .play-screen .side .pl .num{font-size:17px}
+  .play-screen .side .pl.lpl{padding:3px 6px;gap:5px;min-height:0}
+  .play-screen .side .pl.lpl .nm{font-size:11.5px}
+  .play-screen .side .pl.lpl .ljob2{font-size:10.5px;line-height:1.15;margin-top:1px}
+  .play-screen .side .pl.lpl .ljob2 i{padding:0 4px;font-size:9.5px}
+  .play-screen .side .pl.lpl .lchips{gap:2px;margin-top:2px;flex-wrap:nowrap}
+  .play-screen .side .pl.lpl .lc{font-size:9.5px;padding:0 3px 0 2px}
+  .play-screen .side .pl.lpl .lc b{font-size:10.5px}
+  .play-screen .side .pl.lpl .lmoney{font-size:13.5px}
+  .play-screen .side .pl.lpl .lmoney small{font-size:9.5px}
+  .play-screen .side .lside{flex-direction:row;align-items:center;gap:8px}
+  .play-screen .side .lside .lbtns{flex:1;min-width:0;grid-template-columns:1fr;gap:5px}
+  .play-screen .side .lside .lbtns .btn{height:34px;font-size:12.5px}
+  .play-screen .side .lside .lwheel{flex:none;width:72px;height:72px;padding:2px}
+  .play-screen .side .lside .lwheel svg{width:68px;height:68px;max-height:68px}
+  .play-screen .side .seatlist{gap:3px;padding-left:18px}
+  .play-screen .side .seatlist .pl{padding:3px 6px;min-height:28px}
+}
+
+@media (max-width:680px) and (min-height:541px){
+  html:has(.play-screen),body:has(.play-screen){height:100dvh;min-height:100dvh;overflow:hidden}
+  body:has(.play-screen) .app{flex:1 1 0;min-height:0;overflow:hidden}
+  .screen.play-screen{
+    position:relative;
+    flex:1 1 0;
+    min-height:0;
+    height:100%;
+    overflow:hidden;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-rows:auto auto auto auto auto minmax(0,1fr) auto auto auto auto;
+    gap:0 6px;
+    padding:max(6px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));
+    align-items:stretch;
+  }
+  .play-screen .stage,.play-screen .side{display:contents}
+
+  /* 上部: 戻る + ゲーム名 + 設定ボタン */
+  .play-screen .stagehead{grid-column:1 / -1;grid-row:1;margin:0;min-height:34px;padding-right:42px;gap:4px 8px;flex-wrap:wrap;align-items:center}
   .play-screen .stagehead .btn{height:32px;padding:0 8px;font-size:12.5px}
   .play-screen .stagehead h2{font-size:15px}
-  .play-screen .play-settings{top:4px;width:34px;height:34px}
+  .play-screen .play-settings{top:max(6px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));left:auto;bottom:auto;width:34px;height:34px}
   .play-screen .play-settings svg{width:18px;height:18px}
-  .play-screen .acts{padding:4px 0 2px;min-height:0;gap:6px}
-  .play-screen .acts:empty{display:none}
-  .play-screen .acts .btn{height:36px;font-size:13px;padding:0 10px}
-  .play-screen .countbar{height:24px;font-size:12px}
-  .play-screen .countbar b{font-size:18px}
-  .play-screen .countline{margin-bottom:4px}
-  .play-screen .countbar.no-limit,.play-screen .countline.no-limit{display:none}
 
-  .play-screen .boardwrap{width:min(100%,46dvh);max-width:min(500px,46dvh);margin:0 auto}
-  .play-screen .boardwrap.k-c4{width:min(100%,43dvh);max-width:min(500px,43dvh);aspect-ratio:1 / 1.06}
-  .play-screen .boardwrap.k-hex{width:100%;max-width:min(680px,64dvh);aspect-ratio:1.58}
-  .play-screen .boardwrap.k-mancala{width:100%;max-width:min(700px,74dvh);aspect-ratio:1.85}
-  .play-screen .boardwrap.k-hare{width:100%;max-width:min(680px,70dvh);aspect-ratio:1.72}
-  .play-screen .boardwrap.k-backgammon{width:100%;max-width:min(680px,58dvh);aspect-ratio:1.4}
-  .play-screen .boardwrap.k-life{width:100%;max-width:none;height:clamp(210px,34dvh,360px)}
+  /* プレイヤー札 (Android 版 / スマホ Web 版準拠で盤面の上) */
+  .play-screen .side #strip{grid-column:1 / -1;grid-row:2;margin-top:5px;min-height:0}
+  .play-screen .side #strip:not(:has(.seatlist)){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  .play-screen .side #strip:not(:has(.seatlist)) .pl:only-child{grid-column:1 / -1}
+  .play-screen .side #strip:has(.seatlist){max-height:132px;overflow-y:auto}
 
-  .play-screen .boardwrap.k-shogi{width:100%;max-width:500px}
-  .play-screen .boardwrap.k-shogi .shwrap{gap:4px}
-  .play-screen .boardwrap.k-shogi .komadai{min-height:32px;padding:4px 8px;border-radius:8px;gap:4px}
+  /* ステータス + 手数 */
+  .play-screen .side .status{grid-column:1 / -1;grid-row:3;margin-top:5px;min-width:0;min-height:32px;padding:4px 10px;font-size:12.5px;border-radius:8px;white-space:normal;line-height:1.25}
+  .play-screen:has(.sidenote:not(.custom)) .side .status{grid-column:1}
+  .play-screen .side .sidenote:not(.custom){grid-column:2;grid-row:3;margin-top:5px;flex:none;padding:4px 10px;min-height:32px;display:flex;align-items:center;border-radius:8px}
+  .play-screen .side .sidenote:not(.custom) .kv{gap:6px;align-items:baseline}
+  .play-screen .side .sidenote:not(.custom) .kv span{font-size:11.5px;color:var(--sub)}
+  .play-screen .side .sidenote:not(.custom) .kv b{font-size:15px}
+
+  /* 制限時間バー (時間制限なし時は完全非表示) */
+  .play-screen .countbar{grid-column:1 / -1;grid-row:4;margin-top:4px;height:22px;font-size:12px}
+  .play-screen .countbar b{font-size:17px}
+  .play-screen .countline{grid-column:1 / -1;grid-row:5;margin:2px 0 0}
+  .play-screen .countbar:empty,.play-screen .countbar.no-limit,.play-screen .countline.no-limit{display:none}
+
+  /* 中央盤面 (残り領域いっぱいに拡大) */
+  .play-screen .boardwrap{
+    grid-column:1 / -1;grid-row:6;
+    margin:6px 0 0;padding:0;
+    width:100%;height:100%;min-width:0;min-height:0;
+    max-width:none;max-height:none;aspect-ratio:auto;
+    container-type:size;display:grid;place-items:center;
+  }
+  .play-screen .boardwrap>.board{width:min(100cqw,100cqh);max-height:100%}
+  .play-screen .boardwrap>.plate{width:min(100cqw,100cqh);max-height:100%}
+  .play-screen .boardwrap.k-c4>.c4{width:min(100cqw,calc(100cqh * .92))}
+  .play-screen .boardwrap.k-hex>.plate{width:min(100cqw,calc(100cqh * 1.62))}
+  .play-screen .boardwrap.k-mancala>.plate{width:min(100cqw,calc(100cqh * 1.9))}
+  .play-screen .boardwrap.k-hare>.plate{width:min(100cqw,calc(100cqh * 1.75))}
+  .play-screen .boardwrap.k-backgammon>.plate{width:min(100cqw,calc(100cqh * 1.42))}
+  .play-screen .boardwrap.k-life .lifewrap2{width:100%;height:100%}
+
+  /* 将棋・五々将棋 */
+  .play-screen .boardwrap.k-shogi .shwrap{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto;height:100%;width:100%;gap:5px;align-items:center;justify-items:center}
+  .play-screen .boardwrap.k-shogi .komadai{width:min(100%,460px);height:auto;min-height:36px;margin:0!important;align-self:center;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:4px;padding:5px 8px;border-radius:9px}
+  .play-screen .boardwrap.k-shogi .komadai::after{display:none}
   .play-screen .boardwrap.k-shogi .komadai .none{font-size:11px;padding:2px 0}
   .play-screen .boardwrap.k-shogi .hk{width:clamp(24px,7.2cqw,34px);height:clamp(27px,8cqw,38px)}
   .play-screen .boardwrap.k-shogi .hk .kf{font-size:clamp(11px,3.2cqw,16px)}
-  .play-screen .boardwrap.k-shogi .sboard{width:min(100%,35dvh);padding:1.8cqw}
+  .play-screen .boardwrap.k-shogi .hk b{right:-3px;bottom:-2px;font-size:10px;min-width:15px}
+  .play-screen .boardwrap.k-shogi .sboard{width:min(100cqw,460px,calc((100cqh - 94px) / 1.06));height:auto;aspect-ratio:1 / 1.06;justify-self:center;padding:1.8cqmin}
+  .play-screen .boardwrap.k-shogi .sboard .kf{font-size:clamp(13px,4cqw,23px)}
 
-  .play-screen .boardwrap.k-cards{width:100%;max-width:680px;height:clamp(270px,43dvh,410px)}
-  .play-screen .boardwrap.k-speed{width:100%;max-width:640px;height:clamp(240px,39dvh,350px)}
-  .play-screen .boardwrap.k-solitaire{width:100%;max-width:680px;height:clamp(300px,46dvh,440px)}
+  /* カード卓系 9ゲーム */
+  .play-screen .boardwrap.k-cards>.tw{width:100%;height:100%;max-height:100%;--cw:min(10.4cqh,13.5cqw)}
+  .play-screen .boardwrap.k-cards .pile2{--cw:min(11cqh,15cqw)}
+  .play-screen .boardwrap.k-cards .comm{--cw:min(9.4cqh,13.5cqw)}
+  .play-screen .boardwrap.k-cards .bjd{--cw:min(10cqh,13cqw)}
+  .play-screen .boardwrap.k-cards .bjme{--cw:min(12.5cqh,15cqw)}
+  .play-screen .boardwrap.k-cards .hand2{--cw:min(14.2cqh,17cqw)}
+  .play-screen .boardwrap.k-cards .hand2.few{--cw:min(15.4cqh,18cqw)}
+  .play-screen .boardwrap.k-cards .hand2.hanah{--cw:min(11.4cqh,13cqw)}
+  .play-screen .boardwrap.k-cards .sgrid7{gap:4px 2px;--cw:min(6.4cqh,6.4cqw)}
+  .play-screen .boardwrap.k-cards .mgrid{inset:10px;gap:5px;--cw:min(calc((78cqh / var(--rows) - 6px) * 5 / 7),calc(90cqw / var(--cols) - 6px))}
+  .play-screen .boardwrap.k-cards .unoc{gap:3.5cqw;--cw:min(11cqh,18cqw)}
+  .play-screen .boardwrap.k-cards .tw.hanat{--cw:min(7.8cqh,10cqw)}
 
-  .play-screen .boardwrap.k-mahjong{width:100%;max-width:540px}
-  .play-screen .boardwrap.k-mahjong .mjwrap{gap:4px}
-  .play-screen .boardwrap.k-mahjong .mjtable{width:min(100%,35dvh);border-width:5px}
+  /* スピード・ソリティア */
+  .play-screen .boardwrap.k-speed .felt-table.speed{width:100%;height:100%;max-height:100%;justify-content:space-between;padding:10px 8px;border-width:8px;border-radius:16px}
+  .play-screen .boardwrap.k-solitaire .felt-table.sol{width:100%;height:100%;max-height:100%;border-width:8px;border-radius:16px;padding:10px 8px;gap:10px}
+  .play-screen .boardwrap.k-solitaire .sol .soltop .pcard{--w:min(64px,calc((100cqw - 56px) / 7 * .94))}
+
+  /* 麻雀 */
+  .play-screen .boardwrap.k-mahjong .mjwrap{width:100%;height:100%;gap:5px;justify-content:center}
+  .play-screen .boardwrap.k-mahjong .mjtable{flex:none;width:min(100cqw,460px,calc(100cqh - 86px));max-width:100%;height:auto;aspect-ratio:1;border-width:5px;border-radius:14px}
   .play-screen .boardwrap.k-mahjong .mjinfo{font-size:12px;min-height:0}
-  .play-screen .boardwrap.k-mahjong .mjhand{padding:8px 4px 2px}
+  .play-screen .boardwrap.k-mahjong .mjhand{justify-content:flex-start;overflow-x:auto;padding:8px 4px 2px;width:100%;-webkit-overflow-scrolling:touch;gap:2px}
   .play-screen .boardwrap.k-mahjong .mjt.big{--w:clamp(21px,5.4cqw,38px)}
 
-  .play-screen .boardwrap.k-yacht{width:100%;max-width:560px}
-  .play-screen .boardwrap.k-yacht .yacht2{gap:6px;padding:0}
+  /* ヨット・ヒット＆ブロー (狭い画面では領域内のみスクロールし、操作バーを下端固定) */
+  .play-screen .boardwrap.k-yacht,.play-screen .boardwrap.k-hitblow{
+    container-type:inline-size;
+    display:flex;flex-direction:column;align-items:center;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+  }
+  .play-screen .boardwrap.k-yacht .yacht2{margin:auto 0;width:min(100%,560px);height:auto;flex:none;gap:6px;padding:0}
   .play-screen .boardwrap.k-yacht .ytray{padding:7px 10px;gap:5px;border-width:5px;border-radius:12px}
   .play-screen .boardwrap.k-yacht .yturn{font-size:11.5px;padding:2px 10px}
   .play-screen .boardwrap.k-yacht .ydice{gap:6px 4px;grid-template-columns:repeat(6,clamp(16px,4.6cqw,22px))}
@@ -2211,8 +2302,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .play-screen .boardwrap.k-yacht .ysheet td{font-size:12.5px;min-width:38px;padding:2px 4px}
   .play-screen .boardwrap.k-yacht .ysheet tr.bonus th,.play-screen .boardwrap.k-yacht .ysheet tr.bonus td{font-size:11px}
 
-  .play-screen .boardwrap.k-hitblow{width:100%;max-width:600px}
-  .play-screen .boardwrap.k-hitblow .hb2{gap:6px;padding:0}
+  .play-screen .boardwrap.k-hitblow .hb2{margin:auto 0;width:min(100%,600px);height:auto;flex:none;gap:6px;padding:0}
   .play-screen .boardwrap.k-hitblow .hbleft{gap:6px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
   .play-screen .boardwrap.k-hitblow .hbcol{padding:6px 8px;border-radius:10px}
   .play-screen .boardwrap.k-hitblow .hbcol h4{margin:0 0 4px;font-size:11.5px}
@@ -2231,42 +2321,15 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .play-screen .boardwrap.k-hitblow .hbhelp{font-size:10.5px;line-height:1.35}
   .play-screen .boardwrap.k-hitblow .hbhelp b{font-size:10.5px;padding:0 5px}
 
-  .play-screen .side{width:auto;border-left:0;border-top:1px solid var(--line);padding:6px max(10px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px}
-  .play-screen .side #strip{grid-column:1 / -1;order:0}
-  .play-screen .side #strip:not(:has(.seatlist)){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
-  .play-screen .side .pl{padding:4px 8px;min-height:36px;gap:6px;border-radius:10px}
-  .play-screen .side .pl .dot{width:16px;height:16px}
-  .play-screen .side .pl .face{width:24px;height:24px;font-size:12px}
-  .play-screen .side .pl .nm{font-size:12.5px;line-height:1.2}
-  .play-screen .side .pl .nt{font-size:10.5px;line-height:1.15}
-  .play-screen .side .pl .num{font-size:17px}
-  .play-screen .side .pl.lpl{padding:3px 6px;gap:5px;min-height:0}
-  .play-screen .side .pl.lpl .nm{font-size:11.5px}
-  .play-screen .side .pl.lpl .ljob2{font-size:10.5px;line-height:1.15;margin-top:1px}
-  .play-screen .side .pl.lpl .ljob2 i{padding:0 4px;font-size:9.5px}
-  .play-screen .side .pl.lpl .lchips{gap:2px;margin-top:2px;flex-wrap:nowrap}
-  .play-screen .side .pl.lpl .lc{font-size:9.5px;padding:0 3px 0 2px}
-  .play-screen .side .pl.lpl .lc b{font-size:10.5px}
-  .play-screen .side .pl.lpl .lmoney{font-size:13.5px}
-  .play-screen .side .pl.lpl .lmoney small{font-size:9.5px}
-  .play-screen .side .lside{flex-direction:row;align-items:center;gap:8px}
-  .play-screen .side .lside .lbtns{flex:1;min-width:0;grid-template-columns:1fr;gap:5px}
-  .play-screen .side .lside .lbtns .btn{height:34px;font-size:12.5px}
-  .play-screen .side .lside .lwheel{flex:none;width:78px;height:78px;padding:2px}
-  .play-screen .side .lside .lwheel svg{width:74px;height:74px;max-height:74px}
-  .play-screen .side .seatlist{gap:3px;padding-left:18px}
-  .play-screen .side .seatlist .pl{padding:3px 6px;min-height:28px}
-  .play-screen .side .status{grid-column:1 / -1;order:1;min-width:0;min-height:32px;padding:4px 10px;font-size:12.5px;border-radius:8px;white-space:normal;line-height:1.25}
-  .play-screen:has(.sidenote:not(.custom)) .side .status{grid-column:1}
-  .play-screen .side .sidenote:not(.custom){grid-column:2;order:2;flex:none;padding:4px 10px;min-height:32px;display:flex;align-items:center;border-radius:8px}
-  .play-screen .side .sidenote:not(.custom) .kv{gap:6px;align-items:baseline}
-  .play-screen .side .sidenote:not(.custom) .kv span{font-size:11.5px;color:var(--sub)}
-  .play-screen .side .sidenote:not(.custom) .kv b{font-size:15px}
-  .play-screen .side .sidenote.custom{grid-column:1 / -1;order:2}
-  .play-screen .side .ops{grid-column:1 / -1;order:3;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
-  .play-screen .side .ops .btn{height:34px;font-size:11.5px;padding:0 4px;gap:3px;border-radius:9px}
+  /* 下部操作ボタン群 */
+  .play-screen .acts{grid-column:1 / -1;grid-row:7;margin-top:5px;padding:0;min-height:0;gap:6px}
+  .play-screen .acts:empty{display:none;margin-top:0}
+  .play-screen .acts .btn{height:36px;font-size:13px;padding:0 10px}
+  .play-screen .side .sidenote.custom{grid-column:1 / -1;grid-row:8;margin-top:5px}
+  .play-screen .side .ops{grid-column:1 / -1;grid-row:9;margin-top:5px;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+  .play-screen .side .ops .btn{height:36px;font-size:11.5px;padding:0 4px;gap:3px;border-radius:9px}
   .play-screen .side .ops .btn svg.ic{width:14px;height:14px}
-  .play-screen .side .online-ops{grid-column:1 / -1;order:4;gap:6px;padding-right:54px}
+  .play-screen .side .online-ops{grid-column:1 / -1;grid-row:10;margin-top:5px;gap:6px;padding-right:54px}
   .play-screen .side .online-ops .btn{height:34px;font-size:11.5px}
 }
 

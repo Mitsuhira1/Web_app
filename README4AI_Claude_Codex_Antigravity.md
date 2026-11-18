@@ -56,6 +56,21 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-17 21:33(PST)/ Antigravity / ccr-efc07031-6exjqs
+- 目的: ユーザーの指示（2項目）。
+  1. スマホ縦画面（対局画面 `.play-screen`）で下側が空く問題に対し、Android アプリ版 / `web/lite/` 準拠の配置（上部ナビ＋設定ボタン → プレイヤー札 `#strip` → ステータス＋手数 → 中央盤面 `#boardwrap` を残り領域いっぱいに拡大 → `#acts`・`.ops`・`.online-ops` を下端固定）へ再構成して下側の空白を解消する。
+  2. ブラウザの戻るボタンや Android 画面下部の戻るボタン押下時、サイトを即終了するのではなくゲーム内の戻るボタン（`goBack()`）と同じ動作（シート/スタンプ/チャットポップアップ/モーダル/詳細シートを閉じる、対局中は確認シートを出す、設定/準備/成績/ルーム画面からはメニューや部屋へ戻る等）をするようにする。
+- 変更:
+  - `web/pc-firebase/css/app.css`:
+    - スマホ縦専用ルール `@media (max-width:680px) and (min-height:541px)` を `html:has(.play-screen), body:has(.play-screen)` の `100dvh; overflow: hidden;` 固定＋ `.play-screen` の CSS Grid（`.stage, .side { display: contents }`、Row 1 `.stagehead` → Row 2 `#strip` → Row 3 `.status`/`.sidenote:not(.custom)` → Row 4-5 `#countbar`/`.countline`（時間制限なし時は `display: none`）→ Row 6 `minmax(0,1fr)` の `#boardwrap`（`container-type: size` で `100cqw`/`100cqh` に応じて将棋/カード/麻雀/ソリティア/人生すごろく等を拡大）→ Row 7-10 `#acts`/`.sidenote.custom`/`.ops`/`.online-ops` を下端固定）へ刷新。`gap: 0 6px` と要素ごとの明示的 `margin-top` により空行による余分な縦ギャップを防止。
+    - 狭幅 `@media (max-width:640px)` 時の `#bgs` 2段折り返しに対する `.chatfab` / `#chatpop` の下端余白調整を追加し、ヨット/ヒット＆ブローには `#boardwrap` 内部スクロールを維持して操作バー下端固定を保証。
+  - `web/pc-firebase/js/app.js`:
+    - `canGoBackInApp()`, `syncAppHistory()`, 起動時 `asobiGuard` リセット、`popstate` リスナー、`pointerdown`/`keydown`（capture）でのガード同期フォールバックを追加し、`render()`・`openSheet()`（シート置換時は中間 `history.back()` を発火させない）・`closeSheet()`・`togglePlayChat()` と連携。合わせて `goBack()` でモーダル閉鎖時に試聴 BGM (`PV`) を停止するよう修正。
+  - `web/pc-firebase/js/online.js`: `refreshChat()` とスタンプパネル外タップ (`pointerdown`) による状態変化時にも `syncAppHistory()` を同期。
+  - `web/pc-firebase/sw.js`: `f77d707` で統合された8ゲームファイル群を維持したままキャッシュ名を `asobipcfb-20261118-mob-board-back-2` に更新。
+- ファイル: `web/pc-firebase/css/app.css`, `web/pc-firebase/js/app.js`, `web/pc-firebase/js/online.js`, `web/pc-firebase/sw.js`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `git diff --check`、`node --check` (`app.js`, `online.js`, `sw.js`)、`node tools/tests/check_transient_audio.cjs`、`node tools/tests/check_cursor_send.cjs`、`node tools/tests/test_extra_12_games.mjs`、ヘッドレス Chromium CDP 検証3種（`mobile_ux_verify.py`・`tablet_verify.py`・`e2e_verify.py`）すべて合格、`ccr-efc07031-6exjqs` へリベース＆統合再検証の上でプッシュ済み。`web/pc/` と `Windows-Projects` は無変更。
+
 ### 2026-11-18 / Codex / 追加8ゲームをGitHub Pagesへ反映
 - ユーザー検証のため、追加8ゲームのコミット `964ec47` を公開ブランチ `ccr-efc07031-6exjqs` の `de1fb18` に統合。公開側のスマートフォン表示、ルーム設定、公開ルーム一覧と両立するよう競合箇所を調整した。
 - 統合後のPC版で8ゲームの起動・ルーム対戦・協力と既存の対局、観戦、成績を検証。コア12ゲームのテストと、PWAのオフライン起動も確認した。通信はローカルのFirebase API代替を使った。

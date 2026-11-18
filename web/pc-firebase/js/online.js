@@ -1715,6 +1715,7 @@ function refreshChat() {
   const n = $('#chatin'); if (n) { n.value = val; if (focus) n.focus(); }
   const log = $('#log'); if (log) log.scrollTop = log.scrollHeight;
   keepStampScroll();
+  if (typeof syncAppHistory === 'function') syncAppHistory();
 }
 let stScroll = 0;
 document.addEventListener('scroll', (e) => { if (e.target && e.target.classList && e.target.classList.contains('stpanel')) stScroll = e.target.scrollTop; }, true);
@@ -1723,6 +1724,7 @@ document.addEventListener('pointerdown', (e) => {
   if (!S.stOpen || e.target.closest('.stpanel, [data-stopen]')) return;
   S.stOpen = false; const p = document.querySelector('.stpanel'); if (p) p.remove();
   const b = document.querySelector('[data-stopen]'); if (b) b.setAttribute('aria-expanded', 'false');
+  if (typeof syncAppHistory === 'function') syncAppHistory();
 }, true);
 function showAsk(ask) {
   const host = $('.stage') || app;

@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261118-published-games-1";
+const CACHE = "asobipcfb-20261118-mob-board-back-2";
 const FILES = [
 "./core/games/war.mjs",
 "./core/games/vulture.mjs",
