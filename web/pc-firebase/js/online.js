@@ -501,6 +501,10 @@ function handleGuestActionOnHost(act) {
   if (!act || !act.uid || !netApi || netApi.role !== 'host' || !mainCore) return;
   const peerId = uidToPeerId.get(act.uid);
   if (!peerId) return;
+  if (act.type === 'MINE') { minesGame.actionFromGuest(act); return; }
+  if (act.type === 'BOARD_MATCH') { boardMatch.actionFromGuest(act); return; }
+  if (act.type === 'WOLF') { wolfGame.actionFromGuest(act); return; }
+  if (act.type === 'WIRE' && typeof act.text === 'string' && act.text.startsWith('CHAT_REQ|') && !wolfGame.canRoomChat(act.uid)) return;
   if (act.type === 'WIRE' && typeof act.text === 'string') {
     if (act.text.startsWith('CHAT_REQ|') && !isChatEnabled()) return;
     mainCore.netText(peerId, act.text);
@@ -615,6 +619,11 @@ async function promoteToHostFromState(isTakeover = false) {
 
     await netApi.assumeHost(sortedPlayers.length || 1);
     fbState.hostUid = myUid;
+    if (rs.boardMatch || rs.wolf || rs.mine || rs.slide) {
+      boardMatch.reset(); wolfGame.reset();
+      if (['extraPlay','wolfPlay','minePlay','slidePlay'].includes(S.screen)) go('room');
+      await netApi.writeState({boardMatch:null,wolf:null,mine:null,slide:null});
+    }
     hostRoundInfo = {
       round: snapshot.round,
       gameId: snapshot.gameId,
@@ -699,6 +708,9 @@ async function transferHostToPlayer(targetUid) {
   if (!isHostRoom() || !netApi || !targetUid || targetUid === netApi.uid) return;
   const target = playerByUid(targetUid);
   if (!target) return;
+  if (boardMatch.active() || wolfGame.active() || fbState.roomState?.mine || fbState.roomState?.slide) {
+    return toast({w:'お知らせ',t:'この対局を終了してからホストを変更できます'});
+  }
   flushHostStateToFirebase();
   await netApi.transferHost(targetUid);
   fbState.hostUid = targetUid;
@@ -834,7 +846,7 @@ function chatBox() {
   const chatOn = isChatEnabled();
   const list = online || (ost && ost.role !== 'none') ? (ost ? ost.chat : []) : [];
   if (!chatOn) S.stOpen = false;
-  const canSend = chatOn && !!(ost && ost.chatOk);
+  const canSend = chatOn && !!ost?.chatOk && wolfGame.canRoomChat(netApi?.uid);
   const bodyHtml = !chatOn
     ? '<div class="dimtxt">チャットは無効になっています</div>'
     : (list.length ? list.map((m) => {
@@ -843,11 +855,11 @@ function chatBox() {
         return `<div class="msg ${mine ? 'mine' : ''} ${stampIdx(m) >= 0 ? 'st' : ''}">${mine ? '' : `<small>${esc(m.name)}</small>`}${stampIdx(m) >= 0 ? stamp(stampIdx(m)) : esc(m.body)}</div>`;
       }).join('') : '<div class="dimtxt">チャットはまだありません</div>');
   return `<div class="chat${chatOn ? '' : ' chat-off'}"><div class="log" id="log">${bodyHtml}</div>
-   ${chatOn && S.stOpen ? `<div class="stpanel">${STAMPS.map((s, i) => `<button type="button" data-stamp="${i}" title="${s[0]}" aria-label="${s[0]}">${stamp(i)}</button>`).join('')}</div>` : ''}
-   <form id="chatf"><button type="button" class="stbtn" data-stopen aria-expanded="${chatOn ? S.stOpen : false}" aria-label="スタンプ" ${canSend ? '' : 'disabled'}>${ic('smile')}</button><input id="chatin" placeholder="${chatOn ? 'メッセージ' : 'チャット無効'}" maxlength="40" autocomplete="off" aria-label="メッセージ" ${canSend ? '' : 'disabled'}><button ${canSend ? '' : 'disabled'}>送る</button></form></div>`;
+   ${canSend && S.stOpen ? `<div class="stpanel">${STAMPS.map((s, i) => `<button type="button" data-stamp="${i}" title="${s[0]}" aria-label="${s[0]}">${stamp(i)}</button>`).join('')}</div>` : ''}
+   <form id="chatf"><button type="button" class="stbtn" data-stopen aria-expanded="${canSend && S.stOpen}" aria-label="スタンプ" ${canSend ? '' : 'disabled'}>${ic('smile')}</button><input id="chatin" placeholder="${chatOn ? 'メッセージ' : 'チャット無効'}" maxlength="40" autocomplete="off" aria-label="メッセージ" ${canSend ? '' : 'disabled'}><button ${canSend ? '' : 'disabled'}>送る</button></form></div>`;
 }
 function sendChat(t, st) {
-  if (!mainCore || !ost) return;
+  if (!mainCore || !ost || !wolfGame.canRoomChat(netApi?.uid)) return;
   if (!isChatEnabled()) return toast({ w: 'お知らせ', t: 'チャットは無効になっています' });
   const ok = st != null ? (st < ONLINE_STAMPS ? mainCore.onlineSendChat(1, String(st)) : mainCore.onlineSendChat(0, `《${STAMPS[st][0]}》`)) : mainCore.onlineSendChat(0, t);
   if (ok) {
@@ -1086,7 +1098,11 @@ function room() {
   if (none) {
     right += `<div class="panel"><div class="pubrooms-hd"><h3>公開ルーム一覧 <span class="badge" id="pubroomsCount">${(fbState.publicRooms || []).length}</span></h3><button type="button" class="btn pubrefresh-btn${fbState.publicRoomsLoading ? ' is-spin' : ''}" data-pubrefresh aria-label="公開ルーム一覧を更新" title="更新">${ic('refresh')}</button></div><div id="pubroomsBox">${publicRoomsListHtml()}</div></div>`;
   }
-  if (!none && st.phase === 'PLAYING') {
+  if (!none && boardMatch.active()) {
+    right = `<div class="panel"><h3>対局中</h3><p>${esc(gInfo(boardMatch.state.game)?.name)}</p><button class="btn primary" data-oreturn>対局に戻る</button></div>`;
+  } else if (!none && wolfGame.active()) {
+    right = '<div class="panel"><h3>対局中</h3><p>人狼</p><button class="btn primary" data-oreturn>対局に戻る</button></div>';
+  } else if (!none && st.phase === 'PLAYING') {
     const inMatch = st.match >= 0;
     const isSpectator = fbState.roomState && Array.isArray(fbState.roomState.seatSlots) && !fbState.roomState.seatSlots.includes(st.mySlot);
     right = `<div class="panel"><h3>対局中</h3><div class="hero" style="margin:8px 0">${g ? `<span class="art">${artOf(g.id)}</span>` : ''}<div><h2>${g ? esc(g.name) : ''}</h2><p>${isSpectator ? '対局を観戦できます（次の対局から参加できます）' : inMatch ? '対局の画面から部屋に戻っています' : '次の対局から加わります。いまの対局が終わるまで待ってください'}</p></div></div>${inMatch ? `<div style="display:flex;justify-content:flex-end"><button class="btn primary" style="flex:none;width:280px" data-oreturn>${isSpectator ? '対局を観戦する' : '対局に戻る'}</button></div>` : ''}</div>`;
@@ -1137,16 +1153,22 @@ async function createFirebaseRoom() {
     const initSettings = Object.assign({}, fbState.draftSettings || DEFAULT_ROOM_SETTINGS);
 
     const res = await netApi.createRoom(
-      { name: meName(), proto: 2, avatar: Number.isInteger(S.set.av) ? S.set.av : null },
+      { name: meName(), proto: 2, avatar: Number.isInteger(S.set.av) ? S.set.av : null, wolfKey: await wolfGame.publicKey() },
       { phase: 'LOBBY', gameId: 'reversi', options: '', round: 0, hostSlot: 0, soloIdle: false, spectatorSlots: [], autoCpuSlots: [] },
       {
         onPlayers(players) {
           fbState.players = players || {};
+          slideGame.players();
           syncHostPlayers(fbState.players);
+          wolfGame.playersChanged();
           onlineChanged();
         },
         onState(s) {
           fbState.roomState = s;
+          slideGame.remote(s);
+          minesGame.remote(s);
+          wolfGame.remote(s);
+          boardMatch.remote(s);
         },
         onSettings(settings) {
           if (settings) {
@@ -1229,12 +1251,14 @@ async function joinFirebaseRoom(codeInput) {
 
     const res = await netApi.joinRoom(
       code,
-      { name: meName(), proto: 2, avatar: Number.isInteger(S.set.av) ? S.set.av : null },
+      { name: meName(), proto: 2, avatar: Number.isInteger(S.set.av) ? S.set.av : null, wolfKey: await wolfGame.publicKey() },
       {
         onPlayers(players) {
           fbState.players = players || {};
+          slideGame.players();
           if (netApi && netApi.role === 'host') {
             syncHostPlayers(fbState.players);
+            wolfGame.playersChanged();
           } else {
             if (fbState.roomState) applyRemoteStateOnGuest(fbState.roomState);
             maybeElectNewHost();
@@ -1243,6 +1267,10 @@ async function joinFirebaseRoom(codeInput) {
         },
         onState(s) {
           fbState.roomState = s;
+          slideGame.remote(s);
+          minesGame.remote(s);
+          wolfGame.remote(s);
+          boardMatch.remote(s);
           if (netApi && netApi.role === 'guest') applyRemoteStateOnGuest(s);
           onlineChanged();
         },
@@ -1291,7 +1319,7 @@ async function joinFirebaseRoom(codeInput) {
     fbState.roomSettings = res.settings || Object.assign({}, DEFAULT_ROOM_SETTINGS);
     fbState.joining = false;
     syncPublicRoomsWatch();
-    S.screen = 'menu';
+    if (!wolfGame.active() && !boardMatch.active()) S.screen = 'menu';
     startGuestOnlineRoom(meName());
     if (fbState.roomState) applyRemoteStateOnGuest(fbState.roomState);
     onlineChanged();
@@ -1355,6 +1383,7 @@ function onlineClick(d, bElem) {
     }
     return true;
   }
+  if (d.oreturn != null && (wolfGame.resume() || boardMatch.resume())) return true;
   if (d.oreturn != null) { if (ost && ost.match >= 0 && ost.phase === 'PLAYING') { lastBeginSeq = ost.beginSeq; startOnlinePlay(ost.match); } return true; }
   if (d.pick) {
     if (ost && ost.gameId === d.pick && S.roomDecided === d.pick) { S.roomPre = null; return render(), true; }
@@ -1394,6 +1423,11 @@ function onlineClick(d, bElem) {
 function chooseOnline(id) {
   if (!id || !isHostRoom()) return;
   if (!isSoloInRoom() && activeMembers().length === 0) return toast({ w: 'お知らせ', t: '全員が観戦モードのため開始できません' });
+  if (newGameSetup[id]) {
+    if (id==='mineVersus' && activeMembers().length<2) return toast({w:'お知らせ',t:'参加者を待っています'});
+    if (!roomChoosing()) return;
+    return newGameSetup[id](ost.members.length>=2);
+  }
   S.roomPre = null;
   if (!ost || ost.gameId !== id) { mainCore.onlineChoose(id, ''); scheduleHostSync(); }
   try {
@@ -1556,6 +1590,8 @@ function leaveOnlinePlay() {
   online = false;
 }
 function leaveOnline(mode = 'auto') {
+  wolfGame.reset();
+  boardMatch.reset();
   if (pointerFlushTimer) { clearTimeout(pointerFlushTimer); pointerFlushTimer = null; }
   pendingPointer = null;
   hostSyncScheduled = false;
@@ -1652,6 +1688,9 @@ function onlineChanged() {
     (async () => { try { do { onlinePending = false; await refresh(); } while (onlinePending && online && S.screen === 'play'); } finally { onlineBusy = false; } })();
     return refreshChat();
   }
+  if (S.screen==='extraPlay') { refreshChat(); return; }
+  if (S.screen==='wolfPlay') { refreshChat(); wolfGame.update(); return; }
+  if (S.screen==='wolfSetup' && wolfGame.refreshingSetup()) return keepInputs(render);
   if (S.screen === 'room' || (roomActive() && /^(menu|records|settings)$/.test(S.screen)) || (S.screen === 'setup' && S.setup.online)) {
     const rn = $('#readyNames');
     if (rn && ost) {
@@ -1751,6 +1790,7 @@ function sendPointerNow(pt) {
 function queuePointerSend(clientX, clientY, active) {
   if (!netApi || !fbState.roomId || isMobileCursorOff()) return;
   if (online && S.screen === 'play' && cur && NO_CURSOR.has(cur.id)) return;
+  if (S.screen==='minePlay' && !minesGame.personal.share) return;
   const pt = computeNormalizedPointer(clientX, clientY, active);
   if (!pt) return;
   pendingPointer = pt;
@@ -1884,7 +1924,7 @@ function startCursorLoop() {
       document.querySelectorAll('.rcur.live').forEach((e) => e.remove());
       return;
     }
-    if (S.screen !== 'play' || $('#playsettings') || !cursorOn() || (cur && NO_CURSOR.has(cur.id))) {
+    if (!['play','slidePlay','minePlay','wolfPlay','extraPlay'].includes(S.screen) || (S.screen==='minePlay' && !minesGame.personal.show) || $('#playsettings') || !cursorOn() || (S.screen==='play' && cur && NO_CURSOR.has(cur.id))) {
       document.querySelectorAll('.rcur.live').forEach(e => e.remove());
       cursorAnimFrame = requestAnimationFrame(step); return;
     }
@@ -1929,7 +1969,7 @@ function startCursorLoop() {
 }
 
 const roomActive = () => !!(fbState.roomId && ost && ost.role !== 'none');
-const roomChoosing = () => roomActive() && ost.phase === 'LOBBY';
+const roomChoosing = () => roomActive() && ost.phase === 'LOBBY' && !wolfGame.active() && !boardMatch.active();
 function playerBadge(p) {
  const color=SEAT_COLORS[((p.slot||0)%6+6)%6];
  const displayName=ost?.members?.find(m=>m.slot===p.slot)?.name||p.name||'プレイヤー';
@@ -1989,10 +2029,10 @@ function onlineMenuDetail() {
  } else {
   hint = specCount > 0 ? `遊びたいゲームを選べます（対局 ${actCount}人・観戦 ${specCount}人）。開始はホストが行います` : '遊びたいゲームを選べます。設定と開始はホストが行います';
  }
- const canStart = isHostRoom() && g && playable(g.id) && (soloRoom ? true : actCount >= 1);
+ const canStart = isHostRoom() && g && playable(g.id) && (soloRoom ? g.id !== 'mineVersus' : g.id === 'mineVersus' ? actCount >= 2 : actCount >= 1);
  const startLabel = soloRoom ? '1人で遊ぶ' : '対戦プレイ';
  const specToggle = roomChoosing() ? `<div style="margin:6px 0 4px"><button class="btn ${mySpec ? 'gold' : ''}" data-toggle-spec style="width:100%;height:34px;font-size:12px">${mySpec ? '観戦モード: ON（クリックで参加に戻る）' : '観戦モードにする'}</button></div>` : '';
  const mobHd = `<div class="detail-mobhd"><span class="detail-handle" aria-hidden="true"></span><button type="button" class="btn" data-detailclose aria-label="閉じる">✕ 閉じる</button></div>`;
  const openCls = S.mobDetail ? ' open' : '';
- return `<aside class="detail online-detail${openCls}">${mobHd}<div class="scroll">${g?`<div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div>`:'<div class="empty">ゲームを選んでください</div>'}<p>${hint}</p>${specToggle}${roomHowto()}</div>${chatBox()}<div class="foot"><button class="btn" data-rule="${g?g.id:''}" ${g?'':'disabled'}>${ic('book')}ルール</button>${roomChoosing()?`<button class="btn primary" data-next ${canStart?'':'disabled'}>${startLabel}</button>`:`<button class="btn primary" data-oreturn>${isSpectator ? '対局を観戦する' : '対局に戻る'}</button>`}</div></aside>`;
+ return `<aside class="detail online-detail${openCls}">${mobHd}<div class="scroll">${g?`<div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div>`:'<div class="empty">ゲームを選んでください</div>'}<p>${hint}</p>${specToggle}${roomHowto()}</div>${chatBox()}<div class="foot"><button class="btn" data-rule="${g?g.id:''}" ${g&&!newGameSetup[g.id]?'':'disabled'}>${ic('book')}ルール</button>${roomChoosing()?`<button class="btn primary" data-next ${canStart?'':'disabled'}>${startLabel}</button>`:`<button class="btn primary" data-oreturn>${isSpectator ? '対局を観戦する' : '対局に戻る'}</button>`}</div></aside>`;
 }

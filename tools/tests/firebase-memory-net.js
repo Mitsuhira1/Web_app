@@ -160,6 +160,14 @@ export async function createNet() {
    localStorage.removeItem('test-cursor-' + targetUid);
    write('kicked', kicked); write('players', players); notify();
   },
+  async writeSlideProgress(slide) {
+   if (!roomId || !uid) return;
+   const players = read('players') || {};
+   if (!players[uid]) return;
+   players[uid] = {...players[uid], slide};
+   write('players', players);
+   notify();
+  },
   async writeState(state) { write('state', Object.assign({}, read('state') || {}, state)); notify(); },
   async writeCursor(c) { write('cursor-' + uid, { ...c, uid }); notify(); },
   async sendAction(a) { bus.postMessage({ type: 'action', action: { ...a, uid } }); },

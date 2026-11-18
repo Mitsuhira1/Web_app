@@ -329,6 +329,7 @@ export async function createNet(core, hooks) {
             avatar: Number.isInteger(playerInfo.avatar) ? playerInfo.avatar : null,
             spectating: false,
             autoCpu: false,
+            wolfKey: playerInfo.wolfKey || null,
             joinedAt: nowTs,
           }
         },
@@ -387,6 +388,7 @@ export async function createNet(core, hooks) {
         avatar: Number.isInteger(playerInfo.avatar) ? playerInfo.avatar : null,
         spectating: false,
         autoCpu: false,
+        wolfKey: playerInfo.wolfKey || null,
         joinedAt: serverTimestamp(),
       });
 
@@ -498,6 +500,11 @@ export async function createNet(core, hooks) {
         [`players/${targetUid}`]: null,
         [`cursors/${targetUid}`]: null,
       });
+    },
+
+    async writeSlideProgress(progress) {
+      if (!currentRoomId || !uid) return;
+      await set(ref(getDb(), `rooms/${currentRoomId}/players/${uid}/slide`), progress);
     },
 
     // ホストが rooms/{roomId}/state を更新

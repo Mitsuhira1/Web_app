@@ -2314,3 +2314,118 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .play-screen .side .online-ops{padding-right:0;padding-bottom:52px}
   .chatpop{height:min(280px,74dvh)}
 }
+
+/* スライドパズル */
+.slide-setup{width:min(100%,900px);margin:auto}.slide-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.slide-choices button{display:grid;justify-items:center;gap:8px;padding:12px;background:var(--surface2);border:3px solid transparent;border-radius:16px;font-weight:900}.slide-choices button[aria-pressed=true]{border-color:var(--gold)}.slide-choice-art{display:block;aspect-ratio:1;width:min(100%,260px);border:5px solid #765333;border-radius:10px;overflow:hidden;background:#334b49}.slide-choice-art img{width:100%;height:100%;object-fit:cover}.slide-nums{display:grid;grid-template-columns:repeat(var(--slide-n),1fr);gap:2px;padding:2px}.slide-nums span{display:grid;place-items:center;background:linear-gradient(145deg,#f5dca8,#b88d4e);font-size:clamp(10px,1.5vw,22px)}.slide-nums span:last-child{background:#334b49}
+.slide-stage .boardwrap{padding:18px}.slide-board{position:relative;width:min(100cqw,calc(100cqh - 36px));aspect-ratio:1;background:#334b49;border:7px solid #765333;border-radius:12px;box-shadow:0 8px 18px #0005;overflow:hidden}.slide-tile{position:absolute;display:grid;place-items:center;border:2px solid #fff9;transition:left .18s ease-out,top .18s ease-out}.slide-tile span{position:absolute;right:4px;bottom:3px;color:white;text-shadow:0 1px 4px #142625;background:#172a2a88;border-radius:4px;padding:1px 4px;font-weight:900}.slide-tile.number{background:linear-gradient(145deg,#f5dca8,#b88d4e)}.slide-tile.number span{position:static;background:none;color:#3e2b19;text-shadow:none;font-size:clamp(22px,5vw,54px)}.slide-under{text-align:center;padding:8px;color:var(--sub);font-weight:800}.slide-dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px}
+@media(max-width:920px){.slide-stage{flex:none;min-height:auto;padding-bottom:64px}.slide-stage .boardwrap{flex:none;height:min(calc(100vw - 36px),65vh);aspect-ratio:auto;padding:10px}.slide-board{width:min(100cqw,100cqh)}.slide-choices{gap:8px}.slide-choices button{padding:6px}}
+/* ぶにょぶにょ */
+.bunyo-art{display:grid;place-items:center;width:100%;height:100%;background:linear-gradient(145deg,#574da8,#302269);color:#72d4b7;font-size:clamp(32px,6vw,70px);letter-spacing:-.35em;padding-right:.35em;text-shadow:0 4px #24805f}.bunyo-stage{position:relative;background:linear-gradient(#27285c,#553191);align-items:center}.bunyo-stage .stagehead{width:100%;color:white}.bunyo-board{display:grid;grid-template-columns:repeat(6,1fr);width:min(52vh,72%);aspect-ratio:1/2;background:#242352;border:5px solid #8e82c7;border-radius:9px;box-shadow:0 7px 18px #0007;overflow:hidden}.bunyo-slot{display:grid;place-items:center;min-width:0;min-height:0;border:1px solid #ffffff16}.bunyo-piece{width:96%;height:96%;position:relative;border-radius:45% 45% 42% 42%;box-shadow:inset -5px -8px 9px #0004,inset 4px 6px 7px #fff7,0 2px 4px #0006;animation:bunyoLand .15s ease-out}.bunyo-piece.red{background:#f44c65}.bunyo-piece.blue{background:#4d98f6}.bunyo-piece.green{background:#5cdd76}.bunyo-piece.yellow{background:#fbd250}.bunyo-piece.purple{background:#bd76e4}.bunyo-piece.garbage{background:#aeb3c2}.bunyo-piece .eyes{position:absolute;display:flex;justify-content:center;gap:3px;left:25%;right:25%;top:31%;height:30%}.bunyo-piece .eyes>i{width:45%;height:100%;background:white;border-radius:50%;box-shadow:inset -1px -2px 2px #ddd}.bunyo-piece .eyes>i:after{content:'';display:block;width:36%;height:44%;background:#273255;border-radius:50%;margin:42% auto 0}.bunyo-next{display:flex;gap:5px;justify-content:center;height:72px}.bunyo-next .bunyo-piece{width:56px;height:56px}.bunyo-controls{display:flex;gap:12px;margin:12px auto 65px}.bunyo-controls button{width:50px;height:44px;border-radius:10px;background:#f7f3ff;color:#34276f;font-size:23px;font-weight:900}.bunyo-over{position:absolute;inset:30% 10% auto;background:#312b68ee;color:white;padding:30px;text-align:center;border-radius:14px;font-size:24px;font-weight:900}@keyframes bunyoLand{from{transform:scaleY(.65)}to{transform:scaleY(1)}}
+@media(max-width:920px){.bunyo-stage{flex:none;min-height:auto}.bunyo-board{width:min(70vw,360px)}.bunyo-controls{margin-bottom:65px}.bunyo-stage .play-settings{bottom:12px}}
+.bunyo-slot{border:0}.bunyo-piece{width:100%;height:100%}.bunyo-piece.link-top{border-top-left-radius:9%;border-top-right-radius:9%}.bunyo-piece.link-right{border-top-right-radius:9%;border-bottom-right-radius:9%}.bunyo-piece.link-bottom{border-bottom-left-radius:9%;border-bottom-right-radius:9%}.bunyo-piece.link-left{border-top-left-radius:9%;border-bottom-left-radius:9%}
+/* パクリス */
+.pakuris-art{display:grid;place-items:center;width:100%;height:100%;background:radial-gradient(#514099,#18143d);color:#ffcc5a;font-size:clamp(40px,6vw,80px);text-shadow:0 4px 8px #0007}.pakuris-stage{position:relative;background:linear-gradient(#1d194f,#331661);align-items:center}.pakuris-stage .stagehead{width:100%;color:white}.pakuris-board{display:grid;grid-template-columns:repeat(10,1fr);width:min(42vh,68%);aspect-ratio:1/2;background:#15123a;border:5px solid #847fc1;border-radius:8px;box-shadow:0 8px 18px #0008}.pakuris-slot{border:1px solid #ffffff12;min-width:0;min-height:0}.pakuris-block{display:block;width:100%;height:100%;border:3px solid #ffffff44;box-shadow:inset -5px -5px 6px #0004,inset 4px 4px 6px #fff9,0 0 6px #fff5;animation:pakurisEnter .14s ease-out}.pakuris-block.I{background:#3fd5eb}.pakuris-block.O{background:#f8d34c}.pakuris-block.T{background:#b873e3}.pakuris-block.S{background:#67df75}.pakuris-block.Z{background:#f35d6c}.pakuris-block.J{background:#4b8fec}.pakuris-block.L{background:#f4a155}.pakuris-controls{display:flex;gap:8px;margin:12px auto 60px}.pakuris-controls button{width:45px;height:44px;border-radius:10px;background:#f8f5ff;color:#332361;font-size:21px;font-weight:900}.pakuris-next{display:flex;gap:10px;height:52px}.pakuris-next .pakuris-block{width:48px;height:48px}.pakuris-over{position:absolute;inset:35% 10% auto;background:#31245dee;color:white;padding:28px;text-align:center;border-radius:14px;font-size:25px;font-weight:900}@keyframes pakurisEnter{from{opacity:.5;transform:scale(.75)}to{opacity:1;transform:scale(1)}}
+@media(max-width:920px){.pakuris-stage{flex:none;min-height:auto}.pakuris-board{width:min(56vw,280px)}.pakuris-controls{margin-bottom:65px}.pakuris-stage .play-settings{bottom:12px}}
+/* マインスイーパー */
+.mine-art{display:grid;place-items:center;width:100%;height:100%;background:radial-gradient(#50a5be,#1a4566);color:white;font-size:clamp(42px,6vw,88px)}.mine-setup-panel{width:min(100%,860px);margin:auto}.mine-levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.mine-level{display:grid;gap:4px;text-align:center;padding:20px 10px;background:#e5f2f5;border:3px solid transparent;border-radius:16px;color:#15374b}.mine-level[aria-pressed=true]{border-color:#2698c0}.mine-level b{font-size:20px}.mine-stage{background:#d7e8ef}.mine-boardwrap{flex:1;min-height:0;overflow:auto;display:grid;place-items:center;padding:12px}.mine-board{display:grid;grid-template-columns:repeat(var(--mine-cols),minmax(0,1fr));width:max-content;gap:1px;background:#3e7694;border:5px solid #23506d;border-radius:8px;box-shadow:0 5px 14px #193c5966}.mine-cell{display:grid;place-items:center;width:clamp(20px,3.4vw,38px);aspect-ratio:1;background:#d8e9ed;color:#235477;font-weight:900;font-size:clamp(12px,1.7vw,21px)}.mine-cell.hidden{background:linear-gradient(145deg,#5ca2bd,#327a9d);box-shadow:inset 0 2px #a7d9e8,inset 0 -2px #1f5d7c}.mine-cell.flag{background:#73aac0;color:#e62340}.mine-cell.mine{background:#ea6371;color:#162e44}.mine-cell[data-code="1"]{color:#2268bb}.mine-cell[data-code="2"]{color:#188c50}.mine-cell[data-code="3"]{color:#d9513d}.mine-foot{display:flex;justify-content:space-around;padding:6px 70px 16px;color:#174160;font-weight:900}
+@media(max-width:920px){.mine-stage{flex:none;min-height:70vh}.mine-boardwrap{flex:none;display:block;overflow:auto;max-height:65vh}.mine-cell{width:30px}.mine-levels{gap:5px}.mine-level{padding:8px 3px}.mine-level b{font-size:16px}.mine-foot{padding:8px 18px 60px}}
+
+/* 人狼は共通パネルと同じ幅を左右に使う。会話欄は中央に確保する。 */
+.wolf-screen { --wolf-side:340px; }
+.wolf-screen > .side { width:var(--wolf-side); }
+.wolf-info { border-left:0; border-right:1px solid var(--line); overflow:auto; }
+.wolf-info .stagehead { margin:0; }
+#wolfRole { font-size:24px; }
+#wolfPrivate { color:var(--sub); margin:0 0 8px; }
+.wolf-action { margin-top:auto; display:grid; gap:8px; }
+#wolfHint { text-align:center; color:var(--sub); min-height:1.5em; }
+.wolf-controls { display:flex; gap:8px; }
+.wolf-controls .primary { letter-spacing:.08em; }
+.wolf-stage { position:relative; padding:14px; gap:12px; }
+.wolf-village { min-height:0; background:var(--surface); }
+.wolf-village h3 { margin:0; padding:10px 14px; border-bottom:1px solid var(--line); }
+.wolf-village .log { gap:10px; }
+.wolf-village .msg { font-size:17px; padding:8px 14px; overflow-wrap:anywhere; }
+.wolf-village .stamps { flex-wrap:wrap; justify-content:flex-start; }
+.wolf-village .stamps button { flex:0 0 auto; width:auto; height:auto; border-radius:8px; padding:5px 10px; background:var(--surface2); }
+.wolf-village .stamps button:hover { transform:none; filter:brightness(.96); }
+#wolfTargets { display:flex; flex-wrap:wrap; gap:8px; }
+#wolfTargets:empty { display:none; }
+#wolfTargets [aria-pressed="true"] { background:var(--select); color:var(--on-select); }
+.wolf-common .chat { min-height:0; }
+.wolf-options { margin:auto; width:min(100%,720px); }
+.wolf-options .row { gap:12px; flex-wrap:wrap; }
+.wolf-art { display:grid; place-items:center; width:100%; height:100%; background:#292944; color:#ffe4a3; font-size:48px; }
+.wolf-attack { position:absolute; inset:0; z-index:79; display:grid; place-items:center; background:#151927; }
+.wolf-attack video { width:100%; max-height:100%; object-fit:contain; }
+@media(max-width:1050px) {
+  .wolf-screen { --wolf-side:clamp(200px,28vw,340px); }
+}
+
+/* 坊主めくりと百人一首は同じ札と盤の質感を使う。 */
+.poet-stage { position:relative; padding-bottom:12px; }
+.poet-table { flex:1; min-height:0; overflow:auto; padding:18px; border:7px solid var(--walnut-a);
+  border-radius:16px; background:radial-gradient(ellipse at top,var(--felt-a),var(--felt-b)); color:var(--on-felt); }
+.poet-setup > .panel { width:min(600px,100%); margin:auto; }
+.poet-piles { display:flex; flex-wrap:wrap; justify-content:center; gap:22px; padding:12px; }
+.poet-pick { display:grid; justify-items:center; gap:8px; min-width:64px; width:17%; max-width:114px; }
+.poet-pick:disabled { opacity:.65; }
+.poet-open { display:flex; flex-direction:column; align-items:center; min-height:176px; gap:8px; }
+.poet-open .poet-card { width:112px; }
+.poet-card { position:relative; display:block; width:100%; aspect-ratio: .68; overflow:hidden; color:#251e18;
+  border:4px solid #263c32; border-radius:3px; box-shadow:0 2px 0 #182c23,0 4px 8px #0005;
+  background:repeating-linear-gradient(99deg,#fff2 0 1px,#e8d9bc1a 1px 4px),linear-gradient(#fffdf3,#efe5ca);
+  font-family:"Shippori Mincho B1","Yu Mincho",serif; }
+.poet-card.back { border-width:4px; background:
+  repeating-linear-gradient(45deg,#d5b37555 0 1px,transparent 1px 8px),repeating-linear-gradient(-45deg,#d5b37555 0 1px,transparent 1px 8px),#8b3e38;
+  box-shadow:inset 0 0 0 2px #edce9c,0 3px 0 #27362b,0 6px 0 #8b3e38,0 9px 0 #27362b,0 12px 15px #0005; }
+.poet-lines { position:absolute; inset:7% 8%; display:flex; flex-direction:row-reverse; justify-content:space-between;
+  line-height:1; letter-spacing:.08em; }
+.poet-lines > span,.poet-author { writing-mode:vertical-rl; }
+.poet-card.verse { container-type:inline-size; }
+.poet-card.verse .poet-lines { font-size:21cqw; }
+.poet-card.portrait { container-type:inline-size; }
+.poet-card.portrait .poet-lines { inset:6% 20% 40% 9%; font-size:12cqw; }
+.poet-author { position:absolute; top:5%; right:5%; font-size:9cqw; }
+.poet-card img { position:absolute; width:100%; height:62%; inset:auto 0 0; object-fit:fill; }
+.poet-reading { display:flex; min-height:80px; align-items:center; gap:18px; margin:0 0 12px; padding:10px 14px;
+  border-radius:10px; background:#143b2c82; }
+.poet-read-text { flex:1; min-width:0; display:grid; gap:6px; font-family:"Shippori Mincho B1",serif; font-size:clamp(16px,2vw,27px); }
+.poet-reading .poet-card { width:55px; }
+.poet-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(12%,68px),1fr)); gap:8px; }
+.poet-grid button { min-width:0; transition:transform .14s; }
+.poet-grid button:hover:not(:disabled) { transform:translateY(-4px); }
+.poet-flip { animation:poetFlip .36s ease-out both; }
+.poet-piles.dealing,.poet-grid.dealing { animation:poetDeal .42s ease-out both; }
+@keyframes poetFlip { from { transform:translateY(-12px) scaleX(.05); opacity:.4; } }
+@keyframes poetDeal { from { opacity:0; transform:translateY(-16px); } }
+.poet-icon { display:grid; place-items:center; width:100%; height:100%; padding:6%; background:#35684b; }
+.poet-icon .poet-card { max-width:58%; }
+.reduce .poet-flip,.reduce .dealing { animation:none; }
+
+.mine-duel { position:relative; padding-bottom:12px; }
+.mine-versus-setup > .panel { max-width:730px; margin:auto; }
+.mine-versus-setup .row { gap:10px; flex-wrap:wrap; }
+.mine-versus-setup input[type="number"] { width:80px; background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:4px 8px; }
+#duelTools .ops { padding-bottom:8px; }
+#duelBoard button[data-code="12"] { background:#b74d44; color:#fff; }
+#duelBoard .mine-cell:disabled { opacity:.8; }
+
+.falling-rival { border-bottom:1px solid var(--line); padding:0 8px 6px; }
+#fallingRivals { display:flex; gap:8px; max-height:210px; overflow:auto; flex-shrink:0; }
+.falling-mini { display:grid; grid-template-columns:repeat(var(--columns),1fr); background:#292e4a; width:54px; }
+.falling-mini i { aspect-ratio:1; }
+.falling-mini i[data-tone="0"] { background:#ef5965; }
+.falling-mini i[data-tone="1"] { background:#549af5; }
+.falling-mini i[data-tone="2"] { background:#6aca73; }
+.falling-mini i[data-tone="3"] { background:#ffcd4b; }
+.falling-mini i[data-tone="4"] { background:#ae74f8; }
+.falling-mini i[data-tone="5"] { background:#ff8b3e; }
+.falling-mini i[data-tone="6"] { background:#69d8ee; }
+.falling-mini i[data-tone="8"] { background:#aeb1bd; }
+.bunyo-piece.garbage { background:radial-gradient(circle at 40% 28%,#e7e9ee,#9298a6 67%,#707582); }
+.bunyo-piece.garbage .eyes { opacity:.55; }
+.pakuris-block.garbage { background:linear-gradient(145deg,#c1c5d1,#898e9e); }
+.bunyo-slot.popping > span,.pakuris-slot.popping > span { animation:fallingPop .2s ease-out both; }
+@keyframes fallingPop { 36% { transform:scale(1.12); filter:brightness(1.6); } to { transform:scale(.45); opacity:0; } }
+.reduce .popping > span { animation:none; }
