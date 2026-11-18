@@ -1674,7 +1674,7 @@ function showAsk(ask) {
 // 受信側は requestAnimationFrame による補間アニメーションで滑らかに動かし、active: false 時は半透明(待機表示)にする。
 const CUR_FLIP = new Set(['shogi', 'gogo', 'mancala', 'checkers', 'chess']);
 const curFlip = (seat) => !!(cur && CUR_FLIP.has(cur.id) && seat === 1);
-const isMobileCursorOff = () => (typeof isMob === 'function' && isMob()) || (typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+const isMobileCursorOff = () => (typeof isMob === 'function' && isMob()) || (typeof isTouchDevice === 'function' && isTouchDevice()) || (typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
 const POINTER_INTERVAL_MS = 100;
 let lastPointerSentAt = 0;
 let lastPointerSentSig = '';

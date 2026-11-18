@@ -56,6 +56,16 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-17 20:41(PST)/ Antigravity / ccr-efc07031-6exjqs
+- 目的: ユーザーの指示。`web/pc-firebase/` をタブレット（縦・横）でブラウザ表示したときも PC 版の基本構成（左ナビ `.rail` ＋ 中央 `.main`/`.stage` ＋ 右 `.detail`/`.side`）のまま違和感なく収まるように調整し、終了ボタン (`.quitbtn`) を非表示にする。
+- 変更:
+  - `web/pc-firebase/js/app.js`: `isMob()` の閾値をスマホ向け（`innerWidth <= 680` または低高さ横画面 `innerWidth <= 960 && innerHeight <= 540`）に引き下げ、タブレット縦横を PC 構成のまま維持。`isTouchDevice()` に UA (`/iPad|Android|Tablet|PlayBook|Silk/i`) および iPadOS デスクトップモード判定 (`platform === 'MacIntel' && maxTouchPoints > 1`) を追加し、`rail()` で `.quitbtn` を非表示化。
+  - `web/pc-firebase/js/online.js`: `isMobileCursorOff()` にも `isTouchDevice()` 判定を追加し、タッチタブレット端末でもポインター送受信・補間描画を抑止。
+  - `web/pc-firebase/css/app.css`: スマホ専用 `@media (max-width:920px)` を `@media (max-width:680px), (max-width:960px) and (max-height:540px)` へ移行したうえで、タブレット幅帯 (`681px〜1120px`, `681px〜880px`) のカラム幅・設定パネル・セグメントボタン折り返し・BGM ストリップ・成績表・ガイド配置を調整。さらにタブレット縦画面 (`681px〜960px` かつ `orientation: portrait`) 向けに `cqh` 依存で崩れやすかった盤面（将棋の駒台縦配置、ヨット・ヒット＆ブローの縦並び、花札等カード卓・スピード・ソリティアの縦横比、麻雀の正方形盤面と横スクロール手牌、人生すごろくのルーレット幅）を最適化。
+  - `web/pc-firebase/sw.js`: キャッシュ名を `asobipcfb-20261117-tablet-ui-3` に更新。
+- ファイル: `web/pc-firebase/js/app.js`, `web/pc-firebase/js/online.js`, `web/pc-firebase/css/app.css`, `web/pc-firebase/sw.js`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `git diff --check`、`node --check` (`app.js`, `online.js`, `sw.js`)、`node tools/tests/check_transient_audio.cjs`、`node tools/tests/check_cursor_send.cjs`、ヘッドレス Chromium CDP タブレット＋各種ビューポート検証（PC `1280×800`・タブレット縦 `744×1133` / `768×1024` / `820×1180`・タブレット横 `1024×768` / `1180×820`・iPadOS `MacIntel + maxTouchPoints=5`・スマホ縦横 `390×844` / `844×390` のメニュー/部屋/成績/設定/準備/主要11盤面すべて横溢れ0＆主要スクリーンショット目視確認）、および 5 クライアント E2E（公開部屋/詳細確認/ロック/定員超過観戦選択/スマホ・タブレットでの終了ボタン非表示＆カーソル非送受信/エラー0）すべて合格。`web/pc/` と `Windows-Projects` は無変更。`ccr-efc07031-6exjqs` へコミット・プッシュ済み。
+
 ### 2026-11-17 20:22(PST)/ Antigravity / ccr-efc07031-6exjqs
 - 目的: ユーザーの指示。`web/pc-firebase/` の「みんなで遊ぶ」仕様拡張およびモバイル表示調整（7項目）。
   1. 部屋のアクティブ人数が選択ゲームの最大席数より多い場合、ホストがスタート押下時に観戦者を選ぶ確認シート（選択してスタート / キャンセル）を表示。

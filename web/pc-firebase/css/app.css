@@ -287,7 +287,7 @@ svg.stamp{width:30px;height:30px;display:block}
 .koma.op.mv .kb{transform:rotate(180deg) translateY(9%) scale(1.12)}
 .kf{width:100%;height:100%;clip-path:polygon(50% 3%,83% 18%,95% 97%,5% 97%,17% 18%);background:linear-gradient(100deg,#F8E6BB,#E6C684 62%,#CFA85F);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--koma);color:#1a1208;font-size:3.5cqmin;line-height:1.02;padding-top:14%}
 
-@media (max-width:920px){
+@media (max-width:680px), (max-width:960px) and (max-height:540px){
   body{height:auto}
   .app,.screen{flex-direction:column}
   .rail{width:auto;border-right:0;border-bottom:1px solid var(--line)}
@@ -563,7 +563,7 @@ kbd{font-family:ui-monospace,Consolas,monospace;font-size:12.500px;font-weight:7
 .pv{width:32px;height:32px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;flex:none}
 .pv.on{background:var(--gold);color:var(--on-gold)}
 .pv svg.ic{width:16px;height:16px}
-@media (max-width:920px){ .setwrap{flex-direction:column} .setcats{width:auto;flex-direction:row;flex-wrap:wrap} }
+@media (max-width:680px), (max-width:960px) and (max-height:540px){ .setwrap{flex-direction:column} .setcats{width:auto;flex-direction:row;flex-wrap:wrap} }
 
 /* ---- 10回目 ---- */
 .c4board{border:0;padding:0;background:#E9CC94}
@@ -598,9 +598,9 @@ kbd{font-family:ui-monospace,Consolas,monospace;font-size:12.500px;font-weight:7
 .ohline figure{margin:0;text-align:center}
 .ohline figcaption{font-size:12.500px;font-weight:700;margin-top:4px;min-height:19px}
 .ohline .gap{width:22px}
-@media (max-width:920px){ .avgrid{grid-template-columns:repeat(5,1fr)} }
+@media (max-width:680px), (max-width:960px) and (max-height:540px){ .avgrid{grid-template-columns:repeat(5,1fr)} }
 
-@media (max-width:920px){ .cols2{grid-template-columns:1fr} .setupfoot .primary{width:auto;flex:1} .setupbody{overflow:visible;padding:16px} .gal{grid-template-columns:1fr} }
+@media (max-width:680px), (max-width:960px) and (max-height:540px){ .cols2{grid-template-columns:1fr} .setupfoot .primary{width:auto;flex:1} .setupbody{overflow:visible;padding:16px} .gal{grid-template-columns:1fr} }
 
 /* ================================================================ アプリ(見本に足したもの) */
 html,body{height:100%;overflow:hidden}
@@ -1623,7 +1623,7 @@ html.reduce .wfx .wpop{display:none!important}
 
 /* 左の柱: 人数フィルタは上、ルーム情報は下。ゲーム以外のタブでは .rail-filter を不可視化してルーム情報の位置を全タブで固定 */
 .rail-filter.is-hidden{visibility:hidden;pointer-events:none}
-@media (max-width:920px){.rail-filter.is-hidden{display:none}}
+@media (max-width:680px), (max-width:960px) and (max-height:540px){.rail-filter.is-hidden{display:none}}
 /* 人数フィルタ切り替え時のアニメーション */
 .rail-filter .seg button{transition:background-color .2s ease,color .2s ease,transform .2s cubic-bezier(.22,.85,.32,1)}
 .rail-filter .seg button.filter-pop{animation:filterBtnPop .22s cubic-bezier(.22,.85,.32,1) both}
@@ -1664,7 +1664,7 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
   .quitbtn,.rcur,.aimring{display:none!important}
 }
 
-@media (max-width:920px){
+@media (max-width:680px), (max-width:960px) and (max-height:540px){
   html,body{height:auto;min-height:100dvh;overflow-x:clip;overflow-y:visible;-webkit-overflow-scrolling:touch}
   body{overscroll-behavior-y:contain}
   .app{flex:1 0 auto;min-height:0}
@@ -1958,3 +1958,167 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
 .spec-row{justify-content:space-between;padding:8px 12px}
 .spec-row.is-spec{opacity:.78;background:var(--surface2)}
 .spec-left{display:flex;align-items:center;gap:10px;min-width:0}
+
+/* ---- タブレット向け最適化 (PC 構成を維持しつつ余白・列幅・縦向き盤面を調整 2026-11-17) ---- */
+@media (min-width:681px) and (max-width:1120px) and (min-height:541px){
+  .rail{width:184px;padding:14px 10px;gap:14px}
+  .brand strong{font-size:19px}
+  .tabs button{padding:9px 10px;gap:8px;font-size:14px}
+  .main{padding:18px 20px 24px}
+  .shelf{grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:12px}
+  .detail{width:312px}
+  .detail .scroll{padding:14px;gap:10px}
+  .hero{padding:12px;gap:10px}
+  .hero .art{width:68px;height:68px}
+  .hero h2{font-size:18px}
+  .side{width:296px;padding:12px;gap:10px}
+  .stage{padding:12px 14px 0}
+  .setuphead{padding:10px 18px;gap:12px}
+  .setupbody{padding:16px 20px}
+  .setupfoot{padding:12px 20px 18px}
+  .setupfoot .primary{width:240px}
+  .cols2{gap:14px}
+  .setcats{width:144px}
+  .setcats button{padding:9px 10px;font-size:14px}
+  .setpanel .row>span:first-child,.setupbody .row>span:first-child,.cols .row>span:first-child{white-space:normal;flex:1 1 110px;min-width:0}
+  .row .seg,.row .stepper,.row .field,.row .ctl{width:min(236px,100%)}
+  .row .seg{width:auto;min-width:min(210px,100%);max-width:100%}
+  .row .seg button{flex:1 0 auto;padding:5px 8px;font-size:13px}
+  .row .seg.wide{width:auto;min-width:0}
+  .bgstrip{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+  .bgstrip .bgname{width:94px;margin:0 6px 0 8px}
+  .bggen{width:82px;font-size:12px}
+  .bgstrip .bgtime{width:78px;font-size:11.5px}
+  #bgSeek{min-width:64px;margin:0 6px}
+  #bgMute{margin-left:6px}
+  #bgVol{width:74px}
+  .record-game{min-width:190px;gap:12px;min-height:70px}
+  .record-art{width:72px;height:62px}
+  .record-art svg{width:62px;height:62px}
+  .play-settings-dialog .setwrap{grid-template-columns:136px minmax(0,1fr);gap:12px}
+}
+
+@media (min-width:681px) and (max-width:880px) and (min-height:541px){
+  .rail{width:168px;padding:12px 9px;gap:10px}
+  .brand strong{font-size:18px}
+  .tabs button{padding:8px 9px;gap:7px;font-size:13.5px}
+  .tabs button svg.ic{width:18px;height:18px}
+  .room-summary{padding:8px;gap:6px}
+  .room-code{font-size:20px}
+  .me{padding:6px 4px;gap:7px}
+  .me .avatar{width:30px;height:30px;font-size:14px}
+  .main{padding:14px 14px 20px}
+  .conts .resume,.conts .resume.small{grid-template-columns:38px minmax(0,1fr) auto 34px;gap:10px;padding:8px 12px;height:54px}
+  .conts .resume .th,.conts .resume.small .th{width:38px;height:38px}
+  .conts .resume b{font-size:14.5px}
+  .shelf{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin-bottom:20px}
+  .detail{width:268px}
+  .detail .scroll{padding:12px;gap:10px}
+  .hero{padding:10px;gap:10px}
+  .hero .art{width:58px;height:58px}
+  .hero h2{font-size:17px}
+  .hero p{font-size:12px;line-height:1.45}
+  .detail .panel{padding:4px 10px}
+  .detail .row{min-height:38px;font-size:13.5px}
+  .detail .foot{padding:10px 12px 14px;gap:8px}
+  .detail .foot .btn{height:40px;padding:0 10px;font-size:13.5px}
+  .detail .foot .btn.primary{letter-spacing:.12em}
+  .online-detail .chat{margin:6px 10px;min-height:170px}
+  .online-detail .stamps button,.side .stamps button{width:32px;height:32px}
+  .online-detail svg.stamp,.side svg.stamp{width:24px;height:24px}
+  .side{width:264px;padding:10px;gap:8px}
+  .stage{padding:10px 12px 0}
+  .stagehead{gap:8px;margin-bottom:8px}
+  .stagehead h2{font-size:16px}
+  .stagehead .myturn{font-size:12.5px;padding:4px 10px}
+  .seat,.pl{padding:6px 8px;min-height:44px;gap:7px}
+  .pl .num{font-size:20px}
+  .status{font-size:13.5px;padding:7px 10px;min-height:36px}
+  .ops{gap:6px}
+  .ops .btn{height:38px;font-size:12.5px;padding:0 4px}
+  .online-ops .btn{height:34px;font-size:12px;padding:0 6px}
+  .play-settings{left:10px;bottom:10px;width:40px;height:40px}
+  .play-settings svg{width:20px;height:20px}
+  .cols2{grid-template-columns:1fr;max-width:640px}
+  .setcats{width:130px}
+  .setcats button{padding:8px 9px;font-size:13.5px}
+  .setpanel .row .seg,.setpanel .row .stepper,.setpanel .row .field,.setpanel .row .ctl{width:min(216px,100%)}
+  .setpanel .row .seg{width:auto;min-width:min(195px,100%);max-width:100%}
+  .bgstrip .bgl{display:none}
+  .record-game{min-width:160px;gap:10px}
+  .record-art{width:58px;height:52px}
+  .record-art svg{width:52px;height:52px}
+  .pguide{grid-template-columns:200px minmax(0,1fr);gap:10px 14px}
+  .pgrid{width:min(200px,100%)}
+}
+
+@media (min-width:681px) and (max-width:960px) and (orientation:portrait) and (min-height:541px){
+  .boardwrap.k-shogi{container-type:inline-size}
+  .boardwrap.k-shogi .shwrap{grid-template-columns:1fr;grid-template-rows:auto auto auto;gap:10px;height:100%;width:100%;align-content:center}
+  .boardwrap.k-shogi .komadai{width:min(100%,460px);height:auto;min-height:50px;margin:0 auto!important;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:6px;padding:8px 12px;border-radius:12px}
+  .boardwrap.k-shogi .komadai::after{display:none}
+  .boardwrap.k-shogi .komadai .none{font-size:12px;padding:4px 0}
+  .boardwrap.k-shogi .hk{width:38px;height:42px}
+  .boardwrap.k-shogi .hk b{right:-3px;bottom:-2px;font-size:11px;min-width:16px}
+  .boardwrap.k-shogi .sboard{width:min(100%,460px);height:auto;aspect-ratio:1/1.06;justify-self:center;padding:2.2cqw}
+  .boardwrap.k-shogi .sboard .kf{font-size:clamp(16px,4.2cqw,24px)}
+
+  .boardwrap.k-yacht{container-type:inline-size;overflow:auto}
+  .boardwrap.k-yacht .yacht2{width:100%;height:auto;grid-template-columns:1fr;gap:12px;padding:4px 0}
+  .boardwrap.k-yacht .ytray{border-radius:18px;border-width:10px;padding:14px 12px;gap:12px}
+  .boardwrap.k-yacht .yturn{font-size:14px;padding:4px 16px}
+  .boardwrap.k-yacht .ydice{grid-template-columns:repeat(6,clamp(24px,5.5cqw,32px));gap:12px 6px}
+  .boardwrap.k-yacht .yd{width:clamp(50px,12cqw,68px);height:clamp(50px,12cqw,68px);--ds:clamp(50px,12cqw,68px)}
+  .boardwrap.k-yacht .yd .d2{box-shadow:0 4px 0 #B9AC8C,0 8px 8px rgba(0,0,0,.35)}
+  .boardwrap.k-yacht .yroll{min-width:180px;height:44px;border-radius:12px;font-size:16px;padding:0 20px;box-shadow:0 3px 0 #9C6A12,0 6px 10px rgba(0,0,0,.3)}
+  .boardwrap.k-yacht .yleft{gap:8px;padding:4px 14px;font-size:13px}
+  .boardwrap.k-yacht .yleft b{font-size:18px}
+  .boardwrap.k-yacht .ydots{gap:4px}
+  .boardwrap.k-yacht .ydots i{width:10px;height:10px}
+  .boardwrap.k-yacht .ysheet{border-radius:12px;padding:8px 12px}
+  .boardwrap.k-yacht .ysheet th{font-size:13px;padding:5px 4px}
+  .boardwrap.k-yacht .ysheet th small{font-size:11px}
+  .boardwrap.k-yacht .ysheet thead th{font-size:12px}
+  .boardwrap.k-yacht .ysheet td{font-size:15px;min-width:48px;padding:5px 4px}
+  .boardwrap.k-yacht .ysheet tr.bonus th,.boardwrap.k-yacht .ysheet tr.bonus td{font-size:12.5px}
+
+  .boardwrap.k-hitblow{container-type:inline-size;overflow:auto}
+  .boardwrap.k-hitblow .hb2{width:100%;height:auto;grid-template-columns:1fr;gap:12px;padding:4px 0}
+  .boardwrap.k-hitblow .hbleft{grid-auto-flow:row;grid-template-columns:1fr 1fr;gap:10px}
+  .boardwrap.k-hitblow .hbcol{padding:10px 12px;border-radius:12px}
+  .boardwrap.k-hitblow .hbcol h4{margin:0 0 8px;font-size:13px}
+  .boardwrap.k-hitblow .hbrows{max-height:200px;gap:6px}
+  .boardwrap.k-hitblow .hbrow{gap:8px}
+  .boardwrap.k-hitblow .hbn{width:18px;font-size:12px}
+  .boardwrap.k-hitblow .hbt{gap:4px}
+  .boardwrap.k-hitblow .hbt i{width:28px;height:34px;border-radius:5px;font-size:18px}
+  .boardwrap.k-hitblow .hbr{gap:5px}
+  .boardwrap.k-hitblow .hbr b{min-width:46px;padding:2px 8px;font-size:13px}
+  .boardwrap.k-hitblow .hbr small{font-size:10px}
+  .boardwrap.k-hitblow .hbe{font-size:13px;padding:6px 0}
+  .boardwrap.k-hitblow .hbright{padding:14px 12px;gap:12px;border-radius:14px}
+  .boardwrap.k-hitblow .hbs{gap:8px}
+  .boardwrap.k-hitblow .hbs small{font-size:12px}
+  .boardwrap.k-hitblow .hbl{font-size:16px}
+  .boardwrap.k-hitblow .hbentry{gap:8px}
+  .boardwrap.k-hitblow .hbentry span{width:46px;height:56px;border-radius:8px;font-size:26px}
+  .boardwrap.k-hitblow .hbpad{grid-template-columns:repeat(5,minmax(44px,58px));gap:8px}
+  .boardwrap.k-hitblow .hbpad button{height:44px;border-radius:8px;font-size:20px}
+  .boardwrap.k-hitblow .hbpad .del{height:38px;font-size:14px}
+  .boardwrap.k-hitblow .hbpad .clr,.boardwrap.k-hitblow .hbpad .ok{height:42px;font-size:15px}
+  .boardwrap.k-hitblow .hbhelp{font-size:12px;line-height:1.6}
+  .boardwrap.k-hitblow .hbhelp b{font-size:12px;padding:1px 7px}
+
+  .boardwrap.k-cards{flex:none;margin:auto;width:100%;aspect-ratio:1/.96;max-height:100%}
+  .boardwrap.k-speed{flex:none;margin:auto;width:100%;aspect-ratio:1.38;max-height:100%}
+  .boardwrap.k-solitaire{flex:none;margin:auto;width:100%;aspect-ratio:1/1.05;max-height:100%}
+
+  .boardwrap.k-mahjong .mjwrap{justify-content:center;height:100cqh}
+  .boardwrap.k-mahjong .mjtable{flex:none;width:min(100cqw,calc(100cqh - 92px));height:auto;aspect-ratio:1}
+  .boardwrap.k-mahjong .mjinfo{font-size:14px}
+  .boardwrap.k-mahjong .mjhand{justify-content:flex-start;overflow-x:auto;padding:14px 6px 6px;-webkit-overflow-scrolling:touch}
+  .boardwrap.k-mahjong .mjt.big{--w:clamp(28px,5.8cqw,48px)}
+
+  .boardwrap.k-life .wheel{width:min(22cqw,128px);right:12px;bottom:12px}
+  .boardwrap.k-life .lifecard{width:min(460px,calc(100% - min(22cqw,128px) - 40px))}
+}

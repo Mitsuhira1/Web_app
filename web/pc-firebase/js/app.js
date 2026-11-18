@@ -49,8 +49,15 @@ const lvIndex = (t) => Math.max(0, LV.indexOf(t));
 
 const app = $('#app');
 const meName = () => S.set.name || 'あなた';
-const isMob = () => window.innerWidth <= 920;
-const isTouchDevice = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+const isMob = () => window.innerWidth <= 680 || (window.innerWidth <= 960 && window.innerHeight <= 540);
+const isTouchDevice = () => {
+  if (typeof window === 'undefined') return false;
+  if (typeof window.matchMedia === 'function' && window.matchMedia('(hover: none) and (pointer: coarse)').matches) return true;
+  const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+  if (/iPad|Android|Tablet|PlayBook|Silk/i.test(ua)) return true;
+  if (typeof navigator !== 'undefined' && navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) return true;
+  return false;
+};
 
 // ---------------------------------------------------------------- 共通の部品
 const seg = (key, opts, val, cls = '') => `<div class="seg ${cls}" data-seg="${key}">${opts.map((o) => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<button data-v="${esc(v)}" aria-pressed="${String(v) === String(val)}">${esc(l)}</button>`; }).join('')}</div>`;
