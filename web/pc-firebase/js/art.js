@@ -518,3 +518,22 @@ Object.assign(AR,{
    +`<g filter="url(#xSh)"><path d="M0 100C4 82 10 68 17 57L14 53L21 46L21 39L26 24L33 33L38 21L43 32Q48 30 53 26L65 19Q68 20 66 24L56 30L61 30Q61 33 56 35L48 37Q54 45 48 53L54 59L48 67L55 78L62 100Z" fill="#12172a"/><path d="M17 57L21 46L21 39L26 24L33 33L38 21L43 32Q48 30 53 26L65 19" fill="none" stroke="#9eb8ed" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="44.5" cy="33.5" rx="2.5" ry="1.4" fill="#ffbe3b" transform="rotate(-24 44.5 33.5)"/><circle cx="44.2" cy="33.3" r=".7" fill="#fff"/></g>`),
 });
 window.CHESS_PATHS = CH;
+
+// 承認済みの対局盤から、一覧・準備画面用に特徴のある札と駒を描く。
+const iExtraTile = (x,y,n,col,w=23,h=31) => `<g filter="url(#xSh)"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="url(#xIv)" stroke="#aa9473"/><text x="${x+w/2}" y="${y+h*.69}" font-family="Georgia,serif" font-weight="700" font-size="${w*.74}" text-anchor="middle" fill="${col}">${n}</text><path d="M${x+w*.35} ${y+h*.84}h${w*.3}" stroke="${col}" stroke-width="1.4"/></g>`;
+const iExtraGhost = (x,y,col) => `<g transform="translate(${x} ${y})" filter="url(#xSh)"><path d="M-14 13Q-10 8-11 0Q-11-13 0-14Q12-14 11 0Q10 8 14 13L8 16 4 13 0 17-5 13-10 16Z" fill="url(#xIv)" stroke="#766b5a"/>${col?`<circle cy="4" r="5" fill="${col}" stroke="#53453a"/><circle cx="-1.3" cy="2.1" r="1.7" fill="#fff8"/>`:'<path d="M-4-2v3m8-3v3" stroke="#584c3a" stroke-width="2" stroke-linecap="round"/>'}</g>`;
+Object.assign(AR,{
+  war:I(bFelt(),iCard(11,25,35,'4','♦',-10,{gold:true})+iCard(54,25,35,'3','♦',10)),
+  takoyaki:I(bFelt(),iCard(19,14,24,'A','♣')+iCard(57,14,24,'2','♦')+iCard(19,52,24,'','',0,{back:true})+iCard(57,52,24,'','',0,{back:true,gold:true})),
+  butanoshippo:I(bFelt(),Array.from({length:8},(_,i)=>{const a=i*Math.PI/4;return iCard(43+31*Math.sin(a),39+29*Math.cos(a),14,'','',-i*45,{back:true});}).join('')+iCard(38,33,24,'5','♦',8)),
+  oldmaid:I(bFelt(),iCard(12,17,28,'','',-21,{back:true})+iCard(36,11,28,'','',0,{back:true})+iCard(60,17,28,'','',21,{back:true})+iCard(34,43,32,'J','★',0,{gold:true})),
+  hearts:I(bFelt(),iCard(13,29,34,'Q','♠',-16)+iCard(46,20,39,'A','♥',15)),
+  ginrummy:I(bFelt(),iCard(12,24,30,'5','♠',-10)+iCard(35,19,30,'6','♠',0)+iCard(59,26,30,'7','♠',10)),
+  vulture:I(bFelt(),`<rect x="27" y="8" width="46" height="65" rx="4" fill="#4b3544" stroke="#f1cd8c" stroke-width="2"/><path d="M32 23l15 6 3 3 5-5 14-10-4 10-11 11-5 8-4-9z" fill="#f0c37d"/><text x="50" y="62" fill="#f7d185" text-anchor="middle" font-size="20" font-family="Georgia,serif">+6</text>`+iExtraTile(18,70,'8','#8b5630',20,24)+iExtraTile(62,70,'12','#8b5630',20,24)),
+  goita:I(bWood('xKaya',.2),iKoma(33,47,1.2,' 香',-11)+iKoma(66,52,1.35,' 王',12)),
+  quarto:I(bWood('xOak'),`<path d="M6 62l44-23 44 23v7L50 95 6 70z" fill="#71472b"/><path d="M6 62l44-25 44 25-44 25z" fill="#d3a474" stroke="#f5d6ae"/><path d="M20 54a9 5 0 0 0 18 0V28H20z" fill="#e1ad65"/><ellipse cx="29" cy="28" rx="9" ry="5" fill="#ffe1a6"/><ellipse cx="29" cy="28" rx="3.5" ry="2" fill="#61482e"/><path d="M54 54l12-7 12 7v13l-12 7-12-7z" fill="#78492f"/><path d="M54 54l12-7 12 7-12 7z" fill="#aa714a"/>`),
+  geister:I(bFlat('#cdb79b'),'<path d="M0 0H50V50H0ZM50 50H100V100H50Z" fill="#aa9d82"/>'+iExtraGhost(30,31,null)+iExtraGhost(67,49,'#368ab6')+iExtraGhost(34,70,'#c55c48')),
+  rummikub:I(bFelt(),iExtraTile(12,16,'13','#aa3930')+iExtraTile(38,16,'13','#2a5e9d')+iExtraTile(64,16,'13','#302d28')+iExtraTile(12,52,'5','#a36712')+iExtraTile(38,52,'6','#a36712')+iExtraTile(64,52,'7','#a36712')),
+  pegsolitaire:I(bFlat('#dfd2ba'),`<circle cx="50" cy="50" r="43" fill="url(#xOak)" stroke="#916241" stroke-width="3"/><circle cx="50" cy="50" r="38" fill="none" stroke="#e1b485"/>`
+    +[[35,35],[50,35],[65,35],[20,50],[35,50],[50,50],[65,50],[80,50],[35,65],[50,65],[65,65]].map(([x,y],i)=>i===5||i===8?`<circle cx="${x}" cy="${y}" r="5.3" fill="#624028"/>`:ball(x,y,5.3,'G')).join('')),
+});

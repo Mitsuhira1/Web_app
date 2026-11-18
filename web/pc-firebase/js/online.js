@@ -1749,8 +1749,22 @@ let lastPointerSentSig = '';
 let pendingPointer = null;
 let pointerFlushTimer = null;
 
+function maidCursorScene() {
+  return online && S.screen === 'play' && cur?.id === 'oldmaid' ? $('#boardwrap .twelve-scene') : null;
+}
+function clearMaidCursorAim() {
+  document.querySelectorAll('.maid-pointer-aim').forEach(el=>el.classList.remove('maid-pointer-aim'));
+}
+function updateMaidCursorAim(scene,index) {
+  const expected = index == null ? null : scene.querySelector(`[data-maid-own="${index}"]`);
+  const previous = scene.querySelector('.maid-pointer-aim');
+  if (previous !== expected) {
+    previous?.classList.remove('maid-pointer-aim');
+    expected?.classList.add('maid-pointer-aim');
+  }
+}
 function getViewportBox() {
-  const bw = $('#boardwrap') || $('.stage') || app || document.body;
+  const bw = maidCursorScene() || $('#boardwrap') || $('.stage') || app || document.body;
   return bw.getBoundingClientRect();
 }
 
@@ -1765,24 +1779,26 @@ function computeNormalizedPointer(clientX, clientY, active) {
     x = 1 - x;
     y = 1 - y;
   }
-  return {
-    x: Math.round(x * 1000) / 1000,
-    y: Math.round(y * 1000) / 1000,
-    active: !!active,
-  };
+  const pointer = { x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000, active: !!active };
+  if (active && maidCursorScene() && view?.human) {
+    const fan = document.elementFromPoint(clientX,clientY)?.closest('.maid-fan-card');
+    if (fan) {
+      pointer.maidIndex = Number(fan.dataset.maidIndex);
+      pointer.maidMove = view.moves;
+    }
+  }
+  return pointer;
 }
 
 function sendPointerNow(pt) {
   if (!netApi || !fbState.roomId || !pt || isMobileCursorOff()) return;
-  const sig = `${pt.x.toFixed(3)}:${pt.y.toFixed(3)}:${pt.active ? 1 : 0}:${ost ? ost.mySlot : 0}:${online ? mySeat : -1}`;
+  const sig = `${pt.x.toFixed(3)}:${pt.y.toFixed(3)}:${pt.active ? 1 : 0}:${ost ? ost.mySlot : 0}:${online ? mySeat : -1}:${pt.maidMove ?? ''}:${pt.maidIndex ?? ''}`;
   if (sig === lastPointerSentSig) return;
   lastPointerSentSig = sig;
   lastPointerSentAt = performance.now();
   const mySlot = ost ? ost.mySlot : 0;
   netApi.writeCursor({
-    x: pt.x,
-    y: pt.y,
-    active: pt.active,
+    ...pt,
     slot: mySlot,
     seat: online ? mySeat : -1,
     name: meName(),
@@ -1866,6 +1882,8 @@ function updateRemoteTargets(cursorsObj) {
     const x = typeof c.x === 'number' ? Math.max(0, Math.min(1, c.x)) : 0.5;
     const y = typeof c.y === 'number' ? Math.max(0, Math.min(1, c.y)) : 0.5;
     seen.add(uid);
+    const maidIndex = Number.isInteger(c.maidIndex) && c.maidIndex>=0 && c.maidIndex<53 ? c.maidIndex : null;
+    const maidMove = Number.isInteger(c.maidMove) ? c.maidMove : null;
     const existing = remoteCursors.get(uid);
     if (existing) {
       if (existing.tx !== x || existing.ty !== y) {
@@ -1874,6 +1892,8 @@ function updateRemoteTargets(cursorsObj) {
         existing.tx = x; existing.ty = y;
       }
       existing.active = c.active !== false;
+      existing.maidIndex = maidIndex;
+      existing.maidMove = maidMove;
       existing.slot = typeof c.slot === 'number' ? c.slot : existing.slot;
       existing.seat = typeof c.seat === 'number' ? c.seat : existing.seat;
       existing.name = c.name || existing.name;
@@ -1887,6 +1907,7 @@ function updateRemoteTargets(cursorsObj) {
         tx: x,
         ty: y,
         active: c.active !== false,
+        maidIndex, maidMove,
         slot: typeof c.slot === 'number' ? c.slot : 1,
         seat: typeof c.seat === 'number' ? c.seat : -1,
         name: c.name || 'プレイヤー',
@@ -1924,19 +1945,31 @@ function startCursorLoop() {
     cursorAnimFrame = null;
     if (!fbState.roomId || !remoteCursors.size || isMobileCursorOff()) {
       document.querySelectorAll('.rcur.live').forEach((e) => e.remove());
+      clearMaidCursorAim();
       return;
     }
-    if (!['play','slidePlay','minePlay','wolfPlay','extraPlay'].includes(S.screen) || (S.screen==='minePlay' && !minesGame.personal.show) || $('#playsettings') || !cursorOn() || (S.screen==='play' && cur && NO_CURSOR.has(cur.id))) {
+    const maidScene = maidCursorScene();
+    const maidTarget = maidScene && view?.mine >= 0 && view.board.target === view.mine;
+    const seeCursor = cursorOn() || (maidTarget && S.set.cursor !== '表示しない');
+    if (!['play','slidePlay','minePlay','wolfPlay','extraPlay'].includes(S.screen) || (S.screen==='minePlay' && !minesGame.personal.show) || $('#playsettings') || !seeCursor || (S.screen==='play' && cur && NO_CURSOR.has(cur.id))) {
       document.querySelectorAll('.rcur.live').forEach(e => e.remove());
+      if (maidScene) clearMaidCursorAim();
       cursorAnimFrame = requestAnimationFrame(step); return;
     }
     const hostEl = document.body;
     const box = getViewportBox();
     if (!hostEl || !box || box.width <= 0 || box.height <= 0) return;
     const hostRect = {left:0, top:0};
+    let maidAim = false;
     for (const [uid, c] of remoteCursors.entries()) {
       // 100ms updates are spread over 120ms; never depend on display refresh rate.
-      const progress = Math.min(1, (performance.now() - c.startedAt) / 120);
+      const isDrawer = maidScene && view.board.turn === c.seat;
+      const otherTurn = maidScene && !isDrawer && S.set.cursor !== '全員';
+      if (otherTurn || (maidTarget && !isDrawer)) {
+        document.getElementById('rc_' + uid)?.remove();
+        continue;
+      }
+      const progress = S.set.reduce ? 1 : Math.min(1, (performance.now() - c.startedAt) / 120);
       c.curX = c.fromX + (c.tx - c.fromX) * progress;
       c.curY = c.fromY + (c.ty - c.fromY) * progress;
       let rx = c.curX, ry = c.curY;
@@ -1963,8 +1996,13 @@ function startCursorLoop() {
         // タッチ操作で指を離した際(active: false)は半透明(待機表示)にする
         el.style.opacity = c.active ? '1' : '0.38';
         el.classList.toggle('idle', !c.active);
+        if (maidTarget && isDrawer && c.active && c.maidMove === view.moves) {
+          updateMaidCursorAim(maidScene,c.maidIndex);
+          maidAim = true;
+        }
       }
     }
+    if (maidTarget && !maidAim) clearMaidCursorAim();
     cursorAnimFrame = requestAnimationFrame(step);
   };
   cursorAnimFrame = requestAnimationFrame(step);

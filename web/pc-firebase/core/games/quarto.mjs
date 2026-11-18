@@ -218,6 +218,7 @@ export const QUARTO_SPEC = {
         ['on', 'あり（上級ルール）'],
       ],
       default: 'off',
+      group: 'local',
     },
   ],
   sections: [

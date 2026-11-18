@@ -14,7 +14,7 @@ function makeGeisterRules(opts, rng) {
 
   function attach(s) {
     return withView(s, (_rules, me) => {
-      const revealAll = s.winner !== null || me < 0;
+      const revealAll = s.winner !== null || me === -1;
       const cells = s.board.map((p) => {
         if (!p) return 0;
         if (revealAll || p.owner === me) return p.kind;

@@ -1,6 +1,8 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261118-icons-craft-1";
+const CACHE = "asobipcfb-20261118-extra-12";
 const FILES = [
+"./css/twelve.css",
+"./js/boards/twelve.js",
 "./core/games/war.mjs",
 "./core/games/vulture.mjs",
 "./core/games/takoyaki.mjs",

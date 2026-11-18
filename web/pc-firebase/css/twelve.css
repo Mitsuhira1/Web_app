@@ -1,0 +1,82 @@
+/* 承認済みの12盤面。対局画面の共通UIは app.css を使う。 */
+.twelve-scene{position:absolute;left:50%;top:50%;width:900px;height:560px;transform:translate(-50%,-50%) scale(var(--scene-scale,1));isolation:isolate;line-height:1.2}
+.twelve-scene .anchor{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;white-space:nowrap}
+.twelve-scene .twelve-table{position:absolute;left:17px;right:17px;top:22px;bottom:30px;width:auto;height:auto;aspect-ratio:auto;padding:13px;border-radius:160px}
+.twelve-scene .twelve-table .feltin{border-radius:147px}
+.twelve-scene .twelve-table.rect,.twelve-scene .twelve-table.rect .feltin{border-radius:30px}
+.twelve-scene .twelve-table.rect .feltin{border-radius:19px}
+.twelve-scene .twelve-table.handtable{bottom:164px}
+.twelve-scene .piece-row{display:flex;align-items:center;justify-content:center}
+.twelve-scene .board-label,.twelve-scene .seat-name{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:#173c2c;color:#fff5df;border:1px solid #efe6c126;border-radius:20px;padding:5px 14px;font:700 16px/1.35 "Noto Sans CJK JP",sans-serif}
+.twelve-scene .board-note{color:#f0e9cf;font:600 16px/1.35 "Noto Sans CJK JP",sans-serif;text-shadow:0 1px 3px #183c29}
+.twelve-scene .seat-name{padding:4px 12px 4px 5px}
+.twelve-scene .seat-name i{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#f5e4bd;color:#55412a;font-style:normal}
+.twelve-scene .seat-name em{font-size:13px;color:#dadac4;font-style:normal}
+.twelve-scene .pc{display:block}
+.twelve-scene .pc.muted{filter:brightness(.73) saturate(.72)}
+.twelve-scene .pc.selectable{outline:2px solid #ffd674;outline-offset:2px}
+.twelve-scene .card-stack{border-radius:8px;box-shadow:1px 2px #c6bba5,2px 4px #6e6554,3px 6px #ece0c9,4px 8px #696052,5px 10px #d4c8b2,6px 12px 7px #123826a1}
+.twelve-scene .versus{display:grid;place-items:center;border-block:1px solid #b8bc8770;color:#e6d7a0;font:600 31px/1.8 "Noto Serif CJK JP",serif}
+.twelve-scene .slot-num{position:absolute;color:#fff4dc;background:#6b201bdc;border:1px solid #ffeacf6b;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;font-size:15px}
+.twelve-scene .meld{padding-bottom:7px;border-bottom:4px solid #64ad89}
+.twelve-scene .meld.loose{border-color:transparent}
+.twelve-scene .bid{width:53px;height:77px;border-radius:8px;background:linear-gradient(145deg,#fdf7de,#e8d5a6);box-shadow:var(--sh-piece);border:3px solid #fff3d2;outline:1px solid #b38c56;outline-offset:-7px;color:#75462c;display:grid;align-content:center;justify-items:center}
+.twelve-scene .bid b{font:700 30px/1.1 Georgia,serif}
+.twelve-scene .bid i{font-size:11px;color:#bc8750}
+.twelve-scene .prize{width:110px;height:154px;display:grid;align-content:center;justify-items:center;color:#f9d79b;border-radius:11px;background:radial-gradient(ellipse at 40% 25%,#70524d,#392c38 75%);box-shadow:var(--sh-piece),inset 0 0 0 3px #f2d8a3,inset 0 0 0 6px #49363a,inset 0 0 0 7px #b98c5a}
+.twelve-scene .prize b{font:700 43px/.95 Georgia,serif}
+.twelve-scene .wood-rack,.twelve-scene .tile-rack{padding:12px 22px 14px;border-radius:10px;background:var(--grain),linear-gradient(0deg,#a5764d 0 5%,#593a28 8%,#866345 69%,#725038);box-shadow:inset 0 2px 0 #d6aa79,0 6px 0 #4b3426,0 12px 18px #271e1855}
+.twelve-scene .goita-table{position:absolute;inset:18px 59px 122px;border-radius:20px;background:repeating-linear-gradient(0deg,#d2ba823b 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,#9d89513d 0 1px,transparent 1px 3px),radial-gradient(ellipse at 40% 36%,#e9d9af,#c7b885);border:12px solid #705035;outline:2px solid #473827;box-shadow:inset 0 0 0 5px #526653,inset 0 0 0 7px #d4c694,inset 0 0 22px #796f4b,var(--sh-board)}
+.twelve-scene .goita-name{display:block;border-radius:4px;background:#344d41;color:#fff3d5;padding:4px 14px;font-weight:700}
+.twelve-scene .goita-name.team1{background:#70462e}
+.twelve-scene .goita-piece{display:grid;place-items:center;width:var(--p);height:calc(var(--p)*1.16);filter:drop-shadow(0 3px 1px #46341e88);position:relative}
+.twelve-scene .goita-piece:before,.twelve-scene .goita-piece b{content:"";position:absolute;inset:0;clip-path:polygon(50% 0,90% 14%,100% 98%,0 98%,10% 14%);background:#77512f}
+.twelve-scene .goita-piece b{inset:1px 1.5px 4px;display:grid;align-content:center;padding-top:3px;color:#33291e;background:var(--grain),linear-gradient(120deg,#f5dba1,#d6ad70);font:900 calc(var(--p)*.62)/1 "Noto Serif CJK JP",serif}
+.twelve-scene .goita-play{display:grid;justify-items:center;gap:5px;color:#5b513e;font-weight:700}
+.twelve-scene .attack-name{display:inline-flex;align-items:center;gap:15px;color:#6f523a;border-block:1px solid #aa9067;padding:5px 16px;font-weight:700}
+.twelve-scene .attack-name strong{font:800 36px/1.25 "Noto Serif CJK JP",serif;color:#3d2c1d}
+.twelve-scene .qtray{width:220px;text-align:center;padding:15px 10px 19px;border-radius:19px;background:var(--grain),linear-gradient(110deg,#9e744e,#62432f);border:5px solid #674832;box-shadow:inset 0 1px 1px #e1bc90,var(--sh-board);color:#fff1cd}
+.twelve-scene .tray-title{font-size:15px;font-weight:700}
+.twelve-scene .qpool{display:grid;grid-template-columns:repeat(3,1fr);background:#4b382d;border-radius:11px;padding:5px 3px;box-shadow:inset 0 3px 5px #2b1e18;margin-top:8px}
+.twelve-scene .qpool svg{width:59px;height:62px}
+.twelve-scene .chosen{width:100px;background:#543c2e;border:1.5px solid #d9b579;border-radius:12px;margin:7px auto 14px;display:grid;place-items:center}
+.twelve-scene .ghost-board{display:grid;grid-template-columns:repeat(6,76px);grid-template-rows:repeat(6,76px);border:13px solid #684d3b;border-radius:12px;outline:2px solid #443528;background:#79664d;box-shadow:inset 0 0 12px #473b23,var(--sh-board);overflow:hidden}
+.twelve-scene .ghost-cell{position:relative;display:grid;place-items:center;border:1px solid #654f333e;background:var(--noise),linear-gradient(130deg,#e2ceb2,#d4bd9b)}
+.twelve-scene .ghost-cell.parity1{background:var(--noise),linear-gradient(130deg,#b8ac92,#aa9d82)}
+.twelve-scene .ghost-cell.picked{box-shadow:inset 0 0 0 3px #99712f;background:#efd599}
+.twelve-scene .ghost-cell .exit{position:absolute;font:800 33px/1 sans-serif;color:#846c49;opacity:.8}
+.twelve-scene .dest-dot{position:absolute;bottom:6px;right:6px;border:2px solid #7c5f30;background:#ffe2a3;border-radius:50%;width:13px;height:13px}
+.twelve-scene .tile-melds{display:grid;grid-template-columns:repeat(3,max-content);gap:22px 36px;align-items:start;justify-items:start}
+.twelve-scene .tile-table{bottom:168px}
+.twelve-scene .rummi-tile{position:relative;display:grid;align-items:center;justify-items:center;width:43px;height:61px;border:1px solid #bba782;border-radius:6px;background:linear-gradient(130deg,#fff9e5,#ede0bc);box-shadow:inset 0 2px #fff9e9,1px 3px 0 #ad9b78,1px 5px 3px #1a221f75;color:#aa3930;font:700 34px/1 Georgia,serif}
+.twelve-scene .rummi-tile i{position:absolute;bottom:7px;width:11px;height:3px;border-radius:2px;background:currentColor}
+.twelve-scene .rummi-tile.t1{color:#2a5e9d}.twelve-scene .rummi-tile.t2{color:#302d28}.twelve-scene .rummi-tile.t3{color:#a36712}.twelve-scene .rummi-tile.t4{color:#a73d60}
+.twelve-scene .tile-rack{min-width:568px;display:grid;justify-items:start;gap:11px;padding:12px 25px 15px}
+.twelve-scene .tile-rack .rummi-tile{width:42px;height:54px;font-size:31px}
+.twelve-scene .peg-board{width:498px;height:498px;border-radius:50%;position:relative;border:2px solid #5e3928;background:var(--grain),radial-gradient(ellipse at 35% 22%,#d6a473 0%,#b68152 70%,#a57048);box-shadow:inset 0 3px 2px #ecd0a4,inset 0 0 0 10px #ae794e,inset 0 0 0 12px #865c3e,inset 0 0 0 14px #e1b485,0 7px 0 #70492e,var(--sh-board)}
+.twelve-scene .peg-inner{position:absolute;left:50%;top:50%;width:398px;height:398px;transform:translate(-50%,-50%)}
+.twelve-scene .peg-socket{width:34px;height:34px;border-radius:50%;transform:translate(-50%,-50%);position:absolute;background:radial-gradient(circle at 55% 83%,#88603f,#382619 80%);box-shadow:inset 1px 4px 5px #312317a6,0 1.5px 0 #efc79c}
+.twelve-scene .glass-peg{position:absolute;inset:-2px 0 2px;border-radius:50%;background:radial-gradient(ellipse at 29% 21%,#e8fff1 0 4%,#b6ddbb 7%,#81b093 19%,#438166 47%,#2e6550 70%,#204636 85%,#588670);box-shadow:1px 4px 3px #372c2299}
+.twelve-scene .chosen-peg,.twelve-scene .peg-socket.aim{outline:3px solid #ffd57a;outline-offset:3px}
+
+.twelve-scene .twelve-control,.twelve-scene .twelve-static{position:relative;display:grid;place-items:center;padding:0}
+.twelve-scene .twelve-control{border:0;background:none;color:inherit;cursor:pointer}
+.twelve-scene .twelve-control:focus-visible{outline:3px solid var(--mark);outline-offset:3px}
+.twelve-scene .twelve-control:hover>.pc,.twelve-scene .twelve-control:hover>.bid,.twelve-scene .twelve-control:hover>.goita-piece{filter:brightness(1.09)}
+.twelve-scene .twelve-control .slot-num{pointer-events:none}
+.twelve-scene .q-target{display:block;width:65px;height:33px;border-radius:50%}
+.twelve-scene .twelve-control:hover .q-target,.twelve-scene .twelve-control:focus-visible .q-target{box-shadow:inset 0 0 0 3px var(--mark)}
+.twelve-scene .chosen{min-height:85px}
+.twelve-scene .twelve-control.ghost-cell,.twelve-scene .twelve-static.ghost-cell{background:var(--noise),linear-gradient(130deg,#e2ceb2,#d4bd9b);border:1px solid #654f333e}
+.twelve-scene .twelve-control.ghost-cell.parity1,.twelve-scene .twelve-static.ghost-cell.parity1{background:var(--noise),linear-gradient(130deg,#b8ac92,#aa9d82)}
+.twelve-scene .twelve-control.ghost-cell.picked{background:#efd599}
+.twelve-scene .twelve-control.peg-socket,.twelve-scene .twelve-static.peg-socket{position:absolute;background:radial-gradient(circle at 55% 83%,#88603f,#382619 80%)}
+.twelve-scene .maid-pointer-aim .pc{outline:3px solid var(--mark);outline-offset:2px}
+.twelve-scene .tile-set{display:flex;align-items:center;gap:4px}
+.twelve-scene .tile-set .piece-row{max-width:228px;flex-wrap:wrap}
+.twelve-scene .tile-add{border:1px dashed #ffdd91;color:#ffebb8;border-radius:5px;width:26px;height:40px}
+.twelve-scene .tile-picked{outline:3px solid var(--mark);border-radius:6px}
+.twelve-scene .tile-melds.scroll-table{width:740px;max-height:256px;overflow:auto;grid-template-columns:repeat(3,minmax(0,1fr));row-gap:22px;column-gap:20px;justify-items:center;padding:6px}
+.twelve-scene .tile-rack{max-width:814px;max-height:156px;overflow:auto;min-height:70px}
+.twelve-scene .tile-rack .piece-row{justify-content:flex-start;flex-wrap:wrap}
+.twelve-scene .bid-reveal.won{outline:3px solid var(--mark);outline-offset:3px;border-radius:8px}

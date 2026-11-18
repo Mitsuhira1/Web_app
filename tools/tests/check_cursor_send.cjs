@@ -3,3 +3,25 @@ const source=fs.readFileSync('web/pc-firebase/js/online.js','utf8');const part=s
 const c={performance:{now:()=>now},setTimeout:(fn,delay)=>{const t={fn,at:now+delay};timers.push(t);return t},clearTimeout:t=>timers=timers.filter(v=>v!==t),netApi:{writeCursor:async p=>sent.push({...p,at:now})},fbState:{roomId:'4829'},ost:{mySlot:1},mySeat:0,online:true,S:{screen:'play'},cur:{id:'reversi'},NO_CURSOR:new Set(),meName:()=>'',app:{},$:()=>({getBoundingClientRect:()=>({left:100,top:200,width:1000,height:500})})};vm.createContext(c);vm.runInContext(part+';globalThis.send=queuePointerSend;globalThis.norm=computeNormalizedPointer;',c);
 const advance=ms=>{now+=ms;const ready=timers.filter(t=>t.at<=now);timers=timers.filter(t=>t.at>now);ready.forEach(t=>t.fn())};
 c.send(350,450,true);assert.equal(sent[0].x,.25);assert.equal(sent[0].y,.5);advance(20);c.send(400,450,true);advance(20);c.send(450,450,false);assert.equal(sent.length,1);advance(60);assert.equal(sent.length,2);assert.equal(sent[1].active,false);assert.equal(sent[1].x,.35);advance(100);c.send(450,450,false);assert.equal(sent.length,2);c.mySeat=1;c.cur={id:'shogi'};assert.equal(c.norm(350,450,true).x,.75);c.send(350,450,true);assert.equal(sent.length,3);for(let i=1;i<sent.length;i++)assert(sent[i].at-sent[i-1].at>=100);console.log('PASS: normalized and flipped positions, 100ms cap including inactive, latest pending state, no unchanged writes');
+
+// The same pointer coordinates may identify a different fanned card after a move.
+c.mySeat = 0;
+c.cur = {id:'oldmaid'};
+c.view = {human:true,moves:7};
+c.document = {
+  elementFromPoint: () => ({
+    closest: () => ({dataset:{maidIndex:'2'}}),
+  }),
+};
+advance(100);
+c.send(550,500,true);
+assert.equal(sent.at(-1).maidIndex,2);
+assert.equal(sent.at(-1).maidMove,7);
+advance(100);
+c.view.moves++;
+c.send(550,500,true);
+assert.equal(sent.at(-1).maidMove,8);
+advance(100);
+c.send(550,500,false);
+assert.equal(sent.at(-1).maidIndex,undefined);
+console.log('PASS: Old Maid cursor includes only the position index and move number while active');

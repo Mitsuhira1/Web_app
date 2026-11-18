@@ -106,8 +106,16 @@ function moveSound(id, m) {
     case "holdem": return m === 3 ? ["SHUFFLE"] : m === 0 ? ["DEAL"] : ["CHIP"];
     case "poker": return m >= 100 ? ["DEAL"] : ["CHIP"];
     case "blackjack": return m >= 100 ? ["CHIP"] : ["CARD"];
+    case "war": case "butanoshippo": return ["CARD_FLIP"];
+    case "takoyaki": return [m < 10 ? "CARD_FLIP" : "CARD"];
+    case "oldmaid": return [m === 100 ? "SHUFFLE" : "CARD"];
+    case "hearts": case "ginrummy": case "vulture": return ["CARD"];
+    case "goita": return m === 99 ? null : ["KOMA"];
+    case "quarto": case "geister": return ["WOOD"];
+    case "rummikub": return [m === 0 ? "DEAL" : "TILE"];
+    case "pegsolitaire": return ["PEG"];
     case "sevens": case "daifugo": return ["CARD"];
     default: return null;
   }
 }
-const SHUFFLE_GAMES = new Set(["hanafuda", "speed", "holdem", "uno", "solitaire", "daifugo", "sevens", "poker", "memory", "blackjack"]);
+const SHUFFLE_GAMES = new Set(["hanafuda", "speed", "holdem", "uno", "solitaire", "daifugo", "sevens", "poker", "memory", "blackjack", "war", "takoyaki", "butanoshippo", "oldmaid", "hearts", "ginrummy", "vulture"]);
