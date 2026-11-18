@@ -56,6 +56,21 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-18 11:36(UTC)/ Antigravity / ccr-efc07031-6exjqs
+- 目的: ユーザーの指示（「またルーレットを実装したい。ボードゲームとして。カジノでよく置いてあるタイプのやつ。」「君はデザインのセンスがないので、盤面のデザインとかは手をつけず、ゲームの中身の処理の部分のみ担当してください。」「アイコンだけ作って、メニューに貼っておいて。（準備中）」「公開しといて。坊主めくりをcodexで実装したので、コミットプッシュの際に消さないよう注意すること。」）に対応し、リモート `a5ef0fe`（Codex による坊主めくり絵札100枚実装）を統合維持したうえで、カジノ版ルーレット (`roulette`, No.43) のゲームロジック一式＋メニュー用アイコン（準備中）を実装・公開する。
+- 変更:
+  - `web/pc-firebase/core/games/roulette.mjs`: カジノ版ルーレットのエンジン `ROULETTE_SPEC` を新規作成（1〜6人、ヨーロピアン 37穴 / アメリカン `0・00` 38穴、初期チップ 500/1000/2000、ゲーム数 5/10/15/エンドレス(0・リバイ対応)、ラ・パルタージュ `off`/`half`、全152ベット枠 `ROULETTE_SPOTS[0..151]`＝ストレート36倍・スプリット18倍・ストリート12倍・コーナー9倍・ライン6倍・コラム/ダズン3倍・イーブンマネー2倍、手番内 Undo/Clear/Rebet/Double/Remove、状態内決定性 PRNG Mulberry32 スピン、`viewJson` `kind: 'roulette'`、3段階難易度 CPU AI）。
+  - `web/pc-firebase/core/extra-games.mjs`: `ROULETTE_SPEC` を `EXTRA_GAME_SPECS` に登録（`catalogJson()` 全43種）。
+  - `web/pc-firebase/js/art.js`: `AR.roulette` を追加（深緑フェルト＋木製ホイール＋緑0/赤黒18区画＋金枠＋4本スポークタレット＋白玉＋カジノチップを `Iwip(...)` で描画し、左上「準備中」斜めリボン付き）。
+  - `web/pc-firebase/js/app.js`: `ORDER` 末尾に `'roulette'` を追加し、`playable(id)` で `category === 'BOARD'` の未実装ゲームが `window.RENDER.cards` により誤ってプレイ可能扱いにならないよう修正（メニューでは `.tile.soon` ＋「1〜6人・準備中」、詳細欄では「このゲームは準備中です」・`進む` 無効、`ルール` ボタンは閲覧可能）。
+  - `web/pc-firebase/sw.js`: `a5ef0fe` の `./assets/poets/*` すべてを維持したまま `./core/games/roulette.mjs` を `FILES` に追加し、キャッシュ名を `asobipcfb-20261118-roulette-icon-1` に更新。
+  - `tools/tests/test_roulette_core.mjs` / `tools/tests/test_extra_12_games.mjs`: カタログ43種チェック・152スポット・全倍率・ラ・パルタージュ・Rebet/Undo/Double/Clear/Remove・エンドレス Rebuy・全破産終了・`restoreMatch` 一致・全難易度1〜6人CPU完走テストを追加。
+  - `docs/ROULETTE_SPEC_FOR_CODEX.md`: Codex 向けのルーレット仕様＆UI引き継ぎマニュアルを新規作成。
+  - 盤面描画・CSS・坊主めくり関連ファイル (`assets/poets/*`, `js/poems.js`, `js/poet-cards.js`)・`index.html`・`web/pc/`・`Android-Projects`・`Windows-Projects` は破壊・削除せず維持。
+- ファイル: `web/pc-firebase/core/games/roulette.mjs`, `web/pc-firebase/core/extra-games.mjs`, `web/pc-firebase/js/art.js`, `web/pc-firebase/js/app.js`, `web/pc-firebase/sw.js`, `tools/tests/test_roulette_core.mjs`, `tools/tests/test_extra_12_games.mjs`, `docs/ROULETTE_SPEC_FOR_CODEX.md`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `git diff --check`、`node --check` (`roulette.mjs`, `extra-games.mjs`, `art.js`, `app.js`, `poet-cards.js`, `poems.js`, `sw.js`)、`node tools/tests/test_roulette_core.mjs`、`node tools/tests/test_extra_12_games.mjs`、`node tools/tests/check_transient_audio.cjs`、`node tools/tests/check_cursor_send.cjs`、ヘッドレス Chromium CDP 検証（メニュー38種表示・ルーレット `.soon` ＆ SVGアイコン・坊主めくり絵札プレイ動作ともにエラー0）すべて合格。`ccr-efc07031-6exjqs` へコミット・プッシュ済み。
+- 他の AI への申し送り: 盤面UI (`window.RENDER.roulette`) 実装時は [`docs/ROULETTE_SPEC_FOR_CODEX.md`](docs/ROULETTE_SPEC_FOR_CODEX.md) を参照し、完成後に `art.js` の `AR.roulette` を `Iwip` から `I` に切り替えてください（`app.js` の `playable()` は `window.RENDER.roulette` を定義すると自動で有効化されます）。
+
 ### 2026-11-18 / Codex / 坊主めくりの絵札100枚を反映
 - 公開ブランチの `bf35c23` を基に、坊主めくりに確認済みの人物画100枚、歌人名・和歌の縦書き、無地の青緑の裏面を組み込んだ。オフラインでも絵札を表示できるように PWA キャッシュを更新した。
 - 絵札の装束と歌番号を照合し、殿66枚・姫21枚・坊主13枚（10番の蝉丸を含む）に分類した。79番の左京大夫顕輔・76番の法性寺入道前関白太政大臣・84番の藤原清輔朝臣は殿、80番の待賢門院堀河は姫。得点とカットインは同じ分類を参照する。

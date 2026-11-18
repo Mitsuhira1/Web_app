@@ -32,7 +32,7 @@ const sfx = (() => { try { return createSfx(call); } catch (e) { return { init: 
 
 // ---------------------------------------------------------------- ゲームの一覧
 const ORDER = ['shogi', 'gogo', 'reversi', 'connect4', 'gomoku', 'hex', 'mancala', 'morris', 'checkers', 'chess', 'dots', 'hitblow', 'hare', 'chinese', 'ludo', 'backgammon', 'go', 'yacht', 'mahjong', 'life',
-  'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mineVersus', 'mine', 'bozu', 'wolf'];
+  'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mineVersus', 'mine', 'bozu', 'wolf', 'roulette'];
 const ART_ID = { gogo: 'minishogi' };
 const BREAK = { morris: 'ナインメンズ<wbr>モリス', chinese: 'チャイニーズ<wbr>チェッカー', dots: 'ドット＆<wbr>ボックス', holdem: 'テキサス<wbr>ポーカー', yacht: 'ヨット', blackjack: 'ブラック<wbr>ジャック', backgammon: 'バック<wbr>ギャモン', hitblow: 'ヒット＆<wbr>ブロー', life: '人生<wbr>すごろく', solitaire: 'ソリティア<wbr>(クロンダイク)' };
 let CAT = [];
@@ -47,7 +47,7 @@ const newGameSetup = {
   mine:on=>minesGame.setup(on), mineVersus:()=>mineVersus.setup(), wolf:on=>wolfGame.setup(on),
   bozu:on=>poetCards.setup('bozu',on)
 };
-const playable = (id) => Object.hasOwn(newGameSetup,id) || (PLAYABLE.has(id) && (window.RENDER[id] || window.RENDER[KIND_OF[id] || id] || window.RENDER.cards));
+const playable = (id) => Object.hasOwn(newGameSetup,id) || (PLAYABLE.has(id) && (window.RENDER[id] || window.RENDER[KIND_OF[id] || id] || (gInfo(id)?.category !== 'BOARD' && window.RENDER.cards)));
 const KIND_OF = { gogo: 'shogi', connect4: 'c4', chinese: 'chinese' };
 const LV = ['初級', '中級', '上級'];
 const lvIndex = (t) => Math.max(0, LV.indexOf(t));

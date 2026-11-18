@@ -14,6 +14,7 @@ const NEW_IDS = [
   'geister',
   'rummikub',
   'pegsolitaire',
+  'roulette',
 ];
 
 function playout(id, optStr = '', maxSteps = 1200) {
@@ -48,7 +49,7 @@ function playout(id, optStr = '', maxSteps = 1200) {
 
 console.log('1. Checking catalogJson()...');
 const catalog = JSON.parse(core.catalogJson());
-assert.equal(catalog.length, 42, `Expected 42 games, got ${catalog.length}`);
+assert.equal(catalog.length, 43, `Expected 43 games, got ${catalog.length}`);
 for (const id of NEW_IDS) {
   const entry = catalog.find((g) => g.id === id);
   assert.ok(entry, `Missing ${id} in catalog`);
@@ -56,9 +57,9 @@ for (const id of NEW_IDS) {
   const secs = Array.isArray(rj) ? rj : rj.sections;
   assert.ok(Array.isArray(secs) && secs.length >= 2, `${id} missing sections`);
 }
-console.log('   OK: 42 games registered, all 12 new games have rulesJson & options.');
+console.log('   OK: 43 games registered, all 13 extra games have rulesJson & options.');
 
-console.log('2. Running CPU playouts for all 12 games & local rules...');
+console.log('2. Running CPU playouts for all 13 games & local rules...');
 const cases = [
   ['war', ''],
   ['war', 'aRule=weak;twoBeatsAce=on;joker=on;winCond=rounds26'],
@@ -86,6 +87,9 @@ const cases = [
   ['pegsolitaire', ''],
   ['pegsolitaire', 'board=european'],
   ['pegsolitaire', 'board=triangle'],
+  ['roulette', ''],
+  ['roulette', 'players=1;rounds=5;wheel=euro'],
+  ['roulette', 'players=4;wheel=amer;laPartage=half;rounds=5;startChips=500'],
 ];
 
 for (const [id, opts] of cases) {

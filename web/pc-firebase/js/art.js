@@ -514,5 +514,23 @@ Object.assign(AR,{
    +`<circle cx="62" cy="32" r="29" fill="#ffe49e" opacity=".13"/><circle cx="62" cy="32" r="24" fill="#ffe49e" opacity=".2"/><circle cx="62" cy="32" r="20" fill="url(#xWlfM)" filter="url(#xSh)"/><circle cx="56" cy="26" r="4" fill="#d9a53a" opacity=".24"/><circle cx="70" cy="36" r="2.8" fill="#d9a53a" opacity=".24"/><circle cx="64" cy="22" r="2" fill="#d9a53a" opacity=".22"/>`
    +`<path d="M0 90L12 72L21 90ZM8 90L24 68L36 90ZM66 90L77 70L88 90ZM77 90L90 66L100 90Z" fill="#090c18"/><path d="M0 87H100V100H0Z" fill="#090c18"/><path d="M68 89V78L78 71L88 78V89Z" fill="#0d1122"/><rect x="74" y="81" width="3.2" height="3.8" fill="#ffc65c"/><rect x="79" y="81" width="3.2" height="3.8" fill="#ffc65c"/>`
    +`<g filter="url(#xSh)"><path d="M0 100C4 82 10 68 17 57L14 53L21 46L21 39L26 24L33 33L38 21L43 32Q48 30 53 26L65 19Q68 20 66 24L56 30L61 30Q61 33 56 35L48 37Q54 45 48 53L54 59L48 67L55 78L62 100Z" fill="#12172a"/><path d="M17 57L21 46L21 39L26 24L33 33L38 21L43 32Q48 30 53 26L65 19" fill="none" stroke="#9eb8ed" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="44.5" cy="33.5" rx="2.5" ry="1.4" fill="#ffbe3b" transform="rotate(-24 44.5 33.5)"/><circle cx="44.2" cy="33.3" r=".7" fill="#fff"/></g>`),
+ roulette:Iwip(bFelt(),(()=>{const cx=52,cy=49,n=18,da=2*Math.PI/n,ro=31,ri=19.5;
+   const secs=Array.from({length:n},(_,i)=>{const a0=i*da-Math.PI/2-da/2,a1=a0+da,col=i===0?'#1e8c45':i%2?'#c8362e':'#1a1d24';
+     const x0=cx+ro*Math.cos(a0),y0=cy+ro*Math.sin(a0),x1=cx+ro*Math.cos(a1),y1=cy+ro*Math.sin(a1);
+     const ix1=cx+ri*Math.cos(a1),iy1=cy+ri*Math.sin(a1),ix0=cx+ri*Math.cos(a0),iy0=cy+ri*Math.sin(a0);
+     return `<path d="M${x0.toFixed(1)} ${y0.toFixed(1)}A${ro} ${ro} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}L${ix1.toFixed(1)} ${iy1.toFixed(1)}A${ri} ${ri} 0 0 0 ${ix0.toFixed(1)} ${iy0.toFixed(1)}Z" fill="${col}" stroke="#e7c36a" stroke-width=".65"/>`;
+   }).join('');
+   const defs=[0,90,180,270].map(d=>{const a=d*Math.PI/180,dx=cx+34.4*Math.cos(a),dy=cy+34.4*Math.sin(a);
+     return `<rect x="${(dx-1.6).toFixed(1)}" y="${(dy-1.6).toFixed(1)}" width="3.2" height="3.2" fill="#f3d27a" stroke="#7a5416" stroke-width=".5" transform="rotate(${d+45} ${dx.toFixed(1)} ${dy.toFixed(1)})"/>`;
+   }).join('');
+   const bx=cx+25.4*Math.cos(-Math.PI/6),by=cy+25.4*Math.sin(-Math.PI/6);
+   return `<g filter="url(#xSh)"><circle cx="${cx}" cy="${cy}" r="39" fill="url(#xWal)" stroke="#3a2210" stroke-width="1.4"/><circle cx="${cx}" cy="${cy}" r="37.2" fill="none" stroke="#c99b42" stroke-width=".9" opacity=".85"/><circle cx="${cx}" cy="${cy}" r="35.6" fill="#2c1a0e"/><circle cx="${cx}" cy="${cy}" r="32.2" fill="none" stroke="#9e742d" stroke-width=".8"/>`
+     +secs+defs
+     +`<circle cx="${cx}" cy="${cy}" r="19.5" fill="#462814" stroke="#ecc768" stroke-width="1.2"/><circle cx="${cx}" cy="${cy}" r="14.5" fill="none" stroke="rgba(255,235,175,.28)" stroke-width=".8"/><circle cx="${cx}" cy="${cy}" r="9.2" fill="#9a6b24" stroke="#f7dc88" stroke-width="1"/><path d="M${cx-12.5} ${cy}H${cx+12.5}M${cx} ${cy-12.5}V${cy+12.5}" stroke="#f3d27a" stroke-width="2.4" stroke-linecap="round"/>`
+     +[[cx-12.5,cy],[cx+12.5,cy],[cx,cy-12.5],[cx,cy+12.5]].map(([kx,ky])=>`<circle cx="${kx}" cy="${ky}" r="2.2" fill="#ffe799" stroke="#7a5416" stroke-width=".7"/>`).join('')
+     +`<circle cx="${cx}" cy="${cy}" r="4.6" fill="#ffe799" stroke="#7a5416" stroke-width=".9"/>`
+     +`<circle cx="${bx.toFixed(1)}" cy="${(by+.9).toFixed(1)}" r="3.4" fill="#000" opacity=".4"/><circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="3.2" fill="url(#xIv)" stroke="#9a8d72" stroke-width=".5"/><circle cx="${(bx-.9).toFixed(1)}" cy="${(by-1).toFixed(1)}" r="1.1" fill="#fff"/></g>`
+     +iChip(15,87,'#C8362E')+iChip(26,91,'#1e8c45')+iChip(86,88,'#3F78C4');
+ })()),
 });
 window.CHESS_PATHS = CH;
