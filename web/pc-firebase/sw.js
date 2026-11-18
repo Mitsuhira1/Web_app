@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261118-remove-karuta-1";
+const CACHE = "asobipcfb-20261118-bozu-cards-1";
 const FILES = [
 "./core/games/war.mjs",
 "./core/games/vulture.mjs",
@@ -15,9 +15,11 @@ const FILES = [
 "./core/games/butanoshippo.mjs",
 "./core/games/_utils.mjs",
 "./core/extra-games.mjs",
-"./assets/poet-2.svg",
-"./assets/poet-1.svg",
-"./assets/poet-0.svg",
+"./assets/poets/043.webp",
+"./assets/poets/sheet-1.webp",
+"./assets/poets/sheet-2.webp",
+"./assets/poets/sheet-3.webp",
+"./assets/poets/sheet-4.webp",
 "./js/mine-versus.js",
 "./js/poet-cards.js",
 "./js/poems.js",

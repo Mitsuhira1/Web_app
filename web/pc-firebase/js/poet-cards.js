@@ -1,15 +1,28 @@
 'use strict';
 
 const poetCards = (() => {
-  const women = new Set([2,9,19,38,53,54,56,57,58,59,60,61,62,65,67,72,79,88,89,90,92]);
-  const monks = new Set([8,10,12,21,47,66,69,70,76,82,84,85,86,87,95]);
-  const style = n => women.has(n+1)?2:monks.has(n+1)?1:0;
-  const chunks = (s, width) => s.match(new RegExp('.{1,'+width+'}','gu'));
-  const face = (n, read = true) => {
-    const [upper,lower,author] = hundredPoems[n];
-    return `<span class="poet-card ${read?'portrait':'verse'}" aria-label="${esc(read?author:lower)}">
-      ${read?`<span class="poet-author">${esc(author)}</span><span class="poet-lines">${chunks(upper,6).map(s=>`<span>${s}</span>`).join('')}</span><img src="assets/poet-${style(n)}.svg" alt="">`:
-        `<span class="poet-lines">${chunks(lower,5).map(s=>`<span>${s}</span>`).join('')}</span>`}</span>`;
+  const princesses = new Set([2,9,19,38,53,54,56,57,58,59,60,61,62,65,67,72,80,88,89,90,92]);
+  // 絵札の装束で判定する。頭巾の蝉丸（10番）は坊主札として扱う。
+  const monks = new Set([8,10,12,21,47,66,69,70,82,85,86,87,95]);
+  const cardRole = n => princesses.has(n+1) ? 'hime' : monks.has(n+1) ? 'bozu' : 'tono';
+  const portrait = n => {
+    // 43番は差し替え済みの個別絵を使う。
+    if (n === 42) return '<span class="poet-illustration" aria-hidden="true" style="background-image:url(assets/poets/043.webp);--poet-art-size:100%;--poet-art-position:center"></span>';
+    const cell = n % 25;
+    const sheet = Math.floor(n / 25) + 1;
+    const x = cell % 5 * 25;
+    const y = Math.floor(cell / 5) * 25;
+    return `<span class="poet-illustration" aria-hidden="true" style="background-image:url(assets/poets/sheet-${sheet}.webp);--poet-art-position:${x}% ${y}%"></span>`;
+  };
+  const face = n => {
+    const author = hundredPoems[n][2];
+    const lines = hundredPoemPrintLines[n];
+    const columns = lines.map(line => `<span>${esc(line)}</span>`).join('');
+    const longest = Math.max(...lines.map(line => [...line].length));
+    return `<span class="poet-card portrait" aria-label="${esc(author+'　'+lines.join('　'))}">
+      ${portrait(n)}
+      <span class="poet-lines" style="--poet-line-length:${longest}">${columns}</span>
+      <span class="poet-author" style="--author-length:${[...author].length}">${esc(author)}</span></span>`;
   };
   const shuffle = source => {
     const copy = source.slice();
@@ -41,8 +54,17 @@ const poetCards = (() => {
     if (!Number.isInteger(action.cell) || !pile?.length) return false;
     const p=state.seats[state.turn];
     state.last=pile.pop(); state.piles=stacks.map(a=>a.length);
-    if (style(state.last)===1) { state.discard+=p.score; p.score=0; }
-    else { p.score++; if (style(state.last)===2) {p.score+=state.discard;state.discard=0;} }
+    const role=cardRole(state.last);
+    if (role==='bozu') {
+      state.discard+=p.score;
+      p.score=0;
+    } else {
+      p.score++;
+      if (role==='hime') {
+        p.score+=state.discard;
+        state.discard=0;
+      }
+    }
     state.turn=(state.turn+1)%state.seats.length;
     state.finish=stacks.every(a=>!a.length);
     return true;
@@ -93,15 +115,15 @@ const poetCards = (() => {
     $('#poetStatus').textContent=state.finish?winners.join('・')+'の勝ち':active.name+'の番';
     if(animate&&state.last>=0){
       sfx.play('CARD_FLIP');
-      const type=style(state.last);
-      if(type)transientAudio.later(()=>{if($('#poetTable')&&animationKey===actionKey)cut({text:type===1?'坊主':'姫',tone:type===1?'red':'gold',ms:1000});},240);
+      const role=cardRole(state.last);
+      if(role!=='tono')transientAudio.later(()=>{if($('#poetTable')&&animationKey===actionKey)cut({text:role==='bozu'?'坊主':'姫',tone:role==='bozu'?'red':'gold',ms:1000});},240);
     }
     $('#poetScores').innerHTML=state.seats.map(p=>`<div class="seat ${p===active?'turn':''}"><span class="nm">${esc(p.name)}</span><b>${p.score}枚</b></div>`).join('');
   }
   function button(d) {
     const state=boardMatch.state;
     if(d.extraPoetPick!==undefined) return boardMatch.send('draw',{cell:+d.extraPoetPick,turn:state.version});
-    if(d.extraPoetRules!==undefined) openSheet(`<h2>坊主めくり</h2><p>好きな山から1枚引きます。坊主を引くと手持ちの札を場に出し、姫を引くと場の札をすべてもらえます。最後に札が一番多い人が勝ちです。</p><div class="btns"><button class="btn" data-sheetback>閉じる</button></div>`);
+    if(d.extraPoetRules!==undefined) openSheet(`<h2>坊主めくり</h2><p>好きな山から1枚引きます。殿を引くとその札をもらえます。坊主を引くと手持ちの札を場に出し、姫を引くと引いた札と場の札をもらえます。蝉丸は坊主として扱います。最後に札が一番多い人が勝ちです。</p><div class="btns"><button class="btn" data-sheetback>閉じる</button></div>`);
   }
   const stop=()=>{clearTimeout(timer);stacks=null;};
   boardMatch.register('bozu',{initial,apply,changed,html,draw,button,stop});

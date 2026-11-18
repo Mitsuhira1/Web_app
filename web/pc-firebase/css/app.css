@@ -2449,20 +2449,23 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-pick:disabled { opacity:.65; }
 .poet-open { display:flex; flex-direction:column; align-items:center; min-height:176px; gap:8px; }
 .poet-open .poet-card { width:112px; }
-.poet-card { position:relative; display:block; width:100%; aspect-ratio: .68; overflow:hidden; color:#251e18;
-  border:4px solid #263c32; border-radius:3px; box-shadow:0 2px 0 #182c23,0 4px 8px #0005;
-  background:repeating-linear-gradient(99deg,#fff2 0 1px,#e8d9bc1a 1px 4px),linear-gradient(#fffdf3,#efe5ca);
-  font-family:"Shippori Mincho B1","Yu Mincho",serif; }
-.poet-card.back { border-width:4px; background:
-  repeating-linear-gradient(45deg,#d5b37555 0 1px,transparent 1px 8px),repeating-linear-gradient(-45deg,#d5b37555 0 1px,transparent 1px 8px),#8b3e38;
-  box-shadow:inset 0 0 0 2px #edce9c,0 3px 0 #27362b,0 6px 0 #8b3e38,0 9px 0 #27362b,0 12px 15px #0005; }
+.poet-card { position:relative; display:block; width:100%; aspect-ratio:.68; overflow:hidden; color:#262621;
+  border:clamp(2px,.35vw,5px) solid #284e4e; border-radius:3px; box-shadow:0 2px 0 #182c2b,0 4px 8px #0005;
+  background:repeating-linear-gradient(102deg,#fff2 0 1px,#ab80540a 1px 3px),linear-gradient(112deg,#fcf8eb,#f1e7cf);
+  font-family:"Zen Antique","Yu Mincho",serif; font-weight:400; text-align:start; }
+.poet-card.back { border-color:#315b5b;
+  background:linear-gradient(115deg,#3c69682b,#193c431a),var(--noise),#2b5559;
+  box-shadow:0 2px 0 #637c74,0 3px 0 #254b4e,0 5px 0 #58716c,0 6px 0 #24474b,0 9px 11px #0005; }
 .poet-lines { position:absolute; inset:7% 8%; display:flex; flex-direction:row-reverse; justify-content:space-between;
-  line-height:1; letter-spacing:.08em; }
-.poet-lines > span,.poet-author { writing-mode:vertical-rl; }
-.poet-card.portrait { container-type:inline-size; }
-.poet-card.portrait .poet-lines { inset:6% 20% 40% 9%; font-size:12cqw; }
-.poet-author { position:absolute; top:5%; right:5%; font-size:9cqw; }
-.poet-card img { position:absolute; width:100%; height:62%; inset:auto 0 0; object-fit:fill; }
+  line-height:1.08; letter-spacing:.025em; }
+.poet-lines > span,.poet-author { writing-mode:vertical-rl; text-orientation:upright; white-space:nowrap; }
+.poet-card.portrait { container-type:inline-size; isolation:isolate; }
+.poet-card.portrait .poet-lines { inset:4.5% 19% auto 6%; font-size:min(9.45cqw,calc(59cqw / var(--poet-line-length))); }
+.poet-author { position:absolute; top:5%; right:4%; font-size:min(11.5cqw,calc(96cqw / var(--author-length))); line-height:1; }
+.poet-illustration { position:absolute; inset:auto 10% 1% 6%; display:block; height:84cqw;
+  background-size:var(--poet-art-size,500% 500%); background-position:var(--poet-art-position);
+  background-repeat:no-repeat; mix-blend-mode:darken;
+  mask-image:linear-gradient(to bottom,transparent,#000 8%,#000 98%,transparent); }
 .poet-flip { animation:poetFlip .36s ease-out both; }
 .poet-piles.dealing { animation:poetDeal .42s ease-out both; }
 @keyframes poetFlip { from { transform:translateY(-12px) scaleX(.05); opacity:.4; } }
