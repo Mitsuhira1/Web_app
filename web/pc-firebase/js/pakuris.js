@@ -13,7 +13,7 @@ const pakurisGame=(()=>{
  function setup(on=false){fallingMatch.setup('pakuris',on);}
  function playing(){return S.screen==='pakurisPlay'||(S.screen==='extraPlay'&&fallingMatch.linked('pakuris'));}
 
- function setupHtml(){return `<div class="screen col"><div class="setuphead"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button><span class="art">${artOf('pakuris')}</span><div class="txt"><h2>パクリス</h2></div></div><div class="setupbody"><div class="panel"><h3>${fallingMatch.online?'対戦':'ひとりで遊ぶ'}</h3></div></div><div class="setupfoot"><button class="btn" data-go="menu">戻る</button><button class="btn primary" data-pakuris-start>始める</button></div></div>`;}
+ function setupHtml(){return fallingMatch.setupHtml('pakuris');}
  function tryMove(dx,dy){if(ended||animating)return false;const p={...active,x:active.x+dx,y:active.y+dy};if(fits(p)){active=p;redraw();return true;}if(dy>0)lock();return false;}
  function rotate(){if(ended||animating||active.type==='O')return;const shape=active.shape.map(([x,y])=>[3-y,x]);for(const dx of [0,-1,1,-2,2]){const p={...active,x:active.x+dx,shape};if(fits(p)){active=p;redraw();return;}}}
  async function lock(){
@@ -47,11 +47,21 @@ const pakurisGame=(()=>{
  function hardDrop(){if(ended||animating)return;while(fits({...active,y:active.y+1}))active.y++;lock();}
  function action(a){if(a==='left')tryMove(-1,0);else if(a==='right')tryMove(1,0);else if(a==='down')tryMove(0,1);else if(a==='rotate')rotate();else if(a==='drop')hardDrop();}
  function key(k){const a={ArrowLeft:'left',ArrowRight:'right',ArrowDown:'down',ArrowUp:'rotate',' ':'drop'}[k];if(playing()&&a){action(a);return true;}return false;}
- setInterval(()=>{if(playing()&&!document.hidden&&!ended&&active)tryMove(0,1);},650);
+ fallingMatch.tick('pakuris',650,()=>playing()&&!ended&&active,()=>tryMove(0,1));
  function tile(v,falling){return v?`<span class="pakuris-block ${v} ${falling?'falling':''}"></span>`:'';}
  function boardHtml(){const a=board.slice();if(!ended&&!animating)cells().forEach(([x,y])=>{if(y>=0&&x>=0&&x<W&&y<H)a[y*W+x]=active.type;});return a.map((v,i)=>`<span class="pakuris-slot" data-pakuris-index="${i}">${tile(v,board[i]!==v)}</span>`).join('');}
- function redraw(){if(!playing()||!board)return;const e=document.getElementById('pakurisBoard');if(e){fallingMatch.paintMotion(e,boardHtml(),lastActive,animating?null:active);lastActive=animating?null:active&&{x:active.x,y:active.y};}const s=document.getElementById('pakurisScore');if(s)s.textContent=score;const l=document.getElementById('pakurisLines');if(l)l.textContent=lines;const n=document.getElementById('pakurisNext');if(n)n.innerHTML=queue.map(x=>`<span class="pakuris-block ${x}"></span>`).join('');const o=document.getElementById('pakurisOver');if(o)o.hidden=!ended;}
- function playHtml(on=false){return `<div class="screen"><div class="stage pakuris-stage"><div class="stagehead"><button class="btn" ${on?'data-extra-exit':'data-pakuris-exit'} aria-label="戻る">${ic('back')}</button><h2>パクリス</h2></div><div class="pakuris-board" id="pakurisBoard">${boardHtml()}</div><div class="pakuris-controls"><button data-pakuris="left" aria-label="左">◀</button><button data-pakuris="rotate" aria-label="回転">⟳</button><button data-pakuris="right" aria-label="右">▶</button><button data-pakuris="down" aria-label="下">▼</button><button data-pakuris="drop" aria-label="落下">⤓</button></div><div class="pakuris-over" id="pakurisOver" ${ended?'':'hidden'}>ゲーム終了</div><button class="btn play-settings" data-pakuris-settings aria-label="設定">${ic('set')}</button><div class="cutlayer" id="cutlayer"></div></div><aside class="side"><div class="panel"><h3>スコア</h3><div class="row"><span id="pakurisScore">${score}</span><span>ライン <b id="pakurisLines">${lines}</b></span></div></div><div class="panel"><h3>次のブロック</h3><div class="pakuris-next" id="pakurisNext">${queue.map(x=>`<span class="pakuris-block ${x}"></span>`).join('')}</div></div>${on?fallingMatch.sidebar():''}</aside></div>`;}
+ function redraw(){if(!playing()||!board)return;const e=document.getElementById('pakurisBoard');if(e){fallingMatch.paintMotion(e,boardHtml(),lastActive,animating?null:active);lastActive=animating?null:active&&{x:active.x,y:active.y};}const s=document.getElementById('pakurisScore');if(s)s.textContent=score;const l=document.getElementById('pakurisLines');if(l)l.textContent=lines;const n=document.getElementById('pakurisNext');if(n)n.innerHTML=queue.map(x=>`<span class="pakuris-block ${x}"></span>`).join('');const o=document.getElementById('pakurisOver');if(o)o.hidden=!ended;const status=$('#fallingSoloStatus');if(status)status.textContent=ended?'ゲーム終了':'プレイ中';}
+ function playHtml(on=false){
+  const stats = `<div class="panel"><h3>スコア</h3><div class="row"><b id="pakurisScore">${score}</b><span>ライン <b id="pakurisLines">${lines}</b></span></div></div>`;
+  const preview = `<div class="panel"><h3>次のブロック</h3><div class="pakuris-next" id="pakurisNext">${queue.map(x=>`<span class="pakuris-block ${x}"></span>`).join('')}</div></div>`;
+  const side = fallingMatch.sidebar('pakuris',on,stats,preview,ended);
+  return `<div class="screen"><div class="stage pakuris-stage">
+    ${playHeader('パクリス',playMode(on),on?'data-extra-exit':'data-pakuris-exit')}
+    <div class="pakuris-board" id="pakurisBoard">${boardHtml()}</div>
+    <div class="pakuris-controls"><button data-pakuris="left" aria-label="左">◀</button><button data-pakuris="rotate" aria-label="回転">⟳</button><button data-pakuris="right" aria-label="右">▶</button><button data-pakuris="down" aria-label="下">▼</button><button data-pakuris="drop" aria-label="落下">⤓</button></div>
+    <div class="pakuris-over" id="pakurisOver" ${ended?'':'hidden'}>ゲーム終了</div>
+    ${playGear()}<div class="cutlayer" id="cutlayer"></div></div>${side}</div>`;
+ }
  fallingMatch.bind('pakuris',{showSetup,startSolo,playHtml,redraw,startLinked:(s,playing)=>{fresh(s);ended=!playing;},
    receive:n=>{garbage+=n;},finish:()=>{ended=true;},progress:()=>({score,over:ended,
      board:board.map(v=>v==='garbage'?'8':v?String(Object.keys(SHAPES).indexOf(v)):'.').join('')})});

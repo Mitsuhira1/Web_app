@@ -16,7 +16,7 @@ const boardMatch = (() => {
     const game = games.get(state.game);
     if (begin) {
       visibleId = state.id;
-      S.sel = state.game;
+      S.sel = state.game==='mineVersus' ? 'mine' : state.game;
       game.changed?.(state,previous);
       go('extraPlay');
     } else game.changed?.(state,previous);
@@ -82,7 +82,7 @@ const boardMatch = (() => {
     clearTimeout(retry);
   }
   function exit() {
-    if (!state?.online) { reset(); return go('menu'); }
+    if (!state?.online) { reset(); return go(roomActive()?'room':'menu'); }
     if (netApi?.role!=='host') return go('room');
     const end=()=>{closeSheet(); reset(); publish(null); go('room');};
     if (state.game==='mineVersus' && (!minesGame.personal.confirm || state.finish)) return end();

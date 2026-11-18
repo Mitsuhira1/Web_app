@@ -3,6 +3,38 @@
 const fallingMatch = (() => {
   let setupOnline = false, timer, published, received=0;
   const controllers = {};
+  const prefs = store.get('fallingSetup',{});
+  const preferences = id => ({speed:'standard', preview:true, sabotage:true, ...prefs[id]});
+  const speedScale = {slow:1.55, standard:1, fast:.65};
+  function setOption(id,key,value) {
+    if (!controllers[id]) return;
+    if (key==='speed' && !Object.hasOwn(speedScale,value)) return;
+    prefs[id] = {...preferences(id),[key]:key==='speed'?value:value==='on'};
+    store.set('fallingSetup',prefs);
+    render();
+  }
+  function setupHtml(id) {
+    const p=preferences(id);
+    const playRule = setupOnline
+      ? setupRow('お邪魔を送る',seg(id+':sabotage',[['on','あり'],['off','なし']],p.sabotage?'on':'off'))
+      : setupRow('落下速度',seg(id+':speed',[['slow','ゆっくり'],['standard','標準'],['fast','速い']],p.speed));
+    const display = setupRow(id==='bunyo'?'次のピース':'次のブロック',
+      seg(id+':preview',[['on','表示'],['off','非表示']],p.preview?'on':'off'));
+    return extraSetupLayout(id,setupOnline,extraParticipants(setupOnline)+setupPanel('ルール',playRule),
+      setupPanel('表示',display),'data-'+id+'-start');
+  }
+  function tick(id, ms, active, step) {
+    let next = 0;
+    setInterval(() => {
+      if (!active() || document.hidden) { next = 0; return; }
+      const now = performance.now();
+      if (next && now < next) return;
+      const speed = linked(id) ? 1 : speedScale[preferences(id).speed] || 1;
+      const due = next > 0;
+      next = now + ms * speed;
+      if (due) step();
+    },50);
+  }
   function bind(id, controller) {
     controllers[id]=controller;
     boardMatch.register(id,{
@@ -15,7 +47,7 @@ const fallingMatch = (() => {
           !Number.isSafeInteger(action.score)||action.score<p.score||action.score>p.score+1000000||
           !Number.isInteger(action.attack)||action.attack<0||action.attack>24) return false;
         const others=state.seats.filter(q=>q!==p&&!q.over);
-        if(action.attack&&action.score>p.score&&others.length) {
+        if(state.sabotage!==false&&action.attack&&action.score>p.score&&others.length) {
           const enemy=others[(state.turnIndex++)%others.length];
           enemy.garbage+=action.attack;
         }
@@ -41,7 +73,9 @@ const fallingMatch = (() => {
   }
   function setup(id,online) { setupOnline=online; controllers[id].showSetup(); }
   function start(id) {
-    if(setupOnline)boardMatch.start(id,true,{turnIndex:0});else controllers[id].startSolo();
+    if(setupOnline) {
+      if (canStartExtraMatch()) boardMatch.start(id,true,{turnIndex:0,sabotage:preferences(id).sabotage});
+    } else controllers[id].startSolo();
   }
   function linked(id) {return boardMatch.state?.game===id;}
   function progress(id,garbage=0) {
@@ -82,9 +116,17 @@ const fallingMatch = (() => {
       ${[...p.board].map(code=>`<i data-tone="${code}"></i>`).join('')}</div></div>`).join('');
     const status=$('#fallingResult');
     if(status)status.textContent=state.finish?
-      (state.seats.find(p=>p.id===state.winner)?.name||'')+'の勝ち':'';
+      (state.seats.find(p=>p.id===state.winner)?.name||'')+'の勝ち':
+      state.seats.some(p=>p.id===boardMatch.myId())?'対戦中':'観戦中';
   }
-  function sidebar(){return '<div id="fallingRivals"></div><b id="fallingResult" aria-live="polite"></b>'+chatBox();}
+  function sidebar(id,on,score,next,ended) {
+    const you=on?boardMatch.state?.seats.find(p=>p.id===boardMatch.myId()):{name:meName()};
+    const seats=you?`<div class="seats"><div class="seat"><i class="dot" style="background:${SEAT_COLORS[on?ost?.mySlot||0:0]}"></i><span class="nm">${esc(you.name)}</span></div></div>`:'';
+    const status=on?'<div class="status" id="fallingResult" aria-live="polite"></div>':
+      `<div class="status" id="fallingSoloStatus">${ended?'ゲーム終了':'プレイ中'}</div>`;
+    const preview=preferences(id).preview?next:'';
+    return playSide({seats,status,actions:ruleButton(id),on,content:score+preview+(on?'<div id="fallingRivals"></div>':'')});
+  }
   function paintMotion(element,markup,previous,current){
     if(element._markup===markup)return;
     element._markup=markup;
@@ -97,5 +139,5 @@ const fallingMatch = (() => {
       {translate:`${dx}px ${dy}px`},{translate:'0 0'}
     ],{duration:dy?125:95,easing:'ease-out'});
   }
-  return {bind,setup,start,linked,progress,sidebar,paintMotion,get online(){return setupOnline;}};
+  return {bind,setup,setupHtml,setOption,start,linked,progress,sidebar,tick,paintMotion};
 })();

@@ -8,7 +8,7 @@ const mineVersus = (() => {
   const levels = ['easy','normal','hard'];
   const defaults = () => ({ sabotage:true, endRank:3, penalty:10, freeze:3, stock:true, lock:0,
     enabled:attacks.map(()=>true), costs:{} });
-  let preferences = store.get('mineVersusSettings',defaults()), target, fields = new Map(), selectedLevel='normal', drawnVersion=-1, needsFlag=false;
+  let preferences = store.get('mineVersusSettings',defaults()), target, fields = new Map(), selectedLevel=levels.includes(store.get('mineVersusLevel'))?store.get('mineVersusLevel'):'normal', drawnVersion=-1, openedRound='', needsFlag=minesGame.personal.firstFlag;
   const seconds = until => Math.max(0,Math.ceil(((until||0)-Date.now())/1000));
   const random = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const costs = () => preferences.costs[selectedLevel] || attacks.map(a=>Math.round(a[2]*[.5,1,1.8][levels.indexOf(selectedLevel)]));
@@ -56,7 +56,7 @@ const mineVersus = (() => {
     board.adj=board.mine.map((_,i)=>neighbors(board,i).filter(n=>board.mine[n]).length);
   }
   function initial(round) {
-    fields=new Map();drawnVersion=-1;target='';needsFlag=false;
+    fields=new Map();drawnVersion=-1;target='';needsFlag=minesGame.personal.firstFlag;
     let grid=new minesGame.Board(round.level,random());
     const center=Math.floor(grid.h/2)*grid.w+Math.floor(grid.w/2);
     for(let i=0;i<100;i++){
@@ -168,40 +168,57 @@ const mineVersus = (() => {
     refresh(p,board);
     return true;
   }
-  function setup(){go('mineVersusSetup');}
-  function setupHtml(){
-    const number=(key,label,min,max,val)=>`<label>${label} <input type="number" data-mine-vs-pref="${key}" min="${min}" max="${max}" value="${val}"></label>`;
-    const check=(key,label,val)=>`<label><input type="checkbox" data-mine-vs-pref="${key}" ${val?'checked':''}> ${label}</label>`;
-    return `<div class="screen col"><div class="setuphead"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button><span class="art">${artOf('mineVersus')}</span><div class="txt"><h2>マインスイーパー（対戦）</h2></div></div>
-      <div class="setupbody mine-versus-setup"><div class="panel"><h3>難易度</h3><div class="row">${seg('mine-versus:level',levels.map(k=>[k,level(k).label]),selectedLevel)}</div>
-      <h3>妨害</h3><div class="row">${check('sabotage','妨害あり',preferences.sabotage)}</div>
-      ${attacks.map((a,i)=>`<div class="row">${check('enabled:'+i,a[1],preferences.enabled[i])}${number('cost:'+i,'必要ポイント',1,999,costs()[i])}</div>`).join('')}
-      <h3>終了条件と待ち時間</h3><div class="row"><label>対戦終了 <select data-mine-vs-pref="endRank">${[1,2,3,0].map(n=>`<option value="${n}" ${preferences.endRank===n?'selected':''}>${n?n+'位まで決まったら':'全員が終えたら'}</option>`).join('')}</select></label></div>
-      <div class="row">${number('penalty','地雷を踏んだ後の凍結（秒）',0,60,preferences.penalty)}</div>
-      <div class="row">${number('freeze','妨害の凍結（秒）',1,30,preferences.freeze)}</div>
-      <div class="row">${check('stock','盾をためる',preferences.stock)}${number('lock','盾の待ち時間（秒）',0,120,preferences.lock)}</div>
-      <div class="row"><button class="btn" data-mine-vs-reset>初期値に戻す</button></div></div>${minesGame.personalOptions(false)}</div>
-      <div class="setupfoot"><button class="btn" data-go="menu">戻る</button><button class="btn primary" data-mine-vs-start ${netApi?.role==='host'&&activeMembers().length>=2?'':'disabled'}>対戦を始める</button></div></div>`;
+  function setupPanels() {
+    const number = (key,label,min,max,value) => `<input type="number" data-mine-vs-pref="${key}" min="${min}" max="${max}" value="${value}" aria-label="${label}">`;
+    const check = (key,value) => sw('mineVs:'+key,value);
+    const field = level(selectedLevel);
+    const difficulty = setupPanel('ルール',
+      setupRow('難易度',seg('mine-versus:level',levels.map(k=>[k,level(k).label]),selectedLevel)) +
+      setupRow('盤面',`<b>${field.w}×${field.h} / 地雷 ${field.mines}個</b>`) +
+      setupRow('終了条件',`<select data-mine-vs-pref="endRank" aria-label="終了条件">${[1,2,3,0].map(n=>`<option value="${n}" ${preferences.endRank===n?'selected':''}>${n?n+'位まで決まったら':'全員が終えたら'}</option>`).join('')}</select>`) +
+      setupRow('地雷を踏んだ後の凍結（秒）',number('penalty','地雷を踏んだ後の凍結（秒）',0,60,preferences.penalty)));
+    const sabotage = setupPanel('妨害',
+      setupRow('妨害を使う',check('sabotage',preferences.sabotage)) +
+      attacks.map((a,i)=>setupRow(a[1],`<div class="mine-attack-option">${check('enabled:'+i,preferences.enabled[i])}<label>${number('cost:'+i,a[1]+'の必要ポイント',1,999,costs()[i])} pt</label></div>`)).join('') +
+      setupRow('妨害の凍結（秒）',number('freeze','妨害の凍結（秒）',1,30,preferences.freeze)) +
+      setupRow('盾をためる',check('stock',preferences.stock)) +
+      setupRow('盾の待ち時間（秒）',number('lock','盾の待ち時間（秒）',0,120,preferences.lock)) +
+      '<div class="row"><button class="btn" data-mine-vs-reset>対戦の設定を初期値に戻す</button></div>');
+    return {levels:`<div class="mine-versus-setup">${difficulty}</div>`,
+      rules:`<div class="mine-versus-setup">${sabotage}</div>`};
   }
   function pref(input){
-    const [key,index]=input.dataset.mineVsPref.split(':');
-    const value=input.type==='checkbox'?input.checked:input.type==='number'?
+    const value=input.type==='number'?
       Math.min(+input.max,Math.max(+input.min,Math.round(input.valueAsNumber||0))):+input.value;
+    setPref(input.dataset.mineVsPref,value);
+    if (input.type==='number') input.value=String(value);
+  }
+  function togglePref(path) {
+    const [key,index]=path.split(':');
+    setPref(path,key==='enabled'?!preferences.enabled[index]:!preferences[key]);
+    render();
+  }
+  function setPref(path,value) {
+    const [key,index]=path.split(':');
     if(key==='cost'){
       const next=costs().slice();next[index]=value;preferences.costs[selectedLevel]=next;
     }else if(key==='enabled')preferences.enabled[index]=value;
     else preferences[key]=value;
     store.set('mineVersusSettings',preferences);
   }
-  const start=()=>boardMatch.start('mineVersus',true,{level:selectedLevel,config:{...structuredClone(preferences),cost:costs().slice()}});
-  function html(state){
-    return `<div class="screen"><div class="stage mine-duel"><div class="stagehead"><button class="btn" data-extra-exit aria-label="戻る">${ic('back')}</button><h2>マインスイーパー（対戦）</h2></div>
+  const start=()=>canStartExtraMatch() && boardMatch.start('mineVersus',true,{level:selectedLevel,config:{...structuredClone(preferences),cost:costs().slice()}});
+  function html(state) {
+    const side = playSide({seats:'<div class="seats" id="duelSeats"></div>',
+      status:'<div class="status" id="duelStatus">安全なマスを開いてください</div>',
+      actions:ruleButton('mine'),on:true,content:'<div id="duelTools"></div>'});
+    return `<div class="screen"><div class="stage mine-duel">
+      ${playHeader('マインスイーパー','みんなで遊ぶ・対戦','data-extra-exit')}
       <div class="mine-boardwrap"><div class="mine-board" id="duelBoard" style="--mine-cols:${level(state.level).w}"></div></div>
-      <div class="mine-foot" id="duelInfo"></div><button class="btn play-settings" data-playsettings aria-label="設定">${ic('set')}</button><div class="cutlayer" id="cutlayer"></div></div>
-      <aside class="side"><div class="seats" id="duelSeats"></div><div id="duelTools"></div>${chatBox()}</aside></div>`;
+      <div class="mine-foot" id="duelInfo"></div>${playGear()}<div class="cutlayer" id="cutlayer"></div></div>${side}</div>`;
   }
   function draw(state){
     const element=$('#duelBoard');if(!element)return;
+    if (openedRound!==state.id) { openedRound=state.id; needsFlag=minesGame.personal.firstFlag; }
     const p=state.seats.find(p=>p.id===boardMatch.myId());
     const watched=p||state.seats[0];
     const other=state.seats.filter(q=>q!==p&&!q.done);
@@ -214,9 +231,10 @@ const mineVersus = (() => {
     }
     $('#duelInfo').textContent=`⚑ ${watched.left}　 ${p?.points||0} pt　 ${frozen?'凍結 '+frozen+'秒':fogged?'霧 '+fogged+'秒':state.notice||''}`;
     if(state.finish)$('#duelInfo').textContent=state.ranking.map((id,i)=>`${i+1}位 ${state.seats.find(q=>q.id===id)?.name}`).join(' ／ ');
+    $('#duelStatus').textContent=state.finish?'対戦終了':!p?'観戦中':p.done?'クリア！':frozen?'凍結中':state.notice||'安全なマスを開いてください';
     const side=$('#duelSeats');if(side.dataset.version!==String(state.version)){
       side.dataset.version=state.version;
-      side.innerHTML=state.seats.map(q=>`<div class="seat"><span class="nm">${esc(q.name)}</span><b>${q.percent}%</b><small>地雷 ${q.hits}</small></div>`).join('');
+      side.innerHTML=state.seats.map((q,i)=>`<div class="seat"><i class="dot" style="background:${SEAT_COLORS[i]}"></i><span class="nm">${esc(q.name)}</span><b>${q.percent}%</b><small>地雷 ${q.hits}</small></div>`).join('');
     }
     const tools=$('#duelTools');
     if(!p||state.finish||p.done){tools.replaceChildren();return;}
@@ -234,6 +252,6 @@ const mineVersus = (() => {
   }
   setInterval(()=>{if(S.screen==='extraPlay'&&boardMatch.state?.game==='mineVersus')draw(boardMatch.state);},250);
   boardMatch.register('mineVersus',{initial,apply,html,draw,button,stop:()=>fields.clear()});
-  return {setup,setupHtml,start,pref,setLevel:v=>{selectedLevel=v;render();},setTarget:v=>{target=v;draw(boardMatch.state);},
+  return {setupPanels,start,pref,togglePref,setLevel:v=>{if(levels.includes(v)){selectedLevel=v;store.set('mineVersusLevel',v);render();}},setTarget:v=>{target=v;draw(boardMatch.state);},
     reset:()=>{const stored={...preferences.costs};delete stored[selectedLevel];preferences={...defaults(),costs:stored};store.set('mineVersusSettings',preferences);render();}};
 })();

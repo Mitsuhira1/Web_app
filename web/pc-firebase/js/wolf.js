@@ -9,13 +9,13 @@ const wolfGame = (() => {
   const powers = { wolf:'襲う', seer:'占う', guard:'守る' };
   const stamps = ['賛成！','待って！','占い結果は？','もう一度聞きたい'];
   const phaseLabel = { talk:'話し合い', vote:'投票', night:'夜', end:'結果' };
-  const settings = { seats:6, minutes:3, wolves:1, seer:true, medium:true, guard:true, deadChat:false };
+  const settings = { seats:6, minutes:3, voteSeconds:45, nightSeconds:45, wolves:1, seer:true, medium:true, guard:true, deadChat:false, pace:'', ...store.get('wolfSetup',{}) };
   let setupOnline = false, starting = false, host = null, snapshot = null, secret = null;
   let selected = '', keyPair, keyPromise, openedMatch = '', receivedVersion = -1;
   let recordedMatch = '';
   let animationQueue = Promise.resolve(), playback = 0;
 
-  const participants = () => Object.values(fbState.players).sort((a,b) => a.slot-b.slot);
+  const participants = () => Object.values(fbState.players).filter(p=>!isSlotSpectating(p.slot)).sort((a,b) => a.slot-b.slot);
   const minimum = () => setupOnline ? Math.max(3, participants().length) : 3;
   function roster() {
     const roles = [...Array(settings.wolves).fill('wolf'), ...['seer','medium','guard'].filter(role => settings[role])];
@@ -23,7 +23,7 @@ const wolfGame = (() => {
     return roles;
   }
   const canStart = () => !starting && settings.seats >= minimum() && settings.wolves * 2 < settings.seats &&
-    roster().length === settings.seats && (!setupOnline || (netApi?.role === 'host' && participants().length >= 2 && keyPair &&
+    roster().length === settings.seats && (!setupOnline || (canStartExtraMatch() && keyPair &&
       participants().every(p => p.uid === netApi.uid || p.wolfKey)));
   const player = uid => snapshot?.players.find(p => p.id === uid);
   const localId = () => snapshot?.online ? netApi?.uid : 'local';
@@ -57,29 +57,35 @@ const wolfGame = (() => {
     settings.seats = Math.max(settings.seats, minimum());
     go('wolfSetup');
   }
-  function option(label, key, options, value = settings[key]) {
-    return `<div class="row"><b>${label}</b>${seg('wolf:'+key, options, String(value))}</div>`;
+  function option(label, key, options) {
+    return setupRow(label, seg('wolf:'+key, options, key==='pace'?settings.pace||'inherit':String(settings[key])));
   }
   function setupHtml() {
     const enabled = [['true','使う'],['false','使わない']];
     const outdated = setupOnline && participants().some(p => p.uid !== netApi?.uid && !p.wolfKey);
-    return `<div class="screen col"><div class="setuphead"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button>
-      <span class="art">${artOf('wolf')}</span><div class="txt"><h2>人狼</h2></div>
-      <span class="tagl">${setupOnline?'みんなで遊ぶ':'ひとりで遊ぶ'}</span></div>
-      <div class="setupbody"><div class="panel wolf-options"><h3>対局の設定</h3>
-      ${option('人数','seats',[3,4,5,6].filter(n=>n>=minimum()).map(n=>[String(n),n+'人']))}
-      ${option('人狼の人数','wolves',[['1','1人'],['2','2人']])}
-      ${option('話し合い','minutes',[1,3,5].map(n=>[String(n),n+'分']))}
-      ${option('占い師','seer',enabled)}${option('霊媒師','medium',enabled)}${option('騎士','guard',enabled)}
-      ${option('死亡後のチャット','deadChat',[['false','参加不可'],['true','参加可']])}
-      ${outdated?'<p>全員が最新版のアプリから入室すると始められます。</p>':''}
-      ${!canStart()&&!outdated&&!starting?'<p>人数と役職の組み合わせを確認してください。</p>':''}</div></div>
-      <div class="setupfoot"><button class="btn" data-go="menu">戻る</button>
-      <button class="btn primary" data-wolf-start ${canStart()?'':'disabled'}>${starting?'準備中…':'始める'}</button></div></div>`;
+    const cpus = Math.max(0,settings.seats-(setupOnline?participants().length:1));
+    const playerRows = option('合計の人数','seats',[3,4,5,6].filter(n=>n>=minimum()).map(n=>[String(n),n+'人'])) +
+      (setupOnline ? setupRow('対局者',`<b>${participants().length}人</b>`,participants().map(p=>p.name).join('・')) : '') +
+      setupRow('CPUの人数',`<b>${cpus}人</b>`) +
+      (cpus ? option('CPUの手番の長さ','pace',CPU_PACE_CHOICES) : '');
+    const deal = roster();
+    const roles = option('人狼の人数','wolves',[['1','1人'],['2','2人']]) +
+      option('占い師','seer',enabled)+option('霊媒師','medium',enabled)+option('騎士','guard',enabled) +
+      setupRow('役職の内訳',`<b>${Object.keys(labels).filter(role=>deal.includes(role)).map(role=>labels[role]+' '+deal.filter(r=>r===role).length).join('・')}</b>`);
+    const seconds=[30,45,60,90].map(n=>[String(n),n+'秒']);
+    const timing = option('話し合い','minutes',[1,2,3,5,10].map(n=>[String(n),n+'分'])) +
+      option('投票','voteSeconds',seconds)+option('夜の行動','nightSeconds',seconds);
+    const chat = option('死亡後のチャット','deadChat',[['false','参加不可'],['true','参加可']]);
+    const notice = outdated ? '<p class="dimtxt">全員が最新版のアプリから入室すると始められます。</p>' :
+      !canStart()&&!starting ? '<p class="dimtxt">対局者の人数と役職の組み合わせを確認してください。</p>' : '';
+    return extraSetupLayout('wolf',setupOnline,setupPanel('人数と相手',playerRows+notice)+setupPanel('役職',roles),
+      setupPanel('時間',timing)+setupPanel('チャット',chat),'data-wolf-start',{enabled:canStart(),label:starting?'準備中…':'スタート'});
   }
   function setOption(key, value) {
     if (!Object.hasOwn(settings,key) || starting) return;
-    settings[key] = typeof settings[key] === 'boolean' ? value === 'true' : Number(value);
+    if (key==='pace' && !CPU_PACE_CHOICES.some(([id])=>id===value)) return;
+    settings[key] = key==='pace' ? value : typeof settings[key] === 'boolean' ? value === 'true' : Number(value);
+    store.set('wolfSetup',settings);
     render();
   }
   function line(state, text, entry = {}) {
@@ -96,9 +102,8 @@ const wolfGame = (() => {
     state.deadline = Date.now() + seconds*1000;
     state.serial++;
     host.commands.clear();
-    host.cpuMoved = false;
     state.done = [];
-    host.cpuAt = Date.now() + 2200;
+    host.cpuAt = Date.now() + extraCpuDelay(host.pace);
   }
   function daybreak(state) {
     state.day++;
@@ -126,7 +131,7 @@ const wolfGame = (() => {
       const players = deal.map((_,i) => ({ id:members[i]?.uid || 'cpu-'+i, alive:true,
         name:members[i]?.name || 'CPU '+(i+1-members.length), cpu:i>=members.length }));
       host = { keys, keyData:new Map(recipients.map(p=>[p.uid,p.wolfKey])), roomId, deal, commands:new Map(), notes:new Map(), lastGuard:new Map(), cpuAt:0,
-        publishing:false, dirty:false,
+        publishing:false, dirty:false, voteSeconds:settings.voteSeconds, nightSeconds:settings.nightSeconds, pace:settings.pace,
         state:{ id:Array.from(crypto.getRandomValues(new Uint32Array(4)),n=>n.toString(16).padStart(8,'0')).join(''),
           online:!!roomId, players, roles:roster(), day:0, serial:0, version:0, deadChat:settings.deadChat,
           minutes:settings.minutes, chat:[], events:[], eventSeq:0, readyCount:0 } };
@@ -283,9 +288,10 @@ const wolfGame = (() => {
     if (state.phase==='end') return false;
     let changed = false;
     const alive = living(state);
-    if (now >= game.cpuAt && !game.cpuMoved) {
-      game.cpuMoved = true;
-      for (const p of alive.filter(p=>p.cpu)) {
+    if (now >= game.cpuAt) {
+      const p = alive.find(p=>p.cpu && !game.commands.has(p.id));
+      if (p) {
+        game.cpuAt = now + extraCpuDelay(game.pace) / 2;
         const role = roleOf(game,p);
         if (state.phase==='talk') {
           if (!state.online) {
@@ -307,7 +313,7 @@ const wolfGame = (() => {
     const enough = game.commands.size >= (alive.length>=3?alive.length-1:alive.length);
     const soloReady = state.online || !state.players[0].alive || game.commands.has('local');
     if (state.phase==='talk' && (timeout || (enough && soloReady))) {
-      enterPhase(state,'vote',45);
+      enterPhase(state,'vote',host.voteSeconds);
       event(state,'投票開始');
       return true;
     }
@@ -322,7 +328,7 @@ const wolfGame = (() => {
             game.notes.set(p.id,['medium',state.players.indexOf(exile),roleOf(game,exile)==='wolf']);
           }
         } else line(state,'投票がなく、追放された人はいません');
-        if (!isFinished(state)) { enterPhase(state,'night',45); line(state,'夜'); }
+        if (!isFinished(state)) { enterPhase(state,'night',host.nightSeconds); line(state,'夜'); }
       } else {
         const wolfVotes = alive.filter(p=>roleOf(game,p)==='wolf' && game.commands.get(p.id));
         const victimId = plurality(wolfVotes.map(p=>game.commands.get(p.id)));
@@ -412,7 +418,7 @@ const wolfGame = (() => {
     else if (selected) send('choose',{target:selected});
   }
   function exit() {
-    if (!snapshot?.online) return go('menu');
+    if (!snapshot?.online) return go(roomActive()?'room':'menu');
     if (!host) return go('room');
     const end = async () => {
       closeSheet();
@@ -439,15 +445,18 @@ const wolfGame = (() => {
   }
   function playHtml() {
     if (!snapshot) return '';
-    const roomChat = snapshot.online ? chatBox() : '';
+    const seats = `<div class="seats"><div class="seat"><i class="dot" style="background:${SEAT_COLORS[ost?.mySlot]||SEAT_COLORS[0]}"></i>
+      <span class="nm">${esc(me()?.name || meName())}</span><b id="wolfMyStatus"></b></div></div>`;
+    const side = playSide({seats,status:`<div class="status">${snapshot.online&&!me()?'みんなで遊ぶ・観戦中':playMode(snapshot.online)}</div>`,
+      actions:ruleButton('wolf')+`<button class="btn" data-wolf-help="roles">${ic('list')}役職の一覧</button>`,on:snapshot.online,extraClass:'wolf-common'});
     return `<div class="screen wolf-screen">
       <aside class="side wolf-info">
-        <header class="stagehead"><button class="btn" data-wolf-exit aria-label="戻る">${ic('back')}</button><h2>人狼</h2></header>
+        ${playHeader('人狼', '', 'data-wolf-exit')}
         <div class="panel"><div class="row"><strong id="wolfDay"></strong><span id="wolfLiving"></span></div>
           <div class="row"><b id="wolfPhase"></b><time id="wolfTime" class="num"></time></div></div>
         <div class="panel" id="wolfRoleCard"><h3>あなたの役職</h3><div class="row"><b id="wolfRole"></b></div><p id="wolfPrivate" hidden></p></div>
         <div class="wolf-action"><div id="wolfHint" aria-live="polite"></div><div class="wolf-controls">
-          <button class="btn" data-playsettings aria-label="設定">${ic('set')}</button>
+          ${playGear()}
           <button class="btn primary" id="wolfAct" data-wolf-act></button>
         </div></div>
       </aside>
@@ -458,11 +467,7 @@ const wolfGame = (() => {
         </section>
         <div class="cutlayer" id="cutlayer"></div><div class="wolf-attack" id="wolfAttack" hidden></div>
       </main>
-      <aside class="side wolf-common"><div class="seats"><div class="seat"><i class="dot" style="background:${SEAT_COLORS[ost?.mySlot]||SEAT_COLORS[0]}"></i>
-        <span class="nm">${esc(me()?.name || meName())}</span><b id="wolfMyStatus"></b></div></div>
-        <div class="status">${snapshot.online?(me()?'みんなで遊ぶ':'みんなで遊ぶ・観戦中'):'ひとりで遊ぶ'}</div>
-        <div class="ops"><button class="btn" data-wolf-help="rules">${ic('book')}ルール</button><button class="btn" data-wolf-help="roles">${ic('list')}役職の一覧</button></div>
-        ${roomChat}</aside></div>`;
+      ${side}</div>`;
   }
   function noteText() {
     if (!secret) return '';
@@ -517,12 +522,10 @@ const wolfGame = (() => {
     const picker = $('.wolf-common .stpanel');
     if (picker) { picker.remove(); S.stOpen = false; }
   }
-  function help(kind) {
-    const content = kind==='roles'
-      ? `<h2>役職の一覧</h2>${Object.keys(labels).filter(r=>snapshot.roles.includes(r)).map(r=>
-        `<p><b>${labels[r]} × ${snapshot.roles.filter(v=>v===r).length}</b><br>${abilities[r]}</p>`).join('')}`
-      : '<h2>人狼のルール</h2><p>昼は村で話し合い、投票で一人を追放します。夜は役職ごとに行動します。</p><p>3人以上なら生存者のうち1人を除く全員、2人なら全員が「投票へ進む」を押すと投票が始まります。</p><p>人狼を全員追放すると村人陣営の勝ち。人狼が生存者の半数以上になると人狼陣営の勝ちです。</p>';
-    openSheet(content+'<div class="btns"><button class="btn" data-sheetback>閉じる</button></div>');
+  function help() {
+    const roles = Object.keys(labels).filter(r=>snapshot.roles.includes(r)).map(r=>
+      `<p><b>${labels[r]} × ${snapshot.roles.filter(v=>v===r).length}</b><br>${abilities[r]}</p>`).join('');
+    openSheet('<h2>役職の一覧</h2>'+roles+'<div class="btns"><button class="btn" data-sheetback>閉じる</button></div>');
   }
   function attackScene() {
     return new Promise(resolve => {

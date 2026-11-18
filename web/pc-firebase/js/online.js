@@ -867,7 +867,7 @@ function sendChat(t, st) {
     if (isHostRoom()) scheduleHostSync();
   } else toast({ w: 'お知らせ', t: '少し待ってから送ってください' });
   if (st != null) {
-    if (S.screen === 'play') refreshChat();
+    if ($('.side #chatf, #chatpop #chatf')) refreshChat();
     else render();
   }
 }
@@ -1422,9 +1422,9 @@ function onlineClick(d, bElem) {
 }
 function chooseOnline(id) {
   if (!id || !isHostRoom()) return;
+  if (id==='mineVersus') id='mine';
   if (!isSoloInRoom() && activeMembers().length === 0) return toast({ w: 'お知らせ', t: '全員が観戦モードのため開始できません' });
   if (newGameSetup[id]) {
-    if (id==='mineVersus' && activeMembers().length<2) return toast({w:'お知らせ',t:'参加者を待っています'});
     if (!roomChoosing()) return;
     return newGameSetup[id](ost.members.length>=2);
   }
@@ -1688,9 +1688,19 @@ function onlineChanged() {
     (async () => { try { do { onlinePending = false; await refresh(); } while (onlinePending && online && S.screen === 'play'); } finally { onlineBusy = false; } })();
     return refreshChat();
   }
-  if (S.screen==='extraPlay') { refreshChat(); return; }
+  if (['extraPlay','minePlay','slidePlay'].includes(S.screen)) { refreshChat(); return; }
   if (S.screen==='wolfPlay') { refreshChat(); wolfGame.update(); return; }
   if (S.screen==='wolfSetup' && wolfGame.refreshingSetup()) return keepInputs(render);
+  if (roomActive() && ['mineSetup','slideSetup','poetSetup','bunyoSetup','pakurisSetup'].includes(S.screen)) {
+    const body = $('.setupbody');
+    const signature = JSON.stringify(activeMembers().map(p => [p.slot,p.name]));
+    if (body && body.dataset.members !== signature) {
+      keepInputs(render);
+      const updated = $('.setupbody');
+      if (updated) updated.dataset.members = signature;
+    }
+    return;
+  }
   if (S.screen === 'room' || (roomActive() && /^(menu|records|settings)$/.test(S.screen)) || (S.screen === 'setup' && S.setup.online)) {
     const rn = $('#readyNames');
     if (rn && ost) {
@@ -1708,6 +1718,8 @@ function keepInputs(fn) {
   if (e) { e.focus(); try { e.setSelectionRange(pos, pos); } catch (x) {} }
 }
 function refreshChat() {
+  const members = $('.side [data-oomembers]');
+  if (members && ost) members.textContent = `メンバー (${ost.members.length})`;
   if (typeof syncChatFab === 'function') syncChatFab();
   const box = document.querySelector('.side .chat, #chatpop .chat'); if (!box) return;
   const inp = $('#chatin'), val = inp ? inp.value : '', focus = document.activeElement === inp;
@@ -2069,10 +2081,10 @@ function onlineMenuDetail() {
  } else {
   hint = specCount > 0 ? `遊びたいゲームを選べます（対局 ${actCount}人・観戦 ${specCount}人）。開始はホストが行います` : '遊びたいゲームを選べます。設定と開始はホストが行います';
  }
- const canStart = isHostRoom() && g && playable(g.id) && (soloRoom ? g.id !== 'mineVersus' : g.id === 'mineVersus' ? actCount >= 2 : actCount >= 1);
+ const canStart = isHostRoom() && g && playable(g.id) && (soloRoom || actCount >= 1);
  const startLabel = soloRoom ? '1人で遊ぶ' : '対戦プレイ';
  const specToggle = roomChoosing() ? `<div style="margin:6px 0 4px"><button class="btn ${mySpec ? 'gold' : ''}" data-toggle-spec style="width:100%;height:34px;font-size:12px">${mySpec ? '観戦モード: ON（クリックで参加に戻る）' : '観戦モードにする'}</button></div>` : '';
  const mobHd = `<div class="detail-mobhd"><span class="detail-handle" aria-hidden="true"></span><button type="button" class="btn" data-detailclose aria-label="閉じる">✕ 閉じる</button></div>`;
  const openCls = S.mobDetail ? ' open' : '';
- return `<aside class="detail online-detail${openCls}">${mobHd}<div class="scroll">${g?`<div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div>`:'<div class="empty">ゲームを選んでください</div>'}<p>${hint}</p>${specToggle}${roomHowto()}</div>${chatBox()}<div class="foot"><button class="btn" data-rule="${g?g.id:''}" ${g&&!newGameSetup[g.id]?'':'disabled'}>${ic('book')}ルール</button>${roomChoosing()?`<button class="btn primary" data-next ${canStart?'':'disabled'}>${startLabel}</button>`:`<button class="btn primary" data-oreturn>${isSpectator ? '対局を観戦する' : '対局に戻る'}</button>`}</div></aside>`;
+ return `<aside class="detail online-detail${openCls}">${mobHd}<div class="scroll">${g?`<div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div>`:'<div class="empty">ゲームを選んでください</div>'}<p>${hint}</p>${specToggle}${roomHowto()}</div>${chatBox()}<div class="foot">${g?ruleButton(g.id):''}${roomChoosing()?`<button class="btn primary" data-next ${canStart?'':'disabled'}>${startLabel}</button>`:`<button class="btn primary" data-oreturn>${isSpectator ? '対局を観戦する' : '対局に戻る'}</button>`}</div></aside>`;
 }

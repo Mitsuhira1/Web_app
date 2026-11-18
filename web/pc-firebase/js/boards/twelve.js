@@ -15,7 +15,7 @@ const deck=(n,w=76)=>n>0?`<div class="card-stack">${card(null,w)}</div>`:slot(w)
 const slot=(w=70)=>`<span class="pc slot" style="--cw:${w}px"></span>`;
 const table=(body,cls='')=>`<div class="twelve-table table ${cls}"><div class="feltin"></div></div>${body}`;
 const own=(text)=>lab(text || 'あなた');
-const seatAt = (A,x,y,i,count) => at(x,y,`<div class="seat-name"><i>${esc(A.name(i)[0])}</i>${esc(A.name(i))}${count!=null?`<em>${count}枚</em>`:''}</div>`);
+const seatAt = (A,x,y,i,count) => at(x,y,`<div class="seat-name" data-public-seat="${i}"><i>${esc(A.name(i)[0])}</i>${esc(A.name(i))}${count!=null?`<em>${count}枚</em>`:''}</div>`);
 const countSeats = A => A.view.seats.length;
 const ownSeat = (b) => Math.max(0, b.me);
 const relSeat = (b,A,offset) => (ownSeat(b)+offset)%countSeats(A);
@@ -175,7 +175,7 @@ boards.goita = (b,A) => {
   const places=[[450,342],[201,223],[450,104],[699,223]];
   for(let i=0;i<4;i++){
     const seat=relSeat(b,A,i),[x,y]=places[i];
-    html+=at(x,y-46,`<span class="goita-name team${seat%2}">${esc(A.name(seat))}</span>`);
+    html+=at(x,y-46,`<span class="goita-name team${seat%2}" data-public-seat="${seat}">${esc(A.name(seat))}</span>`);
     const pairs=b.played[seat].map((p,j)=>`<div class="goita-play" data-piece="goita-${seat}-${j}">${piece(p,b,40)}<small>${j%2?'攻め':'受け'}</small></div>`);
     html+=at(x,y+14,row(pairs,5));
   }
@@ -195,7 +195,7 @@ const qStone=id=>{
 boards.quarto = (b,A) =>{
   const pos=(r,c)=>[309+(c-r)*67,120+(r+c)*38];
   let art=`<defs><linearGradient id="q-0"><stop stop-color="#bb814c"/><stop offset=".32" stop-color="#eed095"/><stop offset=".7" stop-color="#e4af69"/><stop offset="1" stop-color="#ad743e"/></linearGradient><linearGradient id="q-1"><stop stop-color="#5e3929"/><stop offset=".3" stop-color="#a66d47"/><stop offset="1" stop-color="#5c3827"/></linearGradient><linearGradient id="q-b" x2=".78" y2="1"><stop stop-color="#f0c58b"/><stop offset="1" stop-color="#bc8857"/></linearGradient></defs><path d="M26 231 309 70 592 231v16L309 409 26 247Z" fill="#5e3b26"/><path d="M26 231 309 70 592 231 309 393Z" fill="url(#q-b)" stroke="#986640" stroke-width="4"/><path d="M44 231 309 81 574 231 309 382Z" fill="none" stroke="#fae3bc" stroke-width="2"/>`;
-  b.board.forEach((p,i)=>{const [x,y]=pos(i>>2,i%4);art+=`<ellipse cx="${x}" cy="${y}" rx="35" ry="20" fill="#b48053" stroke="#f2ce95" stroke-width="2"/><ellipse cx="${x}" cy="${y-1}" rx="32" ry="16" fill="#c89a6c" stroke="#976741"/>`;});
+  b.board.forEach((p,i)=>{const [x,y]=pos(i>>2,i%4);art+=`<ellipse cx="${x}" cy="${y}" rx="35" ry="20" fill="#b48053" stroke="#f2ce95" stroke-width="2"/><ellipse data-quarto-cell="${i}" cx="${x}" cy="${y-1}" rx="32" ry="16" fill="#c89a6c" stroke="#976741"/>`;});
   b.board.map((p,i)=>({p,i})).sort((a,z)=>(a.i>>2)+a.i%4-(z.i>>2)-z.i%4).forEach(({p,i})=>{if(p<0)return;const [x,y]=pos(i>>2,i%4);art+=`<g transform="translate(${x},${y})"><g data-piece="quarto-${p}">${qStone(p)}</g></g>`;});
   const targets=b.board.map((p,i)=>{
     const [x,y]=pos(i>>2,i%4);
@@ -239,7 +239,7 @@ boards.rummikub = (b,A) =>{
    const tiles=set.map((t,i)=>move(A,2000+si*32+i,tile(t),'場の'+t.t,
      b.selected?.src==='table'&&b.selected.setIdx===si&&b.selected.tileIdx===i?'tile-picked':''));
    const dest=A.legal.has(500+si);
-   return `<div class="tile-set">${row(tiles,2)}${dest?move(A,500+si,'＋','この組に置く','tile-add'):''}</div>`;
+   return `<div class="tile-set" data-rummi-set="${si}">${row(tiles,2)}${dest?move(A,500+si,'＋','この組に置く','tile-add'):''}</div>`;
  }).join('');
  const hand=b.racks[b.me]||[],cut=Math.ceil(hand.length/2);
  const rack=hand.map((t,i)=>move(A,100+i,tile(t),t.t+'を選ぶ',b.selected?.src==='rack'&&b.selected.idx===i?'tile-picked':''));
@@ -545,5 +545,34 @@ function renderTwelve(b,base) {
 }
 
 for (const id of Object.keys(boards)) window.RENDER[id]=renderTwelve;
+window.TWELVE_HAS = id => Object.hasOwn(boards,id);
 window.TWELVE_STATUS=status;
+window.TWELVE_AIM = (b,mv,seat,q,button) => {
+  const move = n => q(`[data-m="${n}"]`);
+  // 手札や非公開の配置を狙うと答えが見えるため、その場合は公開されている場所だけを示す。
+  switch (b.kind) {
+    case 'war': return [move(0)];
+    case 'takoyaki':
+      if (b.phase==='draw') return [move(mv)];
+      if (mv===20) return [move(1)];
+      return [q(`[data-piece="tako-${seat}-${mv % 10}"]`)];
+    case 'butanoshippo': return [mv<100 ? move(mv) : q('[data-piece="pig-pile"]')];
+    case 'oldmaid': return mv===100 ? [] : [q(`[data-maid-index="${mv}"]`)];
+    case 'hearts': case 'vulture': return [q(`[data-public-seat="${seat}"]`)];
+    case 'ginrummy': return [move(b.phase==='draw'?mv:1)];
+    case 'goita': return [mv===99 ? button(/^パス$/) : q(`[data-public-seat="${seat}"]`)];
+    case 'quarto':
+      return b.phase==='pick' ? [move(mv)] : [q('.qtray .chosen'),q(`[data-quarto-cell="${mv}"]`)];
+    case 'geister': {
+      if (b.phase==='setup') return mv===99 ? [button(/配置決定/)] : [];
+      const cell = i => q(`.ghost-cell[data-src="${i}"]`);
+      return mv>=2000 ? [cell(mv-2000)] : [cell(Math.floor(mv/36)),cell(mv%36)];
+    }
+    case 'rummikub':
+      if (mv>=2000) return [move(mv)];
+      if (mv>=500 && mv<599) return [q(`[data-rummi-set="${mv-500}"]`)];
+      return mv===0 || mv===1 ? [button(mv===0?/山から引く/:/ターン確定/)] : [];
+    default: return [];
+  }
+};
 })();

@@ -12,7 +12,7 @@ const bunyoGame=(()=>{
  function fits(p){return places(p).every(([x,y])=>x>=0&&x<W&&y<H&&(y<0||!cells[y*W+x]));}
  function showSetup(){go('bunyoSetup');}
  function setup(on=false){fallingMatch.setup('bunyo',on);}
- function setupHtml(){return `<div class="screen col"><div class="setuphead"><button class="btn" data-go="menu" aria-label="戻る">${ic('back')}</button><span class="art">${artOf('bunyo')}</span><div class="txt"><h2>ぶにょぶにょ</h2></div></div><div class="setupbody"><div class="panel"><h3>${fallingMatch.online?'対戦':'ひとりで遊ぶ'}</h3><div class="row"><span>同じ色を4個以上つなげると消えます。</span></div></div></div><div class="setupfoot"><button class="btn" data-go="menu">戻る</button><button class="btn primary" data-bunyo-start>始める</button></div></div>`;}
+ function setupHtml(){return fallingMatch.setupHtml('bunyo');}
  function startSolo(){fresh(crypto.getRandomValues(new Uint32Array(1))[0]);go('bunyoPlay');}
  function active(){return S.screen==='bunyoPlay'||(S.screen==='extraPlay'&&fallingMatch.linked('bunyo'));}
 
@@ -63,13 +63,23 @@ const bunyoGame=(()=>{
  }
  function drawCell(color,overlay=false,links=''){return `<span class="bunyo-piece ${color||'empty'} ${overlay?'falling':''} ${links}"><i class="eyes"><i></i><i></i></i></span>`;}
  function boardHtml(){const copy=cells.slice();if(pair&&!ended)places().forEach(([x,y],k)=>{if(y>=0&&x>=0&&x<W&&y<H)copy[y*W+x]=pair.colors[k]});return copy.map((v,i)=>{const links=v?['top','right','bottom','left'].filter((d,k)=>{const j=[i-W,i+1,i+W,i-1][k];return j>=0&&j<copy.length&&(k!==1||i%W<W-1)&&(k!==3||i%W>0)&&copy[j]===v;}).map(d=>'link-'+d).join(' '):'';return `<span class="bunyo-slot" data-bunyo-index="${i}">${v?drawCell(v,cells[i]!==v,links):''}</span>`;}).join('');}
- function redraw(){if(!active()||!cells)return;const b=document.getElementById('bunyoBoard');if(b){fallingMatch.paintMotion(b,boardHtml(),lastPair,pair);lastPair=pair&&{x:pair.x,y:pair.y};}const n=$('#bunyoNext');if(n)n.innerHTML=next.map(c=>drawCell(c)).join('');const s=document.getElementById('bunyoScore');if(s)s.textContent=score;const c=document.getElementById('bunyoChain');if(c)c.textContent=chains?`${chains}連鎖`:'';const o=document.getElementById('bunyoOver');if(o)o.hidden=!ended;}
- function playHtml(on=false){return `<div class="screen"><div class="stage bunyo-stage"><div class="stagehead"><button class="btn" ${on?'data-extra-exit':'data-bunyo-exit'} aria-label="戻る">${ic('back')}</button><h2>ぶにょぶにょ</h2></div><div class="bunyo-board" id="bunyoBoard">${boardHtml()}</div><div class="bunyo-controls"><button data-bunyo="left" aria-label="左">◀</button><button data-bunyo="rotate" aria-label="回転">⟳</button><button data-bunyo="right" aria-label="右">▶</button><button data-bunyo="down" aria-label="落とす">▼</button></div><div class="bunyo-over" id="bunyoOver" ${ended?'':'hidden'}>ゲーム終了</div><button class="btn play-settings" data-bunyo-settings aria-label="設定">${ic('set')}</button><div class="cutlayer" id="cutlayer"></div></div><aside class="side"><div class="panel"><h3>スコア</h3><div class="row"><b id="bunyoScore">${score}</b><b id="bunyoChain">${chains?`${chains}連鎖`:''}</b></div></div><div class="panel"><h3>次のピース</h3><div class="bunyo-next" id="bunyoNext">${next.map(c=>drawCell(c)).join('')}</div></div>${on?fallingMatch.sidebar():''}</aside></div>`;}
+ function redraw(){if(!active()||!cells)return;const b=document.getElementById('bunyoBoard');if(b){fallingMatch.paintMotion(b,boardHtml(),lastPair,pair);lastPair=pair&&{x:pair.x,y:pair.y};}const n=$('#bunyoNext');if(n)n.innerHTML=next.map(c=>drawCell(c)).join('');const s=document.getElementById('bunyoScore');if(s)s.textContent=score;const c=document.getElementById('bunyoChain');if(c)c.textContent=chains?`${chains}連鎖`:'';const o=document.getElementById('bunyoOver');if(o)o.hidden=!ended;const status=$('#fallingSoloStatus');if(status)status.textContent=ended?'ゲーム終了':'プレイ中';}
+ function playHtml(on=false){
+  const stats = `<div class="panel"><h3>スコア</h3><div class="row"><b id="bunyoScore">${score}</b><b id="bunyoChain">${chains?`${chains}連鎖`:''}</b></div></div>`;
+  const preview = `<div class="panel"><h3>次のピース</h3><div class="bunyo-next" id="bunyoNext">${next.map(c=>drawCell(c)).join('')}</div></div>`;
+  const side = fallingMatch.sidebar('bunyo',on,stats,preview,ended);
+  return `<div class="screen"><div class="stage bunyo-stage">
+    ${playHeader('ぶにょぶにょ',playMode(on),on?'data-extra-exit':'data-bunyo-exit')}
+    <div class="bunyo-board" id="bunyoBoard">${boardHtml()}</div>
+    <div class="bunyo-controls"><button data-bunyo="left" aria-label="左">◀</button><button data-bunyo="rotate" aria-label="回転">⟳</button><button data-bunyo="right" aria-label="右">▶</button><button data-bunyo="down" aria-label="落とす">▼</button></div>
+    <div class="bunyo-over" id="bunyoOver" ${ended?'':'hidden'}>ゲーム終了</div>
+    ${playGear()}<div class="cutlayer" id="cutlayer"></div></div>${side}</div>`;
+ }
  function action(a){if(a==='left')step(-1,0);else if(a==='right')step(1,0);else if(a==='rotate')step(0,0,1);else if(a==='down')drop();}
  function key(k){const a={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'rotate',ArrowDown:'down',' ':'down'}[k];if(active()&&a){action(a);return true;}return false;}
  // The falling clock is independent of repainting the page. It only advances the
  // current game while its board is visible, so leaving the page cannot queue moves.
- setInterval(()=>{if(active()&&!document.hidden&&!ended&&pair)step(0,1);},700);
+ fallingMatch.tick('bunyo',700,()=>active()&&!ended&&pair,()=>step(0,1));
  fallingMatch.bind('bunyo',{showSetup,startSolo,playHtml,redraw,startLinked:(s,playing)=>{fresh(s);ended=!playing;},
    receive:n=>{garbage+=n;},finish:()=>{ended=true;},progress:()=>({score,over:ended,
      board:cells.map(v=>v==='garbage'?'8':v?String(C.indexOf(v)):'.').join('')})});

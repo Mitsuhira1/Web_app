@@ -32,7 +32,7 @@ const sfx = (() => { try { return createSfx(call); } catch (e) { return { init: 
 
 // ---------------------------------------------------------------- ゲームの一覧
 const ORDER = ['shogi', 'gogo', 'reversi', 'connect4', 'gomoku', 'hex', 'mancala', 'morris', 'checkers', 'chess', 'dots', 'hitblow', 'hare', 'chinese', 'ludo', 'backgammon', 'go', 'yacht', 'mahjong', 'life',
-  'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mineVersus', 'mine', 'bozu', 'wolf', 'roulette',
+  'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mine', 'bozu', 'wolf', 'roulette',
   'war', 'takoyaki', 'butanoshippo', 'oldmaid', 'hearts', 'ginrummy', 'vulture',
   'goita', 'quarto', 'geister', 'rummikub', 'pegsolitaire'];
 const ART_ID = { gogo: 'minishogi' };
@@ -46,7 +46,7 @@ const range = (p) => { const m = String(p).match(/\d+/g).map(Number); return [m[
 const PLAYABLE = new Set(ORDER);
 const newGameSetup = {
   slide:on=>slideGame.setup(on), bunyo:on=>bunyoGame.setup(on), pakuris:on=>pakurisGame.setup(on),
-  mine:on=>minesGame.setup(on), mineVersus:()=>mineVersus.setup(), wolf:on=>wolfGame.setup(on),
+  mine:on=>minesGame.setup(on), wolf:on=>wolfGame.setup(on),
   bozu:on=>poetCards.setup('bozu',on)
 };
 const playable = (id) => Object.hasOwn(newGameSetup,id) || (PLAYABLE.has(id) && (window.RENDER[id] || window.RENDER[KIND_OF[id] || id] || (gInfo(id)?.category !== 'BOARD' && window.RENDER.cards)));
@@ -207,12 +207,12 @@ function switchPlayerFilter(v) {
 }
 function detail() {
   if (roomActive()) return onlineMenuDetail();
-  const g = S.sel && gInfo(S.sel);
+  const g = S.sel && gInfo(S.sel==='mineVersus'?'mine':S.sel);
   const mobHd = `<div class="detail-mobhd"><span class="detail-handle" aria-hidden="true"></span><button type="button" class="btn" data-detailclose aria-label="閉じる">✕ 閉じる</button></div>`;
   const openCls = S.mobDetail ? ' open' : '';
   if (!g) return `<aside class="detail${openCls}">${mobHd}<div class="empty">ゲームを選んでください</div></aside>`;
   if (Object.hasOwn(newGameSetup,g.id)) return `<aside class="detail${openCls}">${mobHd}<div class="scroll"><div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div></div>
-    <div class="foot">${g.id==='mineVersus'?'<button class="btn primary" data-go="room">みんなで遊ぶ</button>':'<button class="btn primary" data-next>進む</button>'}</div></aside>`;
+    <div class="foot">${ruleButton(g.id)}<button class="btn primary" data-next>進む</button></div></aside>`;
   const c = cfg(g.id);
   const ok = playable(g.id);
   return `<aside class="detail${openCls}">${mobHd}<div class="scroll">
@@ -236,6 +236,32 @@ function cfg(id) {
 function saveCfg(id, c) { const all = store.get('cfg', {}); all[id] = c; store.set('cfg', all); }
 const engineOpts = (g, c, withOnline) => g.options.filter((o) => withOnline || o.group !== 'online').map((o) => `${o.key}=${c.opts[o.key] ?? o.default}`).sort().join(';');
 const isBool = (o) => o.values.length === 2 && o.values.every(([v]) => v === 'true' || v === 'false');
+const ruleButton = id => `<button class="btn" data-rule="${id}">${ic('book')}ルール</button>`;
+const setupRow = (label, control, hint = '') => `<div class="row"><span>${esc(label)}${hint ? `<small class="sub">${esc(hint)}</small>` : ''}</span>${control}</div>`;
+const setupPanel = (title, body) => `<section class="panel"><h3>${esc(title)}</h3>${body}</section>`;
+function setupLayout(id, label, back, left, right, action) {
+  const g = gInfo(id);
+  return `<div class="screen col">
+    <div class="setuphead"><button class="btn" data-go="${back}" aria-label="戻る">${ic('back')}</button><span class="art">${artOf(id)}</span>
+    <div class="txt"><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p></div><span class="tagl">${esc(g.players)}</span><span class="tagl">${esc(label)}</span></div>
+    <div class="setupbody"><div class="cols2"><div class="stack">${left}</div><div class="stack">${right}</div></div></div>
+    <div class="setupfoot">${ruleButton(id)}${action}</div></div>`;
+}
+function canStartExtraMatch() {
+  return isHostRoom() && roomChoosing() && activeMembers().length >= 2;
+}
+function extraSetupLayout(id, on, left, right, start, options = {}) {
+  const label = options.modeLabel ?? (on ? 'みんなで遊ぶ' : roomActive() ? '1人プレイ(待機中)' : 'ひとりで遊ぶ');
+  const enabled = options.enabled ?? (!on || canStartExtraMatch());
+  const action = `<button class="btn primary" ${start} ${enabled ? '' : 'disabled'}>${esc(options.label ?? 'スタート')}</button>`;
+  return setupLayout(id, label, roomActive() ? 'room' : 'menu', left, right, action);
+}
+function extraParticipants(on) {
+  if (!on) return setupPanel('人数と相手', setupRow('対局','<b>1人</b>'));
+  const members = activeMembers();
+  return setupPanel('人数と相手', setupRow('対局', `<b>${members.length}人</b>`, members.map(p => p.name).join('・')) +
+    (members.length < 2 ? '<p class="dimtxt">開始するには対局者が2人以上必要です。</p>' : ''));
+}
 let seatsCache = {};
 function setup() {
   const g = gInfo(S.setup.id), id = g.id, c = cfg(id), on = S.setup.online, soloOn = on && isSoloInRoom();
@@ -248,11 +274,13 @@ function setup() {
   const ps = g.options.find((o) => o.key === 'players');
   const rowOpt = (o) => {
     const v = c.opts[o.key] ?? o.default;
-    if (isBool(o)) return `<div class="row"><span>${esc(o.label)}</span>${sw('o:' + o.key, v === 'true')}</div>`;
+    const hint = EXTRA_SETUP_HINTS[id]?.[o.key] || o.hint;
+    if (isBool(o)) return setupRow(o.label, sw('o:' + o.key, v === 'true'), hint);
     const short = o.values.length <= 4 && o.values.map((x) => x[1]).join('').length <= 14;
-    return short ? `<div class="row"><span>${esc(o.label)}</span>${seg('o:' + o.key, o.values, v)}</div>`
-      : `<div class="row"><span>${esc(o.label)}</span></div><div class="row below">${seg('o:' + o.key, o.values, v, 'wide')}</div>`;
+    return short ? setupRow(o.label, seg('o:' + o.key, o.values, v), hint)
+      : setupRow(o.label, '', hint) + `<div class="row below">${seg('o:' + o.key, o.values, v, 'wide')}</div>`;
   };
+  const time = g.options.filter(o => o.key==='moveSeconds' || o.group==='online');
   const rule = g.options.filter((o) => o.key !== 'players' && o.group === 'rule');
   const local = g.options.filter((o) => o.group === 'local');
   const seatNames = g.seatNames && g.seatNames.length >= 2 ? g.seatNames : ['先手', '後手'];
@@ -268,33 +296,31 @@ function setup() {
   } else if (cpus) {
     subParts.push(`CPU ${cpus}人`);
   }
-  return `<div class="screen col">
-   <div class="setuphead"><button class="btn" data-go="${on ? 'room' : 'menu'}" aria-label="戻る">${ic('back')}</button><span class="art">${artOf(id)}</span>
-     <div class="txt"><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p></div><span class="tagl">${esc(g.players)}</span><span class="tagl">${soloOn ? '1人プレイ(待機中)' : on ? 'みんなで遊ぶ' : g.category === 'BOARD' ? 'ボードゲーム' : 'カードゲーム'}</span></div>
-   <div class="setupbody"><div class="cols2">
-    <div class="stack">
+  const left = `
      ${soloOn ? `<div class="panel"><h3>参加者待ちの1人プレイ</h3><p class="dimtxt" style="margin:4px 0">他の人が入室するまで、シングルプレイと同じ設定で遊べます。参加者が来たらゲームを続けるか選べます。</p></div>` : ''}
-     ${on ? '' : `<div class="panel ${!canPass ? 'off' : ''}"><h3>遊び方</h3><div class="row">${seg('c:mode', [['cpu', 'CPUと対戦'], ['pass', '手番ごとに交代']], pass ? 'pass' : 'cpu', 'wide')}</div></div>`}
+     ${on || !canPass ? '' : `<div class="panel"><h3>遊び方</h3><div class="row">${seg('c:mode', [['cpu', 'CPUと対戦'], ['pass', '手番ごとに交代']], pass ? 'pass' : 'cpu', 'wide')}</div></div>`}
      <div class="panel"><h3>人数と相手</h3>
       <div class="row"><span>合計の人数${subParts.length ? `<small class="sub">${esc(subParts.join('・'))}</small>` : ''}</span>${ps ? `<span class="stepper"><button data-pstep="-1" aria-label="減らす" ${pidx > 0 ? '' : 'disabled'}>−</button><b class="num">${esc(ps.values[pidx][1])}</b><button data-pstep="1" aria-label="増やす" ${pidx < ps.values.length - 1 ? '' : 'disabled'}>＋</button></span>` : `<b>${total}人</b>`}</div>
-      ${on && !soloOn ? '' : `<div class="row ${solo ? 'dim' : ''}"><span>CPUの強さ</span>${seg('c:level', LV.map((l, i) => [i, l]), c.level)}</div>
-      <div class="row ${solo || total !== 2 ? 'dim' : ''}"><span>手番</span>${seg('c:seat', [[0, seatNames[0]], [1, seatNames[1]], [-1, 'ランダム']], c.seat)}</div>`}</div>
-     ${on ? '' : `<div class="panel ${!pass ? 'off' : ''}"><h3>手番ごとに交代</h3>
+      ${(on && !soloOn) || cpus===0 ? '' :
+        setupRow('CPUの強さ',seg('c:level',LV.map((l,i)=>[i,l]),c.level)) +
+        (window.TWELVE_HAS(id)?setupRow('CPUの手番の長さ',seg('c:cpuLen',CPU_PACE_CHOICES,c.cpuLen||'inherit')):'')}
+      ${(!on || soloOn) && !pass && total===2 ? setupRow('手番',seg('c:seat',[[0,seatNames[0]],[1,seatNames[1]],[-1,'ランダム']],c.seat)) : ''}</div>
+     ${on || !pass ? '' : `<div class="panel"><h3>手番ごとに交代</h3>
       <div class="row"><span>交代する人</span><span class="stepper"><button data-hstep="-1" aria-label="減らす" ${c.humans > 2 ? '' : 'disabled'}>−</button><b class="num">${c.humans}人</b><button data-hstep="1" aria-label="増やす" ${c.humans < total ? '' : 'disabled'}>＋</button></span></div>
       <div class="row"><span>1人目</span><b>${esc(meName())}</b></div>
       ${Array.from({ length: Math.max(1, c.humans - 1) }, (_, k) => `<div class="row"><span>${k + 2}人目</span><span class="field"><input data-pname="${k + 1}" value="${esc(c.names[k + 1] || '')}" placeholder="プレイヤー${k + 2}" maxlength="12" aria-label="${k + 2}人目の名前"></span></div>`).join('')}
-      <div class="row"><span>上下反対に表示</span>${sw('c:rotate', c.rotate)}</div></div>`}
-    </div>
-    <div class="stack">
+      <div class="row"><span>上下反対に表示</span>${sw('c:rotate', c.rotate)}</div></div>`}`;
+  const right = `
      ${rule.length ? `<div class="panel"><h3>ルール</h3>${rule.map(rowOpt).join('')}</div>` : ''}
      ${local.length ? `<div class="panel"><h3>ローカルルール</h3>${local.map(rowOpt).join('')}</div>` : ''}
      ${id === 'dots' ? `<div class="panel"><h3>表示</h3><div class="row"><span>紙の色</span>${seg('c:paper', [['light', 'ライト'], ['auto', '設定に合わせる'], ['dark', 'ダーク']], c.paper || 'light')}</div></div>` : ''}
-     ${on && !soloOn ? `<div class="panel"><h3>時間と「待った」</h3>${g.options.filter((o) => o.key === 'moveSeconds' || o.group === 'online').map(rowOpt).join('')}<p class="dimtxt" style="margin:6px 0 0">時間が切れたら、かわりにランダムな一手を指します(アプリ版・WEB版と同じ)。</p></div>`
+     ${on && !soloOn ? setupPanel(time.some(o=>o.key==='onlineUndo')?'時間と待った':'時間',time.map(rowOpt).join('') +
+       '<p class="dimtxt">時間切れになると、代わりに一手進みます。</p>')
      : `<div class="panel"><h3>時間</h3>
       <div class="row"><span>1手の制限時間</span>${seg('c:limit', [[0, 'なし'], [15, '15秒'], [30, '30秒'], [60, '60秒']], c.limit)}</div>
-      ${soloOn ? '<p class="dimtxt" style="margin:6px 0 0">待機中の1人プレイは「待った」が自由に使えます。</p>' : `<div class="row ${c.limit ? '' : 'dim'}"><span>時間切れ</span>${seg('c:tout', [['random', 'ランダムな一手'], ['lose', '負け']], c.tout)}</div>`}</div>`}
-    </div></div></div>
-   <div class="setupfoot"><button class="btn" data-rule="${id}">${ic('book')}ルール</button><button class="btn primary" data-start>スタート</button></div></div>`;
+      ${soloOn ? '<p class="dimtxt" style="margin:6px 0 0">待機中の1人プレイは「待った」が自由に使えます。</p>' : `<div class="row ${c.limit ? '' : 'dim'}"><span>時間切れ</span>${seg('c:tout', [['random', 'ランダムな一手'], ['lose', '負け']], c.tout)}</div>`}</div>`}`;
+  const label = soloOn ? '1人プレイ(待機中)' : on ? 'みんなで遊ぶ' : g.category === 'BOARD' ? 'ボードゲーム' : 'カードゲーム';
+  return setupLayout(id, label, on ? 'room' : 'menu', left, right, '<button class="btn primary" data-start>スタート</button>');
 }
 
 // ---------------------------------------------------------------- 対局
@@ -302,6 +328,11 @@ let concurrent = false, concTimer = null;
 let cur = null, h = -1, token = 0, view = null, mySeat = 0, sel = null, busy = false, clock = null, lastSeat = 0, mode = 'cpu', pcfg = null, lastRecord = '', prevView = null;
 const THINK = [300, 800, 1500];
 const PACE = { 短い: 250, ふつう: 450, 長い: 800 };
+const EXTRA_CPU_PACE = { 短い: 1000, ふつう: 2700, 長い: 3700 };
+const CPU_PACE_CHOICES = [['inherit','共通設定'],...Object.keys(PACE).map(label=>[label,label])];
+const cpuPaceSetting = choice => Object.hasOwn(PACE,choice) ? choice : S.set.cpuLen;
+const extraCpuDelay = choice => EXTRA_CPU_PACE[cpuPaceSetting(choice)] ?? EXTRA_CPU_PACE['ふつう'];
+const cpuPaceChoice = () => cpuPaceSetting(!online || isSoloIdleMatch() ? pcfg?.cpuLen : null);
 const SPEED = () => ({ ゆっくり: 1.5, ふつう: 1, 速い: 0.6 }[S.set.speed] || 1) * (S.set.reduce ? 0.01 : 1);
 const PASS_MOVES = { reversi: 64, ludo: 99, backgammon: 999 };
 async function startMatch(forceSeat) {
@@ -389,6 +420,14 @@ function togglePlayChat(open) {
   syncAppHistory();
 }
 const matchTitle = (g,b) => g.id==='oldmaid' && b?.variant==='jiji' ? 'ジジ抜き' : g.name;
+const playHeader = (title, label, back, extra = '', tail = '') => `<div class="stagehead"><button class="btn" ${back} aria-label="戻る">${ic('back')}</button><h2>${esc(title)}</h2><span>${esc(label)}${extra}</span>${tail}</div>`;
+const playGear = () => `<button class="btn play-settings" data-playsettings aria-label="設定">${ic('set')}</button>`;
+const playMembers = () => `<button class="btn" data-oomembers>メンバー (${ost?.members?.length || 0})</button>`;
+const playMode = on => on ? 'みんなで遊ぶ' : 'ひとりで遊ぶ';
+const playSide = ({seats = '', status, actions, on = false, content = '', extraClass = 'extra-side',
+    onlineActions = '', showChat = on}) => `<aside class="side ${extraClass}">
+  ${seats}${status}<div class="ops">${actions}</div>
+  ${on ? `<div class="online-ops">${onlineActions}${playMembers()}</div>` : ''}${content}${showChat ? chatBox() : ''}</aside>`;
 function play() {
   const g = cur;
   const soloMatch = online && isSoloIdleMatch();
@@ -401,23 +440,21 @@ function play() {
   const chatCnt = chatOn ? (S.chatUnread || 0) : 0;
   const chatBtn = online && mob ? `<button type="button" class="btn chatfab${chatOn ? '' : ' is-off'}${S.chatOpen ? ' is-open' : ''}${chatCnt ? ' has-unread' : ''}" data-chatfab aria-label="${S.chatOpen ? 'チャットを閉じる' : 'チャットを開く'}" aria-expanded="${!!S.chatOpen}" title="チャット">${ic('chat')}${chatCnt ? `<span class="chatfab-badge">${chatCnt > 99 ? '99+' : chatCnt}</span>` : ''}</button>` : '';
   const chatPop = online && mob && S.chatOpen ? playChatPopHtml() : '';
+  const actions = `<button class="btn" data-undo ${canUndo ? '' : 'disabled'}>${ic('undo')}待った</button>${ruleButton(g.id)}
+    <button class="btn ${hasList(g.id) ? 'listbtn' : ''}" data-list ${hasList(g.id) ? '' : 'disabled'}>${ic('list')}${listLabel}</button><button class="btn" data-resign ${view && view.canResign && view.human && !view.outcome && !busy && !autoMe ? '' : 'disabled'}>${ic('flag')}降参</button>`;
+  const cpuButton = online && !soloMatch && view?.mine >= 0 ? `<button class="btn ${myAutoCpuOn() ? 'gold' : ''}" data-autocpu ${view.outcome ? 'disabled' : ''}>${myAutoCpuOn() ? 'CPU操作を解除' : 'CPUに操作を任せる'}</button>` : '';
+  const side = playSide({seats:'<div class="seats" id="strip"></div>', status:'<div class="status" id="status"></div>',
+    actions,on:online,extraClass:'',onlineActions:cpuButton,showChat:online&&!mob,
+    content:online?'':'<div class="sidenote" id="sidenote"></div>'});
   return `<div class="screen play-screen${online ? ' is-online' : ''}"><div class="stage">
-    <div class="stagehead"><button class="btn" data-go="${online ? 'room' : 'menu'}" aria-label="戻る">${ic('back')}</button><h2>${esc(matchTitle(g,view?.board))}</h2><span>${esc(subText())}<b id="hround"></b></span><em class="myturn" id="myturn" hidden>あなたの番</em></div>
+    ${playHeader(matchTitle(g,view?.board), subText(), online ? 'data-go="room"' : 'data-go="menu"', '<b id="hround"></b>', '<em class="myturn" id="myturn" hidden>あなたの番</em>')}
     <div class="boardwrap" id="boardwrap"></div>
     <div class="acts" id="acts"></div>
     <div class="countbar" id="countbar"></div><div class="countline"><i id="cline" style="width:0"></i></div>
-    <button class="btn play-settings" data-playsettings aria-label="設定">${ic('set')}</button>
+    ${playGear()}
     <div class="cutlayer" id="cutlayer"></div>
     <div class="resultlayer" id="result" hidden></div>
-   </div>
-   <aside class="side">
-    <div class="seats" id="strip"></div>
-    <div class="status" id="status"></div>
-    <div class="ops"><button class="btn" data-undo ${canUndo ? '' : 'disabled'}>${ic('undo')}待った</button><button class="btn" data-rule="${g.id}">${ic('book')}ルール</button>
-     <button class="btn ${hasList(g.id) ? 'listbtn' : ''}" data-list ${hasList(g.id) ? '' : 'disabled'}>${ic('list')}${listLabel}</button><button class="btn" data-resign ${view && view.canResign && view.human && !view.outcome && !busy && !autoMe ? '' : 'disabled'}>${ic('flag')}降参</button></div>
-    ${online ? `<div class="online-ops">${!soloMatch && view && view.mine >= 0 ? `<button class="btn ${myAutoCpuOn() ? 'gold' : ''}" data-autocpu ${view.outcome ? 'disabled' : ''}>${myAutoCpuOn() ? 'CPU操作を解除' : 'CPUに操作を任せる'}</button>` : ''}<button class="btn" data-oomembers>メンバー (${ost && ost.members ? ost.members.length : 0})</button></div>` : ''}
-    ${online && !mob ? chatBox() : !online ? `<div class="sidenote" id="sidenote"></div>` : ''}
-   </aside>${chatBtn}${chatPop}</div>`;
+   </div>${side}${chatBtn}${chatPop}</div>`;
 }
 const hasList = (id) => /shogi|gogo|chess|poker|holdem|hanafuda|yacht|daifugo|mahjong/.test(id);
 let refreshRevision = 0, cpuTurnKey = '';
@@ -452,6 +489,7 @@ async function refresh() {
       const nv = view; view = previous;
       try { await runCursor(ms[0], my); } catch (e) {}
       if (my !== token || revision !== refreshRevision) return;
+      hideCursor();
       view = nv;
     }
   }
@@ -521,7 +559,9 @@ async function cpuTurn(my, opts = {}) {
     busy = false; cpuTurnKey = ''; drawPlay(); return;
   }
   if (my !== token) return;
-  const wait = (PACE[S.set.cpuLen] || 450) * Math.max(0.3, SPEED()) - (performance.now() - t0);
+  const choice = cpuPaceChoice();
+  const delay = window.TWELVE_HAS(cur.id) ? extraCpuDelay(choice) : (PACE[choice] || 450) * Math.max(0.3, SPEED());
+  const wait = delay - (performance.now() - t0);
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   if (my !== token) return;
   if (auto && (!online || !view || view.outcome || view.toMove !== forSeat || !isSeatAutoCpu(forSeat))) {
@@ -536,6 +576,7 @@ async function cpuTurn(my, opts = {}) {
   cpuTurnKey = '';
   const quiet = view.board && view.board.kind === 'hitblow' && view.board.setting;
   if (online) mainCore.onlineCpuPlay(h, mv); else await call('playMove', h, mv);
+  if (my !== token) return;
   if (!online) pendSnd = quiet ? null : mv; lastPlayed = mv; hideCursor();
   await refresh();
 }
@@ -946,8 +987,9 @@ function dealIntro() {
 const NO_CURSOR = new Set(['uno', 'daifugo', 'sevens', 'poker', 'holdem', 'blackjack', 'hanafuda', 'mahjong', 'speed', 'solitaire', 'hitblow']);
 function aimSteps(mv) {
   const b = view && view.board; if (!b || NO_CURSOR.has(cur.id)) return [];
-  const W = $('#boardwrap'), q = (sel) => (sel ? W.querySelector(sel) || $(sel) : null), seat = view.toMove;
+  const W = $('#boardwrap'), q = (sel) => (sel ? W?.querySelector(sel) || $(sel) : null), seat = view.toMove;
   const btn = (re) => [...document.querySelectorAll('#acts button, #boardwrap [data-roll]')].find((x) => re.test(x.textContent) || (x.dataset.roll != null && re.test('roll')));
+  if (window.TWELVE_HAS(b.kind)) return window.TWELVE_AIM(b,mv,seat,q,btn);
   switch (b.kind) {
     case 'shogi': { const N = b.w * b.w, f = (mv >> 1) >> 7, t = (mv >> 1) & 127; return [f >= N ? q(`.komadai.top [data-hand="${f - N}"]`) : q(`[data-i="${f}"]`), q(`[data-i="${t}"]`)]; }
     case 'c4': return [q(`.c4slot[data-col="${mv}"]`)];
@@ -970,7 +1012,6 @@ function aimSteps(mv) {
     }
     case 'yacht': if (mv >= 100) { const c = q(`[data-ycell="${seat}-${mv - 100}"]`); return [c, c]; }
       { const held = new Set([...W.querySelectorAll('.yd.held')].map((e) => +e.dataset.die)); return [...[0, 1, 2, 3, 4].filter((i) => b.rollsLeft < 3 && !!((mv >> i) & 1) !== held.has(i)).map((i) => q(`[data-die="${i}"]`)), q('[data-roll]')]; }
-    case 'oldmaid': return mv === 100 ? [btn(/手札を混ぜる/)] : [q(`[data-maid-index="${mv}"]`)];
     case 'cards': return b.tbl && b.tbl.g === 'memory' ? [q(`[data-pos="${mv}"]`)] : [];
     case 'life': return mv === 0 || (mv > 200 && mv < 211) ? [q('[data-spin]')] : [q(`[data-lm="${mv}"]`)];
     default: return [];
@@ -978,12 +1019,19 @@ function aimSteps(mv) {
 }
 async function runCursor(mv, my) {
   if (!cursorOn() || !view) return;
-  const steps = aimSteps(mv).filter(Boolean).filter((e, i, l) => i === 0 || e !== l[i - 1]); if (!steps.length) return;
+  const choice = cpuPaceChoice();
+  const f = window.TWELVE_HAS(cur.id)
+    ? ({短い:.75,ふつう:1,長い:1.25}[choice] || 1)
+    : (PACE[choice] || 450) / 450 * Math.max(0.4, SPEED());
+  await moveCpuCursor(seatName(view.toMove),aimSteps(mv),()=>my===token,f);
+}
+async function moveCpuCursor(name, targets, current, f = 1) {
+  if (!cursorOn() || !current()) return;
+  const steps = targets.filter(Boolean).filter((e, i, l) => i === 0 || e !== l[i - 1]); if (!steps.length) return;
   const stage = $('.stage'); if (!stage) return;
-  const f = (PACE[S.set.cpuLen] || 450) / 450 * Math.max(0.4, SPEED());
   const r0 = stage.getBoundingClientRect();
   let c = $('#cpuCur');
-  if (!c) { stage.insertAdjacentHTML('beforeend', rcurHtml('cpuCur', seatName(view.toMove), '#C8463C', true)); c = $('#cpuCur'); c.style.transform = `translate(${r0.width * 0.5}px,${r0.height + 20}px)`; c.getBoundingClientRect(); }
+  if (!c) { stage.insertAdjacentHTML('beforeend', rcurHtml('cpuCur', name, '#C8463C', true)); c = $('#cpuCur'); c.style.transform = `translate(${r0.width * 0.5}px,${r0.height + 20}px)`; c.getBoundingClientRect(); }
   c.style.transitionDuration = Math.round(420 * f) + 'ms';
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   for (let k = 0; k < steps.length; k++) {
@@ -991,13 +1039,13 @@ async function runCursor(mv, my) {
     const r = el.getBoundingClientRect();
     const quick = el.matches('.yd') ? 0.4 : 1; c.style.transitionDuration = Math.round(420 * f * quick) + 'ms';
     c.style.transform = `translate(${r.left - r0.left + r.width * 0.5}px,${r.top - r0.top + r.height * 0.55}px)`;
-    await wait(470 * f * quick); if (my !== token) return;
+    await wait(470 * f * quick); if (!current() || !c.isConnected) return;
     c.classList.remove('click'); void c.offsetWidth; c.classList.add('click');
     sfxClick();
     // 動かす駒を選んだ印
     if (el.matches('.yd')) el.classList.toggle('held');
     else if (k < steps.length - 1 && steps[k + 1] !== el) { const ring = document.createElement('div'); ring.className = 'aimring'; Object.assign(ring.style, { left: r.left - r0.left + 'px', top: r.top - r0.top + 'px', width: r.width + 'px', height: r.height + 'px' }); stage.appendChild(ring); }
-    await wait((k === steps.length - 1 ? 160 : el.matches('.yd') ? 90 : 230) * f); if (my !== token) return;
+    await wait((k === steps.length - 1 ? 160 : el.matches('.yd') ? 90 : 230) * f); if (!current() || !c.isConnected) return;
   }
 }
 function sfxClick() { if (!S.set.sound || !S.set.hover || !AX || !transientAudio.allowed()) return; try { const t = AX.currentTime, o = transientAudio.track(AX.createOscillator()), g = AX.createGain(); o.type = 'square'; o.frequency.setValueAtTime(2200, t); o.frequency.exponentialRampToValueAtTime(1400, t + 0.012); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.035 * S.set.master / 100 * S.set.sfxVol / 100 + 0.0002, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03); o.connect(g); g.connect(AX.destination); o.start(t); o.stop(t + 0.04); } catch (e) {} }
@@ -1077,8 +1125,9 @@ function rulesModal() {
 }
 async function fillRules() {
   const b = $('#rulesbody'); if (!b) return;
-  const secs = JSON.parse(await callW('rulesJson', S.rulesId));
-  b.innerHTML = secs.length ? RULES.html(S.rulesId, secs) : '<p>ルールの説明はまだありません</p>';
+  const id = S.rulesId;
+  const secs = EXTRA_GAME_RULES[id] || JSON.parse(await callW('rulesJson', id));
+  b.innerHTML = secs.length ? RULES.html(id, secs) : '<p>ルールの説明はまだありません</p>';
   RULES.start(b);
 }
 function listModal() {
@@ -1107,7 +1156,7 @@ function render() {
     const mob = isMob();
     document.body.style.height = (z === 1 || mob) ? '' : (100 / z) + 'vh'; document.body.style.width = (z === 1 || mob) ? '' : (100 / z) + 'vw'; }
   if (S.theme === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = S.theme;
-  const screens = { first, menu, setup, play, settings, records, room, slideSetup:slideGame.setupHtml, slidePlay:slideGame.playHtml, bunyoSetup:bunyoGame.setupHtml, bunyoPlay:bunyoGame.playHtml, pakurisSetup:pakurisGame.setupHtml, pakurisPlay:pakurisGame.playHtml, mineSetup:minesGame.setupHtml, minePlay:minesGame.playHtml, wolfSetup:wolfGame.setupHtml, wolfPlay:wolfGame.playHtml, poetSetup:poetCards.setupHtml, mineVersusSetup:mineVersus.setupHtml, extraPlay:boardMatch.playHtml };
+  const screens = { first, menu, setup, play, settings, records, room, slideSetup:slideGame.setupHtml, slidePlay:slideGame.playHtml, bunyoSetup:bunyoGame.setupHtml, bunyoPlay:bunyoGame.playHtml, pakurisSetup:pakurisGame.setupHtml, pakurisPlay:pakurisGame.playHtml, mineSetup:minesGame.setupHtml, minePlay:minesGame.playHtml, wolfSetup:wolfGame.setupHtml, wolfPlay:wolfGame.playHtml, poetSetup:poetCards.setupHtml, extraPlay:boardMatch.playHtml };
   if (S.screen === 'setup' && !gInfo(S.setup.id)) S.screen = 'menu';
   const fa = document.activeElement, fKey = fa && fa !== document.body && app.contains(fa) ? Object.entries(fa.dataset).slice(0, 2).map(([k, v]) => `[data-${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}="${CSS.escape(v)}"]`).join('') : '';
   const oldMain = $('.main'), keepTop = oldMain && lastScreen === S.screen ? oldMain.scrollTop : null;
@@ -1167,7 +1216,6 @@ function focusPrimary() { setTimeout(() => { const b = $('#sheet .btns .btn:last
 
 // ---------------------------------------------------------------- 操作
 function openLocalSetup(id, clickCount) {
-  if (id === 'mineVersus') return go('room');
   if (newGameSetup[id]) return newGameSetup[id](false);
   if (clickCount === 0) S.focusSel = '[data-start]';
   S.setup = { id, online: false };
@@ -1181,6 +1229,9 @@ app.addEventListener('click', async (e) => {
   const b = e.target.closest('button'); if (!b || b.disabled) return;
   const d = b.dataset;
   clickSound(b, d);
+  const mineSwapped = (d.extraMine != null || d.mineCell != null) && minesGame.personal.swapButtons &&
+    e.detail > 0 && e.pointerType !== 'touch' && e.pointerType !== 'pen';
+  if (mineSwapped && d.extraMine != null) return boardMatch.send('flag',{cell:+d.extraMine});
   if (d.extraExit != null) return boardMatch.exit();
   if (Object.keys(d).some(key=>key.startsWith('extra'))) return boardMatch.button(d);
   if (d.poetStart != null) return poetCards.start();
@@ -1190,27 +1241,23 @@ app.addEventListener('click', async (e) => {
   if (d.wolfExit != null) return wolfGame.exit();
   if (d.wolfAct != null) return wolfGame.act();
   if (d.wolfTarget != null && S.screen==='wolfPlay') return wolfGame.chooseTarget(d.wolfTarget);
-  if (d.wolfHelp && S.screen==='wolfPlay') return wolfGame.help(d.wolfHelp);
+  if (d.wolfHelp && S.screen==='wolfPlay') return wolfGame.help();
   if (d.wolfStamp != null && S.screen==='wolfPlay') return wolfGame.stamp(+d.wolfStamp);
   if (d.slideTile != null) return slideGame.move(d.slideTile);
-  if (d.slideExit != null) return go('menu');
-  if (d.slideSettings != null) return openPlaySettings();
+  if (d.slideExit != null) return go(roomActive()?'room':'menu');
+  if (d.slideGuide != null) return slideGame.showGuide();
   if (d.slideStart != null) return slideGame.start();
   if (d.slidePicture != null) {slideGame.picture=d.slidePicture;return render();}
   if (d.bunyoStart != null) return bunyoGame.start();
   if (d.bunyoExit != null) return go('menu');
-  if (d.bunyoSettings != null) return openPlaySettings();
   if (d.bunyo != null) return bunyoGame.action(d.bunyo);
   if(d.pakurisStart!=null)return pakurisGame.start();
   if(d.pakurisExit!=null)return go('menu');
-  if(d.pakurisSettings!=null)return openPlaySettings();
   if(d.pakuris!=null)return pakurisGame.action(d.pakuris);
   if(d.mineStart!=null)return minesGame.start();
   if(d.mineExit!=null)return minesGame.exit();
-  if(d.mineSettings!=null)return openPlaySettings();
   if(d.mineUndo!=null)return minesGame.requestUndo();
-  if(d.mineLevel!=null){minesGame.level=d.mineLevel;return render();}
-  if(d.mineCell!=null)return minesGame.move(+d.mineCell);
+  if(d.mineCell!=null)return minesGame.move(+d.mineCell, mineSwapped || minesGame.flagMode);
   if (d.playsettings != null) return openPlaySettings();
   if (d.playsettingsclose != null) { closeSheet(); return; }
   if (d.chatfab != null) return togglePlayChat();
@@ -1258,9 +1305,15 @@ app.addEventListener('click', async (e) => {
   if (d.openfolder != null) return openDataFolder();
   if (d.firstdone != null) { S.set.name = ($('#nameIn') && $('#nameIn').value.trim()) || S.set.name; saveSet(); store.set('firstDone', true); return go('menu'); }
   if (d.photo != null) return pickPhoto();
-  if (d.stopen != null) { S.stOpen = !S.stOpen; if (S.screen === 'play' && typeof refreshChat === 'function') return refreshChat(); return render(); }
+  if (d.stopen != null) { S.stOpen = !S.stOpen; if ($('.side #chatf, #chatpop #chatf')) return refreshChat(); return render(); }
   if (d.stamp != null) { S.stOpen = false; return sendChat(null, +d.stamp); }
   if (d.sw) {
+    if (d.sw.startsWith('mine:')) {
+      const key = d.sw.slice(5);
+      minesGame.setPersonal(key,!minesGame.personal[key]);
+      return render();
+    }
+    if (d.sw.startsWith('mineVs:')) return mineVersus.togglePref(d.sw.slice(7));
     if (d.sw.startsWith('o:')) { const id = S.setup.id, c = cfg(id), k = d.sw.slice(2); c.opts[k] = c.opts[k] === 'true' ? 'false' : 'true'; saveCfg(id, c); syncOnlineOptions(); return render(); }
     if (d.sw === 'c:rotate') { const c = cfg(S.setup.id); c.rotate = !c.rotate; saveCfg(S.setup.id, c); return render(); }
     if (d.sw.startsWith('off:')) { const k = d.sw.slice(4), i = S.off.indexOf(k); if (i < 0) S.off.push(k); else S.off.splice(i, 1); saveSet(); if (i < 0 && BG && PL.id === k && !PV) bgmNext(1); bgmSync(); return render(); }
@@ -1278,7 +1331,11 @@ app.addEventListener('click', async (e) => {
     const k = sg.dataset.seg, v = d.v;
     if(k==='mine-versus:level')return mineVersus.setLevel(v);
     if(k.startsWith('wolf:'))return wolfGame.setOption(k.slice(5),v);
-    if(k==='slide:size'){slideGame.size=+v;return render();}
+    if(k.startsWith('slide:'))return slideGame.setOption(k.slice(6),v);
+    if(k.startsWith('bozu:'))return poetCards.setOption(k.slice(5),v);
+    if(k.startsWith('bunyo:')||k.startsWith('pakuris:'))return fallingMatch.setOption(...k.split(':'),v);
+    if(k==='mine:mode')return minesGame.setMode(v);
+    if(k==='mine:level'){minesGame.level=v;return render();}
     if(k==='mine:tap'){minesGame.flagMode=v==='flag';return render();}
     if (k === 'filter') return switchPlayerFilter(v);
     else if (k === 'theme') { S.theme = v; saveSet(); }
@@ -1300,14 +1357,18 @@ app.addEventListener('submit', (e) => {
   }
 });
 app.addEventListener('change', e=>{
-  if(e.target.dataset.minePersonal)minesGame.setPersonal(e.target.dataset.minePersonal,e.target.checked);
   if(e.target.dataset.mineVsPref)mineVersus.pref(e.target);
   if(e.target.hasAttribute('data-mine-vs-target'))mineVersus.setTarget(e.target.value);
 });
-app.addEventListener('contextmenu', e=>{
-  const duel=e.target.closest('[data-extra-mine]');
-  if(duel){e.preventDefault();boardMatch.send('flag',{cell:+duel.dataset.extraMine});return;}
-const cell=e.target.closest('[data-mine-cell]');if(cell){e.preventDefault();minesGame.move(+cell.dataset.mineCell,true);}});
+app.addEventListener('contextmenu', e => {
+  const duel = e.target.closest('[data-extra-mine]');
+  const cell = e.target.closest('[data-mine-cell]');
+  if (!duel && !cell) return;
+  e.preventDefault();
+  const flag = !minesGame.personal.swapButtons;
+  if (duel) boardMatch.send(flag?'flag':'open',{cell:+duel.dataset.extraMine});
+  else minesGame.move(+cell.dataset.mineCell,flag);
+});
 app.addEventListener('input', (e) => {
   const t = e.target;
   if (t.id === 'nameIn') { S.set.name = t.value.trim().slice(0, 12); saveSet(); return; }
@@ -1413,17 +1474,16 @@ function syncAppHistory() {
 function goBack() {
   const snd = () => sfx.play('BACK');
   if ($('#sheetwrap')) { snd(); return closeSheet(); }
-  if (S.stOpen) { snd(); S.stOpen = false; if (S.screen === 'play' && typeof refreshChat === 'function') return refreshChat(); return render(); }
+  if (S.stOpen) { snd(); S.stOpen = false; if ($('.side #chatf, #chatpop #chatf')) return refreshChat(); return render(); }
   if (S.screen === 'play' && S.chatOpen) { snd(); return togglePlayChat(false); }
   if (S.modal) { snd(); S.modal = null; if (PV) { PV = null; bgmStop(); if (S.set.bgm) bgmPick(); } return render(); }
   if (S.screen === 'menu' && S.mobDetail) { snd(); S.mobDetail = false; return render(); }
   if (S.screen !== 'menu' && S.screen !== 'first') snd();
   if (S.screen==='extraPlay') return boardMatch.exit();
   if (S.screen==='minePlay') return minesGame.exit();
-  if (S.screen==='poetSetup'||S.screen==='mineVersusSetup') return go('menu');
+
   if (S.screen==='wolfPlay') return wolfGame.exit();
-  if (S.screen==='wolfSetup') return go('menu');
-  if (['slidePlay','slideSetup','bunyoPlay','bunyoSetup','pakurisPlay','pakurisSetup','minePlay','mineSetup'].includes(S.screen)) return go('menu');
+  if (['slidePlay','slideSetup','bunyoPlay','bunyoSetup','pakurisPlay','pakurisSetup','mineSetup','poetSetup','wolfSetup'].includes(S.screen)) return go(roomActive()?'room':'menu');
   if (S.screen === 'play') {
     if (online && view && view.mine < 0) return go('room');
     // 対局中は確かめてから終わる(まだ 1 手も指していない時は、そのまま戻る。通信対戦はいつも確かめる)
@@ -1612,7 +1672,7 @@ toastEl.addEventListener('pointercancel', () => { drag = null; toastHide(); });
     CAT.push({id:'slide',name:'スライドパズル',intro:'1枚の絵をそろえよう。',players:'1〜6人',category:'BOARD',options:[]});
     CAT.push({id:'bunyo',name:'ぶにょぶにょ',intro:'同じ色を4個つなげて消そう。',players:'1〜6人',category:'BOARD',options:[]});
     CAT.push({id:'pakuris',name:'パクリス',intro:'ブロックをそろえて消そう。',players:'1〜6人',category:'BOARD',options:[]});
-    CAT.push({id:'mine',name:'マインスイーパー（協力）',intro:'地雷を避けて安全なマスを開こう。',players:'1〜6人',category:'BOARD',options:[]});
+    CAT.push({id:'mine',name:'マインスイーパー',intro:'協力して地雷を避けるか、同じ配置でクリアを競おう。',players:'1〜6人',category:'BOARD',options:[]});
     CAT.push({id:'mineVersus',name:'マインスイーパー（対戦）',intro:'同じ配置で競い、ポイントを使って相手を妨害しよう。',players:'2〜6人',category:'BOARD',options:[]});
     CAT.push({id:'bozu',name:'坊主めくり',intro:'4つの山から札を引き、持ち札の数を競おう。',players:'1〜6人',category:'CARD',options:[]});
     CAT.push({id:'wolf',name:'人狼',intro:'話し合いと投票で、村に潜む人狼を探そう。',players:'1〜6人',category:'BOARD',options:[]});
