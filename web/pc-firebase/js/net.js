@@ -154,17 +154,62 @@ export async function createNet(core, hooks) {
   let currentRoomId = null;
   let currentRole = "none";
   let unsubs = [];
+  let actionUnsub = null;
+  let roomCallbacks = null;
   let discHandles = [];
 
+  function stopActionWatch() {
+    if (actionUnsub) {
+      try { actionUnsub(); } catch {}
+      actionUnsub = null;
+    }
+  }
+
+  function startActionWatch(roomId) {
+    stopActionWatch();
+    if (!roomId || !roomCallbacks || !roomCallbacks.onAction) return;
+    const d = getDb();
+    actionUnsub = onChildAdded(ref(d, `rooms/${roomId}/actions`), (snap) => {
+      const val = snap.val();
+      const key = snap.key;
+      remove(ref(d, `rooms/${roomId}/actions/${key}`)).catch(() => {});
+      if (val && currentRole === "host") roomCallbacks.onAction(val, key);
+    });
+  }
+
   async function clearListeners() {
+    stopActionWatch();
+    roomCallbacks = null;
     for (const u of unsubs) { try { u(); } catch {} }
     unsubs = [];
     for (const d of discHandles) { try { await d.cancel(); } catch {} }
     discHandles = [];
   }
 
+  async function syncDisconnectPolicy(playerCount = 1) {
+    for (const d of discHandles) { try { await d.cancel(); } catch {} }
+    discHandles = [];
+    if (!currentRoomId || !uid) return;
+    const d = getDb();
+    try {
+      if (currentRole === "host" && playerCount <= 1) {
+        const dcRoom = onDisconnect(ref(d, `rooms/${currentRoomId}`));
+        await dcRoom.remove();
+        discHandles.push(dcRoom);
+      } else {
+        const dcP = onDisconnect(ref(d, `rooms/${currentRoomId}/players/${uid}`));
+        const dcC = onDisconnect(ref(d, `rooms/${currentRoomId}/cursors/${uid}`));
+        await Promise.all([dcP.remove(), dcC.remove()]);
+        discHandles.push(dcP, dcC);
+      }
+    } catch (e) {
+      console.warn("[Firebase] syncDisconnectPolicy error:", e);
+    }
+  }
+
   function watchRoom(roomId, callbacks) {
     const d = getDb();
+    roomCallbacks = callbacks || {};
     const uPlayers = onValue(ref(d, `rooms/${roomId}/players`), (snap) => {
       callbacks.onPlayers && callbacks.onPlayers(snap.val() || {});
     });
@@ -176,16 +221,17 @@ export async function createNet(core, hooks) {
     });
     const uRoot = onValue(ref(d, `rooms/${roomId}/hostUid`), (snap) => {
       if (!snap.exists()) callbacks.onRoomRemoved && callbacks.onRoomRemoved();
+      else callbacks.onHostUid && callbacks.onHostUid(snap.val());
     });
     unsubs.push(uPlayers, uState, uCursors, uRoot);
-    if (callbacks.onAction) {
-      const uAct = onChildAdded(ref(d, `rooms/${roomId}/actions`), (snap) => {
-        const val = snap.val();
-        const key = snap.key;
-        remove(ref(d, `rooms/${roomId}/actions/${key}`)).catch(() => {});
-        if (val) callbacks.onAction(val, key);
+    if (uid) {
+      const uKicked = onValue(ref(d, `rooms/${roomId}/kicked/${uid}`), (snap) => {
+        if (snap.exists()) callbacks.onKicked && callbacks.onKicked(snap.val());
       });
-      unsubs.push(uAct);
+      unsubs.push(uKicked);
+    }
+    if (currentRole === "host" && callbacks.onAction) {
+      startActionWatch(roomId);
     }
   }
 
@@ -195,6 +241,7 @@ export async function createNet(core, hooks) {
     get roomId() { return currentRoomId; },
     get role() { return currentRole; },
     ensureAuth,
+    syncDisconnectPolicy,
 
     // ホストとして4桁の部屋を作成
     async createRoom(playerInfo, initialState, callbacks) {
@@ -210,11 +257,6 @@ export async function createNet(core, hooks) {
       if (!roomId) throw new Error("空いているルームコードが見つかりませんでした");
 
       const roomRef = ref(d, `rooms/${roomId}`);
-      // (a) ホストが部屋を作成した直後に onDisconnect().remove() を設定
-      const dc = onDisconnect(roomRef);
-      await dc.remove();
-      discHandles.push(dc);
-
       const nowTs = serverTimestamp();
       await set(roomRef, {
         roomId,
@@ -229,6 +271,8 @@ export async function createNet(core, hooks) {
             proto: playerInfo.proto || 2,
             rules: playerInfo.rules || "",
             avatar: Number.isInteger(playerInfo.avatar) ? playerInfo.avatar : null,
+            spectating: false,
+            autoCpu: false,
             joinedAt: nowTs,
           }
         },
@@ -243,6 +287,7 @@ export async function createNet(core, hooks) {
 
       currentRoomId = roomId;
       currentRole = "host";
+      await syncDisconnectPolicy(1);
       watchRoom(roomId, callbacks);
       return { roomId, uid: myUid, slot: 0 };
     },
@@ -269,17 +314,11 @@ export async function createNet(core, hooks) {
       if (!existing && usedSlots.size >= 6) throw new Error("部屋が満員です(最大6人)");
       let slot = existing && typeof existing.slot === "number" ? existing.slot : 1;
       if (!existing) {
-        for (let s = 1; s < 6; s++) { if (!usedSlots.has(s)) { slot = s; break; } }
+        for (let s = 0; s < 6; s++) { if (!usedSlots.has(s)) { slot = s; break; } }
       }
 
       const pRef = ref(d, `rooms/${roomId}/players/${myUid}`);
-      const cRef = ref(d, `rooms/${roomId}/cursors/${myUid}`);
-      // (a) ゲストの場合は自分のプレイヤーデータとポインターデータのみ自動削除
-      const dcP = onDisconnect(pRef);
-      const dcC = onDisconnect(cRef);
-      await Promise.all([dcP.remove(), dcC.remove()]);
-      discHandles.push(dcP, dcC);
-
+      await remove(ref(d, `rooms/${roomId}/kicked/${myUid}`)).catch(() => {});
       await set(pRef, {
         uid: myUid,
         name: playerInfo.name || "プレイヤー",
@@ -287,20 +326,69 @@ export async function createNet(core, hooks) {
         role: "guest",
         proto: playerInfo.proto || 2,
         rules: playerInfo.rules || "",
-            avatar: Number.isInteger(playerInfo.avatar) ? playerInfo.avatar : null,
+        avatar: Number.isInteger(playerInfo.avatar) ? playerInfo.avatar : null,
+        spectating: false,
+        autoCpu: false,
         joinedAt: serverTimestamp(),
       });
 
       currentRoomId = roomId;
       currentRole = "guest";
+      await syncDisconnectPolicy(Object.keys(players).length + (existing ? 0 : 1));
       watchRoom(roomId, callbacks);
-      return { roomId, uid: myUid, slot };
+      return { roomId, uid: myUid, slot, hostUid: roomVal.hostUid || null };
     },
 
     // A preference is advisory; only OnlineRoom's host starts/chooses actual play.
     async chooseGame(gameId, avatar) {
       if (!currentRoomId || !uid) return;
-      await update(ref(getDb(), `rooms/${currentRoomId}/players/${uid}`), {choice: gameId, avatar});
+      await update(ref(getDb(), `rooms/${currentRoomId}/players/${uid}`), { choice: gameId, avatar });
+    },
+
+    // 自分自身のプレイヤー属性(spectating, autoCpu など)を更新
+    async setPlayerFlags(partial) {
+      if (!currentRoomId || !uid || !partial) return;
+      await update(ref(getDb(), `rooms/${currentRoomId}/players/${uid}`), partial);
+    },
+
+    // ホスト権限を他プレイヤーに移譲(ルームコードは維持)
+    async transferHost(targetUid) {
+      if (!currentRoomId || !uid || currentRole !== "host" || !targetUid || targetUid === uid) return;
+      const roomId = currentRoomId;
+      stopActionWatch();
+      currentRole = "guest";
+      const d = getDb();
+      await update(ref(d, `rooms/${roomId}`), {
+        hostUid: targetUid,
+        [`players/${uid}/role`]: "guest",
+        [`players/${targetUid}/role`]: "host",
+      });
+      await syncDisconnectPolicy(2);
+    },
+
+    // ゲストがホストを引き継ぐ(明示的な移譲受信またはホスト切断時の自動引き継ぎ)
+    async assumeHost(playerCount = 1) {
+      if (!currentRoomId || !uid) return;
+      const roomId = currentRoomId;
+      currentRole = "host";
+      const d = getDb();
+      await update(ref(d, `rooms/${roomId}`), {
+        hostUid: uid,
+        [`players/${uid}/role`]: "host",
+      });
+      startActionWatch(roomId);
+      await syncDisconnectPolicy(playerCount);
+    },
+
+    // ホストが指定プレイヤーをキックする
+    async kickPlayer(targetUid) {
+      if (!currentRoomId || !uid || currentRole !== "host" || !targetUid || targetUid === uid) return;
+      const d = getDb();
+      await update(ref(d, `rooms/${currentRoomId}`), {
+        [`kicked/${targetUid}`]: serverTimestamp(),
+        [`players/${targetUid}`]: null,
+        [`cursors/${targetUid}`]: null,
+      });
     },
 
     // ホストが rooms/{roomId}/state を更新
@@ -326,17 +414,19 @@ export async function createNet(core, hooks) {
     },
 
     // (c) 解散・退出ボタンを押した際も不要になった部屋データを削除
-    async leaveRoom(skipRemoteDelete = false) {
+    // mode: 'skip' | 'dissolve' | 'leave' (boolean互換: true -> 'skip', false -> role依存)
+    async leaveRoom(mode = "leave") {
+      const resolved = mode === true ? "skip" : mode === false ? (currentRole === "host" ? "dissolve" : "leave") : (mode || "leave");
       const roomId = currentRoomId;
       const role = currentRole;
       const myUid = uid;
       currentRoomId = null;
       currentRole = "none";
       await clearListeners();
-      if (skipRemoteDelete || !roomId || !myUid) return;
+      if (resolved === "skip" || !roomId || !myUid) return;
       const d = getDb();
       try {
-        if (role === "host") {
+        if (resolved === "dissolve" || (resolved === "auto" && role === "host")) {
           await remove(ref(d, `rooms/${roomId}`));
         } else {
           await Promise.all([

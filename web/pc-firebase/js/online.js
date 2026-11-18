@@ -7,13 +7,19 @@ const drafts = { join: '' };
 let netApi = null;
 let fbState = {
   roomId: null,
+  hostUid: null,
   creating: false,
   joining: false,
   error: null,
   authError: null,
-  players: {},   // uid -> { uid, name, slot, role, proto, rules, joinedAt }
+  players: {},   // uid -> { uid, name, slot, role, proto, rules, spectating, autoCpu, joinedAt }
   cursors: {},   // uid -> { uid, x, y, active, slot, name, updatedAt }
   roomState: null,
+  soloIdle: false,
+  takingOver: false,
+  knownPlayerUids: new Set(),
+  kickedUids: new Set(),
+  promptedJoinUids: new Set(),
 };
 
 // ホスト側で Firebase の players から OnlineRoom への仮想リンクを管理
@@ -23,9 +29,90 @@ let peerSeq = 1;
 // ホストがOnlineRoomの送出メッセージをキャプチャして rooms/{roomId}/state に反映するためのフック
 let hostSentLog = [];
 
-const isHostRoom = () => ost && ost.role === 'host';
+const isHostRoom = () => !!(ost && ost.role === 'host');
 const ONLINE_STAMPS = 16;
 const SEAT_COLORS = ['#C8463C', '#3F78C4', '#3E9B63', '#E0AE36', '#7A5AC0', '#5A3A22'];
+
+function playerByUid(uid) {
+  return (uid && fbState.players && fbState.players[uid]) || null;
+}
+function playerBySlot(slot) {
+  if (typeof slot !== 'number' || slot < 0) return null;
+  for (const p of Object.values(fbState.players || {})) {
+    if (p && p.slot === slot) return p;
+  }
+  return null;
+}
+function playerUidBySlot(slot) {
+  const p = playerBySlot(slot);
+  return p ? p.uid : null;
+}
+function hostSlotOfRoom() {
+  const hp = playerByUid(fbState.hostUid);
+  if (hp && typeof hp.slot === 'number') return hp.slot;
+  if (fbState.roomState && typeof fbState.roomState.hostSlot === 'number') return fbState.roomState.hostSlot;
+  if (ost && ost.role === 'host') return ost.mySlot;
+  return 0;
+}
+function isSlotSpectating(slot) {
+  if (typeof slot !== 'number' || slot < 0) return false;
+  const p = playerBySlot(slot);
+  if (p) return !!p.spectating;
+  const rs = fbState.roomState;
+  return !!(rs && Array.isArray(rs.spectatorSlots) && rs.spectatorSlots.includes(slot));
+}
+function isSlotAutoCpu(slot) {
+  if (typeof slot !== 'number' || slot < 0) return false;
+  const p = playerBySlot(slot);
+  if (p) return !!p.autoCpu;
+  const rs = fbState.roomState;
+  return !!(rs && Array.isArray(rs.autoCpuSlots) && rs.autoCpuSlots.includes(slot));
+}
+function mySpectatingOn() {
+  if (!netApi || !netApi.uid) return false;
+  const p = playerByUid(netApi.uid);
+  return !!(p && p.spectating);
+}
+function myAutoCpuOn() {
+  if (!netApi || !netApi.uid) return false;
+  const p = playerByUid(netApi.uid);
+  return !!(p && p.autoCpu);
+}
+function seatToSlot(seat) {
+  if (typeof seat !== 'number' || seat < 0) return -1;
+  const slots = fbState.roomState && Array.isArray(fbState.roomState.seatSlots) ? fbState.roomState.seatSlots : hostRoundInfo.seatSlots;
+  if (Array.isArray(slots) && seat < slots.length) {
+    const sl = slots[seat];
+    return typeof sl === 'number' ? sl : -1;
+  }
+  return -1;
+}
+function isSeatAutoCpu(seat) {
+  const sl = seatToSlot(seat);
+  return sl >= 0 && isSlotAutoCpu(sl);
+}
+function isMySeatAutoCpu() {
+  return !!(online && view && view.mine >= 0 && myAutoCpuOn());
+}
+function isAutoCpuTurn() {
+  return !!(online && view && !view.outcome && view.toMove >= 0 && isSeatAutoCpu(view.toMove));
+}
+function activeMembers() {
+  const list = (ost && Array.isArray(ost.members)) ? ost.members : [];
+  return list.filter((m) => m && !isSlotSpectating(m.slot));
+}
+function spectatorSlots() {
+  const list = (ost && Array.isArray(ost.members)) ? ost.members : [];
+  return list.filter((m) => m && isSlotSpectating(m.slot)).map((m) => m.slot);
+}
+function isSoloInRoom() {
+  return !!(fbState.roomId && ost && ost.role === 'host' && (ost.members || []).length === 1);
+}
+function isSoloIdleMatch() {
+  if (!fbState.roomId || !ost || ost.phase !== 'PLAYING') return false;
+  if (ost.role === 'host') return !!fbState.soloIdle;
+  return !!(fbState.roomState && fbState.roomState.soloIdle);
+}
 
 // OnlineRoom(Kotlin) の Transport インターフェースを Firebase Realtime Database の state / actions に橋渡しするアダプタ
 function createCoreBridge() {
@@ -105,6 +192,7 @@ function flushHostStateToFirebase() {
         hostRoundInfo.undoAsk = null;
         hostRoundInfo.clockIndex = -1;
         hostRoundInfo.clockSeconds = -1;
+        fbState.soloIdle = false;
         break;
       case 'CLOCK':
         hostRoundInfo.clockIndex = +f[2];
@@ -136,6 +224,14 @@ function flushHostStateToFirebase() {
     } catch (e) {}
   }
 
+  const allPlayers = Object.values(fbState.players || {});
+  const specSlots = allPlayers.filter((p) => p && p.spectating && typeof p.slot === 'number').map((p) => p.slot);
+  const autoSlots = allPlayers.filter((p) => p && p.autoCpu && typeof p.slot === 'number').map((p) => p.slot);
+  if (st.phase === 'LOBBY') fbState.soloIdle = false;
+
+  if (st.seed && st.seed !== '0') hostRoundInfo.seed = String(st.seed);
+  if (Array.isArray(st.seatSlots) && st.seatSlots.length) hostRoundInfo.seatSlots = st.seatSlots.slice();
+
   const payload = {
     phase: st.phase || 'LOBBY',
     gameId: st.gameId || 'reversi',
@@ -148,6 +244,10 @@ function flushHostStateToFirebase() {
     ready: st.ready || [],
     members: st.members || [],
     chat: st.chat || [],
+    hostSlot: st.mySlot >= 0 ? st.mySlot : 0,
+    soloIdle: st.phase === 'PLAYING' && !!fbState.soloIdle,
+    spectatorSlots: specSlots,
+    autoCpuSlots: autoSlots,
     clock: hostRoundInfo.clockIndex >= 0 ? { round: st.round || hostRoundInfo.round, index: hostRoundInfo.clockIndex, seconds: hostRoundInfo.clockSeconds } : null,
     undoAsk: hostRoundInfo.undoAsk,
     undoResult: hostRoundInfo.undoResult,
@@ -225,7 +325,7 @@ function applyRemoteStateOnGuest(s) {
       guestApplied.phase = 'PLAYING';
       guestApplied.movesSig = '';
       guestApplied.undoAskId = -1;
-      const slots = Array.isArray(s.seatSlots) ? s.seatSlots.join(',') : '0,1';
+      const slots = Array.isArray(s.seatSlots) && s.seatSlots.length ? s.seatSlots.join(',') : '0,1';
       mainCore.netText('host', `BEGIN|${round}|${s.gameId || 'reversi'}|${encOpts}|${s.seed || '1'}|${slots}`);
     }
     const moves = Array.isArray(s.moves) ? s.moves : [];
@@ -283,45 +383,103 @@ function applyRemoteStateOnGuest(s) {
     }
   }
 
-  // チャット
+  // チャット (ゲスト側の現在のラウンド値に合わせて配送し、新規参加直後や複数局後もすべて受け取る)
   const chats = Array.isArray(s.chat) ? s.chat : [];
   for (const c of chats) {
     if (c && c.seq > guestApplied.chatSeq) {
       guestApplied.chatSeq = c.seq;
-      mainCore.netText('host', `CHAT|${round}|${c.seq}|${c.slot}|${c.kind}|${c.body}`);
+      mainCore.netText('host', `CHAT|${guestApplied.round}|${c.seq}|${c.slot}|${c.kind}|${c.body}`);
     }
   }
 }
 
+// 1人待ちプレイ中に誰かが参加したときの確認シート
+function openSoloJoinPrompt(namesList) {
+  const joinedLabel = namesList.length ? namesList.map((n) => esc(n)).join('・') : 'プレイヤー';
+  setTimeout(focusPrimary, 0);
+  openSheet(`<h2>${joinedLabel}が参加しました</h2><p>現在のゲームを終了しますか？</p><div class="btns"><button class="btn" id="soloKeep">続ける</button><button class="btn primary" id="soloEnd">終了する</button></div>`);
+  $('#soloKeep').onclick = () => {
+    closeSheet();
+    scheduleHostSync();
+  };
+  $('#soloEnd').onclick = () => {
+    fbState.soloIdle = false;
+    closeSheet();
+    mainCore.onlineBackToLobby();
+    scheduleHostSync();
+  };
+}
+
 // ホスト側で Firebase の players 一覧の変化を OnlineRoom のメンバーと同期する
+const peerNames = new Map(); // uid -> name
+const peerSlots = new Map(); // uid -> slot
 function syncHostPlayers(playersMap) {
   if (!netApi || netApi.role !== 'host' || !mainCore) return;
   const myUid = netApi.uid;
   const currentUids = new Set();
 
   const entries = Object.values(playersMap || {}).filter((p) => p && p.uid && p.uid !== myUid);
-  entries.sort((a, b) => (a.slot || 99) - (b.slot || 99));
+  entries.sort((a, b) => (a.slot ?? 99) - (b.slot ?? 99));
 
+  const newlyJoinedNames = [];
   for (const p of entries) {
     currentUids.add(p.uid);
+    peerNames.set(p.uid, p.name || 'プレイヤー');
+    if (typeof p.slot === 'number') peerSlots.set(p.uid, p.slot);
     if (!uidToPeerId.has(p.uid)) {
       const peerId = 'fb_' + (peerSeq++);
       uidToPeerId.set(p.uid, peerId);
       peerIdToUid.set(peerId, p.uid);
       mainCore.netLinked(peerId);
-      mainCore.netText(peerId, `HELLO|${p.name || 'プレイヤー'}|${p.proto || 2}|${p.rules || ''}`);
+      const slotArg = typeof p.slot === 'number' ? p.slot : '';
+      mainCore.netText(peerId, `HELLO|${p.name || 'プレイヤー'}|${p.proto || 2}|${p.rules || ''}|${slotArg}`);
+      if (!fbState.knownPlayerUids.has(p.uid)) {
+        fbState.knownPlayerUids.add(p.uid);
+        const nm = p.name || 'プレイヤー';
+        newlyJoinedNames.push(nm);
+        mainCore.onlineSystemChat(`${nm}が参加しました`);
+      }
       scheduleHostSync();
     }
   }
 
   for (const [uid, peerId] of [...uidToPeerId.entries()]) {
     if (!currentUids.has(uid)) {
+      const oldName = peerNames.get(uid) || 'プレイヤー';
+      const trackedSlot = peerSlots.has(uid) ? peerSlots.get(uid) : -1;
+      peerNames.delete(uid);
+      peerSlots.delete(uid);
       uidToPeerId.delete(uid);
       peerIdToUid.delete(peerId);
+      // 対局中に誰かが抜けた場合は席をCPUへ変換
+      const leftSlot = Array.isArray(hostRoundInfo.seatSlots) && hostRoundInfo.seatSlots.includes(trackedSlot)
+        ? trackedSlot
+        : -1;
       mainCore.netUnlinked(peerId);
+      if (leftSlot >= 0) {
+        try { mainCore.onlineConvertSeatToCpu(leftSlot); } catch (e) {}
+      }
+      if (!fbState.kickedUids.has(uid)) {
+        mainCore.onlineSystemChat(`${oldName}が退出しました`);
+      }
+      fbState.kickedUids.delete(uid);
+      fbState.knownPlayerUids.delete(uid);
       scheduleHostSync();
     }
   }
+
+  netApi.syncDisconnectPolicy(entries.length + 1).catch(() => {});
+
+  if (newlyJoinedNames.length && fbState.soloIdle && ost && ost.phase === 'PLAYING') {
+    const fresh = newlyJoinedNames.filter((_, idx) => {
+      const e = entries.find((x) => (x.name || 'プレイヤー') === newlyJoinedNames[idx]);
+      if (!e || fbState.promptedJoinUids.has(e.uid)) return false;
+      fbState.promptedJoinUids.add(e.uid);
+      return true;
+    });
+    if (fresh.length) openSoloJoinPrompt(fresh);
+  }
+  scheduleHostSync();
 }
 
 function handleGuestActionOnHost(act) {
@@ -360,6 +518,292 @@ const cpuLvForRoom = () => lvIndex(S.set.cpuLv);
 // 起動時に Firebase 匿名ログインを開始しておく
 setTimeout(() => { ensureNet().catch(() => {}); }, 0);
 
+// ---------------------------------------------------------------- ホスト移譲・引き継ぎ・キック・フラグ操作
+function nextHostCandidateUid(excludeUid) {
+  const candidates = Object.values(fbState.players || {})
+    .filter((p) => p && p.uid && p.uid !== excludeUid)
+    .sort((a, b) => ((+a.joinedAt || 0) - (+b.joinedAt || 0)) || ((a.slot ?? 99) - (b.slot ?? 99)) || String(a.uid).localeCompare(String(b.uid)));
+  return candidates[0] ? candidates[0].uid : null;
+}
+
+function maybeElectNewHost() {
+  if (!netApi || netApi.role === 'host' || !fbState.roomId || fbState.takingOver) return;
+  if (!fbState.hostUid) return;
+  const players = fbState.players || {};
+  if (!players[netApi.uid]) return;
+  if (players[fbState.hostUid]) return;
+  const nextUid = nextHostCandidateUid(null);
+  if (nextUid && nextUid === netApi.uid) {
+    promoteToHostFromState(true);
+  }
+}
+
+async function promoteToHostFromState(isTakeover = false) {
+  if (!netApi || !fbState.roomId || !mainCore || fbState.takingOver) return;
+  if (netApi.role === 'host') return;
+  fbState.takingOver = true;
+  try {
+    const players = Object.assign({}, fbState.players || {});
+    const myUid = netApi.uid;
+    const myPlayer = players[myUid];
+    if (!myPlayer) return;
+    const mySlot = typeof myPlayer.slot === 'number' ? myPlayer.slot : (ost ? ost.mySlot : 0);
+    const rs = fbState.roomState || {};
+    const prevHostSlot = typeof rs.hostSlot === 'number' ? rs.hostSlot : 0;
+    const prevHostMember = Array.isArray(rs.members) ? rs.members.find((m) => m && m.slot === prevHostSlot) : null;
+    const oldHostName = (prevHostMember && prevHostMember.name) || '';
+
+    uidToPeerId.clear();
+    peerIdToUid.clear();
+    peerNames.clear();
+  peerSlots.clear();
+    hostSentLog = [];
+    fbState.knownPlayerUids = new Set(Object.keys(players));
+
+    const sortedPlayers = Object.values(players).filter((p) => p && p.uid).sort((a, b) => (a.slot ?? 99) - (b.slot ?? 99));
+    const membersSnap = [];
+    const presentSlots = new Set();
+    for (const p of sortedPlayers) {
+      if (typeof p.slot !== 'number') continue;
+      presentSlots.add(p.slot);
+      let peerId = null;
+      if (p.uid !== myUid) {
+        peerId = 'fb_' + (peerSeq++);
+        uidToPeerId.set(p.uid, peerId);
+        peerIdToUid.set(peerId, p.uid);
+        peerNames.set(p.uid, p.name || 'プレイヤー');
+      }
+      membersSnap.push({ slot: p.slot, name: p.name || 'プレイヤー', peerId });
+    }
+
+    const wasPlaying = S.screen === 'play' && online;
+    const rawSeatSlots = Array.isArray(rs.seatSlots) ? rs.seatSlots : [];
+    const fixedSeatSlots = rawSeatSlots.map((sl) => (sl >= 0 && !presentSlots.has(sl) ? -1 : sl));
+    const snapshot = {
+      name: meName(),
+      members: membersSnap,
+      gameId: rs.gameId || (ost && ost.gameId) || 'reversi',
+      options: rs.options || (ost && ost.options) || '',
+      round: +(rs.round || (ost && ost.round) || 0),
+      phase: rs.phase || (ost && ost.phase) || 'LOBBY',
+      seed: String(rs.seed || '1'),
+      seatSlots: fixedSeatSlots,
+      names: Array.isArray(rs.names) ? rs.names : [],
+      moves: Array.isArray(rs.moves) ? rs.moves : [],
+      ready: Array.isArray(rs.ready) ? rs.ready : [],
+      chat: Array.isArray(rs.chat) ? rs.chat : (ost && Array.isArray(ost.chat) ? ost.chat : []),
+    };
+
+    await netApi.assumeHost(sortedPlayers.length || 1);
+    fbState.hostUid = myUid;
+    hostRoundInfo = {
+      round: snapshot.round,
+      gameId: snapshot.gameId,
+      options: snapshot.options,
+      seed: snapshot.seed,
+      seatSlots: fixedSeatSlots,
+      names: snapshot.names,
+      clockIndex: rs.clock ? +rs.clock.index : -1,
+      clockSeconds: rs.clock ? +rs.clock.seconds : -1,
+      undoAsk: rs.undoAsk || null,
+      undoResult: rs.undoResult || null,
+      undoResultSeq: (rs.undoResult && +rs.undoResult.seq) || 0,
+    };
+    fbState.soloIdle = false;
+
+    chatSeen = snapshot.chat.length;
+    const resJson = mainCore.onlineAssumeHost(mySlot, JSON.stringify(snapshot));
+    const res = JSON.parse(resJson || '{}');
+    ost = JSON.parse(mainCore.onlineState());
+    lastBeginSeq = ost.beginSeq;
+
+    if (wasPlaying && ost.phase === 'PLAYING' && res.matchHandle >= 0) {
+      h = res.matchHandle;
+      prevView = null;
+      drawnView = null;
+      const v0 = JSON.parse(mainCore.viewJson(h, 0));
+      view = v0;
+      mySeat = v0.mine >= 0 ? v0.mine : 0;
+      refresh();
+    }
+
+    if (isTakeover) {
+      const msg = oldHostName ? `${oldHostName}が退出したため、${meName()}がホストを引き継ぎました` : `${meName()}がホストを引き継ぎました`;
+      mainCore.onlineSystemChat(msg);
+    } else {
+      mainCore.onlineSystemChat(`${meName()}がホストになりました`);
+    }
+    flushHostStateToFirebase();
+    toast({ w: 'お知らせ', t: 'あなたがホストになりました' });
+    onlineChanged();
+  } catch (e) {
+    console.warn('[Firebase] promoteToHostFromState error:', e);
+  } finally {
+    fbState.takingOver = false;
+  }
+}
+
+function demoteHostToGuest() {
+  if (!netApi || !fbState.roomId || !mainCore) return;
+  if (netApi.role === 'guest' && ost && ost.role === 'guest') return;
+  const wasPlaying = S.screen === 'play' && online;
+  const prevChatLen = (ost && Array.isArray(ost.chat) ? ost.chat.length : 0);
+  hostSyncScheduled = false;
+  hostSentLog = [];
+  uidToPeerId.clear();
+  peerIdToUid.clear();
+  peerNames.clear();
+  peerSlots.clear();
+  fbState.soloIdle = false;
+  mainCore.onlineLeave();
+  startGuestOnlineRoom(meName());
+  if (fbState.roomState) {
+    chatSeen = (fbState.roomState.chat || []).length || prevChatLen;
+    applyRemoteStateOnGuest(fbState.roomState);
+  }
+  ost = JSON.parse(mainCore.onlineState());
+  if (wasPlaying && ost.phase === 'PLAYING' && ost.match >= 0) {
+    lastBeginSeq = ost.beginSeq;
+    h = ost.match;
+    prevView = null;
+    drawnView = null;
+    const v0 = JSON.parse(mainCore.viewJson(h, 0));
+    view = v0;
+    mySeat = v0.mine >= 0 ? v0.mine : 0;
+    refresh();
+  }
+  toast({ w: 'お知らせ', t: 'ホストを変更しました' });
+  onlineChanged();
+}
+
+async function transferHostToPlayer(targetUid) {
+  if (!isHostRoom() || !netApi || !targetUid || targetUid === netApi.uid) return;
+  const target = playerByUid(targetUid);
+  if (!target) return;
+  flushHostStateToFirebase();
+  await netApi.transferHost(targetUid);
+  fbState.hostUid = targetUid;
+  demoteHostToGuest();
+}
+
+async function handoffHostAndLeave() {
+  if (!netApi || !fbState.roomId) { leaveOnline('dissolve'); return; }
+  if (isHostRoom()) {
+    const nextUid = nextHostCandidateUid(netApi.uid);
+    if (nextUid) {
+      if (ost && ost.phase === 'PLAYING' && mainCore) {
+        try { mainCore.onlineConvertSeatToCpu(ost.mySlot); } catch (e) {}
+      }
+      flushHostStateToFirebase();
+      await netApi.transferHost(nextUid);
+      fbState.hostUid = nextUid;
+      leaveOnline('leave');
+      return;
+    }
+  }
+  leaveOnline(isHostRoom() ? 'dissolve' : 'leave');
+}
+
+async function kickPlayerFromRoom(targetUid) {
+  if (!isHostRoom() || !netApi || !targetUid || targetUid === netApi.uid) return;
+  const target = playerByUid(targetUid);
+  if (!target) return;
+  const targetName = target.name || 'プレイヤー';
+  const targetSlot = typeof target.slot === 'number' ? target.slot : -1;
+  fbState.kickedUids.add(targetUid);
+  if (ost && ost.phase === 'PLAYING' && targetSlot >= 0) {
+    try { mainCore.onlineConvertSeatToCpu(targetSlot); } catch (e) {}
+  }
+  const peerId = uidToPeerId.get(targetUid);
+  if (peerId) {
+    uidToPeerId.delete(targetUid);
+    peerIdToUid.delete(peerId);
+    peerNames.delete(targetUid);
+    mainCore.netUnlinked(peerId);
+  }
+  await netApi.kickPlayer(targetUid);
+  mainCore.onlineSystemChat(`${targetName}がキックされました`);
+  scheduleHostSync();
+  toast({ w: 'お知らせ', t: `${targetName}をキックしました` });
+}
+
+function toggleSpectating() {
+  if (!netApi || !fbState.roomId || !netApi.uid) return;
+  if (ost && ost.phase === 'PLAYING') return toast({ w: 'お知らせ', t: '対局中は観戦モードを切り替えられません' });
+  const p = fbState.players[netApi.uid];
+  const next = !(p && p.spectating);
+  if (p) p.spectating = next;
+  netApi.setPlayerFlags({ spectating: next }).catch(() => {});
+  if (isHostRoom()) scheduleHostSync();
+  toast({ w: 'お知らせ', t: next ? '観戦モードをONにしました' : '観戦モードをOFFにしました' });
+  render();
+}
+
+function toggleAutoCpu() {
+  if (!netApi || !fbState.roomId || !netApi.uid || !online || !view || view.outcome || view.mine < 0) return;
+  const p = fbState.players[netApi.uid];
+  const next = !(p && p.autoCpu);
+  if (p) p.autoCpu = next;
+  netApi.setPlayerFlags({ autoCpu: next }).catch(() => {});
+  if (isHostRoom()) {
+    scheduleHostSync();
+    if (next && !busy && view.toMove === mySeat) refresh();
+  }
+  toast({ w: 'お知らせ', t: next ? 'CPU(中級)に操作を任せます' : 'CPU操作を解除し、自分で操作します' });
+  drawPlay(true);
+}
+
+function openPlayerActionSheet(targetUid) {
+  if (!isHostRoom() || !netApi || !targetUid || targetUid === netApi.uid) return;
+  const p = playerByUid(targetUid);
+  if (!p) return;
+  const tags = [p.spectating ? '観戦モード中' : '', p.autoCpu ? 'CPUが操作中…' : ''].filter(Boolean).join('・');
+  setTimeout(focusPrimary, 0);
+  openSheet(`<h2>${esc(p.name || 'プレイヤー')}</h2>
+    <p>${tags ? esc(tags) + '<br>' : ''}このプレイヤーへの操作を選んでください。</p>
+    <div class="btns" style="flex-wrap:wrap">
+      <button class="btn" data-sheetback>キャンセル</button>
+      <button class="btn gold" id="pmHost">ホストを変更</button>
+      <button class="btn danger" id="pmKick">キック</button>
+    </div>`);
+  $('#pmHost').onclick = async () => { closeSheet(); await transferHostToPlayer(targetUid); };
+  $('#pmKick').onclick = async () => { closeSheet(); await kickPlayerFromRoom(targetUid); };
+}
+
+function openMemberSheet() {
+  if (!roomActive()) return;
+  const hostSlot = hostSlotOfRoom();
+  const myUid = netApi ? netApi.uid : null;
+  const rows = (ost.members || []).map((m, i) => {
+    const uid = playerUidBySlot(m.slot);
+    const p = uid ? playerByUid(uid) : null;
+    const isMe = m.slot === ost.mySlot;
+    const isH = m.slot === hostSlot;
+    const spec = isSlotSpectating(m.slot);
+    const cpu = isSlotAutoCpu(m.slot);
+    const badges = [
+      isH ? '<span class="badge host">ホスト</span>' : '',
+      spec ? '<span class="badge spec">観戦</span>' : '',
+      cpu ? '<span class="badge cpu">CPUが操作中…</span>' : '',
+    ].filter(Boolean).join('');
+    const canManage = isHostRoom() && uid && uid !== myUid;
+    return `<div class="seat" style="justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        ${isMe ? meAv() : `<span class="avatar" style="background:${SEAT_COLORS[i % 6]};color:#fff">${esc(m.name[0])}</span>`}
+        <span class="nm">${esc(m.name)}${isMe ? '(あなた)' : ''}<small>${badges || '参加者・接続中'}</small></span>
+      </div>
+      ${canManage ? `<div style="display:flex;gap:6px"><button class="btn" data-pm-host="${esc(uid)}">ホストを変更</button><button class="btn danger" data-pm-kick="${esc(uid)}">キック</button></div>` : ''}
+    </div>`;
+  }).join('');
+  openSheet(`<h2>参加メンバー ${(ost.members || []).length}/6</h2><div class="seats" style="margin:8px 0">${rows}</div><div class="btns"><button class="btn" data-sheetback>閉じる</button></div>`);
+  document.querySelectorAll('[data-pm-host]').forEach((b) => {
+    b.onclick = async () => { const u = b.dataset.pmHost; closeSheet(); await transferHostToPlayer(u); };
+  });
+  document.querySelectorAll('[data-pm-kick]').forEach((b) => {
+    b.onclick = async () => { const u = b.dataset.pmKick; closeSheet(); await kickPlayerFromRoom(u); };
+  });
+}
+
 // スタンプ: 0〜15 番はスタンプとして送る。16 番からは「《名前》」の文字で送り、絵で出す
 function stampIdx(m) {
   if (m.kind === 1) { const i = +m.body; return i >= 0 && i < STAMPS.length ? i : -1; }
@@ -368,7 +812,11 @@ function stampIdx(m) {
 }
 function chatBox() {
   const list = online || (ost && ost.role !== 'none') ? (ost ? ost.chat : []) : [];
-  return `<div class="chat"><div class="log" id="log">${list.length ? list.map((m) => { const mine = ost && m.slot === ost.mySlot; return `<div class="msg ${mine ? 'mine' : ''} ${stampIdx(m) >= 0 ? 'st' : ''}">${mine ? '' : `<small>${esc(m.name)}</small>`}${stampIdx(m) >= 0 ? stamp(stampIdx(m)) : esc(m.body)}</div>`; }).join('') : '<div class="dimtxt">チャットはまだありません</div>'}</div>
+  return `<div class="chat"><div class="log" id="log">${list.length ? list.map((m) => {
+    if (m.kind === 2) return `<div class="msg sys">${esc(m.body)}</div>`;
+    const mine = ost && m.slot === ost.mySlot;
+    return `<div class="msg ${mine ? 'mine' : ''} ${stampIdx(m) >= 0 ? 'st' : ''}">${mine ? '' : `<small>${esc(m.name)}</small>`}${stampIdx(m) >= 0 ? stamp(stampIdx(m)) : esc(m.body)}</div>`;
+  }).join('') : '<div class="dimtxt">チャットはまだありません</div>'}</div>
    ${S.stOpen ? `<div class="stpanel">${STAMPS.map((s, i) => `<button type="button" data-stamp="${i}" title="${s[0]}" aria-label="${s[0]}">${stamp(i)}</button>`).join('')}</div>` : ''}
    <form id="chatf"><button type="button" class="stbtn" data-stopen aria-expanded="${S.stOpen}" aria-label="スタンプ" ${ost && ost.chatOk ? '' : 'disabled'}>${ic('smile')}</button><input id="chatin" placeholder="メッセージ" maxlength="40" autocomplete="off" aria-label="メッセージ" ${ost && ost.chatOk ? '' : 'disabled'}><button ${ost && ost.chatOk ? '' : 'disabled'}>送る</button></form></div>`;
 }
@@ -385,8 +833,11 @@ function sendChat(t, st) {
 // ---------------------------------------------------------------- 部屋の画面 (4桁のルームコードマッチング)
 function room() {
   const st = ost || { role: 'none', members: [] };
-  const host = st.role === 'host', guest = st.role === 'guest', none = st.role === 'none';
+  const host = st.role === 'host', none = st.role === 'none';
   const g = st.gameId && gInfo(st.gameId);
+  const hostSlot = hostSlotOfRoom();
+  const myUid = netApi ? netApi.uid : null;
+  const mySpec = mySpectatingOn();
   let left = '';
 
   if (fbState.authError) {
@@ -410,14 +861,31 @@ function room() {
 
   // 3. 参加者一覧と退出・解散
   if (!none) {
-    left += `<div class="panel" style="padding-bottom:10px"><h3>参加メンバー ${st.members.length}/6</h3><div class="seats" style="padding-top:6px">${st.members.map((m, i) => `<div class="seat">${m.slot === st.mySlot ? meAv() : `<span class="avatar" style="background:${SEAT_COLORS[i % 6]};color:#fff">${esc(m.name[0])}</span>`}<span class="nm">${esc(m.name)}${m.slot === st.mySlot ? '(あなた)' : ''}<small>${m.slot === 0 ? 'ホスト・接続中' : '参加者・接続中'}</small></span></div>`).join('')}</div>
+    const memberRows = st.members.map((m, i) => {
+      const uid = playerUidBySlot(m.slot);
+      const isMe = m.slot === st.mySlot;
+      const isH = m.slot === hostSlot;
+      const spec = isSlotSpectating(m.slot);
+      const cpu = isSlotAutoCpu(m.slot);
+      const canClick = host && uid && uid !== myUid;
+      const tags = [isH ? 'ホスト' : '参加者', '接続中', spec ? '観戦モード' : '', cpu ? 'CPUが操作中…' : ''].filter(Boolean).join('・');
+      const inner = `${isMe ? meAv() : `<span class="avatar" style="background:${SEAT_COLORS[i % 6]};color:#fff">${esc(m.name[0])}</span>`}<span class="nm">${esc(m.name)}${isMe ? '(あなた)' : ''}<small>${esc(tags)}</small></span>`;
+      return canClick
+        ? `<button type="button" class="seat seat-btn" data-pmenu="${esc(uid)}" title="クリックしてホスト変更・キック">${inner}<span class="seat-act">管理 ▾</span></button>`
+        : `<div class="seat">${inner}</div>`;
+    }).join('');
+    left += `<div class="panel" style="padding-bottom:10px"><h3>参加メンバー ${st.members.length}/6</h3>
+    <div class="seats" style="padding-top:6px">${memberRows}</div>
     ${st.transportError ? `<p class="err">${esc(st.transportError)}</p>` : ''}
-    <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn" data-leave style="height:38px">${host ? '部屋を解散する' : '部屋を出る'}</button></div></div>`;
+    <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap">
+      ${st.phase === 'LOBBY' ? `<button class="btn ${mySpec ? 'gold' : ''}" data-toggle-spec style="height:38px">${mySpec ? '観戦モード: ON' : '観戦モード'}</button>` : '<span></span>'}
+      <button class="btn" data-leave style="height:38px">${host ? (st.members.length > 1 ? '部屋を出る / 解散' : '部屋を解散する') : '部屋を出る'}</button>
+    </div></div>`;
     left += `<div style="height:260px;display:flex">${chatBox().replace('class="chat"', 'class="chat" style="flex:1"')}</div>`;
   }
 
   // 4. 遊ぶゲームの選択・開始 ＋ 遊び方（部屋を建てた後も消さずに常時表示）
-  const howtoPanel = `<div class="panel"><h3>遊び方</h3><div class="howto"><p><b>部屋を作る人</b>: 「部屋を作る」を押して、発行された4桁のルームコードを相手に伝えます。</p><p><b>参加する人</b>: 4桁のルームコードを入力して「参加する」を押します。</p><p class="dimtxt">Webブラウザ版・Androidアプリ版・Windows版のどれからでも同じルームコードで対戦できます。</p></div></div>`;
+  const howtoPanel = `<div class="panel"><h3>遊び方</h3><div class="howto"><p><b>部屋を作る人</b>: 「部屋を作る」を押して、発行された4桁のルームコードを相手に伝えます。他の人を待っている間も「ゲーム」タブから1人で遊べます。</p><p><b>参加する人</b>: 4桁のルームコードを入力して「参加する」を押します。</p><p><b>ホスト機能・観戦</b>: ホストは参加メンバーをクリックして「ホストを変更」「キック」ができます。次の対局を見学したい時は「観戦モード」をONにしてください。</p><p class="dimtxt">Webブラウザ版・Androidアプリ版・Windows版のどれからでも同じルームコードで対戦できます。</p></div></div>`;
   let right = '';
   if (!none && st.phase === 'PLAYING') {
     const inMatch = st.match >= 0;
@@ -449,20 +917,28 @@ async function createFirebaseRoom() {
   if (fbState.creating || fbState.joining) return;
   fbState.creating = true;
   fbState.error = null;
+  fbState.soloIdle = false;
+  fbState.takingOver = false;
+  fbState.knownPlayerUids = new Set();
+  fbState.kickedUids = new Set();
+  fbState.promptedJoinUids = new Set();
   render();
   try {
     await ensureNet();
     uidToPeerId.clear();
     peerIdToUid.clear();
+    peerNames.clear();
+  peerSlots.clear();
     hostSentLog = [];
     hostRoundInfo = { round: 0, gameId: 'reversi', options: '', seed: '0', seatSlots: [], names: [], clockIndex: -1, clockSeconds: -1, undoAsk: null, undoResult: null, undoResultSeq: 0 };
     mainCore.onlineSetLevel(cpuLvForRoom());
     mainCore.onlineHost(meName());
     lastBeginSeq = 0;
+    chatSeen = 0;
 
     const res = await netApi.createRoom(
       { name: meName(), proto: 2, avatar: Number.isInteger(S.set.av) ? S.set.av : null },
-      { phase: 'LOBBY', gameId: 'reversi', options: '', round: 0 },
+      { phase: 'LOBBY', gameId: 'reversi', options: '', round: 0, hostSlot: 0, soloIdle: false, spectatorSlots: [], autoCpuSlots: [] },
       {
         onPlayers(players) {
           fbState.players = players || {};
@@ -479,9 +955,24 @@ async function createFirebaseRoom() {
         onAction(act) {
           handleGuestActionOnHost(act);
         },
+        onHostUid(uid) {
+          fbState.hostUid = uid || null;
+          if (!uid) return;
+          if (uid === netApi.uid && netApi.role !== 'host') promoteToHostFromState(false);
+          else if (uid !== netApi.uid && netApi.role === 'host') demoteHostToGuest();
+          onlineChanged();
+        },
+        onKicked() {
+          if (fbState.roomId) {
+            leaveOnline('skip');
+            S.screen = 'room';
+            render();
+            toast({ w: 'お知らせ', t: 'ホストによってルームからキックされました' });
+          }
+        },
         onRoomRemoved() {
           if (fbState.roomId) {
-            leaveOnline(true);
+            leaveOnline('skip');
             S.screen = 'room';
             render();
           }
@@ -489,6 +980,8 @@ async function createFirebaseRoom() {
       }
     );
     fbState.roomId = res.roomId;
+    fbState.hostUid = res.uid;
+    fbState.knownPlayerUids = new Set([res.uid]);
     fbState.creating = false;
     scheduleHostSync();
     onlineChanged();
@@ -511,35 +1004,63 @@ async function joinFirebaseRoom(codeInput) {
   if (fbState.creating || fbState.joining) return;
   fbState.joining = true;
   fbState.error = null;
+  fbState.soloIdle = false;
+  fbState.takingOver = false;
+  fbState.knownPlayerUids = new Set();
+  fbState.kickedUids = new Set();
+  fbState.promptedJoinUids = new Set();
   render();
   try {
     await ensureNet();
     resetGuestApplied();
     mainCore.onlineSetLevel(cpuLvForRoom());
     lastBeginSeq = 0;
+    chatSeen = 0;
 
-    // OnlineRoom をゲストとして起動するためのダミー開始
     const res = await netApi.joinRoom(
       code,
       { name: meName(), proto: 2, avatar: Number.isInteger(S.set.av) ? S.set.av : null },
       {
         onPlayers(players) {
           fbState.players = players || {};
-          if (fbState.roomState) applyRemoteStateOnGuest(fbState.roomState);
+          if (netApi && netApi.role === 'host') {
+            syncHostPlayers(fbState.players);
+          } else {
+            if (fbState.roomState) applyRemoteStateOnGuest(fbState.roomState);
+            maybeElectNewHost();
+          }
           onlineChanged();
         },
         onState(s) {
           fbState.roomState = s;
-          applyRemoteStateOnGuest(s);
+          if (netApi && netApi.role === 'guest') applyRemoteStateOnGuest(s);
           onlineChanged();
         },
         onCursors(cursors) {
           fbState.cursors = cursors || {};
           updateRemoteTargets(fbState.cursors);
         },
+        onAction(act) {
+          handleGuestActionOnHost(act);
+        },
+        onHostUid(uid) {
+          fbState.hostUid = uid || null;
+          if (!uid) return;
+          if (uid === netApi.uid && netApi.role !== 'host') promoteToHostFromState(false);
+          else if (uid !== netApi.uid && netApi.role === 'host') demoteHostToGuest();
+          onlineChanged();
+        },
+        onKicked() {
+          if (fbState.roomId) {
+            leaveOnline('skip');
+            S.screen = 'room';
+            render();
+            toast({ w: 'お知らせ', t: 'ホストによってルームからキックされました' });
+          }
+        },
         onRoomRemoved() {
           if (fbState.roomId) {
-            leaveOnline(true);
+            leaveOnline('skip');
             S.screen = 'room';
             render();
             toast({ w: 'お知らせ', t: 'ホストが部屋を解散しました' });
@@ -549,6 +1070,7 @@ async function joinFirebaseRoom(codeInput) {
     );
 
     fbState.roomId = res.roomId;
+    fbState.hostUid = res.hostUid || null;
     fbState.joining = false;
     S.screen = 'menu';
     startGuestOnlineRoom(meName());
@@ -578,6 +1100,10 @@ function startGuestOnlineRoom(name) {
 function onlineClick(d, bElem) {
   if (d.mkroom != null || d.mkcode != null) { createFirebaseRoom(); return true; }
   if (d.join != null) { const v = ($('#joinIn') || {}).value || drafts.join || ''; joinFirebaseRoom(v); return true; }
+  if (d.pmenu) { openPlayerActionSheet(d.pmenu); return true; }
+  if (d.oomembers != null) { openMemberSheet(); return true; }
+  if (d.toggleSpec != null) { toggleSpectating(); return true; }
+  if (d.autocpu != null) { toggleAutoCpu(); return true; }
   if (d.copy) {
     const b = bElem || document.querySelector(`[data-copy="${CSS.escape(d.copy)}"]`);
     navigator.clipboard.writeText(d.copy).then(() => { toast({ w: 'お知らせ', t: 'コピーしました' }); if (b) { const old = b.innerHTML; b.classList.add('done'); b.innerHTML = '✓ コピーしました'; setTimeout(() => { if (b.isConnected) { b.classList.remove('done'); b.innerHTML = old; } }, 2000); } }, () => toast({ w: 'お知らせ', t: 'コピーできませんでした。選んでコピーしてください' }));
@@ -585,9 +1111,16 @@ function onlineClick(d, bElem) {
   }
   if (d.leave != null) {
     const host = isHostRoom();
+    const hasOthers = ost && Array.isArray(ost.members) && ost.members.length > 1;
     setTimeout(focusPrimary, 0);
-    openSheet(`<h2>${host ? '部屋を解散しますか' : '部屋を出ますか'}</h2><p>${host ? '参加している全員が部屋から出ます(部屋のデータを削除します)。' : '部屋から退出します。'}</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn danger" id="lvYes">${host ? '解散する' : '出る'}</button></div>`);
-    $('#lvYes').onclick = () => { closeSheet(); sfx.play('BACK'); leaveOnline(); render(); };
+    if (host && hasOthers) {
+      openSheet(`<h2>部屋を出ますか</h2><p>他のプレイヤーにホストを引き継いで自分だけ抜けるか、全員で部屋を解散するか選べます。</p><div class="btns" style="flex-wrap:wrap"><button class="btn" data-sheetback>キャンセル</button><button class="btn danger" id="lvDissolve">部屋を解散する</button><button class="btn gold" id="lvHandoff">ホストを引き継いで出る</button></div>`);
+      $('#lvDissolve').onclick = () => { closeSheet(); sfx.play('BACK'); leaveOnline('dissolve'); render(); };
+      $('#lvHandoff').onclick = async () => { closeSheet(); sfx.play('BACK'); await handoffHostAndLeave(); render(); };
+    } else {
+      openSheet(`<h2>${host ? '部屋を解散しますか' : '部屋を出ますか'}</h2><p>${host ? 'ルームを閉じ、チャット履歴を削除します。' : '部屋から退出します。'}</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn danger" id="lvYes">${host ? '解散する' : '出る'}</button></div>`);
+      $('#lvYes').onclick = () => { closeSheet(); sfx.play('BACK'); leaveOnline(host ? 'dissolve' : 'leave'); render(); };
+    }
     return true;
   }
   if (d.oreturn != null) { if (ost && ost.match >= 0 && ost.phase === 'PLAYING') { lastBeginSeq = ost.beginSeq; startOnlinePlay(ost.match); } return true; }
@@ -598,24 +1131,41 @@ function onlineClick(d, bElem) {
   }
   if (d.roomnext != null) { const id = S.roomPre || S.roomDecided || ost.gameId; S.roomDecided = id; chooseOnline(id); return true; }
   if (d.oagain != null) {
+    if (isHostRoom() && isSoloInRoom()) {
+      onlineStartSolo();
+      return true;
+    }
+    // 観戦者が「次の対局に参加する」を押したら観戦モードを自動解除する
+    if (mySpectatingOn() && netApi && netApi.uid) {
+      if (fbState.players[netApi.uid]) fbState.players[netApi.uid].spectating = false;
+      netApi.setPlayerFlags({ spectating: false }).catch(() => {});
+    }
     mainCore.onlineAgain();
     if (isHostRoom()) {
       scheduleHostSync();
-      const names = () => ost.members.filter((m) => m.slot === ost.mySlot || ost.ready.includes(m.slot)).map((m) => esc(m.name)).join('・');
+      const exSlots = new Set(spectatorSlots());
+      const names = () => ost.members.filter((m) => !exSlots.has(m.slot) && (m.slot === ost.mySlot || ost.ready.includes(m.slot))).map((m) => esc(m.name)).join('・');
       openSheet(`<h2>もう一度</h2><p id="readyNames">準備ができた人: ${names()}</p><div class="btns"><button class="btn" data-sheetback>待つ</button><button class="btn gold" id="rgo">この人たちで始める</button></div>`);
-      $('#rgo').onclick = () => { closeSheet(); mainCore.onlineStartReady(String(Math.floor(Math.random() * 2 ** 40) + 1)); scheduleHostSync(); };
+      $('#rgo').onclick = () => {
+        closeSheet();
+        fbState.soloIdle = false;
+        const exCsv = spectatorSlots().join(',');
+        mainCore.onlineStartReady(String(Math.floor(Math.random() * 2 ** 40) + 1), exCsv);
+        scheduleHostSync();
+      };
     }
     return true;
   }
-  if (d.olobby != null) { mainCore.onlineBackToLobby(); if (isHostRoom()) scheduleHostSync(); return true; }
+  if (d.olobby != null) { fbState.soloIdle = false; mainCore.onlineBackToLobby(); if (isHostRoom()) scheduleHostSync(); return true; }
   return false;
 }
 function chooseOnline(id) {
-  if (!id || !isHostRoom() || ost.members.length < 2) return;
+  if (!id || !isHostRoom()) return;
+  if (!isSoloInRoom() && activeMembers().length === 0) return toast({ w: 'お知らせ', t: '全員が観戦モードのため開始できません' });
   S.roomPre = null;
   if (!ost || ost.gameId !== id) { mainCore.onlineChoose(id, ''); scheduleHostSync(); }
   try {
-    const g = gInfo(id), ps = g && g.options.find((o) => o.key === 'players'), n = ost ? ost.members.length : 0;
+    const g = gInfo(id), ps = g && g.options.find((o) => o.key === 'players'), n = isSoloInRoom() ? 0 : activeMembers().length;
     if (ps && n) { const v = ps.values.find(([x]) => +x === n) || ps.values.find(([x]) => +x >= n); if (v) { const c = cfg(id); c.opts.players = v[0]; saveCfg(id, c); } }
   } catch (e) {}
   S.setup = { id, online: true };
@@ -625,46 +1175,91 @@ function chooseOnline(id) {
 function syncOnlineOptions() {
   if (!S.setup.online || !isHostRoom()) return;
   const g = gInfo(S.setup.id), c = cfg(g.id);
-  mainCore.onlineChoose(g.id, engineOpts(g, c, true));
+  const opts = isSoloInRoom() ? soloEngineOpts(g, c) : engineOpts(g, c, true);
+  mainCore.onlineChoose(g.id, opts);
   scheduleHostSync();
 }
+function soloEngineOpts(g, c) {
+  const base = engineOpts(g, c, false).split(';').filter((x) => x && !x.startsWith('onlineUndo=') && !x.startsWith('moveSeconds='));
+  base.push('onlineUndo=-1', `moveSeconds=${+c.limit || 0}`);
+  return base.join(';');
+}
+async function onlineStartSolo() {
+  if (!isHostRoom() || !S.setup.id) return;
+  const g = gInfo(S.setup.id), c = cfg(g.id);
+  if (!g) return;
+  const opts = soloEngineOpts(g, c);
+  mainCore.onlineSetLevel(c.level);
+  mainCore.onlineChoose(g.id, opts);
+  const total = await callW('seatCount', g.id, opts);
+  const mySlot = ost ? ost.mySlot : 0;
+  let seatOrder = [mySlot];
+  if (total === 2) {
+    const s = c.seat === -1 ? (Math.random() < 0.5 ? 0 : 1) : (c.seat === 1 ? 1 : 0);
+    seatOrder = s === 0 ? [mySlot, -1] : [-1, mySlot];
+  } else if (total > 2) {
+    seatOrder = [mySlot];
+    while (seatOrder.length < total) seatOrder.push(-1);
+  }
+  fbState.soloIdle = true;
+  fbState.promptedJoinUids = new Set();
+  const ok = mainCore.onlineStartParticipants(String(Math.floor(Math.random() * 2 ** 40) + 1), String(mySlot), seatOrder.join(','));
+  if (!ok) {
+    fbState.soloIdle = false;
+    toast({ w: 'お知らせ', t: 'このゲームは現在の設定では始められません' });
+  } else {
+    scheduleHostSync();
+  }
+}
 function onlineChooseAndStart() {
-  if (isHostRoom() && ost.members.length < 2) return toast({w:'お知らせ',t:'参加者を待っています'});
   if (!isHostRoom()) return toast({ w: 'お知らせ', t: 'ホストが始めるのを待っています' });
+  if (isSoloInRoom()) return onlineStartSolo();
+  const act = activeMembers();
+  if (!act.length) return toast({ w: 'お知らせ', t: '参加プレイヤーがいません（観戦モードを解除してください）' });
+  fbState.soloIdle = false;
   syncOnlineOptions();
-  const ok = mainCore.onlineStart(String(Math.floor(Math.random() * 2 ** 40) + 1));
-  if (!ok) toast({ w: 'お知らせ', t: '人数がこのゲームの席より多いか、このゲームを遊べない人がいます' });
+  const ok = mainCore.onlineStartParticipants(String(Math.floor(Math.random() * 2 ** 40) + 1), act.map((m) => m.slot).join(','), '');
+  if (!ok) toast({ w: 'お知らせ', t: '参加人数がこのゲームの席数より多いか、遊べない設定です' });
   else scheduleHostSync();
 }
 function leaveOnlinePlay() {
   try {
     if (ost && ost.phase === 'PLAYING') {
       const isSpectator = view && view.mine < 0;
-      if (isHostRoom()) { mainCore.onlineBackToLobby(); scheduleHostSync(); }
+      if (isHostRoom()) { fbState.soloIdle = false; mainCore.onlineBackToLobby(); scheduleHostSync(); }
       else if (!isSpectator && view && !view.outcome && ost.canResign) mainCore.onlineResign();
     }
   } catch (e) {}
   online = false;
 }
-function leaveOnline(skipRemoteDelete = false) {
+function leaveOnline(mode = 'auto') {
   if (pointerFlushTimer) { clearTimeout(pointerFlushTimer); pointerFlushTimer = null; }
   pendingPointer = null;
   hostSyncScheduled = false;
   hostSentLog = [];
   const oldRoomId = fbState.roomId;
   fbState.roomId = null;
+  fbState.hostUid = null;
   fbState.creating = false;
   fbState.joining = false;
   fbState.error = null;
   fbState.players = {};
   fbState.cursors = {};
   fbState.roomState = null;
+  fbState.soloIdle = false;
+  fbState.takingOver = false;
+  fbState.knownPlayerUids = new Set();
+  fbState.kickedUids = new Set();
+  fbState.promptedJoinUids = new Set();
   clearRemoteCursors();
   uidToPeerId.clear();
   peerIdToUid.clear();
+  peerNames.clear();
+  peerSlots.clear();
   if (mainCore) mainCore.onlineLeave();
-  if (netApi && oldRoomId) netApi.leaveRoom(skipRemoteDelete).catch(() => {});
-  online = false; token++; ost = null; S.roomPre = null; S.roomDecided = null; lastBeginSeq = 0; chatSeen = 0; closeSheet();
+  if (netApi && oldRoomId) netApi.leaveRoom(mode).catch(() => {});
+  S.chat = [];
+  online = false; token++; ost = null; S.roomPre = null; S.roomDecided = null; lastBeginSeq = 0; chatSeen = 0; lastFlash = '0|'; closeSheet();
 }
 async function startOnlinePlay(handle) {
   pendSnd = null;
@@ -681,21 +1276,42 @@ async function startOnlinePlay(handle) {
 // ---------------------------------------------------------------- 部屋の変化
 function onlineChanged() {
   if (!mainCore) return;
-  ost = JSON.parse(mainCore.onlineState());
-  if (ost.closed) { const msg = ost.closed; leaveOnline(); S.screen = 'room'; render(); return toast({ w: 'お知らせ', t: msg }); }
+  const nextOst = JSON.parse(mainCore.onlineState());
+  if (!fbState.roomId && (!nextOst || nextOst.role === 'none')) {
+    ost = null;
+    if (/^(room|menu|records|settings)$/.test(S.screen)) render();
+    return;
+  }
+  ost = nextOst;
+  if (ost.closed) { const msg = ost.closed; leaveOnline('skip'); S.screen = 'room'; render(); return toast({ w: 'お知らせ', t: msg }); }
   if (ost.flash !== lastFlash) {
     lastFlash = ost.flash; const t = ost.flash.slice(ost.flash.indexOf('|') + 1);
     if (t) { if (/全員が了承/.test(t)) cut({ text: '待った', tone: 'felt', ms: 1200 }); else toast({ w: 'お知らせ', t }); }
   }
   const nChat = (ost.chat || []).length;
-  if (nChat > chatSeen) { const m = ost.chat[nChat - 1]; if (m.slot !== ost.mySlot) { sfxPop(false); { const si = stampIdx(m); toast({ w: m.name, t: si < 0 ? m.body : null, s: si >= 0 ? si : null, chat: true }); } } chatSeen = nChat; }
+  if (nChat > chatSeen) {
+    const startIdx = chatSeen;
+    chatSeen = nChat;
+    for (let ci = startIdx; ci < nChat; ci++) {
+      const m = ost.chat[ci];
+      if (!m) continue;
+      if (m.kind === 2) {
+        if (ci === nChat - 1) toast({ w: 'お知らせ', t: m.body, chat: true });
+      } else if (m.slot !== ost.mySlot && ci === nChat - 1) {
+        sfxPop(false);
+        const si = stampIdx(m);
+        toast({ w: m.name, t: si < 0 ? m.body : null, s: si >= 0 ? si : null, chat: true });
+      }
+    }
+  }
   const ask = ost.undoAsk;
   if (ask && !ask.mine && askShown !== ask.id) { askShown = ask.id; showAsk(ask); }
   else if (!ask && askShown >= 0) { askShown = -1; const a = $('#askcard'); if (a) a.remove(); }
   if (ost.beginSeq !== lastBeginSeq) { lastBeginSeq = ost.beginSeq; if (ost.match >= 0) return startOnlinePlay(ost.match); }
-  if (S.screen === 'play' && online && ost.phase === 'LOBBY') { token++; online = false; h = -1; view = null; S.screen = 'menu'; render(); return; }
+  if (S.screen === 'play' && online && ost.phase === 'LOBBY') { fbState.soloIdle = false; token++; online = false; h = -1; view = null; S.screen = 'menu'; render(); return; }
   if (S.screen === 'play' && online) {
     if (view && view.outcome && $('#result') && !$('#result').hidden) { showResult(); return refreshChat(); }
+    // autoCpu が ON になったタイミングやメンバー状態更新でも手番駆動する
     if (onlineBusy) { onlinePending = true; return refreshChat(); }
     onlineBusy = true;
     (async () => { try { do { onlinePending = false; await refresh(); } while (onlinePending && online && S.screen === 'play'); } finally { onlineBusy = false; } })();
@@ -703,7 +1319,10 @@ function onlineChanged() {
   }
   if (S.screen === 'room' || (roomActive() && /^(menu|records|settings)$/.test(S.screen)) || (S.screen === 'setup' && S.setup.online)) {
     const rn = $('#readyNames');
-    if (rn && ost) rn.textContent = '準備ができた人: ' + ost.members.filter((m) => m.slot === ost.mySlot || ost.ready.includes(m.slot)).map((m) => m.name).join('・');
+    if (rn && ost) {
+      const exSlots = new Set(spectatorSlots());
+      rn.textContent = '準備ができた人: ' + ost.members.filter((m) => !exSlots.has(m.slot) && (m.slot === ost.mySlot || ost.ready.includes(m.slot))).map((m) => m.name).join('・');
+    }
     keepInputs(render);
   }
 }
@@ -738,6 +1357,7 @@ function showAsk(ask) {
   $('#askNo').onclick = () => { $('#askcard').remove(); mainCore.onlineVoteUndo(false); if (isHostRoom()) scheduleHostSync(); };
   $('#askYes').onclick = () => { $('#askcard').remove(); mainCore.onlineVoteUndo(true); if (isHostRoom()) scheduleHostSync(); };
 }
+
 
 // ---------------------------------------------------------------- ポインター(マウス・タッチ)位置のリアルタイム同期
 // 表示領域の左上を (0.0, 0.0)、右下を (1.0, 1.0) とした相対割合で送受信。
@@ -977,10 +1597,29 @@ function gameWishes(id) {
 }
 function roomSummary() {
  if (!roomActive()) return '';
- return `<section class="room-summary"><h4>ルームコード</h4><b class="room-code">${esc(fbState.roomId)}</b><button class="btn" data-copy="${esc(fbState.roomId)}">${ic('copy')}コピー</button><div class="room-members">${ost.members.map(m=>`<div>${playerBadge({...m,avatar:Object.values(fbState.players).find(p=>p.slot===m.slot)?.avatar})}${m.slot===0?'<small>ホスト</small>':''}</div>`).join('')}</div><button class="btn" data-leave>${isHostRoom()?'部屋を解散する':'部屋を出る'}</button></section>`;
+ const hostSlot = hostSlotOfRoom();
+ const myUid = netApi ? netApi.uid : null;
+ const host = isHostRoom();
+ const membersHtml = ost.members.map((m) => {
+  const p = Object.values(fbState.players || {}).find((x) => x && x.slot === m.slot);
+  const uid = p ? p.uid : null;
+  const isH = m.slot === hostSlot;
+  const spec = isSlotSpectating(m.slot);
+  const cpu = isSlotAutoCpu(m.slot);
+  const badges = (isH ? '<small class="badge host">ホスト</small>' : '') +
+   (spec ? '<small class="badge spec">観戦</small>' : '') +
+   (cpu ? '<small class="badge cpu">CPU操作中</small>' : '');
+  const inner = `${playerBadge({ ...m, avatar: p ? p.avatar : null })}${badges}`;
+  if (host && uid && uid !== myUid) {
+   return `<button type="button" class="room-member-btn" data-pmenu="${esc(uid)}" title="ホスト変更・キック">${inner}</button>`;
+  }
+  return `<div>${inner}</div>`;
+ }).join('');
+ const leaveTxt = host ? (ost.members.length > 1 ? '部屋を出る / 解散' : '部屋を解散する') : '部屋を出る';
+ return `<section class="room-summary"><h4>ルームコード</h4><b class="room-code">${esc(fbState.roomId)}</b><button class="btn" data-copy="${esc(fbState.roomId)}">${ic('copy')}コピー</button><div class="room-members">${membersHtml}</div><button class="btn" data-leave>${leaveTxt}</button></section>`;
 }
 function roomHowto() {
- return `<details class="room-howto" open><summary>遊び方</summary><p>「部屋を作る」で発行された4桁のルームコードを相手に伝えてください。参加する人はルームコードを入力します。</p><p>このルームコードを相手に伝えてください。ゲームと設定の決定はホストが行います。</p></details>`;
+ return `<details class="room-howto" open><summary>遊び方</summary><p>「部屋を作る」で発行された4桁のルームコードを相手に伝えてください。参加する人はルームコードを入力します。</p><p>人が集まるまではホスト1人でもゲームを始められます。参加メンバーをクリックすると「ホストを変更」「キック」が行えます。</p></details>`;
 }
 function chooseWish(id) {
  if (!roomChoosing() || !gInfo(id)) return;
@@ -988,7 +1627,23 @@ function chooseWish(id) {
  netApi.chooseGame(id,Number.isInteger(S.set.av)?S.set.av:null).catch(e=>toast({w:'お知らせ',t:'希望ゲームを共有できませんでした'}));
 }
 function onlineMenuDetail() {
- const g=gInfo(S.sel),enough=ost.members.length>=2;
+ const g=gInfo(S.sel);
+ const soloRoom = isSoloInRoom();
+ const act = activeMembers();
+ const actCount = act.length;
+ const specCount = Math.max(0, ost.members.length - actCount);
+ const mySpec = mySpectatingOn();
  const isSpectator = fbState.roomState && Array.isArray(fbState.roomState.seatSlots) && !fbState.roomState.seatSlots.includes(ost.mySlot);
- return `<aside class="detail online-detail"><div class="scroll">${g?`<div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div>`:'<div class="empty">ゲームを選んでください</div>'}<p>${isHostRoom()?(enough?'ゲームを選んで対戦プレイへ進めます':'参加者を待っています'): '遊びたいゲームを選べます。設定と開始はホストが行います'}</p>${roomHowto()}</div>${chatBox()}<div class="foot"><button class="btn" data-rule="${g?g.id:''}" ${g?'':'disabled'}>${ic('book')}ルール</button>${roomChoosing()?`<button class="btn primary" data-next ${isHostRoom()&&enough&&g&&playable(g.id)&&range(g.players)[1]>=ost.members.length?'':'disabled'}>対戦プレイ</button>`:`<button class="btn primary" data-oreturn>${isSpectator ? '対局を観戦する' : '対局に戻る'}</button>`}</div></aside>`;
+ let hint = '';
+ if (isHostRoom()) {
+  if (soloRoom) hint = '参加者を待っている間、1人で遊べます（シングルプレイと同じ設定）';
+  else if (actCount === 0) hint = '全員が観戦モードのため開始できません';
+  else hint = specCount > 0 ? `ゲームを選んで開始できます（対局 ${actCount}人・観戦 ${specCount}人）` : 'ゲームを選んで対戦プレイへ進めます';
+ } else {
+  hint = specCount > 0 ? `遊びたいゲームを選べます（対局 ${actCount}人・観戦 ${specCount}人）。開始はホストが行います` : '遊びたいゲームを選べます。設定と開始はホストが行います';
+ }
+ const canStart = isHostRoom() && g && playable(g.id) && (soloRoom ? true : (actCount >= 1 && range(g.players)[1] >= actCount));
+ const startLabel = soloRoom ? '1人で遊ぶ' : '対戦プレイ';
+ const specToggle = roomChoosing() ? `<div style="margin:6px 0 4px"><button class="btn ${mySpec ? 'gold' : ''}" data-toggle-spec style="width:100%;height:34px;font-size:12px">${mySpec ? '観戦モード: ON（クリックで参加に戻る）' : '観戦モードにする'}</button></div>` : '';
+ return `<aside class="detail online-detail"><div class="scroll">${g?`<div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div>`:'<div class="empty">ゲームを選んでください</div>'}<p>${hint}</p>${specToggle}${roomHowto()}</div>${chatBox()}<div class="foot"><button class="btn" data-rule="${g?g.id:''}" ${g?'':'disabled'}>${ic('book')}ルール</button>${roomChoosing()?`<button class="btn primary" data-next ${canStart?'':'disabled'}>${startLabel}</button>`:`<button class="btn primary" data-oreturn>${isSpectator ? '対局を観戦する' : '対局に戻る'}</button>`}</div></aside>`;
 }

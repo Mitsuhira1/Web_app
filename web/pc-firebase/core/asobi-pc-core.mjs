@@ -1,3 +1,4 @@
+import { registerExtraGames, extraGameView } from './extra-games.mjs';
 import {
   THROW_IAE23kobfj9wdoxr as THROW_IAE,
   enumEntries20mr21zbe3az4 as enumEntries,
@@ -2204,7 +2205,7 @@ function Catalog() {
       destination_2.i(tmp$ret$9);
     }
      while (!(item_2 === last_2));
-  tmp.xr_1 = listOf([tmp_0, tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_6, tmp_7, tmp_8, tmp_9, tmp_10, tmp_11, tmp_12, tmp_13, tmp_14, tmp_15, tmp_16, tmp_17, tmp_18, tmp_22, tmp_23, tmp_24, tmp_25, tmp_26, tmp_27, tmp_28, tmp_32, tmp_33, tmp_37, new GameInfo('solitaire', 10, '\u30BD\u30EA\u30C6\u30A3\u30A2(\u30AF\u30ED\u30F3\u30C0\u30A4\u30AF)', tmp_38, '1\u4EBA', '7\u3064\u306E\u5217\u3092\u6574\u7406\u3057\u3066\u30014\u3064\u306E\u7D44\u672D\u306BA\u304B\u3089K\u307E\u3067\u7A4D\u307F\u4E0A\u3052\u308B\u3002', tmp_39, tmp_40, listOf([new OptionSpec('players', '\u4EBA\u6570', destination_2, '1'), new OptionSpec('draw', '\u3081\u304F\u308B\u679A\u6570', listOf([to('1', '1\u679A'), to('3', '3\u679A')]), '1'), new OptionSpec('passes', '\u5C71\u672D\u306E\u5468\u56DE', listOf([to('0', '\u7121\u5236\u9650'), to('3', '3\u56DE')]), '0')]))]);
+  tmp.xr_1 = registerExtraGames(listOf([tmp_0, tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_6, tmp_7, tmp_8, tmp_9, tmp_10, tmp_11, tmp_12, tmp_13, tmp_14, tmp_15, tmp_16, tmp_17, tmp_18, tmp_22, tmp_23, tmp_24, tmp_25, tmp_26, tmp_27, tmp_28, tmp_32, tmp_33, tmp_37, new GameInfo('solitaire', 10, '\u30BD\u30EA\u30C6\u30A3\u30A2(\u30AF\u30ED\u30F3\u30C0\u30A4\u30AF)', tmp_38, '1\u4EBA', '7\u3064\u306E\u5217\u3092\u6574\u7406\u3057\u3066\u30014\u3064\u306E\u7D44\u672D\u306BA\u304B\u3089K\u307E\u3067\u7A4D\u307F\u4E0A\u3052\u308B\u3002', tmp_39, tmp_40, listOf([new OptionSpec('players', '\u4EBA\u6570', destination_2, '1'), new OptionSpec('draw', '\u3081\u304F\u308B\u679A\u6570', listOf([to('1', '1\u679A'), to('3', '3\u679A')]), '1'), new OptionSpec('passes', '\u5C71\u672D\u306E\u5468\u56DE', listOf([to('0', '\u7121\u5236\u9650'), to('3', '3\u56DE')]), '0')]))]), { GameInfo: GameInfo, GameDef: GameDef, OptionSpec: OptionSpec, Section: Section, Outcome: Outcome, Category_BOARD: Category_BOARD_getInstance(), Category_CARD: Category_CARD_getInstance(), listOf: listOf, to: to, plus: plus, emptyList: emptyList });
 }
 protoOf(Catalog).yr = function (id) {
   var tmp$ret$1;
@@ -35056,6 +35057,16 @@ function hostReceive($this, id, f) {
       }
 
       var slot = tmp$ret$24;
+      var prefRaw = getOrNull(f, 4);
+      var prefSlot = prefRaw == null ? null : toIntOrNull(prefRaw);
+      if (prefSlot != null && prefSlot >= 0 && prefSlot < 6) {
+        var prefFree = true;
+        var itPref = $this.c26_1.k();
+        while (itPref.l()) {
+          if (itPref.m().k25_1 === prefSlot) { prefFree = false; break; }
+        }
+        if (prefFree) slot = prefSlot;
+      }
       // Inline function 'kotlin.text.ifBlank' call
 
       var tmp_11 = Companion_instance_30;
@@ -35725,12 +35736,12 @@ function guestReceive($this, id, f) {
           tmp_20 = '';
         }
         var body = tmp_20;
-        if (kind === 0 || kind === 1) {
+        if (kind === 0 || kind === 1 || kind === 2) {
           var tmp32_safe_receiver = $this.y26_1;
           if (tmp32_safe_receiver == null)
             null;
           else
-            tmp32_safe_receiver(new Chat(seq, slot_2, $this.t27(slot_2), kind, body));
+            tmp32_safe_receiver(new Chat(seq, slot_2, kind === 2 ? '' : $this.t27(slot_2), kind, body));
         }
       }
 
@@ -39011,7 +39022,7 @@ function undoMove(h) {
   var tmp1_elvis_lhs = tmp0_safe_receiver == null ? null : tmp0_safe_receiver.dv();
   return tmp1_elvis_lhs == null ? false : tmp1_elvis_lhs;
 }
-function cpuChoose(h, millis) {
+function cpuChoose(h, millis, levelOverride) {
   _init_properties_Engine_kt__fnrbfm();
   var tmp0_elvis_lhs = get_matches().l1(h);
   var tmp;
@@ -39024,7 +39035,7 @@ function cpuChoose(h, millis) {
   var seat = ses.av();
   if (seat < 0)
     return -1;
-  var level = ses.ju_1.p(seat).zt_1;
+  var level = levelOverride != null ? values_0()[coerceIn_0(levelOverride, 0, 2)] : ses.ju_1.p(seat).zt_1;
   // Inline function 'kotlin.Long.plus' call
   // Inline function 'kotlin.Long.times' call
   var this_0 = ses.lu_1.y1(toLong(131));
@@ -39707,6 +39718,8 @@ function cards(a) {
   return joinToString(a, ',', '[', ']', VOID, VOID, cards$lambda);
 }
 function extraView(st, rules, me) {
+  var __ev = extraGameView(st, rules, me);
+  if (__ev != null) return __ev;
   var tmp;
   if (st instanceof SpeedState) {
     var tmp_0 = joinToString(st.m1z_1, ',', '[', ']', VOID, VOID, extraView$lambda);
@@ -40630,6 +40643,10 @@ function onlineLeave() {
   set_book(null);
   set_flow(null);
   set_matchHandle(-1);
+  set_undoAsk(null);
+  get_undoUsed().x3();
+  get_undoDeclinedAt().x3();
+  get_chatLog().x3();
   changed_2();
 }
 function onlinePlay(h, move) {
@@ -40812,7 +40829,9 @@ function onlineState() {
     tmp_32 = joinToString(tmp45_safe_receiver, ',', '[', ']', VOID, VOID, onlineState$lambda_4);
   }
   var tmp46_elvis_lhs = tmp_32;
-  return tmp_13 + ('"ready":' + tmp_14 + ',"round":' + tmp_15 + ',"legacy":' + tmp_17 + ',"mismatch":' + tmp_20 + ',"undoOk":' + tmp_22 + ',"chatOk":' + tmp_23 + ',"canResign":' + tmp_24 + ',"flash":"' + tmp_25 + '|' + tmp_26 + '","undoAsk":' + tmp_29 + ',"chat":' + tmp_31 + ',"names":' + (tmp46_elvis_lhs == null ? '[]' : tmp46_elvis_lhs) + '}');
+  var beginSeed = tmp44_safe_receiver == null || tmp44_safe_receiver.s25_1 == null ? '0' : String(tmp44_safe_receiver.s25_1);
+  var beginSlots = tmp44_safe_receiver == null || tmp44_safe_receiver.t25_1 == null ? '[]' : joinToString(tmp44_safe_receiver.t25_1, ',', '[', ']');
+  return tmp_13 + ('"ready":' + tmp_14 + ',"round":' + tmp_15 + ',"legacy":' + tmp_17 + ',"mismatch":' + tmp_20 + ',"undoOk":' + tmp_22 + ',"chatOk":' + tmp_23 + ',"canResign":' + tmp_24 + ',"flash":"' + tmp_25 + '|' + tmp_26 + '","undoAsk":' + tmp_29 + ',"chat":' + tmp_31 + ',"names":' + (tmp46_elvis_lhs == null ? '[]' : tmp46_elvis_lhs) + ',"seed":' + qq(beginSeed) + ',"seatSlots":' + beginSlots + '}');
 }
 function onlineResign() {
   _init_properties_WebNet_kt__y4rdrr();
@@ -40976,7 +40995,7 @@ function onlineMismatch(gameId) {
   var tmp = tmp1_elvis_lhs == null ? emptyList() : tmp1_elvis_lhs;
   return joinToString(tmp, ',', '[', ']', VOID, VOID, onlineMismatch$lambda);
 }
-function onlineStartReady(seed) {
+function onlineStartReady(seed, excludeCsv) {
   _init_properties_WebNet_kt__y4rdrr();
   var tmp0_elvis_lhs = get_room();
   var tmp;
@@ -40998,8 +41017,209 @@ function onlineStartReady(seed) {
   }
   var def = tmp_0;
   var seats = def.lh_1(r.e26_1);
-  var who = plus_1(toSet(r.j27_1), r.b26_1);
-  r.v28(seats, toLong_0(seed), who);
+  var exSet = new Set(String(excludeCsv || '').split(',').filter(function (x) { return x !== ''; }).map(Number));
+  var base = ArrayList_init_$Create$_0();
+  var itR = r.j27_1.k();
+  while (itR.l()) {
+    var rs = itR.m();
+    if (!exSet.has(rs)) base.i(rs);
+  }
+  if (!exSet.has(r.b26_1)) base.i(r.b26_1);
+  if (base.q()) return false;
+  r.v28(seats, toLong_0(seed), toSet(base));
+  return true;
+}
+function onlineSystemChat(body) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var r = get_room();
+  if (r == null || !r.w25_1)
+    return false;
+  var text = Compat_getInstance().ns(String(body || ''));
+  if (charSequenceLength(text) === 0)
+    return false;
+  r.z26_1 = r.z26_1 + 1 | 0;
+  var c = new Chat(r.z26_1, -1, '', 2, text);
+  sendAll(r, 'CHAT|' + r.m27_1 + '|' + c.o27_1 + '|-1|2|' + text);
+  var cb = r.y26_1;
+  if (cb != null)
+    cb(c);
+  return true;
+}
+function onlineStartParticipants(seed, participantsCsv, seatOrderCsv) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var r = get_room();
+  if (r == null || !r.w25_1)
+    return false;
+  var info = Catalog_getInstance().yr(r.d26_1);
+  var def = info == null ? null : info.dh_1;
+  if (def == null)
+    return false;
+  var seats = def.lh_1(r.e26_1);
+  var pSet = null;
+  if (participantsCsv != null && String(participantsCsv).trim() !== '') {
+    var pList = ArrayList_init_$Create$_0();
+    var arr = String(participantsCsv).split(',').filter(function (x) { return x !== ''; }).map(Number);
+    for (var idx = 0; idx < arr.length; idx++) pList.i(arr[idx]);
+    pSet = toSet(pList);
+  } else {
+    var allList = ArrayList_init_$Create$_0();
+    var itAll = r.c26_1.k();
+    while (itAll.l()) allList.i(itAll.m().k25_1);
+    pSet = toSet(allList);
+  }
+  var activeCount = 0;
+  var itMem = r.c26_1.k();
+  while (itMem.l()) {
+    if (pSet.t(itMem.m().k25_1)) activeCount++;
+  }
+  if (activeCount > seats || activeCount === 0)
+    return false;
+  if (!r.q28(r.d26_1).q())
+    return false;
+  if (seatOrderCsv != null && String(seatOrderCsv).trim() !== '') {
+    var rawOrder = String(seatOrderCsv).split(',').filter(function (x) { return x !== ''; }).map(Number);
+    if (rawOrder.length === seats) {
+      r.m27_1 = r.m27_1 + 1 | 0;
+      r.c27_1 = null;
+      r.j27_1.x3();
+      var orderList = ArrayList_init_$Create$_0();
+      var namesList = ArrayList_init_$Create$_0();
+      for (var i = 0; i < rawOrder.length; i++) {
+        var sl = rawOrder[i];
+        orderList.i(sl);
+        if (sl < 0) {
+          namesList.i('CPU');
+        } else {
+          var foundName = '\u30D7\u30EC\u30A4\u30E4\u30FC';
+          var itN = r.c26_1.k();
+          while (itN.l()) {
+            var m = itN.m();
+            if (m.k25_1 === sl) { foundName = m.l25_1; break; }
+          }
+          namesList.i(foundName);
+        }
+      }
+      var seedL = toLong_0(seed);
+      var b = new Begin(r.m27_1, r.d26_1, r.e26_1, seedL, orderList, namesList);
+      r.g26_1 = b;
+      r.a26_1 = Phase_PLAYING_getInstance();
+      sendAll(r, joinToString(listOf(['BEGIN', r.m27_1, r.d26_1, Companion_instance_30.h28(r.e26_1), seed, joinToString(orderList, ',')]), '|'));
+      if (r.j26_1 != null) r.j26_1(b);
+      changed_1(r);
+      return true;
+    }
+  }
+  r.v28(seats, toLong_0(seed), pSet);
+  return true;
+}
+function onlineAssumeHost(mySlot, snapshotJson) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var snap = JSON.parse(snapshotJson || '{}');
+  var name = snap.name || get_myName() || '\u3042\u306A\u305F';
+  set_myName(name);
+  set_room(null);
+  set_book(null);
+  set_flow(null);
+  set_undoAsk(null);
+  var r = new OnlineRoom(get_rtc(), true, name, null, false);
+  setup(r);
+  r.b26_1 = mySlot;
+  r.c26_1.x3();
+  var members = Array.isArray(snap.members) ? snap.members.slice() : [];
+  members.sort(function (a, b) { return (a.slot || 0) - (b.slot || 0); });
+  var presentSlots = new Set();
+  for (var i = 0; i < members.length; i++) {
+    var m = members[i];
+    if (typeof m.slot !== 'number') continue;
+    presentSlots.add(m.slot);
+    var mem = new Member(m.slot, m.name || '\u30D7\u30EC\u30A4\u30E4\u30FC', m.slot === mySlot ? null : (m.peerId || null));
+    mem.n25_1 = 2;
+    mem.o25_1 = Compat_getInstance().es_1;
+    r.c26_1.i(mem);
+  }
+  if (!presentSlots.has(mySlot)) {
+    presentSlots.add(mySlot);
+    var selfMem = new Member(mySlot, name, null);
+    selfMem.n25_1 = 2;
+    selfMem.o25_1 = Compat_getInstance().es_1;
+    r.c26_1.i(selfMem);
+  }
+  r.d26_1 = snap.gameId || 'reversi';
+  r.e26_1 = Companion_instance_1.ft(snap.options || '');
+  r.m27_1 = snap.round || 0;
+  get_chatLog().x3();
+  var maxSeq = 0;
+  var chats = Array.isArray(snap.chat) ? snap.chat : [];
+  for (var ci = 0; ci < chats.length; ci++) {
+    var ch = chats[ci];
+    if (!ch) continue;
+    var seq = +ch.seq || (ci + 1);
+    if (seq > maxSeq) maxSeq = seq;
+    get_chatLog().i(new ChatItem(seq, ch.slot != null ? ch.slot : -1, ch.name || '', ch.kind || 0, ch.body || ''));
+  }
+  r.z26_1 = maxSeq;
+  if (snap.phase === 'PLAYING' && r.m27_1 > 0) {
+    r.a26_1 = Phase_PLAYING_getInstance();
+    var readyArr = Array.isArray(snap.ready) ? snap.ready : [];
+    for (var ri = 0; ri < readyArr.length; ri++) {
+      if (presentSlots.has(readyArr[ri])) r.j27_1.i(readyArr[ri]);
+    }
+    var rawSlots = Array.isArray(snap.seatSlots) ? snap.seatSlots : [0, 1];
+    var orderList = ArrayList_init_$Create$_0();
+    var namesList = ArrayList_init_$Create$_0();
+    var seatsList = ArrayList_init_$Create$_0();
+    var cpuVal = values_0()[get_cpuLevel()];
+    for (var si = 0; si < rawSlots.length; si++) {
+      var sl = rawSlots[si];
+      if (sl >= 0 && !presentSlots.has(sl)) sl = -1;
+      orderList.i(sl);
+      var sname = 'CPU';
+      if (sl >= 0) {
+        var found = members.find(function (mm) { return mm.slot === sl; });
+        sname = sl === mySlot ? name : ((found && found.name) || (Array.isArray(snap.names) && snap.names[si]) || '\u30D7\u30EC\u30A4\u30E4\u30FC');
+      }
+      namesList.i(sname);
+      var isMine = sl === mySlot;
+      var isRemote = !isMine && sl >= 0;
+      seatsList.i(new Seat(isMine, cpuVal, sname, isRemote));
+    }
+    var seedL = toLong_0(String(snap.seed || '1'));
+    var info = Catalog_getInstance().yr(r.d26_1);
+    var def = info == null ? null : info.dh_1;
+    r.g26_1 = new Begin(r.m27_1, r.d26_1, r.e26_1, seedL, orderList, namesList);
+    if (def != null) {
+      var movesList = ArrayList_init_$Create$_0();
+      var mvArr = Array.isArray(snap.moves) ? snap.moves : [];
+      for (var mi = 0; mi < mvArr.length; mi++) movesList.i(mvArr[mi]);
+      var rec = new MatchRecord(def.hh_1, r.e26_1, seatsList, seedL, movesList);
+      var ses = Companion_getInstance_4().wu(def, rec);
+      if (ses != null) {
+        var nh = get_nextHandle();
+        set_nextHandle(nh + 1 | 0);
+        get_matches().c3(nh, ses);
+        set_matchHandle(nh);
+      }
+    }
+  } else {
+    r.a26_1 = Phase_LOBBY_getInstance();
+    r.g26_1 = null;
+    set_matchHandle(-1);
+  }
+  set_room(r);
+  changed_2();
+  return JSON.stringify({ matchHandle: get_matchHandle(), beginSeq: get_beginSeq() });
+}
+function onlineConvertSeatToCpu(slot) {
+  _init_properties_WebNet_kt__y4rdrr();
+  var r = get_room();
+  if (r == null) return false;
+  onLeft(r, slot);
+  var b = r.g26_1;
+  if (b != null && b.t25_1 != null) {
+    for (var i = 0; i < b.t25_1.n(); i++) {
+      if (b.t25_1.p(i) === slot) b.t25_1.r(i, -1);
+    }
+  }
   return true;
 }
 function relayNewKeyHex() {
@@ -42001,6 +42221,10 @@ export {
   onlineVoteUndo as onlineVoteUndo,
   onlineMismatch as onlineMismatch,
   onlineStartReady as onlineStartReady,
+  onlineSystemChat as onlineSystemChat,
+  onlineStartParticipants as onlineStartParticipants,
+  onlineAssumeHost as onlineAssumeHost,
+  onlineConvertSeatToCpu as onlineConvertSeatToCpu,
   relayNewKeyHex as relayNewKeyHex,
   relayTopicHex as relayTopicHex,
   relaySealHex as relaySealHex,

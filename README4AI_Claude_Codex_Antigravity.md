@@ -56,6 +56,24 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-17 06:30(PST)/ Antigravity / antigravity/firebase-net-20261117
+- 目的: ユーザーの指示（`web/pc-firebase/` のオンライン対戦強化7点）。
+  1. プレイヤーリストからメンバーをクリックして「ホストを変更」（ルームコード維持）と「キック」を行えるようにする。
+  2. ホストが試合・部屋から抜けた際、即解散ではなく他のプレイヤーがホストを引き継げるようにする（1人だけの時や明示的解散時は従来通り解散）。
+  3. ルームを建てた状態でも1人プレイ（シングルプレイと同じ設定・内容、同時進行ゲーム対応）で待ち時間に遊べるようにし、誰かが参加したら「〇〇が参加しました。現在のゲームを終了しますか？」（続ける / 終了する）の確認を出す。1人プレイ中の参加者は進行中の盤面を観戦可能。
+  4. 1人→2人目やマルチプレイ中を問わず、誰かが参加したら一律でチャットに「〇〇が参加しました」と通知を出す。
+  5. 部屋を解散したらチャット内容（RTDB・コア・ローカル）を消去する。
+  6. マルチプレイで着席プレイヤーが「CPUに操作を任せる」（難易度: **中級 (`level = 1`)**）に切り替えられる機能を追加し、他のプレイヤーには「CPUが操作中…」と表示する。
+  7. ロビー/ゲーム選択に「観戦モード」を追加し、複数人ルーム内で一時的に対局から外れて途中入室時と同じ観戦画面で見られるようにする。
+- 変更:
+  - `web/pc-firebase/core/asobi-pc-core.mjs`: `HELLO` の任意 slot 指定、`CHAT` の `kind === 2` システム通知対応、`cpuChoose` の任意 `levelOverride` 引数追加、`onlineLeave` のチャット完全クリア、`onlineState()` への `seed`/`seatSlots` 露出、`onlineStartReady` / `onlineSystemChat` / `onlineStartParticipants` / `onlineAssumeHost` / `onlineConvertSeatToCpu` をエクスポート追加。
+  - `web/pc-firebase/js/net.js`: `hostUid` / `kicked/{uid}` 監視、動的 `syncDisconnectPolicy(playerCount)`、`setPlayerFlags`、`transferHost`、`assumeHost`、`kickPlayer`、`leaveRoom(mode)`、動的 `startActionWatch`/`stopActionWatch` を実装。
+  - `web/pc-firebase/js/online.js`: 上記 UI（メンバー操作シート、対局中メンバーシート、1人プレイ参加確認シート、観戦モード・CPU委任トグル）とホスト移譲/自動引き継ぎ/キック/一律システムチャット/1人待ちプレイ制御を実装。
+  - `web/pc-firebase/js/app.js`: 1人待ちプレイ設定・同時進行ゲーム (`isConcurrent`/`cpuSeats`/`cpuChooseSeat`) 対応、対局中 `.online-ops`（`CPUに操作を任せる`/`メンバー`）追加、ホストによる中級 (`level=1`) 自動代理着手（`cpuTurnKey` 多重起動ガード含む）、CPU操作中の自手・待った・降参無効化と「CPUが操作中…」表示、ホスト離脱時の「ホストを引き継いで出る」確認を追加。
+  - `web/pc-firebase/css/app.css`, `web/pc-firebase/sw.js`: バッジ・システムメッセージ・対局中追加ボタン用スタイルを追加し、キャッシュ名を `asobipcfb-20261117-online-room-features-7` に更新。
+  - `tools/tests/firebase-memory-net.js`, `docs/FIREBASE_NET_MANUAL_FOR_AI.md`: テスト用メモリモックを新APIに対応させ、通信仕様書に第11章を追記。
+- 確認: `node --check`、`check_transient_audio.cjs`、`check_cursor_send.cjs`、Playwright 3クライアント E2E 9シナリオ検証、および既存回帰検証（左ナビ固定位置・フィルタアニメーション・途中入室観戦・カーソル色/補間・二重効果音抑止・対局中設定・非表示タブ音声破棄）すべてエラー0で合格。`web/pc/` と `Windows-Projects` は無変更。未コミット・未プッシュ。
+
 ### 2026-11-17 01:07(PST)/ Antigravity / antigravity/firebase-net-20261117
 - 目的: ユーザーの指示。左側ナビゲーション(`.rail`)のルーム情報(`.room-summary`)が「ゲーム」タブ(`menu`)でしか表示されず、タブを切り替えるたびに出たり消えたりして不自然だったため、すべての画面(`ゲーム`・`みんなで遊ぶ`・`成績`・`設定`)で同じ位置に表示するようにする。
 - 変更:
@@ -152,3 +170,14 @@
 
 ### 2026-11-16 21:15(PST)/ Antigravity / dev/pc-web-20261117
 - 目的: ユーザーの指示。3 つの AI が互いの変更を読めるよう、共通の記録ファイル `README4AI_Claude_Codex_Antigravity.md`・`AGENTS.md`・`CLAUDE.md` を作成。
+
+### 2026-11-17 03:45(PST)/ Antigravity / antigravity/firebase-net-20261117
+- 目的: ユーザーの指示。盤面デザイン・UI には一切手を付けず、新規12ゲーム（戦争、たこやき、ぶたのしっぽ、ババ抜き、ハーツ、ジンラミー、ハゲタカのえじき、ごいた、クアルト、ガイスター、ラミィキューブ、ペグ・ソリティア）のゲーム処理・CPU AI・ローカルルール・`viewJson`・`Catalog` 登録・Codex 引き継ぎ仕様書を実装する。
+- 変更:
+  - `web/pc-firebase/core/games/_utils.mjs` および `web/pc-firebase/core/games/{war,takoyaki,butanoshippo,oldmaid,hearts,ginrummy,vulture,goita,quarto,geister,rummikub,pegsolitaire}.mjs` を新規作成（全12ゲームのルール・ローカルルール・CPU AI・`viewJson` マスキングを実装）。
+  - `web/pc-firebase/core/extra-games.mjs` を新規作成し、`web/pc-firebase/core/asobi-pc-core.mjs` の `Catalog()` と `extraView()` に最小フックを追加（全42ゲーム構成）。
+  - `tools/tests/test_extra_12_games.mjs` を新規作成（全12ゲーム・ローカルルール26パターンの CPU 完走、非公開情報マスキング、`undoMove`、`restoreMatch` 検証）。
+  - `docs/NEW_12_GAMES_SPEC_FOR_CODEX.md` を新規作成（Codex 向けの全12ゲーム仕様・`move` エンコード・`viewJson` スキーマ・UI 実装ガイド）。
+- ファイル: `web/pc-firebase/core/games/*.mjs`, `web/pc-firebase/core/extra-games.mjs`, `web/pc-firebase/core/asobi-pc-core.mjs`, `tools/tests/test_extra_12_games.mjs`, `docs/NEW_12_GAMES_SPEC_FOR_CODEX.md`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `node tools/tests/test_extra_12_games.mjs` にて全件合格 (`ALL TESTS PASSED!`)。UI/CSS/盤面ファイル (`css/`, `js/boards/`, `js/art.js`, `js/app.js`) は無変更。
+- 他の AI への申し送り: 盤面UI・描画の実装は [`docs/NEW_12_GAMES_SPEC_FOR_CODEX.md`](docs/NEW_12_GAMES_SPEC_FOR_CODEX.md) を参照してください。

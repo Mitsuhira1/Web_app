@@ -1633,3 +1633,18 @@ html.reduce .wfx .wpop{display:none!important}
 @keyframes filterShelfIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes filterTileIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
 html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .shelfhead,html.reduce .main.filter-enter .shelf,html.reduce .main.filter-enter .tile{animation:none}
+
+/* オンライン対戦: ホスト変更・キック・観戦モード・CPU代理操作・システム通知 */
+.room-member-btn{display:flex;flex-wrap:wrap;gap:5px;align-items:center;width:100%;text-align:left;padding:4px 6px;margin:0 -6px;border-radius:8px;cursor:pointer;transition:background-color .15s ease}
+.room-member-btn:hover,.room-member-btn:focus-visible{background:var(--surface2)}
+.room-members .badge,.seat .badge{width:auto;padding:1px 7px;line-height:1.4}
+.badge.host{background:color-mix(in srgb,var(--gold) 24%,var(--surface2));color:var(--gold)}
+.badge.spec{background:color-mix(in srgb,#3F78C4 22%,var(--surface2));color:#6ea4ee}
+.badge.cpu{background:color-mix(in srgb,#3E9B63 22%,var(--surface2));color:#56c484}
+.seat-btn{width:100%;text-align:left;cursor:pointer;background:var(--surface);transition:border-color .15s ease,background-color .15s ease}
+.seat-btn:hover,.seat-btn:focus-visible{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 8%,var(--surface))}
+.seat-act{font-size:11px;font-weight:900;color:var(--gold);padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--gold) 16%,transparent);flex:none;white-space:nowrap}
+.seat .nm small{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:2px}
+.msg.sys{align-self:center;max-width:96%;background:transparent;color:var(--sub);font-size:12px;font-weight:700;padding:2px 8px;text-align:center}
+.online-ops{display:flex;gap:8px;flex-wrap:wrap}
+.online-ops .btn{flex:1;min-width:0;height:36px;font-size:12.5px;padding:0 10px}

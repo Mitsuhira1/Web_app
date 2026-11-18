@@ -211,3 +211,34 @@ Codex に作業を引き継ぐ際は、以下のブロックをそのままコ�
 `gameWishes()` は同じゲームを希望する複数人を、slotに対応する複数の色枠と右上のアイコン/名前で表示する。自分の色枠は既存のオレンジの選択ハイライトと重なるため描画しない（希望は他端末へ引き続き送信する）。他の人の枠はタイルの既存選択outlineと角丸を合わせる。希望の選択では設定画面へ遷移しない。`chooseOnline()` はホスト・参加人数2人以上を検査し、「対戦プレイ」から既存の設定へ進む。開始前にも2人以上を確認する。実際のゲーム設定、合法手、開始は引き続きホストのOnlineRoomが管理する。
 
 Firebase Rulesを独自に厳格化しているプロジェクトでは、本人のplayersノードの `choice`（文字列）と `avatar`（整数/null）の更新を許可すること。ホストのstate更新権限や他プレイヤーの所有権を緩める必要はない。
+
+---
+
+## 11. ホスト管理・1人待ちプレイ・一律通知・CPU委任・観戦モード（2026-11-17）
+
+### 11.1 追加された Realtime Database フィールド
+- `rooms/{roomId}/players/{uid}/spectating`: boolean（観戦モード状態。対局開始時の参加メンバーから除外される）
+- `rooms/{roomId}/players/{uid}/autoCpu`: boolean（対局中の CPU 代理操作フラグ）
+- `rooms/{roomId}/kicked/{uid}`: number（ホストによりキックされた時刻。該当ゲストが `onKicked` で検知して自動退出する）
+- `rooms/{roomId}/state/hostSlot`: number（現在のホストの slot 番号）
+- `rooms/{roomId}/state/soloIdle`: boolean（ホスト1人待ちプレイ中フラグ）
+- `rooms/{roomId}/state/spectatorSlots`: number[]（観戦モード中プレイヤーの slot 一覧）
+- `rooms/{roomId}/state/autoCpuSlots`: number[]（CPU 操作委任中の slot 一覧）
+- `rooms/{roomId}/state/chat[]`: `kind === 2` をシステム通知（`name: ""`、入室「〇〇が参加しました」・退出・キック・ホスト交代など）として使用
+
+※ Firebase Rules を厳格化する場合は、上記に加えて本人の `players/{uid}/spectating`・`autoCpu` の更新と、ホスト交代時 (`assumeHost` / `transferHost`) の `hostUid`・`players/{uid}/role`・`kicked/{uid}` の更新を許可すること。
+
+### 11.2 ホスト変更・キック・ホスト離脱時の引き継ぎと解散
+- **プレイヤー管理メニュー**: ホストが参加メンバー（`.room-members` / 部屋画面の `.seat-btn` / 対局中の「メンバー」シート）をクリックすると、「ホストを変更」「キック」を選べる。
+- **ホスト変更 (`transferHost`)**: `hostUid` と双方の `players/{uid}/role` のみを更新し、**4桁のルームコード (`roomId`) は変更しない**。旧ホストは `demoteHostToGuest()`、新ホストは `promoteToHostFromState(false)` により `onlineAssumeHost(mySlot, snapshotJson)` で進行中盤面やチャットを保ったまま役割を切り替える。
+- **ホスト離脱・切断時の引き継ぎ**: `netApi.syncDisconnectPolicy(playerCount)` により、`onDisconnect` で部屋丸ごと (`rooms/{roomId}`) を削除するのは **ホスト1人だけの時 (`playerCount <= 1`) のみ**。2人以上いる場合はホストも `players/{uid}` / `cursors/{uid}` のみ削除対象となり、ホストが抜けると最古参の残りプレイヤー (`nextHostCandidateUid`) が `promoteToHostFromState(true)` でホストを引き継ぐ。対局中のホスト退出確認でも「ホストを引き継いで出る」を選択可能（離脱ホストの席は `onlineConvertSeatToCpu` で CPU 席に変換）。
+- **解散時のチャット消去**: 部屋を解散 (`leaveRoom('dissolve')`) した際は、`rooms/{roomId}` の削除と同時にコアの `get_chatLog()` および UI の `S.chat` を空にし、次の部屋へ会話が残らないようにする。
+
+### 11.3 ルーム待機中の1人プレイ (`soloIdle`)・一律参加通知
+- **1人待ちプレイ**: ホスト1人だけの時でもゲーム選択から「1人で遊ぶ」を開始可能。`soloEngineOpts()` により、CPU の強さ・先後手番・制限時間・各種ローカルルール・無制限「待った」などシングルプレイと同じ設定・同内容で遊べる（`speed`・`solitaire` 等の同時進行ゲームも `mainCore` 側の `isConcurrent` / `cpuSeats` / `cpuChooseSeat` で動作）。
+- **参加時確認と観戦**: 1人プレイ中に誰か（`〇〇`）が入室すると、新参加者は進行中盤面をリアルタイム観戦でき、ホスト側には「〇〇が参加しました。現在のゲームを終了しますか？」（`続ける` / `終了する`）シートが表示される。
+- **一律の参加チャット通知**: 1人→2人目・マルチプレイ `LOBBY` / `PLAYING` 中を問わず、新規プレイヤーが入室した際は `onlineSystemChat('${name}が参加しました')` (`kind: 2`) を全員のチャットへ一律配信する。
+
+### 11.4 離席時 CPU 操作委任 (`autoCpu`) と観戦モード (`spectating`)
+- **CPUに操作を任せる**: 着席プレイヤーが対局中に `.online-ops` の「CPUに操作を任せる」を押すと `autoCpu = true` になり、他のプレイヤーにも「CPUが操作中…」と表示される。ホストが `cpuChoose(h, millis, 1)`（**中級・`level = 1`**）で代理着手し、本人が「CPU操作を解除」を押すまで本人の盤面操作・待った・降参は無効化される。
+- **観戦モード**: ロビー / ゲーム選択で「観戦モード」を ON にしたメンバーは、`onlineStartParticipants()` による試合開始時の着席対象から外れ、途中入室時と同じ観戦者画面 (`view.mine === -1`) で対局を見られる（「もう一度」で次の対局へ参加可能）。
