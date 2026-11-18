@@ -84,7 +84,7 @@ function fits(p) {
 function go(screen) {
   const m = $('.main'); if (m) (S.scrollMem = S.scrollMem || {})[S.screen] = m.scrollTop;
   if (S.screen === 'play' && screen !== 'play') leavePlay();
-  S.screen = screen; S.stOpen = false; S.modal = null; S.mobDetail = false; ddOpen = null;
+  S.screen = screen; S.stOpen = false; S.modal = null; S.mobDetail = false; S.chatOpen = false; S.chatUnread = 0; ddOpen = null;
   bgCtx(); render();
 }
 function bgmGenreFor() {
@@ -94,7 +94,7 @@ function bgmGenreFor() {
 
 // ---------------------------------------------------------------- メニュー
 const savedList = () => store.get('saved', []).filter((s) => s.moves > 0 && gInfo(s.id)).slice(0, 3);
-function menu() {
+function menuMainHtml() {
   const tiles = (c) => ORDER.map((id) => gInfo(id)).filter((g) => g && (g.category === 'BOARD') === (c === 'b') && fits(g.players))
     .map((g) => `<button class="tile ${playable(g.id) ? '' : 'soon'}" data-tile="${g.id}" aria-pressed="${S.sel === g.id}"><span class="art">${artOf(g.id)}</span>${gameWishes(g.id)}<span class="cap"><b>${dispName(g)}</b><small>${esc(g.players)}${playable(g.id) ? '' : '・準備中'}</small></span></button>`).join('');
   const nb = ORDER.filter((id) => gInfo(id) && gInfo(id).category === 'BOARD' && fits(gInfo(id).players)).length;
@@ -102,12 +102,96 @@ function menu() {
   const sv = roomActive() ? [] : savedList();
   const cont = sv.length ? `<div class="conts"><h3>続きから</h3>${sv.map((s, k) => `<button class="resume" data-resume="${k}"><span class="th">${artOf(s.id)}</span><b>${esc(gInfo(s.id).name)}</b><span class="mv">${s.moves}手目</span><span class="go">${ic('play')}</span></button>`).join('')}</div>` : '';
   const roomBar = roomActive() ? `<div class="mob-roombar"><button type="button" class="btn gold" data-detailopen>${S.sel && gInfo(S.sel) ? `${esc(gInfo(S.sel).name)}・` : ''}ルーム詳細・チャットを開く</button></div>` : '';
+  return `${roomBar}${cont}
+    ${nb ? `<h3 class="shelfhead">ボードゲーム <i>${nb}</i></h3><div class="shelf">${tiles('b')}</div>` : ''}
+    ${nc ? `<h3 class="shelfhead">カードゲーム <i>${nc}</i></h3><div class="shelf">${tiles('c')}</div>` : ''}`;
+}
+function menu() {
   const backdrop = S.mobDetail ? `<button type="button" class="detail-backdrop" data-detailclose aria-label="詳細を閉じる"></button>` : '';
   return `<div class="screen">${rail('menu')}
-   <div class="main">${roomBar}${cont}
-    ${nb ? `<h3 class="shelfhead">ボードゲーム <i>${nb}</i></h3><div class="shelf">${tiles('b')}</div>` : ''}
-    ${nc ? `<h3 class="shelfhead">カードゲーム <i>${nc}</i></h3><div class="shelf">${tiles('c')}</div>` : ''}
-   </div>${backdrop}${detail()}</div>`;
+   <div class="main">${menuMainHtml()}</div>${backdrop}${detail()}</div>`;
+}
+function switchPlayerFilter(v) {
+  if (S.filter === v) return;
+  S.filter = v;
+  const main = $('.main');
+  if (S.screen !== 'menu' || !main || S.set.reduce || typeof main.animate !== 'function') {
+    S.filterChanged = true;
+    return render();
+  }
+  S.filterChanged = false;
+  document.querySelectorAll('.rail-filter [data-seg="filter"] button').forEach((btn) => {
+    const active = btn.dataset.v === v;
+    btn.setAttribute('aria-pressed', String(active));
+    btn.classList.remove('filter-pop');
+    if (active) { void btn.offsetWidth; btn.classList.add('filter-pop'); }
+  });
+  main.querySelectorAll('.tile-ghost-out').forEach((g) => g.remove());
+  const before = new Map();
+  main.querySelectorAll('[data-tile]').forEach((el) => {
+    before.set(el.dataset.tile, { rect: el.getBoundingClientRect(), clone: el.cloneNode(true) });
+  });
+  main.classList.remove('filter-enter', 'filter-anim');
+  main.innerHTML = menuMainHtml();
+  main.scrollTop = 0;
+  void main.offsetWidth;
+  main.classList.add('filter-enter', 'filter-anim');
+
+  const afterIds = new Set([...main.querySelectorAll('[data-tile]')].map((el) => el.dataset.tile));
+  const afterMainRect = main.getBoundingClientRect();
+  const sTop = main.scrollTop, sLeft = main.scrollLeft;
+
+  for (const [id, info] of before) {
+    if (afterIds.has(id)) continue;
+    const g = info.clone;
+    g.classList.add('tile-ghost-out');
+    g.removeAttribute('data-tile');
+    g.tabIndex = -1;
+    g.disabled = true;
+    g.setAttribute('aria-hidden', 'true');
+    Object.assign(g.style, {
+      left: `${info.rect.left - afterMainRect.left + sLeft}px`,
+      top: `${info.rect.top - afterMainRect.top + sTop}px`,
+      width: `${info.rect.width}px`,
+      height: `${info.rect.height}px`,
+    });
+    main.appendChild(g);
+    const anim = g.animate([
+      { opacity: 1, transform: 'scale(1)' },
+      { opacity: 0, transform: 'scale(.78) translateY(8px)' }
+    ], { duration: 190, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+    const clean = () => { if (g.isConnected) g.remove(); };
+    anim.onfinish = clean;
+    setTimeout(clean, 240);
+  }
+
+  let enterIdx = 0;
+  main.querySelectorAll('[data-tile]').forEach((el) => {
+    const prev = before.get(el.dataset.tile);
+    if (prev) {
+      const r = el.getBoundingClientRect();
+      const dx = prev.rect.left - r.left, dy = prev.rect.top - r.top;
+      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+        el.animate([
+          { transform: `translate(${dx}px,${dy}px)` },
+          { transform: 'none' }
+        ], { duration: 320, easing: 'cubic-bezier(.22,.85,.32,1)' });
+      }
+    } else {
+      const delay = Math.min(enterIdx++, 18) * 16;
+      el.animate([
+        { opacity: 0, transform: 'translateY(14px) scale(.88)' },
+        { opacity: 1, transform: 'none' }
+      ], { duration: 280, delay, easing: 'cubic-bezier(.22,.85,.32,1)', fill: 'backwards' });
+    }
+  });
+
+  main.querySelectorAll('.shelfhead, .conts').forEach((hd, i) => {
+    hd.animate([
+      { opacity: 0, transform: 'translateY(8px)' },
+      { opacity: 1, transform: 'none' }
+    ], { duration: 240, delay: i * 35, easing: 'cubic-bezier(.22,.85,.32,1)', fill: 'backwards' });
+  });
 }
 function detail() {
   if (roomActive()) return onlineMenuDetail();
@@ -233,6 +317,7 @@ async function resume(s) {
 }
 async function enterPlay() {
   busy = false; stopConcurrent();
+  S.chatOpen = false; S.chatUnread = 0;
   concurrent = (online && !isSoloIdleMatch()) ? false : await call('isConcurrent', h); S.screen = 'play'; S.modal = null;
   bgCtx(); render();
   dealPending = SHUFFLE_GAMES.has(cur.id) && (!view || !view.moves) && (!online || isSoloIdleMatch()) ? 1 : 0;
@@ -240,15 +325,66 @@ async function enterPlay() {
   if (!view || !view.moves) setTimeout(() => cut({ text: '対局開始', tone: 'gold', ms: 1200 }), 150);
   refresh();
 }
-function leavePlay() { token++; busy = false; cpuTurnKey = ''; stopClock(); stopConcurrent(); closeSheet(); if (online) leaveOnlinePlay(); h = -1; view = null; }
+function leavePlay() { token++; busy = false; cpuTurnKey = ''; S.chatOpen = false; S.chatUnread = 0; stopClock(); stopConcurrent(); closeSheet(); if (online) leaveOnlinePlay(); h = -1; view = null; }
 const subText = () => online ? (view && view.mine < 0 ? 'みんなで遊ぶ・観戦中' : isSoloIdleMatch() ? '1人プレイ(待機中)' : 'みんなで遊ぶ') : mode === 'pass' ? '手番ごとに交代' : 'CPU ' + LV[pcfg ? pcfg.level : 1];
+function playChatPopHtml() {
+  return `<button type="button" class="chatpop-back" data-chatclose aria-label="チャットを閉じる"></button>
+    <div class="chatpop" id="chatpop" role="dialog" aria-label="チャット">
+      <div class="chatpop-hd"><b>チャット</b><button type="button" class="btn chatpop-close" data-chatclose aria-label="閉じる">✕</button></div>
+      ${chatBox()}
+    </div>`;
+}
+function syncChatFab() {
+  const fab = document.querySelector('[data-chatfab]');
+  if (!fab) return;
+  const chatOn = online && typeof isChatEnabled === 'function' ? isChatEnabled() : true;
+  if (!chatOn || S.chatOpen) S.chatUnread = 0;
+  const cnt = chatOn ? (S.chatUnread || 0) : 0;
+  fab.setAttribute('aria-expanded', String(!!S.chatOpen));
+  fab.setAttribute('aria-label', S.chatOpen ? 'チャットを閉じる' : 'チャットを開く');
+  fab.classList.toggle('is-open', !!S.chatOpen);
+  fab.classList.toggle('is-off', !chatOn);
+  fab.classList.toggle('has-unread', cnt > 0);
+  let badge = fab.querySelector('.chatfab-badge');
+  if (cnt > 0) {
+    if (!badge) { badge = document.createElement('span'); badge.className = 'chatfab-badge'; fab.appendChild(badge); }
+    badge.textContent = cnt > 99 ? '99+' : String(cnt);
+  } else if (badge) {
+    badge.remove();
+  }
+}
+function togglePlayChat(open) {
+  if (S.screen !== 'play' || !online) return;
+  const next = open != null ? !!open : !S.chatOpen;
+  S.chatOpen = next;
+  if (!next) {
+    S.stOpen = false;
+    document.querySelectorAll('.chatpop-back, #chatpop').forEach((el) => el.remove());
+  } else {
+    S.chatUnread = 0;
+    document.querySelectorAll('.chatpop-back, #chatpop').forEach((el) => el.remove());
+    const scr = $('.play-screen');
+    if (scr) {
+      scr.insertAdjacentHTML('beforeend', playChatPopHtml());
+      const log = $('#log'); if (log) log.scrollTop = log.scrollHeight;
+      if (typeof keepStampScroll === 'function') keepStampScroll();
+    }
+  }
+  syncChatFab();
+}
 function play() {
   const g = cur;
   const soloMatch = online && isSoloIdleMatch();
   const autoMe = online && isMySeatAutoCpu();
   const canUndo = view && (online ? !!(ost && ost.undoOk) && !busy && !autoMe && view.moves > 0 && !(ost && ost.undoAsk) : view.undoAllowed !== false && !busy && view.moves > 0 && (view.seats.some((s) => !s.human) || !!view.outcome));
   const listLabel = /shogi|gogo|chess/.test(g.id) ? '駒の一覧' : '役の一覧';
-  return `<div class="screen"><div class="stage">
+  const mob = isMob();
+  if (!mob && S.chatOpen) S.chatOpen = false;
+  const chatOn = online && typeof isChatEnabled === 'function' ? isChatEnabled() : true;
+  const chatCnt = chatOn ? (S.chatUnread || 0) : 0;
+  const chatBtn = online && mob ? `<button type="button" class="btn chatfab${chatOn ? '' : ' is-off'}${S.chatOpen ? ' is-open' : ''}${chatCnt ? ' has-unread' : ''}" data-chatfab aria-label="${S.chatOpen ? 'チャットを閉じる' : 'チャットを開く'}" aria-expanded="${!!S.chatOpen}" title="チャット">${ic('chat')}${chatCnt ? `<span class="chatfab-badge">${chatCnt > 99 ? '99+' : chatCnt}</span>` : ''}</button>` : '';
+  const chatPop = online && mob && S.chatOpen ? playChatPopHtml() : '';
+  return `<div class="screen play-screen${online ? ' is-online' : ''}"><div class="stage">
     <div class="stagehead"><button class="btn" data-go="${online ? 'room' : 'menu'}" aria-label="戻る">${ic('back')}</button><h2>${esc(g.name)}</h2><span>${esc(subText())}<b id="hround"></b></span><em class="myturn" id="myturn" hidden>あなたの番</em></div>
     <div class="boardwrap" id="boardwrap"></div>
     <div class="acts" id="acts"></div>
@@ -263,8 +399,8 @@ function play() {
     <div class="ops"><button class="btn" data-undo ${canUndo ? '' : 'disabled'}>${ic('undo')}待った</button><button class="btn" data-rule="${g.id}">${ic('book')}ルール</button>
      <button class="btn ${hasList(g.id) ? 'listbtn' : ''}" data-list ${hasList(g.id) ? '' : 'disabled'}>${ic('list')}${listLabel}</button><button class="btn" data-resign ${view && view.canResign && view.human && !view.outcome && !busy && !autoMe ? '' : 'disabled'}>${ic('flag')}降参</button></div>
     ${online ? `<div class="online-ops">${!soloMatch && view && view.mine >= 0 ? `<button class="btn ${myAutoCpuOn() ? 'gold' : ''}" data-autocpu ${view.outcome ? 'disabled' : ''}>${myAutoCpuOn() ? 'CPU操作を解除' : 'CPUに操作を任せる'}</button>` : ''}<button class="btn" data-oomembers>メンバー (${ost && ost.members ? ost.members.length : 0})</button></div>` : ''}
-    ${online ? chatBox() : `<div class="sidenote" id="sidenote"></div>`}
-   </aside></div>`;
+    ${online && !mob ? chatBox() : !online ? `<div class="sidenote" id="sidenote"></div>` : ''}
+   </aside>${chatBtn}${chatPop}</div>`;
 }
 const hasList = (id) => /shogi|gogo|chess|poker|holdem|hanafuda|yacht|daifugo|mahjong/.test(id);
 let refreshRevision = 0, cpuTurnKey = '';
@@ -586,7 +722,9 @@ function startClock(my) {
   }, 1000);
 }
 function drawClock() {
-  const bar = $('#countbar'), line = $('#cline'); if (!bar) return;
+  const bar = $('#countbar'), line = $('#cline'), track = line && line.parentElement; if (!bar) return;
+  bar.classList.toggle('no-limit', !clock);
+  if (track) track.classList.toggle('no-limit', !clock);
   if (!clock) { bar.innerHTML = '<span class="dimtxt">制限時間なし</span>'; line.style.width = '0'; return; }
   const hot = clock.left <= 5;
   bar.innerHTML = `残り <b class="num ${hot ? 'hot' : ''}">${clock.left}</b> 秒`;
@@ -994,6 +1132,8 @@ app.addEventListener('click', async (e) => {
   clickSound(b, d);
   if (d.playsettings != null) return openPlaySettings();
   if (d.playsettingsclose != null) { closeSheet(); return; }
+  if (d.chatfab != null) return togglePlayChat();
+  if (d.chatclose != null) return togglePlayChat(false);
   if (d.sheetback != null) return closeSheet();
   if (d.detailopen != null) { S.mobDetail = true; return render(); }
   if (d.detailclose != null) { S.mobDetail = false; return render(); }
@@ -1036,7 +1176,7 @@ app.addEventListener('click', async (e) => {
   if (d.openfolder != null) return openDataFolder();
   if (d.firstdone != null) { S.set.name = ($('#nameIn') && $('#nameIn').value.trim()) || S.set.name; saveSet(); store.set('firstDone', true); return go('menu'); }
   if (d.photo != null) return pickPhoto();
-  if (d.stopen != null) { S.stOpen = !S.stOpen; return render(); }
+  if (d.stopen != null) { S.stOpen = !S.stOpen; if (S.screen === 'play' && typeof refreshChat === 'function') return refreshChat(); return render(); }
   if (d.stamp != null) { S.stOpen = false; return sendChat(null, +d.stamp); }
   if (d.sw) {
     if (d.sw.startsWith('o:')) { const id = S.setup.id, c = cfg(id), k = d.sw.slice(2); c.opts[k] = c.opts[k] === 'true' ? 'false' : 'true'; saveCfg(id, c); syncOnlineOptions(); return render(); }
@@ -1054,7 +1194,7 @@ app.addEventListener('click', async (e) => {
   const sg = b.closest('[data-seg]');
   if (sg) {
     const k = sg.dataset.seg, v = d.v;
-    if (k === 'filter') { if (S.filter !== v) { S.filter = v; S.filterChanged = true; } }
+    if (k === 'filter') return switchPlayerFilter(v);
     else if (k === 'theme') { S.theme = v; saveSet(); }
     else if (k.startsWith('c:')) { const c = cfg(S.setup.id), f = k.slice(2); c[f] = /^(level|seat|limit)$/.test(f) ? +v : v; saveCfg(S.setup.id, c); }
     else if (k.startsWith('o:')) { const c = cfg(S.setup.id); c.opts[k.slice(2)] = v; saveCfg(S.setup.id, c); syncOnlineOptions(); }
@@ -1147,7 +1287,8 @@ async function setFullscreen(on) {
 function goBack() {
   const snd = () => sfx.play('BACK');
   if ($('#sheetwrap')) { snd(); return closeSheet(); }
-  if (S.stOpen) { snd(); S.stOpen = false; return render(); }
+  if (S.stOpen) { snd(); S.stOpen = false; if (S.screen === 'play' && typeof refreshChat === 'function') return refreshChat(); return render(); }
+  if (S.screen === 'play' && S.chatOpen) { snd(); return togglePlayChat(false); }
   if (S.modal) { snd(); S.modal = null; return render(); }
   if (S.screen === 'menu' && S.mobDetail) { snd(); S.mobDetail = false; return render(); }
   if (S.screen !== 'menu' && S.screen !== 'first') snd();
@@ -1167,8 +1308,9 @@ window.addEventListener('resize', () => {
   document.body.style.height = (z === 1 || mob) ? '' : (100 / z) + 'vh';
   document.body.style.width = (z === 1 || mob) ? '' : (100 / z) + 'vw';
   if (mob) { hideCursor(); document.querySelectorAll('.rcur.live').forEach((e) => e.remove()); }
+  if (!mob && S.chatOpen) S.chatOpen = false;
   if (!mob && S.mobDetail) { S.mobDetail = false; if (S.screen === 'menu') return render(); }
-  if (mob !== lastResizeMob) { lastResizeMob = mob; if (S.screen !== 'play') render(); }
+  if (mob !== lastResizeMob) { lastResizeMob = mob; if (S.screen !== 'play' || online) render(); }
 }, { passive: true });
 window.addEventListener('mousedown', (e) => { if (e.button === 3 || e.button === 4) e.preventDefault(); });
 window.addEventListener('mouseup', (e) => { if (e.button === 3) { e.preventDefault(); goBack(); } else if (e.button === 4) e.preventDefault(); });

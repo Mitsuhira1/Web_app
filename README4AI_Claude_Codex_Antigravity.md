@@ -56,6 +56,27 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-17 21:06(PST)/ Antigravity / ccr-efc07031-6exjqs
+- 目的: ユーザーの指示（3項目 + 初回起動競合修正）。
+  1. スマホ版 (`isMob()`) の対局画面 (`.play-screen`) でなるべくスクロール不要にし、オンライン対局中のチャットは丸いフローティングボタン (`.chatfab`)＋未読バッジを押すと浮き出るポップアップ (`#chatpop`) にする。
+  2. 公開ルーム一覧の更新ボタン (`[data-pubrefresh]`) を回転矢印アイコン (`IC.refresh` + `.is-spin`) にする。
+  3. ゲームの人数フィルター切替時、ワンフレーム切替ではなくアニメーション（FLIP 移動・退場ゴースト・順次フェードイン）で切り替える。
+  4. あわせて冷起動・リロード直後に `online.js` の `setTimeout(..., 0)` が `app.js` 読込前 (`coreReady` 未定義) に発火して `netReady` が `false` のまま止まる場合があった競合を修正。
+- 変更:
+  - `web/pc-firebase/js/art.js`: `IC.refresh`（回転矢印 SVG）と `IC.chat`（吹き出し SVG）を追加。
+  - `web/pc-firebase/js/app.js`:
+    - メニューの人数フィルター切替を `menuMainHtml()` + `switchPlayerFilter(v)` へ分離し、`.rail` を再生成せずに Web Animations API で残存タイルの FLIP 移動・除外タイルの `.tile-ghost-out` フェード縮小退場・新規タイルの順次登場・見出しフェードを実行（`S.set.reduce` 時は即切替、`.main.filter-enter.filter-anim` で既存テスト互換維持）。
+    - スマホ対局画面で `.side .chat` を省略し、円形 `.chatfab`（`.chatfab-badge` 未読数表示）＋ `.chatpop-back` / `#chatpop` ポップアップ（`togglePlayChat`, `syncChatFab`, `playChatPopHtml`）を `#boardwrap` を再描画せず開閉可能に実装。`Escape` / `goBack()` / リサイズ時は閉じるように対応。
+    - `drawClock()` で時間制限なし時に `#countbar`・`.countline` へ `.no-limit` クラスを付与しスマホ表示時に高さを詰めるよう調整。
+  - `web/pc-firebase/js/online.js`:
+    - `[data-pubrefresh]` をアイコンのみの丸ボタン `.pubrefresh-btn` に変更し、`refreshPublicRooms()` で最低 450ms `.is-spin` 回転クラスを付与。
+    - `onlineChanged()` と `refreshChat()` でスマホ対局中のチャット受信時に未読数 `S.chatUnread` を更新し、`.side .chat, #chatpop .chat` の両方を更新・`sendChat()` のスタンプ送信時も対局中は `refreshChat()` のみ呼んで盤面維持。
+    - `ensureNet()` の自動起動を `document.readyState === 'loading'` 時は `DOMContentLoaded` 後に遅延し、`app.js` の `coreReady` 初期化前発火による失敗を防止。
+  - `web/pc-firebase/css/app.css`: `.pubrefresh-btn` / `@keyframes pubSpin`、`.chatfab` / `.chatfab-badge` / `#chatpop`（BGM バー `#bgs:not([hidden])` 回避位置）、`.tile-ghost-out`、および `@media (max-width:680px)` / `@media (max-height:540px) and (max-width:960px)` 向けの `.play-screen` 省スペース無スクロール配置（`.no-limit` 非表示、`.status`＋`.sidenote:not(.custom)` の同列配置、4列 `.ops`、人生すごろくの `.lside` 横並びルーレット、将棋/ヨット/ヒット＆ブロー/カード/麻雀/ソリティア等の `dvh` ベース調整、横画面 2カラム `100dvh` 固定）を追加。
+  - `web/pc-firebase/sw.js`: キャッシュ名を `asobipcfb-20261117-mob-noscroll-anim-4` に更新。
+- ファイル: `web/pc-firebase/js/art.js`, `web/pc-firebase/js/app.js`, `web/pc-firebase/js/online.js`, `web/pc-firebase/css/app.css`, `web/pc-firebase/sw.js`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `git diff --check`、`node --check` (`art.js`, `app.js`, `online.js`, `sw.js`)、`node tools/tests/check_transient_audio.cjs`、`node tools/tests/check_cursor_send.cjs`、`node tools/tests/test_extra_12_games.mjs`、ヘッドレス Chromium CDP 検証3種（`tablet_verify.py`・`e2e_verify.py`・`mobile_ux_verify.py`: フィルターアニメーション＋省モーション対応、スマホ縦 `390×844` 全30ゲーム / `360×740` 主要12ゲーム / スマホ横 `844×390` 主要12ゲームのすべてで縦横ページスクロール0、公開ルーム更新アイコン回転、オンラインスマホの `.chatfab` 未読バッジ・スタンプ・チャット送受信時の盤面非再描画、主要スクリーンショット目視確認）すべて合格。`web/pc/` と `Windows-Projects` は無変更。`ccr-efc07031-6exjqs` へコミット・プッシュ済み。
+
 ### 2026-11-17 20:41(PST)/ Antigravity / ccr-efc07031-6exjqs
 - 目的: ユーザーの指示。`web/pc-firebase/` をタブレット（縦・横）でブラウザ表示したときも PC 版の基本構成（左ナビ `.rail` ＋ 中央 `.main`/`.stage` ＋ 右 `.detail`/`.side`）のまま違和感なく収まるように調整し、終了ボタン (`.quitbtn`) を非表示にする。
 - 変更:

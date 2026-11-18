@@ -25,6 +25,8 @@ const IC = {
   g_yo:'<path d="M5 9l3.500 4L12 6.500l3.500 6.500L19 9l-1.500 9.500h-11z"/>',
   g_cd:'<path d="M12 4C9 8 5.500 10 5.500 13.500a3.200 3.200 0 006 1.500h1a3.200 3.200 0 006-1.500C18.500 10 15 8 12 4zM12 15v5M9.500 20h5"/>',
   smile:'<circle cx="12" cy="12" r="8.500"/><path d="M8.500 13.500c1 1.600 2.200 2.300 3.500 2.300s2.500-.7 3.500-2.300"/><circle cx="9.300" cy="10" r=".6" fill="currentColor"/><circle cx="14.700" cy="10" r=".6" fill="currentColor"/>',
+  refresh:'<path d="M20.5 12a8.5 8.5 0 1 1-2.4-5.95"/><path d="M20.5 3.8v4.8h-4.8"/>',
+  chat:'<path d="M20 11.2c0 4-3.6 7.3-8 7.3-1.3 0-2.6-.3-3.7-.8L4 19.3l1.1-3.6A6.8 6.8 0 0 1 4 11.2C4 7.2 7.6 4 12 4s8 3.2 8 7.2z"/><circle cx="8.8" cy="11.2" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="11.2" r=".9" fill="currentColor" stroke="none"/><circle cx="15.2" cy="11.2" r=".9" fill="currentColor" stroke="none"/>',
 };
 const ic = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${IC[n]}</svg>`;
 

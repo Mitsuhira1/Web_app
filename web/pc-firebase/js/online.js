@@ -532,8 +532,10 @@ async function ensureNet() {
 }
 const cpuLvForRoom = () => lvIndex(S.set.cpuLv);
 
-// 起動時に Firebase 匿名ログインを開始しておく
-setTimeout(() => { ensureNet().catch(() => {}); }, 0);
+// 起動時に Firebase 匿名ログインを開始しておく(app.js 読込完了後に実行)
+const startNetInit = () => { ensureNet().catch(() => {}); };
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startNetInit, { once: true });
+else setTimeout(startNetInit, 0);
 
 // ---------------------------------------------------------------- ホスト移譲・引き継ぎ・キック・フラグ操作
 function nextHostCandidateUid(excludeUid) {
@@ -852,7 +854,10 @@ function sendChat(t, st) {
     sfxPop(true);
     if (isHostRoom()) scheduleHostSync();
   } else toast({ w: 'お知らせ', t: '少し待ってから送ってください' });
-  if (st != null) render();
+  if (st != null) {
+    if (S.screen === 'play') refreshChat();
+    else render();
+  }
 }
 
 // ---------------------------------------------------------------- ルーム設定・公開ルーム一覧
@@ -947,14 +952,17 @@ function syncPublicRoomsWatch() {
   }
 }
 
+let refreshSpinTimer = null;
 async function refreshPublicRooms() {
   if (!netApi || typeof netApi.listPublicRooms !== 'function') {
     await ensureNet();
   }
   if (!netApi || typeof netApi.listPublicRooms !== 'function') return;
   fbState.publicRoomsLoading = true;
+  const spinUntil = Date.now() + 450;
+  if (refreshSpinTimer) { clearTimeout(refreshSpinTimer); refreshSpinTimer = null; }
   const btn = document.querySelector('[data-pubrefresh]');
-  if (btn) btn.disabled = true;
+  if (btn) { btn.disabled = true; btn.classList.add('is-spin'); }
   try {
     fbState.publicRooms = await netApi.listPublicRooms();
     fbState.publicRoomsLoaded = true;
@@ -967,7 +975,15 @@ async function refreshPublicRooms() {
     if (box) {
       box.innerHTML = publicRoomsListHtml();
       if (cnt) cnt.textContent = String(fbState.publicRooms.length);
-      if (btn) btn.disabled = false;
+      if (btn) {
+        btn.disabled = false;
+        const left = Math.max(0, spinUntil - Date.now());
+        refreshSpinTimer = setTimeout(() => {
+          refreshSpinTimer = null;
+          const b2 = document.querySelector('[data-pubrefresh]');
+          if (b2 && !fbState.publicRoomsLoading) b2.classList.remove('is-spin');
+        }, left);
+      }
     } else {
       render();
     }
@@ -1068,7 +1084,7 @@ function room() {
   const howtoPanel = `<div class="panel"><h3>遊び方</h3><div class="howto"><p><b>部屋を作る人</b>: 「部屋を作る」を押して、発行された4桁のルームコードを相手に伝えます。公開に設定すると一覧にも表示されます。</p><p><b>参加する人</b>: 4桁のルームコードを入力するか、公開ルーム一覧から選んで参加します。</p><p><b>ホスト機能・観戦</b>: ホストは参加メンバーをクリックして「ホストを変更」「キック」ができます。次の対局を見学したい時は「観戦モード」をONにしてください。</p><p class="dimtxt">Webブラウザ版・Androidアプリ版・Windows版のどれからでも同じルームコードで対戦できます。</p></div></div>`;
   let right = '';
   if (none) {
-    right += `<div class="panel"><div class="pubrooms-hd"><h3>公開ルーム一覧 <span class="badge" id="pubroomsCount">${(fbState.publicRooms || []).length}</span></h3><button type="button" class="btn" data-pubrefresh style="height:32px;padding:0 12px;font-size:12.5px">更新</button></div><div id="pubroomsBox">${publicRoomsListHtml()}</div></div>`;
+    right += `<div class="panel"><div class="pubrooms-hd"><h3>公開ルーム一覧 <span class="badge" id="pubroomsCount">${(fbState.publicRooms || []).length}</span></h3><button type="button" class="btn pubrefresh-btn${fbState.publicRoomsLoading ? ' is-spin' : ''}" data-pubrefresh aria-label="公開ルーム一覧を更新" title="更新">${ic('refresh')}</button></div><div id="pubroomsBox">${publicRoomsListHtml()}</div></div>`;
   }
   if (!none && st.phase === 'PLAYING') {
     const inMatch = st.match >= 0;
@@ -1601,16 +1617,26 @@ function onlineChanged() {
   if (nChat > chatSeen) {
     const startIdx = chatSeen;
     chatSeen = nChat;
+    let unreadAdd = 0;
     for (let ci = startIdx; ci < nChat; ci++) {
       const m = ost.chat[ci];
       if (!m) continue;
       if (m.kind === 2) {
         if (ci === nChat - 1) toast({ w: 'お知らせ', t: m.body, chat: true });
-      } else if (isChatEnabled() && m.slot !== ost.mySlot && ci === nChat - 1) {
-        sfxPop(false);
-        const si = stampIdx(m);
-        toast({ w: m.name, t: si < 0 ? m.body : null, s: si >= 0 ? si : null, chat: true });
+      } else if (isChatEnabled()) {
+        if (m.slot !== ost.mySlot) {
+          unreadAdd++;
+          if (ci === nChat - 1) {
+            sfxPop(false);
+            const si = stampIdx(m);
+            toast({ w: m.name, t: si < 0 ? m.body : null, s: si >= 0 ? si : null, chat: true });
+          }
+        }
       }
+    }
+    if (unreadAdd > 0 && S.screen === 'play' && typeof isMob === 'function' && isMob() && !S.chatOpen) {
+      S.chatUnread = (S.chatUnread || 0) + unreadAdd;
+      if (typeof syncChatFab === 'function') syncChatFab();
     }
   }
   const ask = ost.undoAsk;
@@ -1643,7 +1669,8 @@ function keepInputs(fn) {
   if (e) { e.focus(); try { e.setSelectionRange(pos, pos); } catch (x) {} }
 }
 function refreshChat() {
-  const box = document.querySelector('.side .chat'); if (!box) return;
+  if (typeof syncChatFab === 'function') syncChatFab();
+  const box = document.querySelector('.side .chat, #chatpop .chat'); if (!box) return;
   const inp = $('#chatin'), val = inp ? inp.value : '', focus = document.activeElement === inp;
   box.outerHTML = chatBox();
   const n = $('#chatin'); if (n) { n.value = val; if (focus) n.focus(); }
