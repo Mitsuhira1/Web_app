@@ -12,10 +12,10 @@
     const s = Math.floor(id / 13), red = s === 1 || s === 2;
     return `<span class="pc ${red ? 'r' : ''} ${cls}" ${attr}><i class="ix">${RK(id)}<br>${SU[s]}</i><b>${SU[s]}</b></span>`;
   }
-  const face = (game, c, cls = '', attr = '') => {
-    if (c.back) return game === 'uno' ? `<span class="pc svgc ${cls}" ${attr}>${ohCard('back')}</span>` : game === 'hanafuda' ? `<span class="pc hback ${cls}" ${attr}></span>` : pc(-1, cls, attr);
-    if (game === 'uno') return `<span class="pc svgc ${cls}" ${attr}>${window.CARDFACE(game, c).html}</span>`;
-    if (game === 'hanafuda') return `<span class="pc svgc hana ${cls}" ${attr} title="${esc(c.t)}">${window.HANA(c.id)}</span>`;
+  const face = (game, c, cls = '', attr = '', extra = '') => {
+    if (c.back) return game === 'uno' ? `<span class="pc svgc ${cls}" ${attr}>${ohCard('back')}${extra}</span>` : game === 'hanafuda' ? `<span class="pc hback ${cls}" ${attr}>${extra}</span>` : pc(-1, cls, attr);
+    if (game === 'uno') return `<span class="pc svgc ${cls}" ${attr}>${window.CARDFACE(game, c).html}${extra}</span>`;
+    if (game === 'hanafuda') return `<span class="pc svgc hana ${cls}" ${attr} title="${esc(c.t)}">${window.HANA(c.id)}${extra}</span>`;
     return pc(c.id, cls, attr);
   };
   // 席の場所(自分は下。ほかの人は番の順に左 → 上 → 右)
@@ -81,7 +81,23 @@
       A.sel = { ids: [...picked] }; A.sfx('TAP'); A.redraw();
     });
     if (nf.length) fly(A, '.pile2 .pc.new', t.fieldOwner);
-    A.drag({ src: '.hand2 [data-card]', dst: '.feltin', drop: (sEl) => { const id = +sEl.dataset.card, ids = picked.has(id) && picked.size > 1 ? [...picked] : [id]; const mv = moves.find(([, cs]) => cs.length === ids.length && cs.every((c) => ids.includes(c))); if (mv) { A.sel = null; A.play(mv[0]); } } });
+    A.drag({
+      src: '.hand2 [data-card]',
+      dst: '.feltin',
+      getStack: (sEl) => {
+        const id = +sEl.dataset.card;
+        if (picked.has(id) && picked.size > 1) {
+          const all = [...document.querySelectorAll('#boardwrap .hand2 [data-card]')].filter((el) => picked.has(+el.dataset.card));
+          return [sEl, ...all.filter((el) => el !== sEl)];
+        }
+        return [sEl];
+      },
+      drop: (sEl) => {
+        const id = +sEl.dataset.card, ids = picked.has(id) && picked.size > 1 ? [...picked] : [id];
+        const mv = moves.find(([, cs]) => cs.length === ids.length && cs.every((c) => ids.includes(c)));
+        if (mv) { A.sel = null; A.play(mv[0]); }
+      },
+    });
     const lab = (m) => t.phase === 0 || (m >= 10000 && m < 30000) ? '渡す' : m >= 30000 && m < 31000 ? '渡す(7渡し)' : m >= 31000 && m < 32000 ? '捨てる(10捨て)' : '出す';
     const acts = [{ label: 'パス', move: 0, enabled: human && A.view.legal.includes(0), cls: '' }, ...b.buttons.filter((x) => x.m >= 32000).map((x) => ({ label: x.label, move: x.m, enabled: human, cls: '' }))];
     acts.push({ label: '選び直す', enabled: human && picked.size > 0, cls: '', fn: () => { A.sel = null; A.redraw(); } });
@@ -125,7 +141,59 @@
     A.strip(`<div class="seatlist ${t.dir > 0 ? 'down' : 'up'}" aria-label="${t.dir > 0 ? '下へ回る' : '上へ回る'}">${b.scores.map((s, i) => `<div class="pl${s.turn ? ' turn' : ''}">${i === me ? A.face(24) : `<span class="dot face">${esc(A.name(i)[0])}</span>`}<span class="who"><span class="nm">${esc(A.name(i))}</span></span><span class="bslot">${t.decl === i ? '<span class="bdg ohno">Oh, No!</span>' : i === next && !s.turn ? '<span class="bdg next">NEXT</span>' : ''}</span><span class="cnt"><i></i>${t.n[i]}</span></div>`).join('')}</div>`);
     const top = b.zones[0].cards[0], hand = b.zones[1].cards;
     const sel = A.sel && A.sel.k != null && A.sel.k < hand.length ? A.sel.k : -1;
-    const ok = (c) => c.m != null || c.opts.length > 0;
+    const ok = (c) => c && (c.m != null || (c.opts && c.opts.length > 0));
+    const rawCard = (c) => Math.floor(c.id / 10);
+    const colOf = (c) => { const x = rawCard(c); return x < 100 ? Math.floor(x / 25) : 4; };
+    const rankOf = (c) => { const x = rawCard(c); if (x >= 100) return x < 104 ? 13 : 14; const k = x % 25; return k === 0 ? 0 : (k + 1) >> 1; };
+    const legalSet = new Set(A.view.legal);
+    const bundleOn = !!(t.bundle && !t.drawnOnly && !t.swapping);
+    const byRank = new Map();
+    hand.forEach((c, idx) => {
+      const r = rankOf(c);
+      if (!byRank.has(r)) byRank.set(r, []);
+      if (byRank.get(r).length < 8) byRank.get(r).push(idx);
+    });
+    const bundleRanks = new Set();
+    if (bundleOn) {
+      for (const m of A.view.legal) {
+        if (m >= 1000000) bundleRanks.add(((m - 1000000) >>> 13) & 0x1f);
+      }
+    }
+    const inBundleGroup = (k) => {
+      if (!bundleOn || k < 0 || k >= hand.length) return false;
+      const r = rankOf(hand[k]);
+      return bundleRanks.has(r) && (byRank.get(r) || []).includes(k);
+    };
+    const rawBundleSel = bundleOn && A.sel && Array.isArray(A.sel.bundle)
+      ? A.sel.bundle.filter((i) => Number.isInteger(i) && i >= 0 && i < hand.length && inBundleGroup(i))
+      : [];
+    const bundleSel = rawBundleSel.length
+      ? rawBundleSel.filter((i, idx, arr) => arr.indexOf(i) === idx && rankOf(hand[i]) === rankOf(hand[rawBundleSel[0]]))
+      : [];
+    const buildBundleMove = (selIdxs) => {
+      if (!bundleOn || selIdxs.length < 2) return null;
+      const rk = rankOf(hand[selIdxs[0]]), idxs = byRank.get(rk) || [];
+      if (!bundleRanks.has(rk)) return null;
+      let mask = 0;
+      for (const idx of selIdxs) {
+        const sub = idxs.indexOf(idx);
+        if (sub < 0) return null;
+        mask |= (1 << sub);
+      }
+      const lastIdx = selIdxs[selIdxs.length - 1], lastSub = idxs.indexOf(lastIdx);
+      if (lastSub < 0) return null;
+      if (rk >= 13) {
+        const opts = [0, 1, 2, 3]
+          .map((wcol) => [`${OCN[wcol]}にする`, 1000000 + ((rk << 13) | (wcol << 11) | (lastSub << 8) | mask)])
+          .filter(([, m]) => legalSet.has(m));
+        return opts.length ? { wild: true, opts } : null;
+      }
+      const c = colOf(hand[lastIdx]);
+      const m = 1000000 + ((rk << 13) | (c << 11) | (lastSub << 8) | mask);
+      return legalSet.has(m) ? { wild: false, move: m } : null;
+    };
+    const bundleMv = buildBundleMove(bundleSel);
+    const canTap = (c, k) => ok(c) || inBundleGroup(k);
     const nf = top ? fresh(A, 'un', [top.id]) : [];
     const seats = seatsOf(A, total, me).map((s) => seatHtml(A, s, { count: t.n[s.seat], note: t.decl === s.seat ? 'Oh, No!' : s.seat === next ? 'NEXT' : '', noteCls: t.decl === s.seat ? 'ohno' : 'next' })).join('');
     const drawnOnly = human && t.pass && hand.some((c) => c.hi);
@@ -133,23 +201,79 @@
     const center = `<div class="unoc">
       <button class="ustock ${t.draw && human ? 'can' : ''}" data-draw="1" ${t.draw && human ? '' : 'disabled'} aria-label="山札から引く"><span class="pc svgc s3">${ohCard('back')}</span><span class="pc svgc s2">${ohCard('back')}</span><span class="pc svgc">${ohCard('back')}</span><small class="ulabel">山札${t.draw && human ? `<br>${t.pending > 0 ? `クリックして${t.pending}枚引く` : 'クリックして引く'}` : ''}</small></button>
       <div class="udisc" style="--uc:${col}">${top ? face('uno', top, nf.length ? 'new' : '') : ''}<small><i style="background:${col}"></i>いまの色: ${OCN[t.color] || ''}</small></div>
-      ${t.pass && !t.draw && human && !hand.some(ok) ? '<button class="upass" data-pass="1">PASS</button>' : ''}
+      ${t.pass && !t.draw && human && !hand.some((c, k) => canTap(c, k)) ? '<button class="upass" data-pass="1">PASS</button>' : ''}
      </div><div class="pinfo">${t.lastMover >= 0 && t.last ? `<span class="pill"><b>${esc(A.name(t.lastMover))}</b>${esc(t.last)}</span>` : ''}${t.pending > 0 ? `<span class="pill warn">次の人は${t.pending}枚引きます</span>` : ''}${drawnOnly ? '<span class="pill">引いた札だけ出せます</span>' : ''}</div>`;
-    const handHtml = handRow(hand, hand.map((c, k) => face('uno', c, `${k === sel ? 'on' : ''} ${human && !ok(c) ? 'no' : ''} ${human && ok(c) ? 'tap' : ''} ${c.hi ? 'hi' : ''}`, `data-k="${k}"`)).join(''));
-    const playCard = (k) => { const c = hand[k]; if (!c) return; if (c.opts.length) return pickColor(A, c.opts); A.sel = null; A.play(c.m); };
+    const handHtml = handRow(hand, hand.map((c, k) => {
+      const bIdx = bundleSel.indexOf(k);
+      const isSel = bIdx >= 0 || k === sel;
+      const badge = bIdx >= 0 ? `<b class="ubord">${bIdx + 1}</b>` : '';
+      return face('uno', c, `${isSel ? 'on' : ''} ${human && !canTap(c, k) ? 'no' : ''} ${human && canTap(c, k) ? 'tap' : ''} ${c.hi ? 'hi' : ''}`, `data-k="${k}"`, badge);
+    }).join(''));
+    const playCard = (k) => { const c = hand[k]; if (!c || !ok(c)) return; if (c.opts.length) return pickColor(A, c.opts); A.sel = null; A.play(c.m); };
+    const playBundle = () => {
+      if (!bundleMv) return;
+      if (bundleMv.wild) return pickColor(A, bundleMv.opts);
+      A.sel = null;
+      A.play(bundleMv.move);
+    };
     A.board(wrap('oval uno', seats + center, handHtml), (d) => {
       if (!human) return;
       if (d.draw != null) return t.draw && A.play(t.mDraw);
       if (d.pass != null) { const b2 = document.querySelector('.upass'); if (b2) b2.classList.add('press'); return setTimeout(() => A.play(t.mPass), 170); }
-      if (d.k == null) return; const k = +d.k, c = hand[k]; if (!c || !ok(c)) return;
+      if (d.k == null) return;
+      const k = +d.k, c = hand[k];
+      if (!c || !canTap(c, k)) return;
+      if (bundleOn && inBundleGroup(k)) {
+        if (bundleSel.includes(k)) {
+          if (bundleSel.length === 1 && !A.pre && ok(c)) return playCard(k);
+          const nextSel = bundleSel.filter((x) => x !== k);
+          A.sel = nextSel.length ? { bundle: nextSel, k: nextSel[nextSel.length - 1] } : null;
+          A.sfx('TAP');
+          return A.redraw();
+        }
+        if (bundleSel.length > 0 && rankOf(hand[bundleSel[0]]) === rankOf(c)) {
+          const nextSel = [...bundleSel, k];
+          A.sel = { bundle: nextSel, k };
+          A.sfx('TAP');
+          return A.redraw();
+        }
+        A.sel = { bundle: [k], k };
+        A.sfx('TAP');
+        return A.redraw();
+      }
+      if (!ok(c)) return;
       if (!A.pre || sel === k) return playCard(k);
       A.sel = { k }; A.sfx('TAP'); A.redraw();
     });
-    A.drag({ src: '.hand2 [data-k]', dst: '.feltin', drop: (sEl) => { const k = +sEl.dataset.k, c = hand[k]; if (c && ok(c)) playCard(k); } });
+    A.drag({
+      src: '.hand2 [data-k]',
+      dst: '.feltin',
+      getStack: (sEl) => {
+        const k = +sEl.dataset.k;
+        if (bundleSel.includes(k) && bundleSel.length > 1) {
+          const byK = new Map([...document.querySelectorAll('#boardwrap .hand2 [data-k]')].map((el) => [+el.dataset.k, el]));
+          const ordered = bundleSel.map((idx) => byK.get(idx)).filter(Boolean);
+          return [sEl, ...ordered.filter((el) => el !== sEl)];
+        }
+        return [sEl];
+      },
+      drop: (sEl) => {
+        const k = +sEl.dataset.k, c = hand[k];
+        if (bundleSel.includes(k) && bundleSel.length >= 2 && bundleMv) return playBundle();
+        if (c && ok(c)) playCard(k);
+      },
+    });
     if (nf.length) fly(A, '.udisc .pc.new', t.lastMover);
     if (t.swapping && human && t.swap.length && !A.sheetOpen()) sheetBtns(A, '手札を取りかえる相手を選ぶ', t.swap.map((p) => [`${A.name(p)}(${t.n[p]}枚)`, t.mSwap + p]));
     const acts = [];
-    if (A.pre) acts.push({ label: '出す', enabled: human && sel >= 0, cls: '', fn: () => playCard(sel) });
+    if (bundleOn && bundleSel.length >= 2) {
+      acts.push({ label: `まとめ出し(${bundleSel.length}枚)`, enabled: human && !!bundleMv, cls: 'bundle gold', fn: () => playBundle() });
+      acts.push({ label: '選び直す', enabled: human, cls: '', fn: () => { A.sel = null; A.redraw(); } });
+    } else if (bundleOn && bundleSel.length === 1) {
+      acts.push({ label: '1枚で出す', enabled: human && ok(hand[bundleSel[0]]), cls: 'gold', fn: () => playCard(bundleSel[0]) });
+    } else if (A.pre) {
+      acts.push({ label: '出す', enabled: human && sel >= 0 && ok(hand[sel]), cls: '', fn: () => playCard(sel) });
+    }
     acts.push({ label: 'パス', move: t.mPass, enabled: human && t.pass, cls: '' });
     acts.push({ label: 'Oh, No!', move: t.mDeclare, enabled: human && t.declare, cls: 'ohno' });
     A.acts(acts);
@@ -157,7 +281,8 @@
 
   // ワイルドの色を選ぶ(大きな 4 色のボタン)
   function pickColor(A, opts) {
-    A.sheet(`<h2>ワイルド: 色を選ぶ</h2><div class="cpick">${opts.map(([, m]) => `<button class="cbtn" data-m="${m}" style="--c:${OCC[m % 4]}">${OCN[m % 4]}</button>`).join('')}</div><div class="btns"><button class="btn" data-sheetback>キャンセル</button></div>`,
+    const colorOfMove = (m) => (m >= 1000000 ? (((m - 1000000) >>> 11) & 3) : (m % 4));
+    A.sheet(`<h2>ワイルド: 色を選ぶ</h2><div class="cpick">${opts.map(([, m]) => { const ci = colorOfMove(m); return `<button class="cbtn" data-m="${m}" style="--c:${OCC[ci]}">${OCN[ci]}</button>`; }).join('')}</div><div class="btns"><button class="btn" data-sheetback>キャンセル</button></div>`,
       (box) => box.querySelectorAll('button[data-m]').forEach((x) => (x.onclick = () => { A.closeSheet(); A.sel = null; A.play(+x.dataset.m); })));
   }
 
@@ -246,13 +371,13 @@
       ${seats}<div class="bjme ${A.view.toMove === me && !A.view.outcome ? 'turn' : ''}"><span class="bjwho">${A.face ? A.face(24) : ''}${esc(A.name(me))}</span>${t.hands[me].length ? `<div class="bjrow">${handsHtml(me, '')}</div>` : ''}</div>`;
     A.board(wrap('oval bjt2', table, null), () => {});
     if (nf.length && nf.length < 12) { requestAnimationFrame(() => document.querySelectorAll('#boardwrap .pc.new').forEach((e, i) => e.animate([{ transform: 'translate(30cqw,-40cqh) rotate(40deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 340 * A.speed, delay: i * 110 * A.speed, easing: 'cubic-bezier(.2,.9,.3,1)', fill: 'backwards' }))); A.anim(340 + nf.length * 110); }
-    // 回の結果: 数が決まって 1 秒後に、自分の勝ち負けをカットインで。終わったら札を引き上げて、次に賭ける
+    // 回の結果: 数が決まったらすぐに自分の勝ち負けをカットインで表示。終わったら札を引き上げて、次に賭ける
     const newRes = t.delta && (!prevBj || prevBj.h !== A.handle || prevBj.r !== t.round);
     if (newRes) {
-      if (t.dealer.length === 2 && t.dealerTotal === 21) setTimeout(() => A.cut({ who: { name: 'ディーラー' }, text: 'ブラックジャック', tone: 'dark', font: 'yo', ms: 1400 }), 500);
-      const dm = t.delta[me]; setTimeout(() => A.cut({ text: dm > 0 ? '勝ち' : dm < 0 ? '負け' : '引き分け', sub: dm ? `${dm > 0 ? '+' : ''}${dm}` : '', tone: dm > 0 ? 'gold' : 'dark', font: 'yo', ms: 1300 }), 1000);
-      const r0 = t.round; setTimeout(() => { bjCleared[A.handle + ':' + r0] = true; document.querySelectorAll('#boardwrap .bjc .pc').forEach((e, i) => e.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(0,-40cqh) rotate(-20deg)', opacity: 0 }], { duration: 360, delay: i * 25, fill: 'forwards' })); setTimeout(() => A.redraw(), 450); }, 3100 * A.speed);
-      A.anim(3700);
+      if (t.dealer.length === 2 && t.dealerTotal === 21) setTimeout(() => A.cut({ who: { name: 'ディーラー' }, text: 'ブラックジャック', tone: 'dark', font: 'yo', ms: 1300 }), 100);
+      const dm = t.delta[me]; setTimeout(() => A.cut({ text: dm > 0 ? '勝ち' : dm < 0 ? '負け' : '引き分け', sub: dm ? `${dm > 0 ? '+' : ''}${dm}` : '', tone: dm > 0 ? 'gold' : 'dark', font: 'yo', ms: 1200 }), 220);
+      const r0 = t.round; setTimeout(() => { bjCleared[A.handle + ':' + r0] = true; document.querySelectorAll('#boardwrap .bjc .pc').forEach((e, i) => e.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(0,-40cqh) rotate(-20deg)', opacity: 0 }], { duration: 320, delay: i * 25, fill: 'forwards' })); setTimeout(() => A.redraw(), 400); }, 2100 * A.speed);
+      A.anim(2500);
     }
     prevBj = { h: A.handle, r: t.round };
     A.acts(b.buttons.map((x) => ({ label: x.label, move: x.m, enabled: human && x.en !== false, cls: /ヒット|50賭/.test(x.label) ? 'gold' : '' })));

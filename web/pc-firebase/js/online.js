@@ -1158,6 +1158,7 @@ async function createFirebaseRoom() {
       {
         onPlayers(players) {
           fbState.players = players || {};
+          pruneStaleCursors();
           slideGame.players();
           syncHostPlayers(fbState.players);
           wolfGame.playersChanged();
@@ -1255,6 +1256,7 @@ async function joinFirebaseRoom(codeInput) {
       {
         onPlayers(players) {
           fbState.players = players || {};
+          pruneStaleCursors();
           slideGame.players();
           if (netApi && netApi.role === 'host') {
             syncHostPlayers(fbState.players);
@@ -1776,24 +1778,30 @@ function updateMaidCursorAim(scene,index) {
   }
 }
 function getViewportBox() {
-  const bw = maidCursorScene() || $('#boardwrap') || $('.stage') || app || document.body;
-  return bw.getBoundingClientRect();
+  const bw = maidCursorScene() || $('#boardwrap') || $('.stage') || app || (typeof document !== 'undefined' ? document.body : null);
+  return bw ? bw.getBoundingClientRect() : null;
 }
 
-function computeNormalizedPointer(clientX, clientY, active) {
+function computeNormalizedPointer(clientX, clientY, active, forceOut = false) {
   const r = getViewportBox();
   if (!r || r.width <= 0 || r.height <= 0) return null;
-  let x = (clientX - r.left) / r.width;
-  let y = (clientY - r.top) / r.height;
-  x = Math.max(0, Math.min(1, x));
-  y = Math.max(0, Math.min(1, y));
+  const rawX = (clientX - r.left) / r.width;
+  const rawY = (clientY - r.top) / r.height;
+  const out = !!forceOut || rawX < 0 || rawX > 1 || rawY < 0 || rawY > 1 || (typeof document !== 'undefined' && !!document.hidden);
+  let x = Math.max(0, Math.min(1, rawX));
+  let y = Math.max(0, Math.min(1, rawY));
   if (online && S.screen === 'play' && curFlip(mySeat)) {
     x = 1 - x;
     y = 1 - y;
   }
-  const pointer = { x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000, active: !!active };
-  if (active && maidCursorScene() && view?.human) {
-    const fan = document.elementFromPoint(clientX,clientY)?.closest('.maid-fan-card');
+  const pointer = {
+    x: Math.round(x * 1000) / 1000,
+    y: Math.round(y * 1000) / 1000,
+    active: !!active && !out,
+    out,
+  };
+  if (pointer.active && maidCursorScene() && view?.human) {
+    const fan = document.elementFromPoint(clientX, clientY)?.closest('.maid-fan-card');
     if (fan) {
       pointer.maidIndex = Number(fan.dataset.maidIndex);
       pointer.maidMove = view.moves;
@@ -1804,24 +1812,25 @@ function computeNormalizedPointer(clientX, clientY, active) {
 
 function sendPointerNow(pt) {
   if (!netApi || !fbState.roomId || !pt || isMobileCursorOff()) return;
-  const sig = `${pt.x.toFixed(3)}:${pt.y.toFixed(3)}:${pt.active ? 1 : 0}:${ost ? ost.mySlot : 0}:${online ? mySeat : -1}:${pt.maidMove ?? ''}:${pt.maidIndex ?? ''}`;
+  const sig = `${pt.x.toFixed(3)}:${pt.y.toFixed(3)}:${pt.active ? 1 : 0}:${pt.out ? 1 : 0}:${ost ? ost.mySlot : 0}:${online ? mySeat : -1}:${pt.maidMove ?? ''}:${pt.maidIndex ?? ''}`;
   if (sig === lastPointerSentSig) return;
   lastPointerSentSig = sig;
   lastPointerSentAt = performance.now();
   const mySlot = ost ? ost.mySlot : 0;
   netApi.writeCursor({
     ...pt,
+    out: !!pt.out,
     slot: mySlot,
     seat: online ? mySeat : -1,
     name: meName(),
   }).catch(() => {});
 }
 
-function queuePointerSend(clientX, clientY, active) {
+function queuePointerSend(clientX, clientY, active, forceOut = false) {
   if (!netApi || !fbState.roomId || isMobileCursorOff()) return;
   if (online && S.screen === 'play' && cur && NO_CURSOR.has(cur.id)) return;
-  if (S.screen==='minePlay' && !minesGame.personal.share) return;
-  const pt = computeNormalizedPointer(clientX, clientY, active);
+  if (S.screen === 'minePlay' && typeof minesGame !== 'undefined' && !minesGame.personal.share) return;
+  const pt = computeNormalizedPointer(clientX, clientY, active, forceOut);
   if (!pt) return;
   pendingPointer = pt;
   const elapsed = performance.now() - lastPointerSentAt;
@@ -1841,19 +1850,20 @@ function queuePointerSend(clientX, clientY, active) {
 }
 
 let lastClientPos = { x: 0, y: 0 };
-// PCのマウス操作 (mousemove)
+// PCのマウス操作 (mousemove / mouseleave / blur)
 document.addEventListener('mousemove', (e) => {
   if (isMobileCursorOff()) return;
   lastClientPos = { x: e.clientX, y: e.clientY };
-  queuePointerSend(e.clientX, e.clientY, true);
+  const outsideWin = e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth - 1 || e.clientY >= window.innerHeight - 1;
+  queuePointerSend(e.clientX, e.clientY, !outsideWin, outsideWin);
 }, { passive: true });
 document.addEventListener('mouseleave', () => {
   if (isMobileCursorOff()) return;
-  queuePointerSend(lastClientPos.x, lastClientPos.y, false);
+  queuePointerSend(lastClientPos.x, lastClientPos.y, false, true);
 }, { passive: true });
 window.addEventListener('blur', () => {
   if (isMobileCursorOff()) return;
-  queuePointerSend(lastClientPos.x, lastClientPos.y, false);
+  queuePointerSend(lastClientPos.x, lastClientPos.y, false, true);
 });
 
 // タッチ操作 (モバイルプレイヤーはカーソルを送信・表示しない)
@@ -1881,18 +1891,70 @@ document.addEventListener('touchcancel', () => {
   queuePointerSend(lastClientPos.x, lastClientPos.y, false);
 }, { passive: true });
 
-// 受信側の補間アニメーション管理
-const remoteCursors = new Map(); // uid -> { curX, curY, tx, ty, active, slot, seat, name, updatedAt }
+// 受信側の補間アニメーション管理（幽霊・分裂カーソル防止、ウィンドウ外表示、ループ常駐）
+const remoteCursors = new Map(); // uid -> { curX, curY, tx, ty, active, out, slot, seat, name, updatedAt }
 let cursorAnimFrame = null;
+
+function isCursorOwnerValid(uid, c) {
+  if (!c || c.mobile) return false;
+  const myUid = netApi ? netApi.uid : null;
+  if (myUid && uid === myUid) return false;
+  const players = fbState && fbState.players ? fbState.players : null;
+  const pKeys = players ? Object.keys(players) : [];
+  if (pKeys.length > 0 && !players[uid]) return false;
+  const mySlot = ost && Number.isInteger(ost.mySlot) ? ost.mySlot : -1;
+  const slot = players && players[uid] && Number.isInteger(players[uid].slot)
+    ? players[uid].slot
+    : (typeof c.slot === 'number' ? c.slot : -1);
+  if (mySlot >= 0 && slot === mySlot && pKeys.length > 0) return false;
+  return true;
+}
+
+function pruneStaleCursors() {
+  if (fbState && fbState.cursors) {
+    updateRemoteTargets(fbState.cursors);
+    return;
+  }
+  for (const [uid, c] of [...remoteCursors.entries()]) {
+    if (!isCursorOwnerValid(uid, c)) {
+      remoteCursors.delete(uid);
+      const el = document.getElementById('rc_' + uid);
+      if (el) el.remove();
+    }
+  }
+}
 
 function updateRemoteTargets(cursorsObj) {
   if (isMobileCursorOff()) { clearRemoteCursors(); return; }
-  const myUid = netApi ? netApi.uid : null;
-  const seen = new Set();
+  const players = fbState && fbState.players ? fbState.players : {};
+  // 同一 slot に複数 uid の古いカーソルが残っている場合は最新の 1 件のみ採用（カーソル分裂防止）
+  const bestBySlot = new Map();
+  const validEntries = [];
   for (const [uid, c] of Object.entries(cursorsObj || {})) {
-    if (!c || c.mobile || uid === myUid) continue;
+    if (!isCursorOwnerValid(uid, c)) continue;
+    const member = players[uid];
+    const slot = member && Number.isInteger(member.slot) ? member.slot : (typeof c.slot === 'number' ? c.slot : -1);
+    const stamp = typeof c.updatedAt === 'number' ? c.updatedAt : (member && typeof member.joinedAt === 'number' ? member.joinedAt : 0);
+    if (slot >= 0) {
+      const prevBest = bestBySlot.get(slot);
+      if (!prevBest || stamp >= prevBest.stamp) {
+        bestBySlot.set(slot, { uid, c, slot, stamp });
+      }
+    } else {
+      validEntries.push({ uid, c, slot: 1 });
+    }
+  }
+  for (const item of bestBySlot.values()) validEntries.push(item);
+
+  const seen = new Set();
+  const now = performance.now();
+  for (const { uid, c, slot } of validEntries) {
+    const member = players[uid];
     const x = typeof c.x === 'number' ? Math.max(0, Math.min(1, c.x)) : 0.5;
     const y = typeof c.y === 'number' ? Math.max(0, Math.min(1, c.y)) : 0.5;
+    const out = !!c.out;
+    const active = c.active !== false && !out;
+    const name = (member && member.name) || c.name || 'プレイヤー';
     seen.add(uid);
     const maidIndex = Number.isInteger(c.maidIndex) && c.maidIndex>=0 && c.maidIndex<53 ? c.maidIndex : null;
     const maidMove = Number.isInteger(c.maidMove) ? c.maidMove : null;
@@ -1900,30 +1962,33 @@ function updateRemoteTargets(cursorsObj) {
     if (existing) {
       if (existing.tx !== x || existing.ty !== y) {
         existing.fromX = existing.curX; existing.fromY = existing.curY;
-        existing.startedAt = performance.now();
+        existing.startedAt = now;
         existing.tx = x; existing.ty = y;
       }
-      existing.active = c.active !== false;
+      existing.active = active;
+      existing.out = out;
       existing.maidIndex = maidIndex;
       existing.maidMove = maidMove;
-      existing.slot = typeof c.slot === 'number' ? c.slot : existing.slot;
+      existing.slot = slot >= 0 ? slot : existing.slot;
       existing.seat = typeof c.seat === 'number' ? c.seat : existing.seat;
-      existing.name = c.name || existing.name;
-      existing.updatedAt = performance.now();
+      existing.name = name;
+      existing.updatedAt = now;
     } else {
       remoteCursors.set(uid, {
         uid,
-        fromX: x, fromY: y, startedAt: performance.now(),
+        fromX: x, fromY: y, startedAt: now,
         curX: x,
         curY: y,
         tx: x,
         ty: y,
-        active: c.active !== false,
-        maidIndex, maidMove,
-        slot: typeof c.slot === 'number' ? c.slot : 1,
+        active,
+        out,
+        maidIndex,
+        maidMove,
+        slot: slot >= 0 ? slot : 1,
         seat: typeof c.seat === 'number' ? c.seat : -1,
-        name: c.name || 'プレイヤー',
-        updatedAt: performance.now(),
+        name,
+        updatedAt: now,
       });
     }
   }
@@ -1934,6 +1999,11 @@ function updateRemoteTargets(cursorsObj) {
       if (el) el.remove();
     }
   }
+  // DOM 上に孤立した .rcur.live 要素があれば掃除
+  document.querySelectorAll('.rcur.live').forEach((el) => {
+    const uid = el.id && el.id.startsWith('rc_') ? el.id.slice(3) : '';
+    if (!uid || !seen.has(uid)) el.remove();
+  });
   startCursorLoop();
 }
 
@@ -1946,16 +2016,29 @@ function clearRemoteCursors() {
 const liveCursorOf = (seat) => {
   if (isMobileCursorOff()) return null;
   for (const c of remoteCursors.values()) {
-    if (c.seat === seat && c.active && performance.now() - c.updatedAt < 5000) return c;
+    if (c.seat === seat && c.active && !c.out && performance.now() - c.updatedAt < 5000) return c;
   }
   return null;
 };
+
+function kickCursorLoop() {
+  if (isMobileCursorOff()) return;
+  if (fbState && fbState.cursors && Object.keys(fbState.cursors).length && !remoteCursors.size) {
+    updateRemoteTargets(fbState.cursors);
+  } else if (remoteCursors.size) {
+    startCursorLoop();
+  }
+}
 
 function startCursorLoop() {
   if (cursorAnimFrame) return;
   const step = () => {
     cursorAnimFrame = null;
-    if (!fbState.roomId || !remoteCursors.size || isMobileCursorOff()) {
+    if (!fbState.roomId || isMobileCursorOff()) {
+      document.querySelectorAll('.rcur.live').forEach((e) => e.remove());
+      return;
+    }
+    if (!remoteCursors.size) {
       document.querySelectorAll('.rcur.live').forEach((e) => e.remove());
       clearMaidCursorAim();
       return;
@@ -1970,10 +2053,35 @@ function startCursorLoop() {
     }
     const hostEl = document.body;
     const box = getViewportBox();
-    if (!hostEl || !box || box.width <= 0 || box.height <= 0) return;
-    const hostRect = {left:0, top:0};
+    // 画面遷移や再描画の瞬間に box が 0 でもループを止めず次フレームで復帰させる
+    if (!hostEl || !box || box.width <= 0 || box.height <= 0) {
+      cursorAnimFrame = requestAnimationFrame(step);
+      return;
+    }
+    const zoom = (hostEl.style && parseFloat(hostEl.style.zoom)) || 1;
+    const vw = (window.innerWidth || box.width) / zoom;
+    const vh = (window.innerHeight || box.height) / zoom;
+    const seenIds = new Set();
+    const usedSlots = new Set();
     let maidAim = false;
-    for (const [uid, c] of remoteCursors.entries()) {
+    for (const [uid, c] of [...remoteCursors.entries()]) {
+      if (!isCursorOwnerValid(uid, c)) {
+        remoteCursors.delete(uid);
+        const oldEl = document.getElementById('rc_' + uid);
+        if (oldEl) oldEl.remove();
+        continue;
+      }
+      const member = fbState.players[uid];
+      const slot = member && Number.isInteger(member.slot) ? member.slot : c.slot;
+      if (slot >= 0) {
+        if (usedSlots.has(slot)) {
+          remoteCursors.delete(uid);
+          const oldEl = document.getElementById('rc_' + uid);
+          if (oldEl) oldEl.remove();
+          continue;
+        }
+        usedSlots.add(slot);
+      }
       // 100ms updates are spread over 120ms; never depend on display refresh rate.
       const isDrawer = maidScene && view.board.turn === c.seat;
       const otherTurn = maidScene && !isDrawer && S.set.cursor !== '全員';
@@ -1990,35 +2098,79 @@ function startCursorLoop() {
         ry = 1 - ry;
       }
       const id = 'rc_' + uid;
+      seenIds.add(id);
       let el = document.getElementById(id);
-      const member = fbState.players[uid];
-      const slot = member && Number.isInteger(member.slot) ? member.slot : c.slot;
       const color = SEAT_COLORS[((slot || 0) % 6 + 6) % 6];
+      const dispName = (member && member.name) || c.name || 'プレイヤー';
       if (!el) {
-        hostEl.insertAdjacentHTML('beforeend', rcurHtml(id, c.name || 'プレイヤー', color, true));
+        hostEl.insertAdjacentHTML('beforeend', rcurHtml(id, dispName, color, true));
         el = document.getElementById(id);
         if (el) el.classList.add('live');
       }
       if (el) {
         el.style.setProperty('--cc', color);
-        el.querySelector('svg path').setAttribute('fill', color);
-        const px = (box.left - hostRect.left) + rx * box.width;
-        const py = (box.top - hostRect.top) + ry * box.height;
+        const pathEl = el.querySelector('svg path');
+        if (pathEl) pathEl.setAttribute('fill', color);
+        const tagEl = el.querySelector('span');
+        if (tagEl && tagEl.textContent !== dispName) tagEl.textContent = dispName;
+        let px = (box.left + rx * box.width) / zoom;
+        let py = (box.top + ry * box.height) / zoom;
+        const clampedX = Math.max(6, Math.min(vw - 26, px));
+        const clampedY = Math.max(6, Math.min(vh - 26, py));
+        const isOut = !!c.out || !c.active || px < 2 || py < 2 || px > vw - 6 || py > vh - 6;
+        px = clampedX;
+        py = clampedY;
         el.style.transform = `translate(${px.toFixed(1)}px,${py.toFixed(1)}px)`;
-        // タッチ操作で指を離した際(active: false)は半透明(待機表示)にする
-        el.style.opacity = c.active ? '1' : '0.38';
-        el.classList.toggle('idle', !c.active);
-        if (maidTarget && isDrawer && c.active && c.maidMove === view.moves) {
-          updateMaidCursorAim(maidScene,c.maidIndex);
+        // 画面外・タッチ待機時は半透明表示し、端ではラベルを内向きに反転
+        el.style.opacity = isOut ? '0.42' : (c.active ? '1' : '0.38');
+        el.classList.toggle('idle', !c.active || isOut);
+        el.classList.toggle('out', isOut);
+        el.classList.toggle('flip-x', px > vw - 110);
+        el.classList.toggle('flip-y', py > vh - 54);
+        if (maidTarget && isDrawer && c.active && !isOut && c.maidMove === view.moves) {
+          updateMaidCursorAim(maidScene, c.maidIndex);
           maidAim = true;
         }
       }
     }
     if (maidTarget && !maidAim) clearMaidCursorAim();
+    document.querySelectorAll('.rcur.live').forEach((el) => {
+      if (!seenIds.has(el.id)) el.remove();
+    });
     cursorAnimFrame = requestAnimationFrame(step);
   };
   cursorAnimFrame = requestAnimationFrame(step);
 }
+
+// ---------------------------------------------------------------- ヨット: 通信対戦で相手がキープ(黄枠)したサイコロをリアルタイム共有
+let lastYachtKeepSig = '';
+function syncOnlineYachtKeep(turn, rollsLeft, mask) {
+  if (!online || !netApi || !fbState.roomId) return;
+  const cleanMask = Number(mask) & 31;
+  const sig = `${fbState.roomId}:${turn}:${rollsLeft}:${cleanMask}`;
+  if (sig === lastYachtKeepSig) return;
+  lastYachtKeepSig = sig;
+  const payload = { turn: Number(turn), rollsLeft: Number(rollsLeft), mask: cleanMask, at: Date.now() };
+  if (fbState.players && netApi.uid && fbState.players[netApi.uid]) {
+    fbState.players[netApi.uid].yachtKeep = payload;
+  }
+  if (typeof netApi.setPlayerFlags === 'function') {
+    netApi.setPlayerFlags({ yachtKeep: payload }).catch(() => {});
+  }
+}
+
+function getOnlineYachtKeep(turn, rollsLeft) {
+  if (!online || !fbState || !fbState.players) return 0;
+  const slot = seatToSlot(turn);
+  const p = slot >= 0 ? playerBySlot(slot) : null;
+  const yk = p && p.yachtKeep;
+  if (yk && Number(yk.turn) === Number(turn) && Number(yk.rollsLeft) === Number(rollsLeft)) {
+    return Number(yk.mask) & 31;
+  }
+  return 0;
+}
+window.syncOnlineYachtKeep = syncOnlineYachtKeep;
+window.getOnlineYachtKeep = getOnlineYachtKeep;
 
 const roomActive = () => !!(fbState.roomId && ost && ost.role !== 'none');
 const roomChoosing = () => roomActive() && ost.phase === 'LOBBY' && !wolfGame.active() && !boardMatch.active();

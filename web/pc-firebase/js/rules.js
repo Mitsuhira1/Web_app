@@ -191,10 +191,17 @@ const EXTRA_SETUP_HINTS = {
       try { d[3](kit(c, W, H), reduce ? .92 : (now % d[0]) / d[0]); } catch (e) { live.delete(cv); console.error('demo', cv.dataset.demo, e); } }
     if (live.size) raf = requestAnimationFrame(tick);
   }
-  function startDemos(root) { root.querySelectorAll('canvas[data-demo]').forEach((cv) => live.add(cv)); if (!raf && live.size) raf = requestAnimationFrame(tick); }
-  // Oh, No! の図: 盤と同じ札の絵を、HTML で動かす
-  const unoDemo = () => `<figure class="demo"><div class="unodemo" style="height:${Math.round(160 * 1.25)}px"><div class="ud top">${ohCard(5, 3)}</div><div class="ud h1">${ohCard(3, 0)}</div><div class="ud h2">${ohCard(8, 3)}</div><div class="ud h3">${ohCard(9, 2)}</div><span class="udtag">同じ色</span></div><figcaption>${esc(D.uno_play[2])}</figcaption></figure>`;
-  const demoHtml = (id) => id === 'uno_play' ? unoDemo() : D[id] ? `<figure class="demo"><canvas data-demo="${id}" style="height:${Math.round(D[id][1] * 1.25)}px"></canvas><figcaption>${esc(D[id][2])}</figcaption></figure>` : '';
+  function startDemos(root) {
+    const reduce = document.documentElement.classList.contains('reduce');
+    root.querySelectorAll('video.rule-vid').forEach((v) => {
+      if (reduce) { try { v.pause(); v.currentTime = 1.6; } catch (e) {} }
+      else { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+    });
+    root.querySelectorAll('canvas[data-demo]').forEach((cv) => live.add(cv));
+    if (!raf && live.size) raf = requestAnimationFrame(tick);
+  }
+  // 盤面全体を映し、矢印と吹き出しで説明する短いループ動画(assets/rules/<id>.mp4)
+  const demoHtml = (id) => D[id] ? `<figure class="demo"><video class="rule-vid" data-demo="${id}" src="assets/rules/${id}.mp4" autoplay loop muted playsinline preload="metadata"></video><figcaption>${esc(D[id][2])}</figcaption></figure>` : '';
 
   // ---------------------------------------------------------------- 絵つきの説明(Oh, No! の札・役・駒の動き)
   const unoSpecial = () => `<div class="rcards">${[['skip', 0, 'スキップ', '次の人の番を飛ばす'], ['rev', 1, 'リバース', '回る向きが逆になる(2人ではスキップと同じ)'], ['+2', 2, '+2', '次の人が2枚引き、番も飛ばされる'], ['wild', -1, 'ワイルド', '好きな色を選んで出す。場では選んだ色に変わる'], ['+4', -1, '+4', '好きな色を選び、次の人が4枚引いて番も飛ばされる。いまの色を持っていない時だけ出せる']].map(([k, ci, n, b]) => `<div class="rcard">${ohCard(k, ci)}<b>${n}</b><span>${b}</span></div>`).join('')}</div>`;

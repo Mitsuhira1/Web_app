@@ -70,7 +70,7 @@ Object.assign(AR,{
  solitaire:A('url(#f1)',[['K','♠',0],['Q','♥',1],['J','♣',0],['10','♦',1]].map(([r,s,red],i)=>pc(34,10+i*13,r,s,red,32)).join('')),
 });
 const art=id=>AR[id];
-/* ---- スタンプ(27 種。駒の形のキャラクター+文字。内容ごとに地・表情・書体を変える) ---- */
+/* ---- スタンプ(28 種。駒の形のキャラクター+文字。内容ごとに地・表情・書体を変える) ---- */
 const SK='#4A3220', SF={maru:"'Zen Maru Gothic',sans-serif",dela:"'Dela Gothic One','Zen Maru Gothic',sans-serif",wa:"'Kaisei Tokumin',serif",yo:"'Cinzel',serif",mono:"ui-monospace,Consolas,monospace"};
 const sL=(d,w=3.6)=>`<path d="${d}" fill-rule="evenodd" fill="none" stroke="${SK}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
 const sStar=(x,y,r,f='#F2B21F')=>{let d='';for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,q=i%2?r*.45:r;d+=(i?'L':'M')+(x+Math.cos(a)*q).toFixed(1)+' '+(y+Math.sin(a)*q).toFixed(1);}return `<path d="${d}Z" fill="${f}" stroke="${SK}" stroke-width="1.6" stroke-linejoin="round"/>`;};
@@ -120,6 +120,7 @@ const sEx={
  lines:()=>sL('M12 30l10 6M108 30l-10 6M60 4v10M30 10l6 9M90 10l-6 9',3.4).replace(SK,'#C8322B'),
  bolt:()=>`<path d="M20 14l-8 20h8l-5 16 16-22h-8l6-14z" fill="#FFD45C" stroke="#1F2440" stroke-width="1.5" stroke-linejoin="round"/><path d="M104 10l-8 18h7l-5 14 14-20h-7l5-12z" fill="#FFD45C" stroke="#1F2440" stroke-width="1.5" stroke-linejoin="round"/>`,
  glitch:()=>[[14,40,22,5,'#FF4D6D'],[84,58,26,4,'#4DD9FF'],[30,84,18,4,'#6DFF9C'],[70,28,30,3,'#FF4D6D'],[8,66,14,6,'#4DD9FF']].map(([x,y,w,h,c])=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}" opacity=".85"/>`).join(''),
+ gloom:()=>`<path d="M41 22C35 22 35 12 42 12C44 4 56 2 62 7C69 2 80 6 79 14C85 14 85 22 79 22Z" fill="#7D8FA6" stroke="${SK}" stroke-width="2.2" stroke-linejoin="round"/>`+[[47,25],[60,26],[73,25]].map(([x,y])=>`<path d="M${x} ${y}l-2 7" stroke="#5FA8E8" stroke-width="2.6" stroke-linecap="round"/>`).join('')+`<path d="M15 20v18M22 16v20" stroke="#5B7EA6" stroke-width="2.8" stroke-linecap="round"/>`,
 };
 const sBg={none:()=>'',circle:c=>`<circle cx="60" cy="58" r="54" fill="${c}"/>`,rrect:c=>`<rect x="4" y="4" width="112" height="112" rx="20" fill="${c}"/>`,
  burst:c=>{let d='';for(let i=0;i<28;i++){const a=i*Math.PI/14,q=i%2?47:58;d+=(i?'L':'M')+(60+Math.cos(a)*q).toFixed(1)+' '+(58+Math.sin(a)*q).toFixed(1);}return `<path d="${d}Z" fill="${c}"/>`;}};
@@ -155,6 +156,7 @@ const STAMPS=[
  ['勝ったな',{bg:['rrect','#2A221A'],ey:'shades',mo:'smirk',ex:['spark'],t:['勝ったな',21,'dela','#E9BB5C','#2A221A']}],
  ['Oh, No!って言ってないー！',{bg:['burst','#FFE08A'],sc:.68,ey:'fire',mo:'shout',ex:['anger','point'],t2:['Oh, No! って',14,'dela','#C8322B'],t:['言ってないー!',16,'dela','#C8322B']}],
  ['バグってんな',{bg:['rrect','#0d1a12'],glitch:1,ey:'x',mo:'wavy',ex:['glitch'],t:['バグってんな',16,'mono','#6DFF9C','#0d1a12']}],
+ ['運がない…',{bg:['rrect','#C5D1E0'],body:['#DFD6C7','#BFB5A4'],rot:-4,ey:'sleepy',mo:'frown',ex:['sweat','gloom'],t:['運がない…',20,'maru','#334E6D']}],
 ];
 const stampCache={};
 function stamp(i){ if(stampCache[i]) return stampCache[i]; const d=STAMPS[i][1], sc=d.sc||.8, tx=60-60*sc, ty=d.t2?-4:0, ex=(d.ex||[]).map(k=>sEx[k]()).join('');

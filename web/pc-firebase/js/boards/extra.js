@@ -30,6 +30,44 @@
   }
 
   // ---------------------------------------------------------------- ソリティア(クロンダイク)
+  let solRO = null;
+  function fitSolitaire() {
+    const sol = document.querySelector('#boardwrap .felt-table.sol');
+    if (!sol) return;
+    const topEl = sol.querySelector('.soltop'), tabEl = sol.querySelector('.soltab');
+    const solW = sol.clientWidth || 640, solH = sol.clientHeight || 420;
+    const cardW = Math.floor(Math.max(36, Math.min(72, (solW - 60) / 7.5, solH * 0.165)));
+    sol.style.setProperty('--sol-w', cardW + 'px');
+    const cardH = cardW * 1.4;
+    const topH = topEl ? topEl.offsetHeight : cardH + 6;
+    const tabH = Math.max(110, (tabEl && tabEl.clientHeight ? tabEl.clientHeight : solH - topH - 36) - 6);
+    const defClose = cardW * 0.16, defOpen = cardW * 0.37;
+    sol.querySelectorAll('.spile').forEach((pile) => {
+      const cards = [...pile.querySelectorAll('.pcard.pil')];
+      if (cards.length <= 1) {
+        pile.style.removeProperty('--sol-close');
+        pile.style.removeProperty('--sol-open');
+        return;
+      }
+      let cGaps = 0, oGaps = 0;
+      for (let i = 1; i < cards.length; i++) {
+        if (cards[i - 1].classList.contains('open')) oGaps++;
+        else cGaps++;
+      }
+      const needSpan = cGaps * defClose + oGaps * defOpen;
+      const availSpan = Math.max(16, tabH - cardH - 4);
+      if (needSpan > availSpan && needSpan > 0) {
+        const k = availSpan / needSpan;
+        const stepClose = defClose * k, stepOpen = defOpen * k;
+        pile.style.setProperty('--sol-close', (stepClose - cardH).toFixed(2) + 'px');
+        pile.style.setProperty('--sol-open', (stepOpen - cardH).toFixed(2) + 'px');
+      } else {
+        pile.style.removeProperty('--sol-close');
+        pile.style.removeProperty('--sol-open');
+      }
+    });
+  }
+
   function solitaire(b, A) {
     const SEAT = 1000000, seat = b.me;
     const legal = new Set(A.view.legal);
@@ -38,25 +76,31 @@
     A.strip(b.others.map(([i, f, g]) => `<div class="pl ${i === seat ? 'turn' : ''}"><span class="dot" style="background:${['#C8463C', '#3F78C4', '#3E9B63', '#E0AE36', '#7A5AC0', '#5A3A22'][i]}"></span><span class="who"><span class="nm">${E(A.name(i))}</span><span class="nt">${g ? 'やめた' : `組札 ${f}/52`}</span></span></div>`).join(''));
     const destsFor = (src, n) => { const out = []; for (let d = 2; d <= 12; d++) if (legal.has(enc(src, n, d))) out.push(d); return out; };
     const hl = new Set(sel ? destsFor(sel.src, sel.n) : []);
-    const found = b.found.map((f, i) => `<div class="slot ${hl.has(2 + i) ? 'can' : ''}" data-dest="${2 + i}">${f.length ? cardHtml(f[0], `data-src="${2 + i}" data-n="1"`) : `<span class="pcard empty"><b>${SU[i]}</b></span>`}</div>`).join('');
+    const found = b.found.map((f, i) => `<div class="slot ${hl.has(2 + i) ? 'can' : ''}" data-dest="${2 + i}">${f.length ? cardHtml(f[0], `data-cid="${f[0].c}" data-src="${2 + i}" data-n="1"`) : `<span class="pcard empty"><b>${SU[i]}</b></span>`}</div>`).join('');
     const stock = `<div class="slot" data-draw="1">${b.stock ? backHtml('data-draw="1"', 'tap') : `<span class="pcard empty redo" data-draw="1">${legal.has(seat * SEAT) ? '↻' : ''}</span>`}</div>`;
-    // 捨て札は上の 3 枚だけ。左から右へ、いちばん新しい札が手前
+    // 捨て札は上の 3 枚を左から右へ少しずつずらして重ね、下の 2 枚の数字・マークも見えるようにする
     const oldRects = new Map([...document.querySelectorAll('#boardwrap .waste [data-wid]')].map((e) => [+e.dataset.wid, e.getBoundingClientRect()]));
+    const oldCidRects = new Map([...document.querySelectorAll('#boardwrap [data-cid]')].map((e) => [+e.dataset.cid, e.getBoundingClientRect()]));
     const stockR = (document.querySelector('#boardwrap .slot[data-draw]') || { getBoundingClientRect: () => null }).getBoundingClientRect();
     const vis = b.waste.slice(-3), topI = vis.length - 1;
-    const waste = `<div class="slot waste">${vis.map((c, i) => cardHtml(c, `data-wid="${c.c}" ${i === topI ? 'data-src="1" data-n="1"' : ''}`, `${i === topI ? 'tap' : ''} ${sel && sel.src === 1 && i === topI ? 'on' : ''}`)).join('') || '<span class="pcard empty"></span>'}</div>`;
+    const waste = `<div class="slot waste">${vis.map((c, i) => cardHtml(c, `data-cid="${c.c}" data-wid="${c.c}" ${i === topI ? 'data-src="1" data-n="1"' : ''}`, `${i === topI ? 'tap' : ''} ${sel && sel.src === 1 && i === topI ? 'on' : ''}`)).join('') || '<span class="pcard empty"></span>'}</div>`;
     const piles = b.piles.map((p, k) => {
       const closed = p.length - b.open[k];
-      return `<div class="spile ${hl.has(6 + k) ? 'can' : ''}" data-dest="${6 + k}">${p.length ? p.map((c, i) => i < closed ? backHtml('', 'pil') : cardHtml(c, `data-src="${6 + k}" data-n="${p.length - i}"`, `pil tap ${sel && sel.src === 6 + k && p.length - i <= sel.n ? 'on' : ''}`)).join('') : '<span class="pcard empty">K</span>'}</div>`;
+      return `<div class="spile ${hl.has(6 + k) ? 'can' : ''}" data-dest="${6 + k}">${p.length ? p.map((c, i) => i < closed ? backHtml('', 'pil') : cardHtml(c, `data-cid="${c.c}" data-src="${6 + k}" data-n="${p.length - i}"`, `pil open tap ${sel && sel.src === 6 + k && p.length - i <= sel.n ? 'on' : ''}`)).join('') : '<span class="pcard empty">K</span>'}</div>`;
     }).join('');
+    const autoMove = (src, n) => {
+      const ds = destsFor(src, n), f = ds.find((x) => x < 6) ?? ds[0];
+      if (f != null) { A.sel = null; A.play(enc(src, n, f)); return true; }
+      return false;
+    };
     A.board(`<div class="felt-table sol"><div class="soltop">${stock}${waste}<span class="grow"></span>${found}</div><div class="soltab">${piles}</div></div>`, (d, el) => {
       if (d.draw != null) { if (legal.has(seat * SEAT)) { A.sel = null; A.play(seat * SEAT); } return; }
       if (d.src != null) {
         const src = +d.src, n = +d.n;
         if (sel && sel.src === src && sel.n === n) {
           // もう一度: 組札へ。置けなければ置ける列へ
-          const ds = destsFor(src, n), f = ds.find((x) => x < 6) ?? ds[0];
-          A.sel = null; if (f != null) return A.play(enc(src, n, f)); return A.redraw();
+          if (autoMove(src, n)) return;
+          A.sel = null; return A.redraw();
         }
         if (sel) { const dest = +(el.closest('[data-dest]') || {}).dataset?.dest; if (dest && legal.has(enc(sel.src, sel.n, dest))) { A.sel = null; return A.play(enc(sel.src, sel.n, dest)); } }
         if (destsFor(src, n).length) { A.sel = { sol: 1, src, n }; return A.redraw(); }
@@ -64,6 +108,22 @@
       }
       if (d.dest != null && sel) { const m = enc(sel.src, sel.n, +d.dest); A.sel = null; if (legal.has(m)) return A.play(m); return A.redraw(); }
     });
+    const wrapEl = document.getElementById('boardwrap');
+    if (wrapEl) {
+      wrapEl.ondblclick = (e) => {
+        const el = e.target.closest('#boardwrap [data-src]');
+        if (!el) return;
+        e.preventDefault();
+        autoMove(+el.dataset.src, +el.dataset.n);
+      };
+    }
+    fitSolitaire();
+    const solEl = document.querySelector('#boardwrap .felt-table.sol');
+    if (solEl && typeof ResizeObserver !== 'undefined') {
+      if (solRO) solRO.disconnect();
+      solRO = new ResizeObserver(() => fitSolitaire());
+      solRO.observe(solEl);
+    }
     // 捨て札が流れ、山札から引いた札は表を返しながら手前に重なる。
     if (!A.reduce && (oldRects.size || vis.length)) {
       const now = new Set(vis.map((c) => c.c));
@@ -77,11 +137,45 @@
       });
       for (const [id, o] of oldRects) if (!now.has(id) && stockR) {
         const g = document.createElement('div'); g.className = 'wghost'; g.innerHTML = cardHtml(b.waste.find((c) => c.c === id) || { c: id, r: id % 13 + 1, s: Math.floor(id / 13) }); const el = g.firstChild; Object.assign(el.style, { position: 'fixed', left: o.left + 'px', top: o.top + 'px', width: o.width + 'px', height: o.height + 'px', margin: 0, zIndex: 30, pointerEvents: 'none', '--w': o.width + 'px' }); document.body.appendChild(el);
-        el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${o.width * .4}px)` }], { duration: 280 * A.speed, easing: 'ease-out', fill: 'forwards' }).onfinish = () => el.remove();
+        el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${-o.width * .4}px)` }], { duration: 280 * A.speed, easing: 'ease-out', fill: 'forwards' }).onfinish = () => el.remove();
       }
       if (vis.length && [...oldRects.keys()].join() !== vis.map((c) => c.c).join()) A.anim(300);
     }
-    A.drag({ src: '[data-src]', dst: '[data-dest]', drop: (sEl, dEl) => { const m = enc(+sEl.dataset.src, +sEl.dataset.n, +dEl.dataset.dest); if (legal.has(m)) { A.sel = null; A.play(m); } } });
+    // 列・組札へ移動したカードのスライドアニメーション(ダブルクリック・タップ・ドラッグ共通)
+    if (oldCidRects.size) {
+      let moved = false;
+      document.querySelectorAll('#boardwrap [data-cid]').forEach((e) => {
+        if (e.hasAttribute('data-wid')) return;
+        const id = +e.dataset.cid, o = oldCidRects.get(id);
+        if (!o) return;
+        const r = e.getBoundingClientRect();
+        const dx = o.left - r.left, dy = o.top - r.top;
+        if (Math.hypot(dx, dy) > 4) {
+          moved = true;
+          e.animate(
+            [{ transform: `translate(${dx}px,${dy}px)`, zIndex: 25 }, { transform: 'none', zIndex: 25 }],
+            { duration: 250 * A.speed, easing: 'cubic-bezier(.22,.9,.3,1)' }
+          );
+        }
+      });
+      if (moved) A.anim(270);
+    }
+    A.drag({
+      src: '[data-src]',
+      dst: '[data-dest]',
+      getStack: (sEl) => {
+        const src = +sEl.dataset.src, n = +sEl.dataset.n;
+        if (src >= 6 && n > 1 && sEl.parentElement) {
+          return [...sEl.parentElement.querySelectorAll('[data-src]')].filter((el) => +el.dataset.n <= n);
+        }
+        return [sEl];
+      },
+      canDrop: (sEl, dEl) => legal.has(enc(+sEl.dataset.src, +sEl.dataset.n, +dEl.dataset.dest)),
+      drop: (sEl, dEl) => {
+        const m = enc(+sEl.dataset.src, +sEl.dataset.n, +dEl.dataset.dest);
+        if (legal.has(m)) { A.sel = null; A.play(m); }
+      },
+    });
     const auto = [...legal].find((m) => { const c = m % SEAT; const dest = c % 100; return c > 1 && dest >= 2 && dest <= 5; });
     A.acts([{ label: 'やめる', move: seat * SEAT + 1, enabled: legal.has(seat * SEAT + 1) }, { label: '組札へ', move: auto ?? -1, enabled: auto != null }]);
   }

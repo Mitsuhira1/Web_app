@@ -269,3 +269,17 @@ Firebase Rulesを独自に厳格化しているプロジェクトでは、本人
 - ぶにょぶにょ・パクリスでホストが「お邪魔を送る」をオフにすると、`state/boardMatch.sabotage` が `false` になり、ホストは得点・盤面を反映しても相手にお邪魔を送らない。フィールドがない既存対局では従来どおり。落下速度の選択は1人用で、通信対戦の速度は標準。
 - マインスイーパーの選択画面は `mine` を表示する。協力の `state/mine` と対戦の `state/boardMatch`（`game: "mineVersus"`）は従来の進行・操作形式を使う。プレイモード・難易度の選択は開始前にホストが行う。
 - ホストが切断して交代した場合、ホストだけが保持していた盤面や山札を使う対局は終了してロビーに戻す。ロビーの引き継ぎと既存ゲームの同期は従来どおり行う。
+
+## 14. リモートカーソル分裂防止・画面外エッジ表示・消滅防止・ヨット固定枠リアルタイム同期（2026-11-19）
+
+- **カーソル分裂（ゴーストカーソル）の防止 (`js/online.js`)**:
+  - `isCursorOwnerValid(uid, c)`: `cursors/{uid}` のエントリについて、自分自身 (`uid === myUid` / `slot === mySlot`) を除外した上で、現在有効な `fbState.players[uid]` または `state.members` 内の実在スロットと一致し、かつ `updatedAt` が古い残骸でないことを検証する。
+  - **スロット単位の重複排除 (`bySlot`)**: 再接続や UID 再発行で同一スロットに複数の `cursors/{uid}` が一時的に残った場合でも、`updateRemoteTargets()` と `startCursorLoop()` の双方で `slot` ごとに最新の `updatedAt` を持つ 1 件のみを採用し、古い UID の DOM 要素 (`.rcur.live`) および孤立した `.rcur.live` を即座に削除する。またホスト側は `pruneStaleCursors()` で `players` に存在しない古い `cursors/{uid}` を自動削除する。
+- **ウィンドウ外カーソルの自然な端寄せ表示 (`cursors/{uid}.out`)**:
+  - 送信側: `mouseleave` / `blur` またはステージ外にポインターが出た際、最後にいた方向を端 (`0.0`〜`1.0`) にクランプした座標とともに `out: true, active: false` を送信する。
+  - 受信側: `out: true`（または端付近の非アクティブ状態）のカーソルはステージ外周の内側（マージン `8px`）へ自然に寄せ、`.rcur.live.out` クラス（半透明・縮小・外周吸着）および右端/下端での矢印・ラベル反転 (`.flip-x`, `.flip-y`) を付与して、相手が画面外へマウスを置いていることが自然に見えるようにする。
+- **カーソル消滅の防止**:
+  - 盤面再描画の瞬間に `#boardwrap` のサイズが 0 になったフレームでも `requestAnimationFrame` ループを停止せず次フレームで継続し、`cssZoom()` で画面全体の `zoom` 倍率を割って正確な `fixed` 座標を算出する。また `app.js` の `drawPlay()` 毎に `kickCursorLoop()` を呼び出して対局画面での描画ループを確実に維持する。
+- **ヨット (`yacht`) のサイコロ固定枠（黄色い枠）のリアルタイム同期 (`cursors/{uid}.ykeep`)**:
+  - 手番プレイヤーがサイコロを固定/解除または振り直した際、`syncOnlineYachtKeep(turn, rollsLeft, mask)` により `cursors/{uid}` の任意フィールド `ykeep` (`{ t, r, m }`) にビットマスク `m` (`0`〜`31`) を即時送信する（既存の `cursors/{uid}` 書き込み権限のみで動作し、Firebase Rules の変更不要）。
+  - 相手側（および観戦者）は `getOnlineYachtKeep(turn, rollsLeft)` で現在の手番・残り振り直し回数と一致する `m` を参照し、サイコロを振り直す前の段階から相手が固定したサイコロにリアルタイムで黄色い枠 (`.yd.held`) を表示する。

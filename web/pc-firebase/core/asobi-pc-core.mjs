@@ -2168,7 +2168,7 @@ function Catalog() {
   var tmp_33 = new GameInfo('poker', 8, '\u30DD\u30FC\u30AB\u30FC', Category_CARD_getInstance(), '2\u301C6\u4EBA', '5\u679A\u306E\u624B\u672D\u30921\u56DE\u3060\u3051\u4EA4\u63DB\u3057\u3066\u5F79\u3092\u4F5C\u308A\u3001\u30C1\u30C3\u30D7\u3092\u8CED\u3051\u3066\u7AF6\u3046\u3002', Companion_getInstance_24().jr_1, listOf([new Section('\u6982\u8981\u3068\u76EE\u7684', '\u914D\u3089\u308C\u305F5\u679A\u306E\u624B\u672D\u30921\u56DE\u3060\u3051\u4EA4\u63DB\u3057\u3066\u3001\u5F37\u3044\u5F79\u3092\u4F5C\u308A\u307E\u3059\u3002\u5F79\u306E\u5F37\u3055\u306B\u81EA\u4FE1\u304C\u3042\u308C\u3070\u8CED\u3051\u984D\u3092\u4E0A\u3052\u3001\u306A\u3051\u308C\u3070\u964D\u308A\u307E\u3059\u3002\u6700\u5F8C\u306B\u6301\u3061\u70B9(\u30C1\u30C3\u30D7)\u306E\u591A\u3044\u4EBA\u304C\u52DD\u3061\u3067\u3059\u3002'), new Section('\u4EBA\u6570\u30FB\u9053\u5177', '2\u301C6\u4EBA(\u3042\u306A\u305F\u4EE5\u5916\u306F CPU)\u3002\u30B8\u30E7\u30FC\u30AB\u30FC\u3092\u9664\u3044\u305F52\u679A\u306E\u30C8\u30E9\u30F3\u30D7\u3068\u30C1\u30C3\u30D7\u3002\u6700\u521D\u306E\u6301\u3061\u70B9\u306F\u5168\u54E11000\u3067\u3059\u3002'), new Section('1\u30B2\u30FC\u30E0\u306E\u6D41\u308C', '1. \u5168\u54E1\u304C\u53C2\u52A0\u659910\u3092\u51FA\u3057\u30015\u679A\u305A\u3064\u914D\u3089\u308C\u307E\u3059\u3002\n2. 1\u56DE\u76EE\u306E\u8CED\u3051: \u9806\u756A\u306B\u300C\u30C1\u30A7\u30C3\u30AF(\u8CED\u3051\u305A\u306B\u56DE\u3059)\u300D\u300C\u30D9\u30C3\u30C8(\u8CED\u3051\u308B)\u300D\u300C\u30B3\u30FC\u30EB(\u540C\u3058\u984D\u3092\u51FA\u3059)\u300D\u300C\u30EC\u30A4\u30BA(\u4E0A\u4E57\u305B\u3059\u308B)\u300D\u300C\u964D\u308A\u308B\u300D\u3092\u9078\u3073\u307E\u3059\u3002\n3. \u4EA4\u63DB: \u964D\u308A\u3066\u3044\u306A\u3044\u4EBA\u306F\u3001\u8981\u3089\u306A\u3044\u672D\u30920\u301C5\u679A\u9078\u3093\u3067\u4EA4\u63DB\u3057\u307E\u3059\u3002\n4. 2\u56DE\u76EE\u306E\u8CED\u3051(\u984D\u306F1\u56DE\u76EE\u306E2\u500D)\u3002\n5. \u52DD\u8CA0: \u6B8B\u3063\u305F\u4EBA\u304C\u624B\u672D\u3092\u898B\u305B\u3001\u5F79\u306E\u5F37\u3044\u4EBA\u304C\u5834\u306E\u30C1\u30C3\u30D7\u3092\u5168\u90E8\u3082\u3089\u3044\u307E\u3059\u3002'), new Section('\u4EA4\u63DB', '\u964D\u308A\u3066\u3044\u306A\u3044\u4EBA\u306F\u3001\u8981\u3089\u306A\u3044\u672D\u30920\u301C5\u679A\u9078\u3073\u3001\u5C71\u306E\u672D\u30681\u56DE\u3060\u3051\u4EA4\u63DB\u3067\u304D\u307E\u3059\u3002', listOf_0('poker_draw')), new Section('\u8CED\u3051\u306E\u6C7A\u307E\u308A', '1\u56DE\u76EE\u306E\u8CED\u3051\u306F20\u305A\u3064\u30012\u56DE\u76EE\u306F40\u305A\u3064\u3067\u3059\u3002\u4E0A\u4E57\u305B(\u30EC\u30A4\u30BA)\u306F1\u56DE\u306E\u8CED\u3051\u306B\u3064\u304D3\u56DE\u307E\u3067\u3067\u3059\u3002\u6301\u3061\u70B9\u304C\u8DB3\u308A\u306A\u3044\u6642\u306F\u3001\u6301\u3063\u3066\u3044\u308B\u5206\u3060\u3051\u3067\u52DD\u8CA0\u306B\u53C2\u52A0\u3067\u304D\u307E\u3059\u3002'), new Section('\u5F79(\u5F31\u3044\u9806)', '\u30FB\u30EF\u30F3\u30DA\u30A2: \u540C\u3058\u65702\u679A\n\u30FB\u30C4\u30FC\u30DA\u30A2: \u30DA\u30A2\u304C2\u7D44\n\u30FB\u30B9\u30EA\u30FC\u30AB\u30FC\u30C9: \u540C\u3058\u65703\u679A\n\u30FB\u30B9\u30C8\u30EC\u30FC\u30C8: 5\u679A\u306E\u6570\u304C\u7D9A\u304F(A-2-3-4-5 \u3082\u53EF)\n\u30FB\u30D5\u30E9\u30C3\u30B7\u30E5: 5\u679A\u304C\u540C\u3058\u30DE\u30FC\u30AF\n\u30FB\u30D5\u30EB\u30CF\u30A6\u30B9: \u30B9\u30EA\u30FC\u30AB\u30FC\u30C9+\u30EF\u30F3\u30DA\u30A2\n\u30FB\u30D5\u30A9\u30FC\u30AB\u30FC\u30C9: \u540C\u3058\u65704\u679A\n\u30FB\u30B9\u30C8\u30EC\u30FC\u30C8\u30D5\u30E9\u30C3\u30B7\u30E5: \u540C\u3058\u30DE\u30FC\u30AF\u3067\u6570\u304C\u7D9A\u304F(10-J-Q-K-A \u306F\u30ED\u30A4\u30E4\u30EB\u30B9\u30C8\u30EC\u30FC\u30C8\u30D5\u30E9\u30C3\u30B7\u30E5)\n\u540C\u3058\u5F79\u306A\u3089\u3001\u5F79\u3092\u4F5C\u308B\u6570\u306E\u5927\u304D\u3044\u65B9(A \u304C\u4E00\u756A\u5F37\u3044)\u304C\u52DD\u3061\u3067\u3059\u3002'), new Section('\u52DD\u6557', '10\u30B2\u30FC\u30E0\u904A\u3076\u304B\u30011\u4EBA\u3092\u9664\u3044\u3066\u5168\u54E1\u306E\u6301\u3061\u70B9\u304C\u306A\u304F\u306A\u3063\u305F\u3089\u7D42\u308F\u308A\u3067\u3059\u3002\u6301\u3061\u70B9\u306E\u4E00\u756A\u591A\u3044\u4EBA\u306E\u52DD\u3061\u3067\u3059\u3002'), new Section('\u30B3\u30C4', '\u30FB\u4EA4\u63DB\u306E\u78BA\u7387: \u30DA\u30A2\u304B\u30893\u679A\u66FF\u3048\u308B\u3068\u3001\u30C4\u30FC\u30DA\u30A2\u4EE5\u4E0A\u306B\u306A\u308B\u306E\u306F\u7D0429%(\u30B9\u30EA\u30FC\u30AB\u30FC\u30C9\u4EE5\u4E0A\u306F\u7D0412%)\u30024\u679A\u306E\u30D5\u30E9\u30C3\u30B7\u30E5\u304B\u30891\u679A\u66FF\u3048\u3066\u30D5\u30E9\u30C3\u30B7\u30E5\u306B\u306A\u308B\u306E\u306F\u7D0419%(47\u679A\u4E2D9\u679A)\u3002\u4E21\u5074\u306E\u958B\u3044\u305F4\u679A\u7D9A\u304D\u304B\u3089\u30B9\u30C8\u30EC\u30FC\u30C8\u306F\u7D0417%\u3067\u3059\u3002\n\u30FB\u30DD\u30C3\u30C8\u30AA\u30C3\u30BA: \u30B3\u30FC\u30EB\u306B\u5FC5\u8981\u306A\u984D\u3068\u3001\u5834\u306E\u5408\u8A08\u3092\u6BD4\u3079\u307E\u3059\u3002\u5834\u304C100\u3067\u30B3\u30FC\u30EB\u306B20\u306A\u3089\u30016\u56DE\u306B1\u56DE\u4EE5\u4E0A\u52DD\u3066\u308B\u306A\u3089\u30B3\u30FC\u30EB\u304C\u5F97\u3067\u3059\u3002\n\u30FB\u4EA4\u63DB\u306E\u679A\u6570\u306F\u60C5\u5831\u3067\u3059\u30021\u679A\u3060\u3051\u66FF\u3048\u308B\u4EBA\u306F\u30D5\u30E9\u30C3\u30B7\u30E5\u304B\u30B9\u30C8\u30EC\u30FC\u30C8\u3092\u72D9\u3063\u3066\u3044\u308B\u3053\u3068\u304C\u591A\u304F\u3001\u4EA4\u63DB\u3057\u306A\u3044\u4EBA\u306F\u5F37\u3044\u5F79\u3092\u6301\u3063\u3066\u3044\u308B\u3053\u3068\u304C\u3042\u308A\u307E\u3059\u3002\n\u30FB\u5F31\u3044\u624B\u3067\u8CED\u3051\u7D9A\u3051\u306A\u3044: \u5E8F\u76E4\u306F\u30EF\u30F3\u30DA\u30A2(\u7279\u306B J \u4EE5\u4E0A)\u304B\u3089\u304C\u76EE\u5B89\u3067\u3059\u3002\u964D\u308A\u308B\u306E\u3082\u5927\u5207\u306A\u4E00\u624B\u3067\u3059\u3002\n\u30FB\u3068\u304D\u3069\u304D\u306E\u30D6\u30E9\u30D5: \u4EA4\u63DB\u3057\u306A\u3044\u3001\u307E\u305F\u306F\u5F37\u304F\u8CED\u3051\u3066\u3001\u5F37\u3044\u5F79\u304C\u3042\u308B\u3088\u3046\u306B\u898B\u305B\u308B\u624B\u3082\u3042\u308A\u307E\u3059\u3002'), new Section('\u3053\u306E\u30A2\u30D7\u30EA\u306E\u30EB\u30FC\u30EB', '\u30D5\u30A1\u30A4\u30D6\u30AB\u30FC\u30C9\u30C9\u30ED\u30FC\u3002\u53C2\u52A0\u659910\u3001\u8CED\u3051\u306F\u6C7A\u307E\u3063\u305F\u984D(1\u56DE\u76EE20\u30FB2\u56DE\u76EE40)\u3001\u4E0A\u4E57\u305B\u306F3\u56DE\u307E\u3067\u300210\u30B2\u30FC\u30E0\u3067\u7D42\u308F\u308A\u3002\u300C\u5F85\u3063\u305F\u300D\u306F\u3067\u304D\u307E\u305B\u3093\u3002')]), listOf_0(new OptionSpec('players', '\u4EBA\u6570', listOf([to('2', '2\u4EBA'), to('3', '3\u4EBA'), to('4', '4\u4EBA'), to('5', '5\u4EBA'), to('6', '6\u4EBA')]), '4')));
   var tmp_34 = Category_CARD_getInstance();
   var tmp_35 = Companion_getInstance_23().rr_1;
-  var tmp_36 = listOf([new Section('\u6982\u8981\u3068\u76EE\u7684', '4\u8272\u306E\u6570\u5B57\u30FB\u8A18\u53F7\u306E\u672D\u3092\u51FA\u3057\u3001\u5148\u306B\u624B\u672D\u3092\u306A\u304F\u3057\u305F\u4EBA\u304C\u52DD\u3061\u3067\u3059\u30021\u5C40\u52DD\u8CA0\u3067\u3059\u3002'), new Section('\u6E96\u5099', '2\u301C6\u4EBA\u3002108\u679A(\u8D64\u30FB\u9EC4\u30FB\u7DD1\u30FB\u9752\u306E\u540425\u679A\u3068\u30EF\u30A4\u30EB\u30C98\u679A)\u304B\u30897\u679A\u305A\u3064\u914D\u308A\u307E\u3059\u3002\u6700\u521D\u306E\u6368\u3066\u672D\u306F\u6570\u5B57\u306E\u672D\u3067\u3059\u3002'), new Section('\u51FA\u305B\u308B\u672D', '\u6368\u3066\u672D\u3068\u540C\u3058\u8272\u304B\u3001\u540C\u3058\u6570\u5B57\u30FB\u8A18\u53F7\u306E\u672D\u3092\u51FA\u305B\u307E\u3059\u3002\u30EF\u30A4\u30EB\u30C9\u306F\u3044\u3064\u3067\u3082\u51FA\u305B\u307E\u3059\u3002+4\u306F\u3001\u3044\u307E\u306E\u8272\u306E\u672D\u3092\u6301\u3063\u3066\u3044\u306A\u3044\u6642\u3060\u3051\u51FA\u305B\u307E\u3059\u3002'), new Section('\u7279\u6B8A\u306A\u672D', '\u30FB\u30B9\u30AD\u30C3\u30D7(\u2298): \u6B21\u306E\u4EBA\u306E\u756A\u3092\u98DB\u3070\u3057\u307E\u3059\u3002\n\u30FB\u30EA\u30D0\u30FC\u30B9(\u21C4): \u56DE\u308B\u5411\u304D\u3092\u9006\u306B\u3057\u307E\u3059\u30022\u4EBA\u3067\u306F\u30B9\u30AD\u30C3\u30D7\u3068\u540C\u3058\u3067\u3059\u3002\n\u30FB+2: \u6B21\u306E\u4EBA\u304C2\u679A\u5F15\u304D\u3001\u756A\u3092\u98DB\u3070\u3055\u308C\u307E\u3059\u3002\n\u30FB\u30EF\u30A4\u30EB\u30C9(W): \u597D\u304D\u306A\u8272\u3092\u9078\u3093\u3067\u51FA\u3057\u307E\u3059\u3002\u5834\u306E\u30EF\u30A4\u30EB\u30C9\u306F\u3001\u9078\u3093\u3060\u8272\u306B\u5909\u308F\u308A\u307E\u3059\u3002\n\u30FB+4: \u597D\u304D\u306A\u8272\u3092\u9078\u3073\u3001\u6B21\u306E\u4EBA\u304C4\u679A\u5F15\u3044\u3066\u756A\u3092\u98DB\u3070\u3055\u308C\u307E\u3059\u3002'), new Section('\u624B\u756A\u306E\u64CD\u4F5C', '\u624B\u672D\u3092\u30BF\u30C3\u30D7\u3057\u3066\u9078\u3073\u3001\u300C\u51FA\u3059\u300D\u3067\u5834\u3078\u3002\u30EF\u30A4\u30EB\u30C9\u306F\u7D9A\u3051\u3066\u8272\u3092\u9078\u3073\u307E\u3059\u3002\u51FA\u305B\u306A\u3044\u6642\u3084\u51FA\u3057\u305F\u304F\u306A\u3044\u6642\u306F\u3001\u5C71\u672D\u3092\u30BF\u30C3\u30D7\u3057\u30661\u679A\u5F15\u304D\u307E\u3059\u3002\u5F15\u3044\u305F\u672D\u304C\u51FA\u305B\u308C\u3070\u51FA\u305B\u307E\u3059\u3002\u51FA\u305B\u306A\u3051\u308C\u3070\u3001\u5834\u306E\u4E2D\u592E\u306E\u300CPASS\u300D\u3067\u30D1\u30B9\u3057\u307E\u3059\u3002\u300C\u4E26\u3079\u66FF\u3048\u300D\u3067\u624B\u672D\u3092\u8272\u3068\u6570\u5B57\u306E\u9806\u306B\u4E26\u3079\u307E\u3059\u3002', listOf_0('uno_play')), new Section('Oh, No! \u306E\u5BA3\u8A00', '\u624B\u672D\u304C2\u679A\u3067\u3001\u672D\u3092\u51FA\u3059\u524D\u306B\u300COh, No!\u300D\u3092\u62BC\u3059\u3068\u5BA3\u8A00\u306B\u306A\u308A\u307E\u3059\u3002\u5BA3\u8A00\u3057\u306A\u3044\u3067\u6B8B\u308A1\u679A\u306B\u306A\u308B\u3068\u3001\u30DA\u30CA\u30EB\u30C6\u30A3\u3067\u672D\u3092\u5F15\u304D\u307E\u3059\u3002\u300COh, No!\u300D\u306F\u3044\u3064\u3067\u3082\u62BC\u305B\u307E\u3059\u304C\u3001\u624B\u672D\u304C2\u679A\u3067\u306A\u3044\u6642\u306B\u62BC\u3059\u3068\u3001\u8A00\u3044\u307E\u3061\u304C\u3044\u3068\u3057\u3066\u540C\u3058\u679A\u6570\u3092\u5F15\u304D\u307E\u3059\u3002\u5F15\u304F\u679A\u6570\u306F\u8A2D\u5B9A\u3067\u6C7A\u3081\u307E\u3059\u3002'), new Section('\u52DD\u6557', '\u624B\u672D\u3092\u6700\u521D\u306B\u306A\u304F\u3057\u305F\u4EBA\u306E\u52DD\u3061\u3067\u3059\u3002\u6700\u5F8C\u306E\u672D\u304C\u8A18\u53F7\u3067\u3082\u3001\u305D\u306E\u52B9\u679C\u306F\u4F7F\u308F\u308C\u307E\u3059\u3002'), new Section('\u30B3\u30C4', '\u624B\u5143\u306B\u591A\u3044\u8272\u3078\u5909\u3048\u308B\u3068\u51FA\u3057\u3084\u3059\u304F\u306A\u308A\u307E\u3059\u3002\u76F8\u624B\u306E\u6B8B\u308A\u304C\u5C11\u306A\u3044\u6642\u306F\u3001\u30B9\u30AD\u30C3\u30D7\u30FB+2\u3067\u6B62\u3081\u308B\u672D\u3092\u6B8B\u3057\u3066\u304A\u304D\u307E\u3057\u3087\u3046\u3002\u5BA3\u8A00\u3092\u5FD8\u308C\u306A\u3044\u3088\u3046\u306B\u3002')]);
+  var tmp_36 = listOf([new Section('\u6982\u8981\u3068\u76EE\u7684', '4\u8272\u306E\u6570\u5B57\u30FB\u8A18\u53F7\u306E\u672D\u3092\u51FA\u3057\u3001\u5148\u306B\u624B\u672D\u3092\u306A\u304F\u3057\u305F\u4EBA\u304C\u52DD\u3061\u3067\u3059\u30021\u5C40\u52DD\u8CA0\u3067\u3059\u3002'), new Section('\u6E96\u5099', '2\u301C6\u4EBA\u3002108\u679A(\u8D64\u30FB\u9EC4\u30FB\u7DD1\u30FB\u9752\u306E\u540425\u679A\u3068\u30EF\u30A4\u30EB\u30C98\u679A)\u304B\u30897\u679A\u305A\u3064\u914D\u308A\u307E\u3059\u3002\u6700\u521D\u306E\u6368\u3066\u672D\u306F\u6570\u5B57\u306E\u672D\u3067\u3059\u3002'), new Section('\u51FA\u305B\u308B\u672D', '\u6368\u3066\u672D\u3068\u540C\u3058\u8272\u304B\u3001\u540C\u3058\u6570\u5B57\u30FB\u8A18\u53F7\u306E\u672D\u3092\u51FA\u305B\u307E\u3059\u3002\u30EF\u30A4\u30EB\u30C9\u306F\u3044\u3064\u3067\u3082\u51FA\u305B\u307E\u3059\u3002+4\u306F\u3001\u3044\u307E\u306E\u8272\u306E\u672D\u3092\u6301\u3063\u3066\u3044\u306A\u3044\u6642\u3060\u3051\u51FA\u305B\u307E\u3059\u3002'), new Section('\u7279\u6B8A\u306A\u672D', '\u30FB\u30B9\u30AD\u30C3\u30D7(\u2298): \u6B21\u306E\u4EBA\u306E\u756A\u3092\u98DB\u3070\u3057\u307E\u3059\u3002\n\u30FB\u30EA\u30D0\u30FC\u30B9(\u21C4): \u56DE\u308B\u5411\u304D\u3092\u9006\u306B\u3057\u307E\u3059\u30022\u4EBA\u3067\u306F\u30B9\u30AD\u30C3\u30D7\u3068\u540C\u3058\u3067\u3059\u3002\n\u30FB+2: \u6B21\u306E\u4EBA\u304C2\u679A\u5F15\u304D\u3001\u756A\u3092\u98DB\u3070\u3055\u308C\u307E\u3059\u3002\n\u30FB\u30EF\u30A4\u30EB\u30C9(W): \u597D\u304D\u306A\u8272\u3092\u9078\u3093\u3067\u51FA\u3057\u307E\u3059\u3002\u5834\u306E\u30EF\u30A4\u30EB\u30C9\u306F\u3001\u9078\u3093\u3060\u8272\u306B\u5909\u308F\u308A\u307E\u3059\u3002\n\u30FB+4: \u597D\u304D\u306A\u8272\u3092\u9078\u3073\u3001\u6B21\u306E\u4EBA\u304C4\u679A\u5F15\u3044\u3066\u756A\u3092\u98DB\u3070\u3055\u308C\u307E\u3059\u3002'), new Section('\u624B\u756A\u306E\u64CD\u4F5C', '\u624B\u672D\u3092\u30BF\u30C3\u30D7\u3057\u3066\u9078\u3073\u3001\u300C\u51FA\u3059\u300D\u3067\u5834\u3078\u3002\u30EF\u30A4\u30EB\u30C9\u306F\u7D9A\u3051\u3066\u8272\u3092\u9078\u3073\u307E\u3059\u3002\u51FA\u305B\u306A\u3044\u6642\u3084\u51FA\u3057\u305F\u304F\u306A\u3044\u6642\u306F\u3001\u5C71\u672D\u3092\u30BF\u30C3\u30D7\u3057\u30661\u679A\u5F15\u304D\u307E\u3059\u3002\u5F15\u3044\u305F\u672D\u304C\u51FA\u305B\u308C\u3070\u51FA\u305B\u307E\u3059\u3002\u51FA\u305B\u306A\u3051\u308C\u3070\u3001\u5834\u306E\u4E2D\u592E\u306E\u300CPASS\u300D\u3067\u30D1\u30B9\u3057\u307E\u3059\u3002\u300C\u4E26\u3079\u66FF\u3048\u300D\u3067\u624B\u672D\u3092\u8272\u3068\u6570\u5B57\u306E\u9806\u306B\u4E26\u3079\u307E\u3059\u3002\nローカルルール「まとめ出し」をオンにすると、同じ数字や同じ記号の札を2枚以上まとめて選んで一度に出せます（最後に出す札で色や効果を引き継ぎます）。', listOf_0('uno_play')), new Section('Oh, No! \u306E\u5BA3\u8A00', '\u624B\u672D\u304C2\u679A\u3067\u3001\u672D\u3092\u51FA\u3059\u524D\u306B\u300COh, No!\u300D\u3092\u62BC\u3059\u3068\u5BA3\u8A00\u306B\u306A\u308A\u307E\u3059\u3002\u5BA3\u8A00\u3057\u306A\u3044\u3067\u6B8B\u308A1\u679A\u306B\u306A\u308B\u3068\u3001\u30DA\u30CA\u30EB\u30C6\u30A3\u3067\u672D\u3092\u5F15\u304D\u307E\u3059\u3002\u300COh, No!\u300D\u306F\u3044\u3064\u3067\u3082\u62BC\u305B\u307E\u3059\u304C\u3001\u624B\u672D\u304C2\u679A\u3067\u306A\u3044\u6642\u306B\u62BC\u3059\u3068\u3001\u8A00\u3044\u307E\u3061\u304C\u3044\u3068\u3057\u3066\u540C\u3058\u679A\u6570\u3092\u5F15\u304D\u307E\u3059\u3002\u5F15\u304F\u679A\u6570\u306F\u8A2D\u5B9A\u3067\u6C7A\u3081\u307E\u3059\u3002'), new Section('\u52DD\u6557', '\u624B\u672D\u3092\u6700\u521D\u306B\u306A\u304F\u3057\u305F\u4EBA\u306E\u52DD\u3061\u3067\u3059\u3002\u6700\u5F8C\u306E\u672D\u304C\u8A18\u53F7\u3067\u3082\u3001\u305D\u306E\u52B9\u679C\u306F\u4F7F\u308F\u308C\u307E\u3059\u3002'), new Section('\u30B3\u30C4', '\u624B\u5143\u306B\u591A\u3044\u8272\u3078\u5909\u3048\u308B\u3068\u51FA\u3057\u3084\u3059\u304F\u306A\u308A\u307E\u3059\u3002\u76F8\u624B\u306E\u6B8B\u308A\u304C\u5C11\u306A\u3044\u6642\u306F\u3001\u30B9\u30AD\u30C3\u30D7\u30FB+2\u3067\u6B62\u3081\u308B\u672D\u3092\u6B8B\u3057\u3066\u304A\u304D\u307E\u3057\u3087\u3046\u3002\u5BA3\u8A00\u3092\u5FD8\u308C\u306A\u3044\u3088\u3046\u306B\u3002')]);
   // Inline function 'kotlin.collections.map' call
   var this_2 = numberRangeToNumber(2, 6);
   // Inline function 'kotlin.collections.mapTo' call
@@ -2185,10 +2185,10 @@ function Catalog() {
       destination_1.i(tmp$ret$6);
     }
      while (!(item_1 === last_1));
-  var tmp_37 = new GameInfo('uno', 9, 'Oh, No!', tmp_34, '2\u301C6\u4EBA', '\u8272\u304B\u6570\u5B57\u304C\u540C\u3058\u30AB\u30FC\u30C9\u3092\u51FA\u3059\u3002\u6B8B\u308A1\u679A\u306B\u306A\u308B\u524D\u306B\u300COh, No!\u300D\u3068\u5BA3\u8A00\u3059\u308B\u3002', tmp_35, tmp_36, listOf([new OptionSpec('players', '\u4EBA\u6570', destination_1, '4'), new OptionSpec('penalty', '\u8A00\u3044\u5FD8\u308C\u30FB\u8A00\u3044\u307E\u3061\u304C\u3044\u3067\u5F15\u304F\u679A\u6570', listOf([to('0', '\u306A\u3057'), to('1', '1\u679A'), to('2', '2\u679A'), to('4', '4\u679A')]), '2')]));
+  var tmp_37 = new GameInfo('uno', 9, 'Oh, No!', tmp_34, '2\u301C6\u4EBA', '\u8272\u304B\u6570\u5B57\u304C\u540C\u3058\u30AB\u30FC\u30C9\u3092\u51FA\u3059\u3002\u6B8B\u308A1\u679A\u306B\u306A\u308B\u524D\u306B\u300COh, No!\u300D\u3068\u5BA3\u8A00\u3059\u308B\u3002', tmp_35, tmp_36, listOf([new OptionSpec('players', '\u4EBA\u6570', destination_1, '4'), new OptionSpec('penalty', '\u8A00\u3044\u5FD8\u308C\u30FB\u8A00\u3044\u307E\u3061\u304C\u3044\u3067\u5F15\u304F\u679A\u6570', listOf([to('0', '\u306A\u3057'), to('1', '1\u679A'), to('2', '2\u679A'), to('4', '4\u679A')]), '2'), new OptionSpec('bundle', 'まとめ出し', listOf([to('off', 'なし'), to('on', 'あり')]), 'off', 'local', '同じ数字・記号の札を2枚以上まとめて出せる')]));
   var tmp_38 = Category_CARD_getInstance();
   var tmp_39 = Companion_getInstance_27().wr_1;
-  var tmp_40 = listOf([new Section('\u6982\u8981\u3068\u76EE\u7684', '1\u4EBA\u306A\u3089\u30AF\u30ED\u30F3\u30C0\u30A4\u30AF\u3001\u591A\u4EBA\u6570\u306A\u3089\u540C\u3058\u914D\u672D\u3092\u5225\u3005\u306B\u89E3\u304F\u7AF6\u4E89\u3067\u3059\u3002\u5148\u306B4\u3064\u306E\u7D44\u672D\u3092\u5B8C\u6210\u3055\u305B\u307E\u3059\u3002'), new Section('\u6E96\u5099', '7\u5217\u306B1\u301C7\u679A\u3092\u914D\u308A\u3001\u5404\u5217\u306E\u4E00\u756A\u4E0A\u3092\u8868\u306B\u3057\u307E\u3059\u3002\u6B8B\u308A\u306F\u5C71\u672D\u3067\u3059\u30021\u679A\u3081\u304F\u308A\u30FB3\u679A\u3081\u304F\u308A\u3001\u5C71\u672D\u306E\u5468\u56DE\u7121\u5236\u9650\u30FB3\u56DE\u3092\u8A2D\u5B9A\u3067\u304D\u307E\u3059\u3002'), new Section('\u5834\u672D\u306E\u79FB\u52D5', '\u8D64\u3068\u9ED2\u304C\u4EA4\u4E92\u3001\u6570\u5B57\u306F1\u3064\u305A\u3064\u5C0F\u3055\u304F\u306A\u308B\u3088\u3046\u91CD\u306D\u307E\u3059\u3002\u8868\u5411\u304D\u3067\u3064\u306A\u304C\u3063\u305F\u672D\u306F\u307E\u3068\u3081\u3066\u79FB\u52D5\u53EF\u80FD\u3002\u7A7A\u306E\u5217\u306B\u306FK\u304B\u3089\u306E\u7D44\u3060\u3051\u7F6E\u3051\u307E\u3059\u3002\u96A0\u308C\u3066\u3044\u305F\u4E00\u756A\u4E0A\u306E\u672D\u306F\u81EA\u52D5\u3067\u8868\u306B\u306A\u308A\u307E\u3059\u3002'), new Section('\u7D44\u672D\u3068\u64CD\u4F5C', '\u7D44\u672D\u306F\u540C\u3058\u30DE\u30FC\u30AF\u3067A\u304B\u3089K\u306E\u9806\u3002\u672D\u306F\u6307\u3067\u30C9\u30E9\u30C3\u30B0\u3057\u3066\u884C\u304D\u5148\u306B\u843D\u3068\u3059\u304B\u3001\u30BF\u30C3\u30D7\u3067\u9078\u3093\u3067\u304B\u3089\u884C\u304D\u5148\u3092\u30BF\u30C3\u30D7\u3057\u3066\u52D5\u304B\u3057\u307E\u3059\u3002\u9078\u3093\u3060\u672D\u3092\u3082\u3046\u4E00\u5EA6\u30BF\u30C3\u30D7\u3059\u308B\u3068\u3001\u7D44\u672D(\u7F6E\u3051\u306A\u3051\u308C\u3070\u7F6E\u3051\u308B\u5217)\u3078\u81EA\u52D5\u3067\u52D5\u304D\u307E\u3059\u3002\u5DE6\u4E0A\u306E\u5C71\u672D\u3092\u30BF\u30C3\u30D7\u3059\u308B\u3068\u3081\u304F\u308A\u3001\u5C71\u672D\u304C\u306A\u304F\u306A\u3063\u305F\u3089\u3082\u3046\u4E00\u5EA6\u30BF\u30C3\u30D7\u3067\u623B\u3057\u307E\u3059\u3002\u300C\u7D44\u672D\u3078\u300D\u306F\u9078\u3093\u3060\u672D(\u9078\u3093\u3067\u3044\u306A\u3044\u6642\u306F\u7F6E\u3051\u308B\u672D)\u3092\u7D44\u672D\u3078\u52D5\u304B\u3057\u307E\u3059\u3002\u7D44\u672D\u304B\u3089\u5834\u672D\u3078\u623B\u3059\u3053\u3068\u3082\u3067\u304D\u307E\u3059\u3002', listOf_0('solitaire_play')), new Section('\u52DD\u6557', '4\u7D44\u3059\u3079\u3066\u5B8C\u6210\u3067\u6210\u529F\u3002\u5FC5\u305A\u89E3\u3051\u308B\u914D\u672D\u3067\u306F\u3042\u308A\u307E\u305B\u3093\u3002\u7D9A\u3051\u3089\u308C\u306A\u3044\u6642\u306F\u7D42\u4E86\u3067\u304D\u307E\u3059\u3002\u901A\u4FE1\u3067\u306F\u540C\u3058\u914D\u672D\u3067\u72EC\u7ACB\u3057\u3066\u9032\u3081\u3001\u6700\u521D\u306E\u5B8C\u6210\u8005\u304C\u52DD\u3061\u3001\u5168\u54E1\u7D42\u4E86\u306A\u3089\u5F15\u304D\u5206\u3051\u30021\u53F0\u306E\u4EA4\u4EE3\u5F62\u5F0F\u306B\u306F\u5BFE\u5FDC\u3057\u307E\u305B\u3093\u3002'), new Section('\u30B3\u30C4', '\u96A0\u308C\u305F\u672D\u3092\u591A\u304F\u958B\u304F\u3053\u3068\u3092\u512A\u5148\u3057\u307E\u3059\u3002K\u3092\u52D5\u304B\u305B\u308B\u7A7A\u5217\u3092\u78BA\u4FDD\u3057\u3001\u7D44\u672D\u3078\u6025\u3044\u3067\u79FB\u3059\u3053\u3068\u3067\u5834\u672D\u306E\u9023\u7D50\u3092\u59A8\u3052\u306A\u3044\u3088\u3046\u306B\u3057\u307E\u3057\u3087\u3046\u3002')]);
+  var tmp_40 = listOf([new Section('\u6982\u8981\u3068\u76EE\u7684', '1\u4EBA\u306A\u3089\u30AF\u30ED\u30F3\u30C0\u30A4\u30AF\u3001\u591A\u4EBA\u6570\u306A\u3089\u540C\u3058\u914D\u672D\u3092\u5225\u3005\u306B\u89E3\u304F\u7AF6\u4E89\u3067\u3059\u3002\u5148\u306B4\u3064\u306E\u7D44\u672D\u3092\u5B8C\u6210\u3055\u305B\u307E\u3059\u3002'), new Section('\u6E96\u5099', '7\u5217\u306B1\u301C7\u679A\u3092\u914D\u308A\u3001\u5404\u5217\u306E\u4E00\u756A\u4E0A\u3092\u8868\u306B\u3057\u307E\u3059\u3002\u6B8B\u308A\u306F\u5C71\u672D\u3067\u3059\u30021\u679A\u3081\u304F\u308A\u30FB3\u679A\u3081\u304F\u308A\u3001\u5C71\u672D\u306E\u5468\u56DE\u7121\u5236\u9650\u30FB3\u56DE\u3092\u8A2D\u5B9A\u3067\u304D\u307E\u3059\u3002'), new Section('\u5834\u672D\u306E\u79FB\u52D5', '\u8D64\u3068\u9ED2\u304C\u4EA4\u4E92\u3001\u6570\u5B57\u306F1\u3064\u305A\u3064\u5C0F\u3055\u304F\u306A\u308B\u3088\u3046\u91CD\u306D\u307E\u3059\u3002\u8868\u5411\u304D\u3067\u3064\u306A\u304C\u3063\u305F\u672D\u306F\u307E\u3068\u3081\u3066\u79FB\u52D5\u53EF\u80FD\u3002\u7A7A\u306E\u5217\u306B\u306FK\u304B\u3089\u306E\u7D44\u3060\u3051\u7F6E\u3051\u307E\u3059\u3002\u96A0\u308C\u3066\u3044\u305F\u4E00\u756A\u4E0A\u306E\u672D\u306F\u81EA\u52D5\u3067\u8868\u306B\u306A\u308A\u307E\u3059\u3002'), new Section('\u7D44\u672D\u3068\u64CD\u4F5C', '\u7D44\u672D\u306F\u540C\u3058\u30DE\u30FC\u30AF\u3067A\u304B\u3089K\u306E\u9806\u3002\u672D\u306F\u6307\u3067\u30C9\u30E9\u30C3\u30B0\u3057\u3066\u884C\u304D\u5148\u306B\u843D\u3068\u3059\u304B\u3001\u30BF\u30C3\u30D7\u3067\u9078\u3093\u3067\u304B\u3089\u884C\u304D\u5148\u3092\u30BF\u30C3\u30D7\u3057\u3066\u52D5\u304B\u3057\u307E\u3059\u3002\u9078\u3093\u3060\u672D\u3092\u3082\u3046\u4E00\u5EA6\u30BF\u30C3\u30D7\u3059\u308B\u3068\u3001\u7D44\u672D(\u7F6E\u3051\u306A\u3051\u308C\u3070\u7F6E\u3051\u308B\u5217)\u3078\u81EA\u52D5\u3067\u52D5\u304D\u307E\u3059\u3002\u5DE6\u4E0A\u306E\u5C71\u672D\u3092\u30BF\u30C3\u30D7\u3059\u308B\u3068\u3081\u304F\u308A\u3001\u5C71\u672D\u304C\u306A\u304F\u306A\u3063\u305F\u3089\u3082\u3046\u4E00\u5EA6\u30BF\u30C3\u30D7\u3067\u623B\u3057\u307E\u3059\u3002\u300C\u7D44\u672D\u3078\u300D\u306F\u9078\u3093\u3060\u672D(\u9078\u3093\u3067\u3044\u306A\u3044\u6642\u306F\u7F6E\u3051\u308B\u672D)\u3092\u7D44\u672D\u3078\u52D5\u304B\u3057\u307E\u3059\u3002\u7D44\u672D\u304B\u3089\u5834\u672D\u3078\u623B\u3059\u3053\u3068\u3082\u3067\u304D\u307E\u3059\u3002', listOf_0('solitaire_play')), new Section('\u52DD\u6557', '4\u7D44\u3059\u3079\u3066\u5B8C\u6210\u3067\u6210\u529F\u3002\u89E3\u3051\u308B\u914D\u672D\u304C\u914D\u3089\u308C\u307E\u3059\u3002\u7D9A\u3051\u3089\u308C\u306A\u3044\u6642\u306F\u7D42\u4E86\u3067\u304D\u307E\u3059\u3002\u901A\u4FE1\u3067\u306F\u540C\u3058\u914D\u672D\u3067\u72EC\u7ACB\u3057\u3066\u9032\u3081\u3001\u6700\u521D\u306E\u5B8C\u6210\u8005\u304C\u52DD\u3061\u3001\u5168\u54E1\u7D42\u4E86\u306A\u3089\u5F15\u304D\u5206\u3051\u30021\u53F0\u306E\u4EA4\u4EE3\u5F62\u5F0F\u306B\u306F\u5BFE\u5FDC\u3057\u307E\u305B\u3093\u3002'), new Section('\u30B3\u30C4', '\u96A0\u308C\u305F\u672D\u3092\u591A\u304F\u958B\u304F\u3053\u3068\u3092\u512A\u5148\u3057\u307E\u3059\u3002K\u3092\u52D5\u304B\u305B\u308B\u7A7A\u5217\u3092\u78BA\u4FDD\u3057\u3001\u7D44\u672D\u3078\u6025\u3044\u3067\u79FB\u3059\u3053\u3068\u3067\u5834\u672D\u306E\u9023\u7D50\u3092\u59A8\u3052\u306A\u3044\u3088\u3046\u306B\u3057\u307E\u3057\u3087\u3046\u3002')]);
   // Inline function 'kotlin.collections.map' call
   var this_3 = numberRangeToNumber(1, 6);
   // Inline function 'kotlin.collections.mapTo' call
@@ -13572,26 +13572,265 @@ function HareHounds$evaluate$ref($boundThis) {
   l.callableName = 'evaluate';
   return l;
 }
+var hareExactTblCache = null;
+function hareStateIndex(b, turn) {
+  var h0 = -1, h1 = -1, h2 = -1, hare = -1;
+  for (var i = 0; i < 11; i = i + 1 | 0) {
+    if (b[i] === 1) {
+      if (h0 < 0) h0 = i;
+      else if (h1 < 0) h1 = i;
+      else h2 = i;
+    } else if (b[i] === 2) {
+      hare = i;
+    }
+  }
+  if (h0 < 0 || h1 < 0 || h2 < 0 || hare < 0) return -1;
+  var tbl = hareExactTable();
+  var tId = tbl.triMap[(h0 << 8) | (h1 << 4) | h2];
+  return tId == null ? -1 : ((tId * 11 + hare) * 2 + turn) | 0;
+}
+function hareExactTable() {
+  if (hareExactTblCache != null) return hareExactTblCache;
+  var hh = HareHounds_getInstance();
+  var col = hh.cj_1;
+  var adj = hh.dj_1;
+  var triplets = [];
+  var triMap = Object.create(null);
+  for (var a = 0; a < 11; a = a + 1 | 0) {
+    for (var b = a + 1 | 0; b < 11; b = b + 1 | 0) {
+      for (var c = b + 1 | 0; c < 11; c = c + 1 | 0) {
+        var id = triplets.length;
+        triplets.push([a, b, c]);
+        triMap[(a << 8) | (b << 4) | c] = id;
+      }
+    }
+  }
+  var N = triplets.length * 11 * 2;
+  var win = new Int8Array(N);
+  var dtm = new Int16Array(N);
+  function idx(tId, hare, turn) { return ((tId * 11 + hare) * 2 + turn) | 0; }
+  function isEsc(h, hare) { return col[h[0]] > col[hare] && col[h[1]] > col[hare] && col[h[2]] > col[hare]; }
+  function hMoves(h, hare) {
+    var res = [];
+    for (var i = 0; i < 3; i = i + 1 | 0) {
+      var f = h[i];
+      var nbs = adj[f];
+      for (var j = 0; j < nbs.length; j = j + 1 | 0) {
+        var t = nbs[j];
+        if (t === hare || t === h[0] || t === h[1] || t === h[2] || col[t] < col[f]) continue;
+        var n0 = i === 0 ? t : h[0], n1 = i === 1 ? t : h[1], n2 = i === 2 ? t : h[2];
+        var tmp;
+        if (n0 > n1) { tmp = n0; n0 = n1; n1 = tmp; }
+        if (n1 > n2) { tmp = n1; n1 = n2; n2 = tmp; }
+        if (n0 > n1) { tmp = n0; n0 = n1; n1 = tmp; }
+        res.push(triMap[(n0 << 8) | (n1 << 4) | n2]);
+      }
+    }
+    return res;
+  }
+  function rMoves(h, hare) {
+    var res = [];
+    var nbs = adj[hare];
+    for (var j = 0; j < nbs.length; j = j + 1 | 0) {
+      var t = nbs[j];
+      if (t !== h[0] && t !== h[1] && t !== h[2]) res.push(t);
+    }
+    return res;
+  }
+  var tId, hare;
+  for (tId = 0; tId < triplets.length; tId = tId + 1 | 0) {
+    var h = triplets[tId];
+    for (hare = 0; hare < 11; hare = hare + 1 | 0) {
+      if (hare === h[0] || hare === h[1] || hare === h[2]) continue;
+      var esc = isEsc(h, hare);
+      var rm = rMoves(h, hare);
+      var hm = hMoves(h, hare);
+      if (esc) win[idx(tId, hare, 1)] = -1;
+      else if (rm.length === 0) win[idx(tId, hare, 1)] = 1;
+      if (esc || hm.length === 0) win[idx(tId, hare, 0)] = -1;
+    }
+  }
+  var changed = true;
+  while (changed) {
+    changed = false;
+    for (tId = 0; tId < triplets.length; tId = tId + 1 | 0) {
+      var h_0 = triplets[tId];
+      for (hare = 0; hare < 11; hare = hare + 1 | 0) {
+        if (hare === h_0[0] || hare === h_0[1] || hare === h_0[2]) continue;
+        var i0 = idx(tId, hare, 0);
+        if (win[i0] === 0) {
+          var hms = hMoves(h_0, hare);
+          var allLose = true, bestWin = 9999, worstLose = -1;
+          for (var k = 0; k < hms.length; k = k + 1 | 0) {
+            var ci = idx(hms[k], hare, 1);
+            var cw = win[ci];
+            if (cw !== -1) allLose = false;
+            if (cw === 1 && dtm[ci] + 1 < bestWin) bestWin = dtm[ci] + 1;
+            if (cw === -1 && dtm[ci] + 1 > worstLose) worstLose = dtm[ci] + 1;
+          }
+          if (bestWin < 9999) { win[i0] = 1; dtm[i0] = bestWin; changed = true; }
+          else if (allLose) { win[i0] = -1; dtm[i0] = worstLose; changed = true; }
+        }
+        var i1 = idx(tId, hare, 1);
+        if (win[i1] === 0) {
+          var rms = rMoves(h_0, hare);
+          var allWin = true, bestLose = 9999, worstWin = -1;
+          for (var k2 = 0; k2 < rms.length; k2 = k2 + 1 | 0) {
+            var ci2 = idx(tId, rms[k2], 0);
+            var cw2 = win[ci2];
+            if (cw2 !== 1) allWin = false;
+            if (cw2 === -1 && dtm[ci2] + 1 < bestLose) bestLose = dtm[ci2] + 1;
+            if (cw2 === 1 && dtm[ci2] + 1 > worstWin) worstWin = dtm[ci2] + 1;
+          }
+          if (bestLose < 9999) { win[i1] = -1; dtm[i1] = bestLose; changed = true; }
+          else if (allWin) { win[i1] = 1; dtm[i1] = worstWin; changed = true; }
+        }
+      }
+    }
+  }
+  hareExactTblCache = { triMap: triMap, win: win, dtm: dtm };
+  return hareExactTblCache;
+}
+function harePickAdvancing(hh, rules, tbl, s, adv, level, rng) {
+  var best = adv[0];
+  var bestScore = -1e9;
+  var noise = level.q1_1 === 0 ? 28 : level.q1_1 === 1 ? 8 : 0;
+  for (var i = 0; i < adv.length; i = i + 1 | 0) {
+    var m = adv[i];
+    var f = m / 11 | 0, t = m % 11 | 0;
+    var ns = rules.ws(s, m);
+    var score = 0;
+    if (ns.q1c_1 === 0) score = 1000000 - i;
+    else if (ns.q1c_1 === 1) score = -100000 + (hh.cj_1[t] - hh.cj_1[f]) * 20 - hh.u1c(ns, 1);
+    else {
+      var ci = hareStateIndex(ns.m1c_1, 1);
+      var cw = ci >= 0 ? tbl.win[ci] : 0;
+      var cd = ci >= 0 ? tbl.dtm[ci] : 0;
+      score = (cw === 1 ? 50000 - cd * 10 : cw === 0 ? 1000 : -50000 + cd * 10) + (hh.cj_1[t] - hh.cj_1[f]) * 12 + hh.u1c(ns, 0);
+    }
+    if (noise > 0 && rng != null) score += rng.e(noise);
+    if (score > bestScore) {
+      bestScore = score;
+      best = m;
+    }
+  }
+  return best;
+}
 function HareHounds$brain$lambda(rules, s, seat, level, rng, budget) {
   var legal = rules.ps(s);
   if (legal.length === 1)
     return legal[0];
-  var tmp;
+  var hh = HareHounds_getInstance();
+  var tbl = hareExactTable();
+  var curIdx = hareStateIndex(s.m1c_1, s.n1c_1);
+  var curWin = curIdx >= 0 ? tbl.win[curIdx] : 0;
+  if (seat === 0) {
+    var adv = [];
+    var winMoves = [];
+    var winAdv = [];
+    var lastF = s.s1c_1 >= 0 ? (s.s1c_1 / 11 | 0) : -1;
+    var lastT = s.s1c_1 >= 0 ? (s.s1c_1 % 11 | 0) : -1;
+    for (var i = 0; i < legal.length; i = i + 1 | 0) {
+      var m = legal[i];
+      var f = m / 11 | 0, t = m % 11 | 0;
+      var isVert = hh.cj_1[t] === hh.cj_1[f];
+      if (!isVert) adv.push(m);
+      var ns = rules.ws(s, m);
+      var ci = ns.q1c_1 === 0 ? -1 : hareStateIndex(ns.m1c_1, 1);
+      var cw = ns.q1c_1 === 0 ? 1 : (ns.q1c_1 === 1 ? -1 : (ci >= 0 ? tbl.win[ci] : 0));
+      var cd = ns.q1c_1 === 0 ? 0 : (ci >= 0 ? tbl.dtm[ci] : 999);
+      if (cw === 1) {
+        var entry = { m: m, dtm: cd, vert: isVert, rev: isVert && f === lastT && t === lastF };
+        winMoves.push(entry);
+        if (!isVert) winAdv.push(entry);
+      }
+    }
+    if (curWin !== 1 && adv.length > 0) {
+      return harePickAdvancing(hh, rules, tbl, s, adv, level, rng);
+    }
+    if (level.q1_1 === 2 && winMoves.length > 0) {
+      var pool = winMoves;
+      if (s.o1c_1 >= 2 && winAdv.length > 0) pool = winAdv;
+      else {
+        var nonRev = pool.filter(function (e) { return !e.rev; });
+        if (nonRev.length > 0) pool = nonRev;
+      }
+      var bestEntry = pool[0];
+      for (var k = 1; k < pool.length; k = k + 1 | 0) {
+        var e = pool[k];
+        if (e.dtm < bestEntry.dtm || (e.dtm === bestEntry.dtm && bestEntry.vert && !e.vert))
+          bestEntry = e;
+      }
+      return bestEntry.m;
+    }
+    var tmp;
+    switch (level.q1_1) {
+      case 0:
+        tmp = hh.fj_1.jv().xt(s, seat, 2, budget, rng, 30);
+        break;
+      case 1:
+        tmp = hh.fj_1.jv().xt(s, seat, 4, budget, rng, 10);
+        break;
+      case 2:
+        tmp = hh.fj_1.jv().xt(s, seat, 8, budget, rng, 5);
+        break;
+      default:
+        noWhenBranchMatchedException();
+        break;
+    }
+    var tf = tmp / 11 | 0, tt = tmp % 11 | 0;
+    if (hh.cj_1[tt] === hh.cj_1[tf] && adv.length > 0) {
+      var ns_t = rules.ws(s, tmp);
+      var ci_t = ns_t.q1c_1 === 0 ? -1 : hareStateIndex(ns_t.m1c_1, 1);
+      var cw_t = ns_t.q1c_1 === 0 ? 1 : (ns_t.q1c_1 === 1 ? -1 : (ci_t >= 0 ? tbl.win[ci_t] : 0));
+      var cd_t = ci_t >= 0 ? tbl.dtm[ci_t] : 999;
+      var advBeatsOrClose = false;
+      for (var w = 0; w < winAdv.length; w = w + 1 | 0) {
+        if (winAdv[w].dtm <= cd_t + 2) { advBeatsOrClose = true; break; }
+      }
+      if (cw_t !== 1 || s.o1c_1 >= 1 || (tf === lastT && tt === lastF) || advBeatsOrClose) {
+        return harePickAdvancing(hh, rules, tbl, s, adv, level, rng);
+      }
+    }
+    return tmp;
+  }
+  if (level.q1_1 === 2 && curWin !== 1) {
+    var loseMoves = [];
+    for (var j = 0; j < legal.length; j = j + 1 | 0) {
+      var hm = legal[j];
+      var hf = hm / 11 | 0, ht = hm % 11 | 0;
+      var hns = rules.ws(s, hm);
+      var hci = hns.q1c_1 >= 0 ? -1 : hareStateIndex(hns.m1c_1, 0);
+      var hcw = hns.q1c_1 === 1 ? -1 : (hns.q1c_1 === 0 ? 1 : (hci >= 0 ? tbl.win[hci] : 0));
+      var hcd = hns.q1c_1 === 1 ? 0 : (hci >= 0 ? tbl.dtm[hci] : 999);
+      if (hcw === -1) loseMoves.push({ m: hm, dtm: hcd, left: hh.cj_1[ht] < hh.cj_1[hf] });
+    }
+    if (loseMoves.length > 0) {
+      var bestH = loseMoves[0];
+      for (var r = 1; r < loseMoves.length; r = r + 1 | 0) {
+        var he = loseMoves[r];
+        if (he.dtm < bestH.dtm || (he.dtm === bestH.dtm && !bestH.left && he.left))
+          bestH = he;
+      }
+      return bestH.m;
+    }
+  }
+  var tmp_0;
   switch (level.q1_1) {
     case 0:
-      tmp = HareHounds_getInstance().fj_1.jv().xt(s, seat, 2, budget, rng, 30);
+      tmp_0 = hh.fj_1.jv().xt(s, seat, 2, budget, rng, 30);
       break;
     case 1:
-      tmp = HareHounds_getInstance().fj_1.jv().xt(s, seat, 4, budget, rng, 10);
+      tmp_0 = hh.fj_1.jv().xt(s, seat, 4, budget, rng, 10);
       break;
     case 2:
-      tmp = HareHounds_getInstance().fj_1.jv().xt(s, seat, 8, budget, rng, 5);
+      tmp_0 = hh.fj_1.jv().xt(s, seat, 8, budget, rng, 5);
       break;
     default:
       noWhenBranchMatchedException();
       break;
   }
-  return tmp;
+  return tmp_0;
 }
 function HareHounds$def$lambda(it) {
   return HareHounds_getInstance();
@@ -26301,28 +26540,30 @@ protoOf(OhNoState).equals = function (other) {
 function Companion_22() {
 }
 protoOf(Companion_22).d1t = function (o) {
-  return new OhNoRules(coerceIn_0(o.it('penalty', 2), 0, 4), o.jt('stack', 'off') === 'on', o.jt('drawUntil', 'off') === 'on', o.jt('noActionFinish', 'off') === 'on', o.jt('sevenZero', 'off') === 'on', o.jt('wildAnytime', 'off') === 'on');
+  return new OhNoRules(coerceIn_0(o.it('penalty', 2), 0, 4), o.jt('stack', 'off') === 'on', o.jt('drawUntil', 'off') === 'on', o.jt('noActionFinish', 'off') === 'on', o.jt('sevenZero', 'off') === 'on', o.jt('wildAnytime', 'off') === 'on', o.jt('bundle', 'off') === 'on');
 };
 var Companion_instance_22;
 function Companion_getInstance_22() {
   return Companion_instance_22;
 }
-function OhNoRules(penalty, stack, drawUntil, noActionFinish, sevenZero, wildAnytime) {
+function OhNoRules(penalty, stack, drawUntil, noActionFinish, sevenZero, wildAnytime, bundle) {
   penalty = penalty === VOID ? 2 : penalty;
   stack = stack === VOID ? false : stack;
   drawUntil = drawUntil === VOID ? false : drawUntil;
   noActionFinish = noActionFinish === VOID ? false : noActionFinish;
   sevenZero = sevenZero === VOID ? false : sevenZero;
   wildAnytime = wildAnytime === VOID ? false : wildAnytime;
+  bundle = bundle === VOID ? false : bundle;
   this.e1t_1 = penalty;
   this.f1t_1 = stack;
   this.g1t_1 = drawUntil;
   this.h1t_1 = noActionFinish;
   this.i1t_1 = sevenZero;
   this.j1t_1 = wildAnytime;
+  this.k1t_bundle = bundle;
 }
 protoOf(OhNoRules).toString = function () {
-  return 'OhNoRules(penalty=' + this.e1t_1 + ', stack=' + this.f1t_1 + ', drawUntil=' + this.g1t_1 + ', noActionFinish=' + this.h1t_1 + ', sevenZero=' + this.i1t_1 + ', wildAnytime=' + this.j1t_1 + ')';
+  return 'OhNoRules(penalty=' + this.e1t_1 + ', stack=' + this.f1t_1 + ', drawUntil=' + this.g1t_1 + ', noActionFinish=' + this.h1t_1 + ', sevenZero=' + this.i1t_1 + ', wildAnytime=' + this.j1t_1 + ', bundle=' + this.k1t_bundle + ')';
 };
 protoOf(OhNoRules).hashCode = function () {
   var result = this.e1t_1;
@@ -26331,6 +26572,7 @@ protoOf(OhNoRules).hashCode = function () {
   result = imul(result, 31) + getBooleanHashCode(this.h1t_1) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.i1t_1) | 0;
   result = imul(result, 31) + getBooleanHashCode(this.j1t_1) | 0;
+  result = imul(result, 31) + getBooleanHashCode(this.k1t_bundle) | 0;
   return result;
 };
 protoOf(OhNoRules).equals = function (other) {
@@ -26351,8 +26593,78 @@ protoOf(OhNoRules).equals = function (other) {
     return false;
   if (!(this.j1t_1 === tmp0_other_with_cast.j1t_1))
     return false;
+  if (!(this.k1t_bundle === tmp0_other_with_cast.k1t_bundle))
+    return false;
   return true;
 };
+function ohNoDecodeBundle(rules, s, m) {
+  if (!(rules instanceof OhNo) || !rules.m1t_1.k1t_bundle || !(s instanceof OhNoState))
+    return null;
+  if (s.u1s_1 >= 0 || s.y1s_1 || s.t1s_1 >= 0 || m < 1000000)
+    return null;
+  var code = m - 1000000 | 0;
+  if (code < 0 || code >= (15 << 13))
+    return null;
+  var rank = (code >>> 13) & 15;
+  var col = (code >>> 11) & 3;
+  var lastSub = (code >>> 8) & 7;
+  var mask = code & 255;
+  if (rank > 14 || mask === 0)
+    return null;
+  var comp23 = Companion_getInstance_23();
+  var hand = s.m1s_1.p(s.p1s_1);
+  var hn = hand.n();
+  var rankIdxs = [];
+  var hasCurCol = false;
+  for (var i = 0; i < hn; i = i + 1 | 0) {
+    var c = hand.p(i);
+    if (comp23.q1t(c) === s.r1s_1)
+      hasCurCol = true;
+    if (comp23.r1t(c) === rank)
+      rankIdxs.push(i);
+  }
+  if (rankIdxs.length < 2 || rankIdxs.length > 8)
+    return null;
+  if (lastSub >= rankIdxs.length || ((mask >> lastSub) & 1) === 0 || (mask >>> rankIdxs.length) !== 0)
+    return null;
+  var sel = [];
+  var hasMatchCol = false;
+  for (var sub = 0; sub < rankIdxs.length; sub = sub + 1 | 0) {
+    if ((mask >> sub) & 1) {
+      var idx = rankIdxs[sub];
+      sel.push(idx);
+      if (comp23.q1t(hand.p(idx)) === s.r1s_1)
+        hasMatchCol = true;
+    }
+  }
+  if (sel.length < 2)
+    return null;
+  if (rules.m1t_1.h1t_1 && sel.length === hn && rank >= 10)
+    return null;
+  var tailIdx = rankIdxs[lastSub];
+  var tailCard = hand.p(tailIdx);
+  if (rank < 13 && col !== comp23.q1t(tailCard))
+    return null;
+  var topRank = comp23.r1t(s.o1s_1.p(s.o1s_1.n() - 1 | 0));
+  if (s.x1s_1 > 0) {
+    if (!(rank === topRank && rank >= 12))
+      return null;
+  } else if (rank === 14) {
+    if (hasCurCol && !rules.m1t_1.j1t_1)
+      return null;
+  } else if (rank < 13) {
+    if (rank !== topRank && !hasMatchCol)
+      return null;
+  }
+  return { rank: rank, col: col, tail: tailIdx, sel: sel, mask: mask, rankIdxs: rankIdxs };
+}
+function ohNoIsLegal(s, m) {
+  if (!(s instanceof OhNoState) || this.ts(s) < 0)
+    return false;
+  if (m >= 1000000)
+    return !(ohNoDecodeBundle(this, s, m) == null);
+  return contains_0(this.o1t(s), m);
+}
 function sam$jp_yonekou_asobi26_core_Brain$0_20(function_0) {
   this.k1t_1 = function_0;
 }
@@ -26380,318 +26692,105 @@ protoOf(sam$jp_yonekou_asobi26_core_Brain$0_20).equals = function (other) {
 protoOf(sam$jp_yonekou_asobi26_core_Brain$0_20).hashCode = function () {
   return hashCode(this.n2());
 };
+function ohNoBrainMoveInfo(r, s, hand, m) {
+  var comp23 = Companion_getInstance_23();
+  if (m >= 1000000) {
+    var d = ohNoDecodeBundle(r, s, m);
+    var cards = [];
+    for (var i = 0; i < d.sel.length; i = i + 1 | 0) cards.push(hand.p(d.sel[i]));
+    return { cards: cards, tail: hand.p(d.tail), col: d.col };
+  }
+  var c = hand.p((m - 100 | 0) / 4 | 0);
+  var tc = comp23.r1t(c) >= 13 ? (m - 100 | 0) % 4 | 0 : comp23.q1t(c);
+  return { cards: [c], tail: c, col: tc };
+}
+function ohNoBrainScore(r, s, hand, lv, plays, m) {
+  var comp23 = Companion_getInstance_23();
+  var info = ohNoBrainMoveInfo(r, s, hand, m);
+  var cards = info.cards;
+  var tail = info.tail;
+  var targetColor = info.col;
+  var leftAfter = hand.n() - cards.length | 0;
+  var ptsSum = 0;
+  for (var i = 0; i < cards.length; i = i + 1 | 0) ptsSum = ptsSum + comp23.s1t(cards[i]) | 0;
+  var remCol = 0;
+  var hn = hand.n();
+  for (var hi = 0; hi < hn; hi = hi + 1 | 0) {
+    if (comp23.q1t(hand.p(hi)) === targetColor) remCol = remCol + 1 | 0;
+  }
+  var score = (leftAfter === 0 ? 5000 : 0) + imul(ptsSum, 10) + imul(cards.length - 1 | 0, 35) + imul(remCol, 3);
+  if (lv.equals(Level_HARD_getInstance())) {
+    var totalP = s.m1s_1.n();
+    var nextSeat = ((s.p1s_1 + s.q1s_1 | 0) + imul(totalP, 2) | 0) % totalP | 0;
+    var tailRank = comp23.r1t(tail);
+    if (s.m1s_1.p(nextSeat).n() <= 2 && ((10 <= tailRank ? tailRank <= 12 : false) || tailRank === 14)) {
+      score = score + 200 | 0;
+    }
+    if (tailRank >= 13 && leftAfter > 0) {
+      var hasNonWild = false;
+      var pIt = plays.k();
+      while (pIt.l()) {
+        var pm = pIt.m();
+        var pi = ohNoBrainMoveInfo(r, s, hand, pm);
+        if (comp23.r1t(pi.tail) < 13) { hasNonWild = true; break; }
+      }
+      if (hasNonWild) score = score - 160 | 0;
+    }
+  }
+  return score;
+}
 function OhNo$Companion$brain$lambda(r0, s, _unused_var__etf5q3, lv, rng, _unused_var__etf5q3_0) {
   var r = r0 instanceof OhNo ? r0 : THROW_CCE();
   var legal = r.o1t(s);
   var hand = s.m1s_1.p(s.p1s_1);
-  var tmp;
   if (s.y1s_1) {
-    var tmp$ret$1;
-    $l$block: {
-      // Inline function 'kotlin.collections.minBy' call
-      // Inline function 'kotlin.collections.isEmpty' call
-      if (legal.length === 0)
-        throw NoSuchElementException_init_$Create$();
-      var minElem = legal[0];
-      var lastIndex = get_lastIndex_0(legal);
-      if (lastIndex === 0) {
-        tmp$ret$1 = minElem;
-        break $l$block;
-      }
-      // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-      var it = minElem;
-      var minValue = lv.equals(Level_EASY_getInstance()) ? rng.e(10) : s.m1s_1.p(it - 50 | 0).n();
-      var inductionVariable = 1;
-      if (inductionVariable <= lastIndex)
-        do {
-          var i = inductionVariable;
-          inductionVariable = inductionVariable + 1 | 0;
-          var e = legal[i];
-          // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-          var v = lv.equals(Level_EASY_getInstance()) ? rng.e(10) : s.m1s_1.p(e - 50 | 0).n();
-          if (compareTo(minValue, v) > 0) {
-            minElem = e;
-            minValue = v;
-          }
-        }
-         while (!(i === lastIndex));
-      tmp$ret$1 = minElem;
+    if (legal.length === 0)
+      throw NoSuchElementException_init_$Create$();
+    var minElem = legal[0];
+    var minValue = lv.equals(Level_EASY_getInstance()) ? rng.e(10) : s.m1s_1.p(minElem - 50 | 0).n();
+    for (var i = 1; i < legal.length; i = i + 1 | 0) {
+      var e = legal[i];
+      var v = lv.equals(Level_EASY_getInstance()) ? rng.e(10) : s.m1s_1.p(e - 50 | 0).n();
+      if (compareTo(minValue, v) > 0) { minElem = e; minValue = v; }
     }
-    tmp = tmp$ret$1;
-  } else {
-    var tmp_0;
-    var tmp_1;
-    if (r.p1t(s)) {
-      var tmp$ret$5;
-      $l$block_0: {
-        // Inline function 'kotlin.collections.any' call
-        var inductionVariable_0 = 0;
-        var last = legal.length;
-        while (inductionVariable_0 < last) {
-          var element = legal[inductionVariable_0];
-          inductionVariable_0 = inductionVariable_0 + 1 | 0;
-          // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-          if (element >= 100) {
-            tmp$ret$5 = true;
-            break $l$block_0;
-          }
-        }
-        tmp$ret$5 = false;
-      }
-      tmp_1 = tmp$ret$5;
-    } else {
-      tmp_1 = false;
-    }
-    if (tmp_1) {
-      var tmp_2 = rng.kd();
-      var tmp0 = lv.q1_1;
-      tmp_0 = tmp_2 >= (tmp0 === 0 ? 0.3 : tmp0 === 1 ? 0.08 : 0.0);
-    } else {
-      tmp_0 = false;
-    }
-    if (tmp_0) {
-      tmp = 2;
-    } else {
-      // Inline function 'kotlin.collections.filter' call
-      // Inline function 'kotlin.collections.filterTo' call
-      var destination = ArrayList_init_$Create$_0();
-      var inductionVariable_1 = 0;
-      var last_0 = legal.length;
-      while (inductionVariable_1 < last_0) {
-        var element_0 = legal[inductionVariable_1];
-        inductionVariable_1 = inductionVariable_1 + 1 | 0;
-        // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-        if (element_0 >= 100) {
-          destination.i(element_0);
-        }
-      }
-      var plays = destination;
-      var tmp_3;
-      if (plays.q()) {
-        var tmp$ret$10;
-        $l$block_1: {
-          // Inline function 'kotlin.collections.first' call
-          var inductionVariable_2 = 0;
-          var last_1 = legal.length;
-          while (inductionVariable_2 < last_1) {
-            var element_1 = legal[inductionVariable_2];
-            inductionVariable_2 = inductionVariable_2 + 1 | 0;
-            // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-            if (!(element_1 === 2)) {
-              tmp$ret$10 = element_1;
-              break $l$block_1;
-            }
-          }
-          throw NoSuchElementException_init_$Create$_0('Array contains no element matching the predicate.');
-        }
-        tmp_3 = tmp$ret$10;
-      } else if (lv.equals(Level_EASY_getInstance())) {
-        tmp_3 = random_0(plays, rng);
-      } else {
-        var tmp$ret$11;
-        $l$block_2: {
-          // Inline function 'kotlin.collections.maxBy' call
-          var iterator = plays.k();
-          if (!iterator.l())
-            throw NoSuchElementException_init_$Create$();
-          var maxElem = iterator.m();
-          if (!iterator.l()) {
-            tmp$ret$11 = maxElem;
-            break $l$block_2;
-          }
-          // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-          var m = maxElem;
-          var card = hand.p((m - 100 | 0) / 4 | 0);
-          var targetColor = Companion_getInstance_23().r1t(card) >= 13 ? (m - 100 | 0) % 4 | 0 : Companion_getInstance_23().q1t(card);
-          var next = ((s.p1s_1 + s.q1s_1 | 0) + imul(s.m1s_1.n(), 2) | 0) % s.m1s_1.n() | 0;
-          var tmp_4 = imul(Companion_getInstance_23().s1t(card), 10);
-          var tmp$ret$12;
-          $l$block_3: {
-            // Inline function 'kotlin.collections.count' call
-            var tmp_5;
-            if (isInterface(hand, Collection)) {
-              tmp_5 = hand.q();
-            } else {
-              tmp_5 = false;
-            }
-            if (tmp_5) {
-              tmp$ret$12 = 0;
-              break $l$block_3;
-            }
-            var count = 0;
-            var tmp0_iterator = hand.k();
-            while (tmp0_iterator.l()) {
-              var element_2 = tmp0_iterator.m();
-              // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>.<anonymous>' call
-              if (Companion_getInstance_23().q1t(element_2) === targetColor) {
-                count = count + 1 | 0;
-                checkCountOverflow(count);
-              }
-            }
-            tmp$ret$12 = count;
-          }
-          var tmp_6 = tmp_4 + imul(tmp$ret$12, 3) | 0;
-          var tmp_7;
-          if (lv.equals(Level_HARD_getInstance())) {
-            var tmp_8;
-            var tmp_9;
-            if (s.m1s_1.p(next).n() <= 2) {
-              var containsArg = Companion_getInstance_23().r1t(card);
-              tmp_9 = 10 <= containsArg ? containsArg <= 12 : false;
-            } else {
-              tmp_9 = false;
-            }
-            if (tmp_9) {
-              tmp_8 = 200;
-            } else {
-              tmp_8 = 0;
-            }
-            var tmp_10 = tmp_8;
-            var tmp_11;
-            var tmp_12;
-            if (Companion_getInstance_23().r1t(card) >= 13) {
-              var tmp$ret$14;
-              $l$block_5: {
-                // Inline function 'kotlin.collections.any' call
-                var tmp_13;
-                if (isInterface(plays, Collection)) {
-                  tmp_13 = plays.q();
-                } else {
-                  tmp_13 = false;
-                }
-                if (tmp_13) {
-                  tmp$ret$14 = false;
-                  break $l$block_5;
-                }
-                var tmp0_iterator_0 = plays.k();
-                while (tmp0_iterator_0.l()) {
-                  var element_3 = tmp0_iterator_0.m();
-                  // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>.<anonymous>' call
-                  if (Companion_getInstance_23().r1t(hand.p((element_3 - 100 | 0) / 4 | 0)) < 13) {
-                    tmp$ret$14 = true;
-                    break $l$block_5;
-                  }
-                }
-                tmp$ret$14 = false;
-              }
-              tmp_12 = tmp$ret$14;
-            } else {
-              tmp_12 = false;
-            }
-            if (tmp_12) {
-              tmp_11 = 160;
-            } else {
-              tmp_11 = 0;
-            }
-            tmp_7 = tmp_10 - tmp_11 | 0;
-          } else {
-            tmp_7 = 0;
-          }
-          var maxValue = tmp_6 + tmp_7 | 0;
-          do {
-            var e_0 = iterator.m();
-            // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-            var card_0 = hand.p((e_0 - 100 | 0) / 4 | 0);
-            var targetColor_0 = Companion_getInstance_23().r1t(card_0) >= 13 ? (e_0 - 100 | 0) % 4 | 0 : Companion_getInstance_23().q1t(card_0);
-            var next_0 = ((s.p1s_1 + s.q1s_1 | 0) + imul(s.m1s_1.n(), 2) | 0) % s.m1s_1.n() | 0;
-            var tmp_14 = imul(Companion_getInstance_23().s1t(card_0), 10);
-            var tmp$ret$17;
-            $l$block_6: {
-              // Inline function 'kotlin.collections.count' call
-              var tmp_15;
-              if (isInterface(hand, Collection)) {
-                tmp_15 = hand.q();
-              } else {
-                tmp_15 = false;
-              }
-              if (tmp_15) {
-                tmp$ret$17 = 0;
-                break $l$block_6;
-              }
-              var count_0 = 0;
-              var tmp0_iterator_1 = hand.k();
-              while (tmp0_iterator_1.l()) {
-                var element_4 = tmp0_iterator_1.m();
-                // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>.<anonymous>' call
-                if (Companion_getInstance_23().q1t(element_4) === targetColor_0) {
-                  count_0 = count_0 + 1 | 0;
-                  checkCountOverflow(count_0);
-                }
-              }
-              tmp$ret$17 = count_0;
-            }
-            var tmp_16 = tmp_14 + imul(tmp$ret$17, 3) | 0;
-            var tmp_17;
-            if (lv.equals(Level_HARD_getInstance())) {
-              var tmp_18;
-              var tmp_19;
-              if (s.m1s_1.p(next_0).n() <= 2) {
-                var containsArg_0 = Companion_getInstance_23().r1t(card_0);
-                tmp_19 = 10 <= containsArg_0 ? containsArg_0 <= 12 : false;
-              } else {
-                tmp_19 = false;
-              }
-              if (tmp_19) {
-                tmp_18 = 200;
-              } else {
-                tmp_18 = 0;
-              }
-              var tmp_20 = tmp_18;
-              var tmp_21;
-              var tmp_22;
-              if (Companion_getInstance_23().r1t(card_0) >= 13) {
-                var tmp$ret$19;
-                $l$block_8: {
-                  // Inline function 'kotlin.collections.any' call
-                  var tmp_23;
-                  if (isInterface(plays, Collection)) {
-                    tmp_23 = plays.q();
-                  } else {
-                    tmp_23 = false;
-                  }
-                  if (tmp_23) {
-                    tmp$ret$19 = false;
-                    break $l$block_8;
-                  }
-                  var tmp0_iterator_2 = plays.k();
-                  while (tmp0_iterator_2.l()) {
-                    var element_5 = tmp0_iterator_2.m();
-                    // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>.<anonymous>' call
-                    if (Companion_getInstance_23().r1t(hand.p((element_5 - 100 | 0) / 4 | 0)) < 13) {
-                      tmp$ret$19 = true;
-                      break $l$block_8;
-                    }
-                  }
-                  tmp$ret$19 = false;
-                }
-                tmp_22 = tmp$ret$19;
-              } else {
-                tmp_22 = false;
-              }
-              if (tmp_22) {
-                tmp_21 = 160;
-              } else {
-                tmp_21 = 0;
-              }
-              tmp_17 = tmp_20 - tmp_21 | 0;
-            } else {
-              tmp_17 = 0;
-            }
-            var v_0 = tmp_16 + tmp_17 | 0;
-            if (compareTo(maxValue, v_0) < 0) {
-              maxElem = e_0;
-              maxValue = v_0;
-            }
-          }
-           while (iterator.l());
-          tmp$ret$11 = maxElem;
-        }
-        tmp_3 = tmp$ret$11;
-      }
-      tmp = tmp_3;
+    return minElem;
+  }
+  var plays = ArrayList_init_$Create$_0();
+  var canWinNow = false;
+  var canLeaveOne = false;
+  for (var li = 0; li < legal.length; li = li + 1 | 0) {
+    var lm = legal[li];
+    if (lm >= 100) {
+      plays.i(lm);
+      var lInfo = ohNoBrainMoveInfo(r, s, hand, lm);
+      var rem = hand.n() - lInfo.cards.length | 0;
+      if (rem === 0) canWinNow = true;
+      if (rem === 1) canLeaveOne = true;
     }
   }
-  return tmp;
+  if (!canWinNow && canLeaveOne && r.p1t(s)) {
+    var tmp_2 = rng.kd();
+    var tmp0 = lv.q1_1;
+    if (tmp_2 >= (tmp0 === 0 ? 0.3 : tmp0 === 1 ? 0.08 : 0.0))
+      return 2;
+  }
+  if (plays.q()) {
+    for (var ki = 0; ki < legal.length; ki = ki + 1 | 0) {
+      if (legal[ki] !== 2) return legal[ki];
+    }
+    throw NoSuchElementException_init_$Create$_0('Array contains no element matching the predicate.');
+  }
+  if (lv.equals(Level_EASY_getInstance()))
+    return random_0(plays, rng);
+  var iterator = plays.k();
+  var maxElem = iterator.m();
+  var maxValue = ohNoBrainScore(r, s, hand, lv, plays, maxElem);
+  while (iterator.l()) {
+    var e_0 = iterator.m();
+    var v_0 = ohNoBrainScore(r, s, hand, lv, plays, e_0);
+    if (compareTo(maxValue, v_0) < 0) { maxElem = e_0; maxValue = v_0; }
+  }
+  return maxElem;
 }
 function OhNo$Companion$def$lambda(it) {
   return new OhNo(coerceIn_0(it.it('players', 4), 2, 6), Companion_instance_22.d1t(it));
@@ -26898,7 +26997,22 @@ protoOf(OhNo).u1t = function (s, card) {
   return v >= 13 || Companion_getInstance_23().q1t(card) === s.r1s_1 || v === Companion_getInstance_23().r1t(last(s.o1s_1));
 };
 protoOf(OhNo).p1t = function (s) {
-  return s.m1s_1.p(s.p1s_1).n() === 2 && !(s.s1s_1 === s.p1s_1) && !s.y1s_1;
+  var hand = s.m1s_1.p(s.p1s_1);
+  if (s.s1s_1 === s.p1s_1 || s.y1s_1)
+    return false;
+  if (hand.n() === 2)
+    return true;
+  if (this.m1t_1.k1t_bundle && hand.n() >= 3) {
+    var legal = this.o1t(s);
+    for (var i = 0; i < legal.length; i = i + 1 | 0) {
+      if (legal[i] >= 1000000) {
+        var d = ohNoDecodeBundle(this, s, legal[i]);
+        if (!(d == null) && (hand.n() - d.sel.length | 0) === 1)
+          return true;
+      }
+    }
+  }
+  return false;
 };
 protoOf(OhNo).o1t = function (s) {
   if (s.u1s_1 >= 0) {
@@ -26938,7 +27052,8 @@ protoOf(OhNo).o1t = function (s) {
   var out = ArrayList_init_$Create$_0();
   // Inline function 'kotlin.collections.forEachIndexed' call
   var index = 0;
-  var tmp0_iterator_0 = s.m1s_1.p(s.p1s_1).k();
+  var hand = s.m1s_1.p(s.p1s_1);
+  var tmp0_iterator_0 = hand.k();
   while (tmp0_iterator_0.l()) {
     var item_0 = tmp0_iterator_0.m();
     // Inline function 'jp.yonekou.asobi26.core.games.OhNo.legalMoves.<anonymous>' call
@@ -26961,6 +27076,58 @@ protoOf(OhNo).o1t = function (s) {
         // Inline function 'kotlin.collections.plusAssign' call
         var element_1 = 100 + imul(i, 4) | 0;
         out.i(element_1);
+      }
+    }
+  }
+  if (this.m1t_1.k1t_bundle && s.t1s_1 < 0) {
+    var comp23 = Companion_getInstance_23();
+    var byRank = new Array(15);
+    for (var ri = 0; ri < 15; ri = ri + 1 | 0) byRank[ri] = [];
+    var hasCurCol = false;
+    var hn = hand.n();
+    for (var hi = 0; hi < hn; hi = hi + 1 | 0) {
+      var hc = hand.p(hi);
+      if (comp23.q1t(hc) === s.r1s_1) hasCurCol = true;
+      var rk = comp23.r1t(hc);
+      if (0 <= rk && rk <= 14) byRank[rk].push(hi);
+    }
+    var topCard = s.o1s_1.p(s.o1s_1.n() - 1 | 0);
+    var topRank = comp23.r1t(topCard);
+    for (var rank = 0; rank < 15; rank = rank + 1 | 0) {
+      var idxs = byRank[rank];
+      if (idxs.length < 2 || idxs.length > 8) continue;
+      if (s.x1s_1 > 0 && !(rank === topRank && rank >= 12)) continue;
+      if (s.x1s_1 === 0 && rank === 14 && hasCurCol && !this.m1t_1.j1t_1) continue;
+      var lim = 1 << idxs.length;
+      for (var mask = 3; mask < lim; mask = mask + 1 | 0) {
+        var pop = 0;
+        var hasMatchCol = false;
+        for (var sub = 0; sub < idxs.length; sub = sub + 1 | 0) {
+          if ((mask >> sub) & 1) {
+            pop = pop + 1 | 0;
+            if (comp23.q1t(hand.p(idxs[sub])) === s.r1s_1) hasMatchCol = true;
+          }
+        }
+        if (pop < 2) continue;
+        if (this.m1t_1.h1t_1 && pop === hn && rank >= 10) continue;
+        if (s.x1s_1 === 0 && rank < 13 && rank !== topRank && !hasMatchCol) continue;
+        if (rank >= 13) {
+          var hiSub = idxs.length - 1 | 0;
+          while (hiSub >= 0 && !((mask >> hiSub) & 1)) hiSub = hiSub - 1 | 0;
+          for (var wcol = 0; wcol <= 3; wcol = wcol + 1 | 0) {
+            out.i(1000000 + ((rank << 13) | (wcol << 11) | (hiSub << 8) | mask) | 0);
+          }
+        } else {
+          var emittedCols = 0;
+          for (var sub2 = idxs.length - 1 | 0; sub2 >= 0; sub2 = sub2 - 1 | 0) {
+            if (!((mask >> sub2) & 1)) continue;
+            var cc = comp23.q1t(hand.p(idxs[sub2]));
+            if (!(emittedCols & (1 << cc))) {
+              emittedCols = emittedCols | (1 << cc);
+              out.i(1000000 + ((rank << 13) | (cc << 11) | (sub2 << 8) | mask) | 0);
+            }
+          }
+        }
       }
     }
   }
@@ -27037,6 +27204,62 @@ protoOf(OhNo).v1t = function (s, m) {
   if (m === 1) {
     var tmp7_turn = play$next$default(s, this);
     return base.c1t(VOID, VOID, VOID, tmp7_turn, VOID, VOID, -1, -1, VOID, VOID, '\u30D1\u30B9');
+  }
+  if (m >= 1000000) {
+    var bDec = ohNoDecodeBundle(this, s, m);
+    var pHand = hands.p(s.p1s_1);
+    var tailCard = pHand.p(bDec.tail);
+    var matchedNonTail = [];
+    var otherNonTail = [];
+    for (var bi = 0; bi < bDec.sel.length; bi = bi + 1 | 0) {
+      var bIdx = bDec.sel[bi];
+      if (bIdx === bDec.tail) continue;
+      var bc = pHand.p(bIdx);
+      if (Companion_getInstance_23().q1t(bc) === s.r1s_1) matchedNonTail.push(bc);
+      else otherNonTail.push(bc);
+    }
+    for (var mi = 0; mi < matchedNonTail.length; mi = mi + 1 | 0) discard.i(matchedNonTail[mi]);
+    for (var oi = 0; oi < otherNonTail.length; oi = oi + 1 | 0) discard.i(otherNonTail[oi]);
+    discard.i(tailCard);
+    var desc = bDec.sel.slice().sort(function (a, b) { return b - a; });
+    for (var di = 0; di < desc.length; di = di + 1 | 0) pHand.k3(desc[di]);
+    var vb = Companion_getInstance_23().r1t(tailCard);
+    var cnt = bDec.sel.length;
+    var dirb = vb === 11 && (cnt % 2 | 0) === 1 ? -s.q1s_1 | 0 : s.q1s_1;
+    var step = (vb === 10 || (vb === 11 && this.l1t_1 === 2)) ? (1 + cnt | 0) : 1;
+    var nextSeatb = ((s.p1s_1 + dirb | 0) + this.l1t_1 | 0) % this.l1t_1 | 0;
+    var forgotb = -1;
+    if (pHand.n() === 1 && !(s.s1s_1 === s.p1s_1)) {
+      play$draw_0(stock, discard, hands, s.p1s_1, this.m1t_1.e1t_1);
+      forgotb = s.p1s_1;
+    }
+    var winnerb = pHand.q() ? s.p1s_1 : -1;
+    var newColorb = vb >= 13 ? bDec.col : Companion_getInstance_23().q1t(tailCard);
+    var pendingb = s.x1s_1;
+    if (vb === 12 || vb === 14) {
+      var addN = imul(vb === 12 ? 2 : 4, cnt);
+      if (this.m1t_1.f1t_1) {
+        pendingb = pendingb + addN | 0;
+      } else {
+        play$draw_0(stock, discard, hands, nextSeatb, addN);
+        if (step < 2) step = 2;
+      }
+    }
+    var actText = '' + cnt + '\u679A\u51FA\u3057 ' + Companion_getInstance_23().d1c(tailCard);
+    if (winnerb < 0 && this.m1t_1.i1t_1 && vb === 7)
+      return new OhNoState(hands, stock, discard, s.p1s_1, dirb, newColorb, VOID, VOID, -1, s.p1s_1, actText, pendingb, true, forgotb);
+    if (winnerb < 0 && this.m1t_1.i1t_1 && vb === 0) {
+      for (var rot = 0; rot < cnt; rot = rot + 1 | 0) {
+        var copyB = [];
+        for (var pi = 0; pi < this.l1t_1; pi = pi + 1 | 0) copyB.push(toList(hands.p(pi)));
+        for (var pi2 = 0; pi2 < this.l1t_1; pi2 = pi2 + 1 | 0) {
+          var toP = ((pi2 + dirb | 0) + this.l1t_1 | 0) % this.l1t_1 | 0;
+          hands.p(toP).x3();
+          hands.p(toP).o(copyB[pi2]);
+        }
+      }
+    }
+    return new OhNoState(hands, stock, discard, ((s.p1s_1 + imul(dirb, step) | 0) + imul(this.l1t_1, 16) | 0) % this.l1t_1 | 0, dirb, newColorb, VOID, VOID, winnerb, s.p1s_1, actText, pendingb, VOID, forgotb);
   }
   var index = (m - 100 | 0) / 4 | 0;
   var card = hands.p(s.p1s_1).k3(index);
@@ -31041,8 +31264,313 @@ protoOf(Solitaire).qs = function () {
 protoOf(Solitaire).h1z = function (move) {
   return move / 1000000 | 0;
 };
+function solitaireRank(c) {
+  var k = c % 13;
+  return k === 12 ? 1 : k + 2;
+}
+function solitaireSuit(c) {
+  return (c / 13) | 0;
+}
+function solitaireColor(c) {
+  var s = (c / 13) | 0;
+  return (s === 1 || s === 2) ? 1 : 0;
+}
+function solitaireCanFoundation(c, fTop) {
+  return fTop[solitaireSuit(c)] + 1 === solitaireRank(c);
+}
+function solitaireCanTableau(c, piles, d) {
+  var p = piles[d];
+  if (p.length === 0) return solitaireRank(c) === 13;
+  var top = p[p.length - 1];
+  return solitaireColor(top) !== solitaireColor(c) && solitaireRank(top) === solitaireRank(c) + 1;
+}
+function solitaireIsSafeFoundation(c, fTop) {
+  var r = solitaireRank(c);
+  if (r <= 2) return true;
+  var col = solitaireColor(c);
+  var oppMin = col === 1 ? Math.min(fTop[0], fTop[3]) : Math.min(fTop[1], fTop[2]);
+  return oppMin >= r - 1;
+}
+function solveKlondike(deck, draw, maxPasses, maxNodes) {
+  var piles0 = [];
+  var open0 = new Int32Array(7);
+  var pos = 0;
+  for (var i = 0; i < 7; i++) {
+    piles0.push(deck.slice(pos, pos + i + 1));
+    pos += i + 1;
+    open0[i] = 1;
+  }
+  var stock0 = deck.slice(pos);
+  var waste0 = [];
+  var f0 = new Int32Array(4);
+
+  var seen = new Set();
+  var nodes = 0;
+  var solved = false;
+
+  function stateKey(f, piles, open, stock, waste, passes) {
+    var pk = maxPasses > 0 ? passes : 0;
+    var k = f[0] + ',' + f[1] + ',' + f[2] + ',' + f[3] + '|' + pk + '|' + stock.join(',') + '|' + waste.join(',');
+    for (var i = 0; i < 7; i++) {
+      var p = piles[i];
+      k += '|' + open[i] + ':' + p.join(',');
+    }
+    return k;
+  }
+
+  function cloneState(f, piles, open, stock, waste, passes) {
+    var np = new Array(7);
+    for (var i = 0; i < 7; i++) np[i] = piles[i].slice();
+    return { f: new Int32Array(f), piles: np, open: new Int32Array(open), stock: stock.slice(), waste: waste.slice(), passes: passes };
+  }
+
+  function autoSafe(st) {
+    var moved = true;
+    while (moved) {
+      moved = false;
+      for (var i = 0; i < 7; i++) {
+        var p = st.piles[i];
+        if (p.length > 0 && st.open[i] > 0) {
+          var c = p[p.length - 1];
+          if (solitaireCanFoundation(c, st.f) && solitaireIsSafeFoundation(c, st.f)) {
+            st.f[solitaireSuit(c)]++;
+            p.pop();
+            st.open[i] = Math.max(st.open[i] - 1, p.length > 0 ? 1 : 0);
+            moved = true;
+          }
+        }
+      }
+      if (st.waste.length > 0) {
+        var wc = st.waste[st.waste.length - 1];
+        if (solitaireCanFoundation(wc, st.f) && solitaireIsSafeFoundation(wc, st.f)) {
+          st.f[solitaireSuit(wc)]++;
+          st.waste.pop();
+          moved = true;
+        }
+      }
+    }
+  }
+
+  function dfs(st, lastMoveSrc, lastMoveDst) {
+    if (solved) return true;
+    if (nodes >= maxNodes) return false;
+    autoSafe(st);
+    var totalF = st.f[0] + st.f[1] + st.f[2] + st.f[3];
+    if (totalF === 52) {
+      solved = true;
+      return true;
+    }
+    nodes++;
+    var sk = stateKey(st.f, st.piles, st.open, st.stock, st.waste, st.passes);
+    if (seen.has(sk)) return false;
+    seen.add(sk);
+
+    var cands = [];
+    // 1. Tableau moves that expose hidden cards or move Kings off hidden stacks
+    for (var s = 0; s < 7; s++) {
+      var p = st.piles[s];
+      var op = st.open[s];
+      if (p.length === 0 || op === 0) continue;
+      // Full open run transfer (reveals hidden card or clears column)
+      var cnt = op;
+      var first = p[p.length - cnt];
+      for (var d = 0; d < 7; d++) {
+        if (d === s) continue;
+        if (lastMoveSrc === d + 6 && lastMoveDst === s + 6) continue;
+        if (solitaireCanTableau(first, st.piles, d)) {
+          if (st.piles[d].length === 0 && p.length === op) continue; // useless K shuffle between pure empty bases
+          var reveals = p.length > op ? 200 : 80;
+          if (st.piles[d].length === 0 && p.length > op) reveals += 40;
+          cands.push({ score: reveals + totalF * 5, type: 't2t', s: s, cnt: cnt, d: d });
+        }
+      }
+      // Partial run transfer only when it uncovers a card ready for foundation
+      if (op > 1) {
+        for (var k = 1; k < op; k++) {
+          var subFirst = p[p.length - k];
+          var uncovered = p[p.length - k - 1];
+          if (solitaireCanFoundation(uncovered, st.f)) {
+            for (var d2 = 0; d2 < 7; d2++) {
+              if (d2 === s) continue;
+              if (solitaireCanTableau(subFirst, st.piles, d2)) {
+                cands.push({ score: 170 + totalF * 5, type: 't2t', s: s, cnt: k, d: d2 });
+              }
+            }
+          }
+        }
+      }
+      // Top card to non-safe foundation
+      var topC = p[p.length - 1];
+      if (solitaireCanFoundation(topC, st.f)) {
+        cands.push({ score: 140 + (p.length > op && op === 1 ? 60 : 0), type: 't2f', s: s });
+      }
+    }
+
+    // 2. Waste top -> Foundation or Tableau
+    if (st.waste.length > 0) {
+      var wc = st.waste[st.waste.length - 1];
+      if (solitaireCanFoundation(wc, st.f)) {
+        cands.push({ score: 155, type: 'w2f' });
+      }
+      for (var dw = 0; dw < 7; dw++) {
+        if (solitaireCanTableau(wc, st.piles, dw)) {
+          cands.push({ score: 120 + (st.piles[dw].length > 0 ? 15 : 0), type: 'w2t', d: dw });
+        }
+      }
+    }
+
+    // 3. Draw or Recycle from stock
+    if (st.stock.length > 0) {
+      cands.push({ score: 30, type: 'draw' });
+    } else if (st.waste.length > 0 && (maxPasses === 0 || st.passes < maxPasses)) {
+      cands.push({ score: 10, type: 'recycle' });
+    }
+
+    cands.sort(function (a, b) { return b.score - a.score; });
+
+    for (var ci = 0; ci < cands.length; ci++) {
+      var mv = cands[ci];
+      var ns = cloneState(st.f, st.piles, st.open, st.stock, st.waste, st.passes);
+      var lSrc = -1, lDst = -1;
+      if (mv.type === 't2t') {
+        var movedCards = ns.piles[mv.s].splice(ns.piles[mv.s].length - mv.cnt, mv.cnt);
+        for (var mi = 0; mi < movedCards.length; mi++) ns.piles[mv.d].push(movedCards[mi]);
+        ns.open[mv.s] = Math.max(ns.open[mv.s] - mv.cnt, ns.piles[mv.s].length > 0 ? 1 : 0);
+        ns.open[mv.d] += mv.cnt;
+        lSrc = mv.s + 6; lDst = mv.d + 6;
+      } else if (mv.type === 't2f') {
+        var fc = ns.piles[mv.s].pop();
+        ns.f[solitaireSuit(fc)]++;
+        ns.open[mv.s] = Math.max(ns.open[mv.s] - 1, ns.piles[mv.s].length > 0 ? 1 : 0);
+      } else if (mv.type === 'w2f') {
+        var wfc = ns.waste.pop();
+        ns.f[solitaireSuit(wfc)]++;
+      } else if (mv.type === 'w2t') {
+        var wtc = ns.waste.pop();
+        ns.piles[mv.d].push(wtc);
+        ns.open[mv.d]++;
+      } else if (mv.type === 'draw') {
+        var takeN = Math.min(draw, ns.stock.length);
+        var drawn = ns.stock.splice(0, takeN);
+        for (var di = 0; di < drawn.length; di++) ns.waste.push(drawn[di]);
+      } else if (mv.type === 'recycle') {
+        ns.stock = ns.waste;
+        ns.waste = [];
+        ns.passes++;
+      }
+      if (dfs(ns, lSrc, lDst)) return true;
+      if (nodes >= maxNodes) break;
+    }
+    return false;
+  }
+
+  var root = { f: f0, piles: piles0, open: open0, stock: stock0, waste: waste0, passes: 0 };
+  return dfs(root, -1, -1);
+}
+function solitaireShuffleRng(rng) {
+  var d = new Array(52);
+  for (var i = 0; i < 52; i++) d[i] = i;
+  for (var j = 51; j >= 1; j--) {
+    var k = rng.e(j + 1);
+    var t = d[j];
+    d[j] = d[k];
+    d[k] = t;
+  }
+  return d;
+}
+function solitaireScoreDeal(d) {
+  // Prefer deals with Aces/low cards accessible on face-up tableau tops or early stock
+  var topIdx = [0, 2, 5, 9, 14, 20, 27];
+  var isTop = new Uint8Array(52);
+  for (var ti = 0; ti < topIdx.length; ti++) isTop[topIdx[ti]] = 1;
+  var score = 0;
+  for (var i = 0; i < 52; i++) {
+    var r = solitaireRank(d[i]);
+    if (isTop[i]) score += (14 - r) * 3;
+    else if (i >= 28) score += (14 - r);
+    else if (r <= 3) score -= (7 - (i % 7));
+  }
+  return score;
+}
+function solitaireConstructiveDeal(rng) {
+  // Rank-layered randomized constructive fallback: places low ranks near tops/stock and high ranks deeper
+  var buckets = [[], [], [], []]; // [A-3, 4-6, 7-10, J-K]
+  for (var c = 0; c < 52; c++) {
+    var r = solitaireRank(c);
+    if (r <= 3) buckets[0].push(c);
+    else if (r <= 6) buckets[1].push(c);
+    else if (r <= 10) buckets[2].push(c);
+    else buckets[3].push(c);
+  }
+  for (var bi = 0; bi < 4; bi++) {
+    var b = buckets[bi];
+    for (var j = b.length - 1; j >= 1; j--) {
+      var k = rng.e(j + 1);
+      var t = b[j]; b[j] = b[k]; b[k] = t;
+    }
+  }
+  var pool = buckets[0].concat(buckets[1], buckets[2], buckets[3]);
+  // Slots ordered from most accessible to deepest hidden base
+  var slotOrder = [0, 2, 5, 9, 14, 20, 27];
+  for (var s = 28; s < 52; s++) slotOrder.push(s);
+  var hidden = [];
+  for (var h = 0; h < 28; h++) {
+    if (slotOrder.indexOf(h) < 0) hidden.push(h);
+  }
+  hidden.reverse();
+  slotOrder = slotOrder.concat(hidden);
+  var out = new Array(52);
+  for (var i = 0; i < 52; i++) out[slotOrder[i]] = pool[i];
+  return out;
+}
+function solitaireBuildSolvableDeck(rng, draw, maxPasses) {
+  var budget = (draw === 3 && maxPasses > 0) ? 7000 : 4500;
+  var tries = (draw === 3 && maxPasses > 0) ? 28 : 16;
+  var bestDeck = null;
+  var bestScore = -1e9;
+  for (var a = 0; a < tries; a++) {
+    var d = solitaireShuffleRng(rng);
+    if (solveKlondike(d, draw, maxPasses, budget)) return d;
+    var sc = solitaireScoreDeal(d);
+    if (sc > bestScore) { bestScore = sc; bestDeck = d; }
+  }
+  for (var b = 0; b < 24; b++) {
+    var c = solitaireConstructiveDeal(rng);
+    if (solveKlondike(c, draw, maxPasses, 9000)) return c;
+  }
+  // Last-resort guaranteed solvable descending tableau/stock order across suits
+  var byRankAsc = [];
+  for (var r = 1; r <= 13; r++) {
+    var suitPerm = [0, 1, 2, 3];
+    for (var j = 3; j >= 1; j--) {
+      var k = rng.e(j + 1);
+      var tmp = suitPerm[j]; suitPerm[j] = suitPerm[k]; suitPerm[k] = tmp;
+    }
+    for (var si = 0; si < 4; si++) {
+      byRankAsc.push(suitPerm[si] * 13 + (r === 1 ? 12 : r - 2));
+    }
+  }
+  var slotOrder = [0, 2, 5, 9, 14, 20, 27];
+  if (draw === 3) {
+    for (var s = 28; s < 52; s += 3) {
+      var end = Math.min(51, s + 2);
+      for (var t = end; t >= s; t--) slotOrder.push(t);
+    }
+  } else {
+    for (var s = 28; s < 52; s++) slotOrder.push(s);
+  }
+  for (var d = 1; d <= 6; d++) {
+    for (var p = d; p <= 6; p++) {
+      slotOrder.push((p * (p + 1) >> 1) + p - d);
+    }
+  }
+  var safeDeck = new Array(52);
+  for (var i = 0; i < 52; i++) safeDeck[slotOrder[i]] = byRankAsc[i];
+  return safeDeck;
+}
 protoOf(Solitaire).ss = function (rng) {
-  var deck = toList_0(Cards_getInstance().a1f(rng.id()));
+  var chosen = solitaireBuildSolvableDeck(rng, this.c1z_1, this.d1z_1);
+  var deck = toList_0(new Int32Array(chosen));
   var pos = 0;
   // Inline function 'kotlin.collections.List' call
   // Inline function 'kotlin.collections.MutableList' call
@@ -37902,23 +38430,16 @@ function cardsView(st, rules, me, legal, human) {
         zones.i(new CZone(tmp, destination, 13));
       }
        while (inductionVariable < 4);
-    // Inline function 'kotlin.collections.filter' call
-    // Inline function 'kotlin.collections.filterTo' call
-    var this_1 = until(0, 52);
     var destination_0 = ArrayList_init_$Create$_0();
-    var inductionVariable_1 = this_1.x_1;
-    var last_0 = this_1.y_1;
-    if (inductionVariable_1 <= last_0)
-      do {
-        var element = inductionVariable_1;
-        inductionVariable_1 = inductionVariable_1 + 1 | 0;
-        // Inline function 'cardsView.<anonymous>' call
-        var it = element;
-        if (st.w1v(me, it)) {
+    var svOrder = [12, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    for (var svS = 0; svS < 4; svS = svS + 1 | 0) {
+      for (var svK = 0; svK < 13; svK = svK + 1 | 0) {
+        var element = imul(svS, 13) + svOrder[svK] | 0;
+        if (st.w1v(me, element)) {
           destination_0.i(element);
         }
       }
-       while (!(element === last_0));
+    }
     var mine = destination_0;
     var tmp_0 = '\u3042\u306A\u305F\u306E\u624B\u672D(' + mine.n() + '\u679A)';
     // Inline function 'kotlin.collections.map' call
@@ -38179,7 +38700,12 @@ function cardsView(st, rules, me, legal, human) {
             }
           }
            while (!(element_2 === last_8));
-        return cardsJson(tmp_8, zones_0, tmp_10, tmp_11, tmp_12 + ('"swap":' + il(destination_12) + ',"mSwap":50,"forgot":' + st.z1s_1 + ',"miscall":' + st.a1t_1 + '}'));
+        var unoBundle = rules instanceof OhNo && rules.m1t_1.k1t_bundle;
+        var unoTopRank = top == null ? -1 : Companion_getInstance_23().r1t(top);
+        var unoDrawnOnly = st.t1s_1 >= 0 && st.p1s_1 === me;
+        var unoNoActFin = rules instanceof OhNo && rules.m1t_1.h1t_1;
+        var unoWildAny = rules instanceof OhNo && rules.m1t_1.j1t_1;
+        return cardsJson(tmp_8, zones_0, tmp_10, tmp_11, tmp_12 + ('"swap":' + il(destination_12) + ',"mSwap":50,"forgot":' + st.z1s_1 + ',"miscall":' + st.a1t_1 + ',"bundle":' + unoBundle + ',"topRank":' + unoTopRank + ',"drawnOnly":' + unoDrawnOnly + ',"noActFin":' + unoNoActFin + ',"wildAny":' + unoWildAny + '}'));
       } else {
         if (st instanceof HanaState) {
           var label = cardsView$lambda;
@@ -39083,7 +39609,7 @@ function viewJson(h, me) {
             tmp_1 = '{"kind":"hex","n":' + st.a1d_1 + ',"cells":' + ints(st.b1d_1) + ',"turn":' + st.c1d_1 + ',"last":' + st.e1d_1 + ',"win":' + ints(st.f1d_1) + '}';
           } else {
             if (st instanceof MancalaState) {
-              tmp_1 = '{"kind":"mancala","pits":' + ints(st.g1q_1) + ',"turn":' + st.h1q_1 + ',"last":' + st.j1q_1 + ',"extra":' + st.k1q_1 + '}';
+              tmp_1 = '{"kind":"mancala","pits":' + ints(st.g1q_1) + ',"turn":' + st.h1q_1 + ',"last":' + st.j1q_1 + ',"extra":' + st.k1q_1 + ',"captured":' + st.l1q_1 + '}';
             } else {
               if (st instanceof MorrisState) {
                 tmp_1 = '{"kind":"morris","board":' + ints(st.v1r_1) + ',"inHand":' + ints(st.w1r_1) + ',"turn":' + st.x1r_1 + ',"removing":' + st.y1r_1 + ',"last":' + st.c1s_1 + '}';
@@ -42111,7 +42637,7 @@ protoOf(Ludo).rs = isLegal;
 protoOf(Mahjong).rs = isLegal;
 protoOf(Memory).rs = isLegal;
 protoOf(Morris).rs = isLegal;
-protoOf(OhNo).rs = isLegal;
+protoOf(OhNo).rs = ohNoIsLegal;
 protoOf(Poker).rs = isLegal;
 protoOf(Sevens).rs = isLegal;
 protoOf(Shogi).rs = isLegal;

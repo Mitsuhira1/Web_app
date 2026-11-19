@@ -2721,3 +2721,194 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .rq-denom { width:34px; height:34px; }
   #acts .rq-tools .btn, #acts .rq-actions .btn { padding:0 6px; font-size:11.5px; }
 }
+
+/* ---- ゲームパッド接続時のフォーカス枠 (#7) ---- */
+.gp-focus {
+  outline: 3.5px solid #FFC65C !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 5px rgba(255, 198, 92, .34), 0 6px 16px rgba(0, 0, 0, .4) !important;
+  z-index: 25;
+}
+
+/* ---- チャット通知の強調表示 (#21) ---- */
+.toast.chat-toast {
+  min-width: 280px;
+  max-width: min(440px, 90vw);
+  padding: 14px 20px;
+  border: 2.5px solid #FFC65C;
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(28, 36, 54, .97), rgba(18, 22, 34, .97));
+  color: #FFFDF5;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .55), 0 0 0 4px rgba(255, 198, 92, .25), inset 0 1px 0 rgba(255, 255, 255, .2);
+}
+.toast.chat-toast small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 900;
+  color: #FFE39E;
+  margin-bottom: 6px;
+}
+.toast .chat-toast-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #FFC65C, #E69A28);
+  color: #26180A;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+}
+.toast.chat-toast .toast-body {
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.4;
+  color: #FFFFFF;
+}
+.toast.chat-toast svg.stamp {
+  width: 96px;
+  height: 96px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .45));
+}
+.toast.chat-toast.chat-pop {
+  animation: chatToastPop .48s cubic-bezier(.22, 1.35, .36, 1) both;
+}
+@keyframes chatToastPop {
+  0% { opacity: 0; transform: translateY(-18px) scale(.86); }
+  55% { opacity: 1; transform: translateY(2px) scale(1.04); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.reduce .toast.chat-toast.chat-pop { animation: none; }
+
+/* ---- 相手のカーソル: ウィンドウ外での自然な待機表示・端でのラベル反転 (#19) ---- */
+.rcur.live {
+  transition: opacity .22s ease, filter .22s ease;
+}
+.rcur.live.out {
+  opacity: .42 !important;
+  filter: saturate(.78) drop-shadow(0 2px 4px rgba(0, 0, 0, .25));
+}
+.rcur.live.out svg {
+  transform: scale(.86);
+  transform-origin: 4px 2px;
+  transition: transform .2s ease;
+}
+.rcur.live.flip-x span {
+  left: auto;
+  right: 14px;
+}
+.rcur.live.flip-y span {
+  top: auto;
+  bottom: 10px;
+}
+
+/* ---- 複数枚まとめドラッグ時のゴースト (#1, #10) ---- */
+.dragghost.dragstack {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.dragghost.dragstack .dragstack-item {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .45);
+  pointer-events: none;
+}
+
+/* ---- Oh, No! まとめ出しバッジ・ボタン (#6) ---- */
+.pc { position: relative; }
+.pc .ubord {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #FFC65C, #E68A1E);
+  color: #23160A;
+  border: 2px solid #FFFDF5;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .4);
+  z-index: 6;
+  pointer-events: none;
+}
+#acts .btn.bundle {
+  background: linear-gradient(135deg, #FFC65C, #E58C1E);
+  color: #23160A;
+  border-color: #FFF3C4;
+  font-weight: 900;
+  box-shadow: 0 4px 14px rgba(230, 138, 30, .4);
+}
+
+/* ---- ソリティア: 列の動的縮小ではみ出し防止 (#2, #10, #12) ※捨て札の左→右重ねは上の .sol .waste 規則(Codex)を使う ---- */
+.sol .soltop .slot > .pcard,
+.sol .spile > .pcard.pil {
+  --w: var(--sol-w, clamp(46px, min(7.5cqw, 10.2cqh), 72px));
+  width: var(--w);
+}
+.sol .soltab {
+  overflow: hidden;
+  padding-bottom: 4px;
+}
+.sol .spile {
+  min-height: 0;
+}
+.sol .spile > .pcard.pil + .pcard.pil {
+  margin-top: var(--sol-close, calc(var(--w) * -1.24));
+}
+.sol .spile > .pcard.pil.open + .pcard.pil {
+  margin-top: var(--sol-open, calc(var(--w) * -1.03));
+}
+
+/* ---- マンカラ: 横取りアニメーション (#3) ---- */
+.mcap-ring {
+  animation: mcapRingPulse .72s ease-out both;
+}
+@keyframes mcapRingPulse {
+  0% { opacity: 0; stroke-width: 2; }
+  30% { opacity: 1; stroke-width: 7; }
+  100% { opacity: 0; stroke-width: 1.5; }
+}
+.mcap-tag {
+  animation: mcapTagPop .95s cubic-bezier(.2, .9, .3, 1) both;
+}
+@keyframes mcapTagPop {
+  0% { opacity: 0; transform: translateY(12px) scale(.75); }
+  22% { opacity: 1; transform: translateY(-4px) scale(1.06); }
+  78% { opacity: 1; transform: translateY(-8px) scale(1); }
+  100% { opacity: 0; transform: translateY(-16px) scale(.94); }
+}
+
+/* ---- ヨット: フォーダイスの盤面内説明 (#22) ---- */
+.ysheet tbody th .ydesc {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--sub, #6b5a45);
+  line-height: 1.15;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+@media (max-width: 920px) {
+  .ysheet tbody th .ydesc {
+    font-size: 9px;
+  }
+}
+
+/* ---- ルール説明: 盤面全体動画 (#14) ---- */
+.demo video.rule-vid {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #f6f1e6;
+  border-radius: 10px 10px 0 0;
+}

@@ -56,6 +56,46 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-19 / Antigravity / ccr-efc07031-6exjqs
+- 目的: ユーザーの指示によるゲーム・UI・オンライン通信・ルール説明動画の計24項目の改善を実施する（Codex のルーレット刷新・追加12ゲーム・あそび箱49改修へ競合なく統合）。
+  1. ソリティア（および大富豪・Oh, No!）で複数枚まとめてドラッグ移動する際、1枚だけでなく重なった束全体がついてくるドラッグゴーストにする。
+  2. ソリティアで12枚以上や最大枚数を並べても盤面の下にはみ出さないよう、カードサイズと各列の重なり間隔を動的に自動調整する。
+  3. マンカラの横取り時に、自分の最後の石と向かいの相手の石が放物線を描いて自分の倉へ飛び込むアニメーション・軌跡・`+N 横取り!` バッジ・効果音を追加する。
+  4. 7ならべの持ち札をマーク（♠→♥→♦→♣）・数字順で常時ソートする。
+  5. ウサギと猟犬のCPUが、負けるのを嫌って意味なく上下に往復する遅延挙動をやめ、前進手を優先するように改善する。
+  6. Oh, No! に「まとめ出し」（`bundle=on/off`）ローカルルールを実装する（同じ数字・記号を複数枚まとめて選択・順番バッジ表示・一括出し・カットイン対応）。
+  7. PCでゲームパッド（PAD）接続に対応する（左スティック/十字キーで2D空間フォーカス移動、右スティックでスクロール、A決定、B戻る/キャンセル、X/Yアクション、L1/R1タブ切替、STARTメニュー、接続トースト通知）。
+  8. ソリティアの左上のめくり札（捨て札）で、重なった下の2枚の数字とマークも見えるよう左から右へ扇状にずらして表示する。
+  9. ソリティアで解けない詰みの初期配札にならないよう、ソルバー検証を通過したクリア可能な配札のみを生成する。
+  10. ソリティアで列やカードを移動した際のスライドアニメーション（FLIP WAAPI 補間）を実装する。
+  11. ソリティアで全部並べた時に盤面の下にはみ出さないようにする（`fitSolitaire` + `ResizeObserver` で列ごとに `--sol-close` / `--sol-open` を動的圧縮）。
+  12. ソリティアでダブルクリックにより並べられる場所（組札または場札列）へアニメーション付きで自動移動できるようにする。
+  13. ソリティアのドロップ当たり判定を、カードのどこ（上端・下端）をつかんでドラッグしてもカード矩形の重なり面積で自然に判定されるように改善する。
+  14. ルール説明のアニメーションを、実際の盤面全体を映し矢印と吹き出しを加えた分かりやすい短いループ動画（全40本・`assets/rules/<id>.mp4`）に刷新する。
+  15. ブラックジャックで勝敗が決まってから勝ち等のカットインが出るまでの遅延を短縮する（`220ms` / ディーラーBJ `100ms`）。
+  16. 運がないときに悲しむスタンプ「運がない…」（`sEx.gloom`・全28種）を追加する。
+  17. 1人のプレイヤーしかいないのにリモートカーソルが分裂して複数人に見える不具合を修正する（UID/slot 所有者検証、slot 単位の最新1件重複排除、孤立 `.rcur.live` 除去、ホスト側の古い `cursors` 自動掃除）。
+  18. ヨットのオンライン対戦で、相手が固定したサイコロの黄色い枠（`.yd.held`）がリアルタイムで表示されるように同期する（`cursors/{uid}.ykeep` / `players/{uid}.yachtKeep`）。
+  19. 相手がウィンドウ外にカーソルを置いたとき、盤面外周の内側へ自然に吸着・半透明表示（`.rcur.live.out`）し、右端・下端では矢印と名前ラベルを内向きに反転させる。
+  20. 相手のカーソルが見えなくなることがある不具合を修正する（`#boardwrap` 一時サイズ0での RAF ループ停止防止、`zoom` 補正、`drawPlay` 毎の `kickCursorLoop`）。
+  21. チャット（スタンプ・定型文・自由入力）の受信通知トーストをより大きく目立つデザイン（`.toast.chat-toast`・「💬 チャット」バッジ・ポップ演出・5.2秒表示）に強化する。
+  22. ヨットの盤面内のフォーダイスの説明を「同じ目４個で、５個の合計」として常時表示する。
+  23. ヨットでヨット（50点）を達成してチェックを付けた時に「（プレイヤー名） ヨット」のカットインを入れる。
+  24. (a) 他の人の手番が始まる時はカットインの効果音を鳴らさず自分の番の時だけ鳴らす。(b) ヨットでサイコロを振り終わる（揺れアニメーションが終わる）まで候補点数の数字を出さないようにする。
+- 変更:
+  - `web/pc-firebase/core/asobi-pc-core.mjs`: 7ならべ初期手札および手札配列のソート、ウサギと猟犬の猟犬CPU前進優先・上下反復ペナルティ、Oh, No! まとめ出し (`bundle=on/off`) ルール・合法手エンコード・`viewJson` `opts` 出力、ソリティア初期配札のソルバー検証 (`isSolitaireSolvable`) を実装。
+  - `web/pc-firebase/js/app.js`: `setupDrag` の複数枚スタックゴースト (`o.getStack`) とカード矩形重なり面積によるドロップ先判定 (`findBestTarget`)、自分の手番のみ `sfxYourTurn` を鳴らす `turnCut`、ヨット達成時の `${seatName(p)} ヨット` カットイン、Oh, No! まとめ出しカットイン、目立つチャット通知トースト (`.chat-toast`)、`drawPlay` での `kickCursorLoop()` 呼び出しを実装。
+  - `web/pc-firebase/js/boards/extra.js`: ソリティアの3枚扇状めくり札、スタックドラッグ (`getStack`)、グリップ位置非依存の `canDrop`、ダブルクリック自動移動 (`autoMove`)、全カード `[data-cid]` の FLIP スライドアニメーション、列ごとの動的縦間隔圧縮 (`fitSolitaire` + `ResizeObserver`) を実装（Codex の `A.flipCard`・`!A.reduce` 対応を維持）。
+  - `web/pc-firebase/js/boards/fix.js`: マンカラ横取りアニメーション (`.mcap-stone` 放物線飛行・`.mcap-ring`・`.mcap-tag` `+N 横取り!`・`MARBLE` 効果音)、ヨットのフォーダイス盤面説明「同じ目４個で、５個の合計」、サイコロ振り中 (`shaking`) の候補点数非表示、オンライン相手キープ枠 (`syncOnlineYachtKeep` / `getOnlineYachtKeep`) のリアルタイム反映を実装。
+  - `web/pc-firebase/js/boards/table.js`: Oh, No! まとめ出しUI（同数字複数選択・順番バッジ `.ubord`・`まとめ出し(N枚)` / `1枚で出す` ボタン・束ドラッグ・ワイルド色選択連携）、大富豪の束ドラッグゴースト、ブラックジャックの勝敗カットイン高速化 (`220ms`) を実装。
+  - `web/pc-firebase/js/online.js`: ババ抜きカーソル照準 (`maidIndex`/`maidMove`) を維持したまま、カーソル分裂防止 (`isCursorOwnerValid`, `bySlot` 重複排除, `pruneStaleCursors`)、画面外 `out` フラグと外周クランプ・反転表示 (`.out`, `.flip-x`, `.flip-y`)、RAF 停止防止と `cssZoom()` 補正、ヨット `yachtKeep` リアルタイム同期を実装。
+  - `web/pc-firebase/js/art.js`: 悲しむスタンプ `'運がない…'` (`sEx.gloom`) を追加（全28種）。
+  - `web/pc-firebase/js/gamepad.js`（新規） / `web/pc-firebase/index.html`: Web Gamepad API によるコントローラー操作一式を実装し、`index.html` から読み込み。
+  - `web/pc-firebase/js/rules.js` / `web/pc-firebase/assets/rules/*.mp4`（新規40本）: 実際の盤面全体を映し矢印と吹き出しで解説する短いループ動画40本を生成し、`demoHtml` / `startDemos` を `<video class="rule-vid">` 再生に刷新。
+  - `web/pc-firebase/css/app.css` / `web/pc-firebase/sw.js`: ルーレット等の既存CSS・キャッシュ一覧を維持しつつ上記各機能のスタイルを追加し、`sw.js` の `FILES` に `./js/gamepad.js` と `./assets/rules/*.mp4`（40本）を追加、キャッシュ名を `asobipcfb-20261119-improvements-1` に更新。
+- ファイル: `web/pc-firebase/core/asobi-pc-core.mjs`, `web/pc-firebase/js/app.js`, `web/pc-firebase/js/online.js`, `web/pc-firebase/js/art.js`, `web/pc-firebase/js/gamepad.js`, `web/pc-firebase/js/rules.js`, `web/pc-firebase/js/boards/extra.js`, `web/pc-firebase/js/boards/fix.js`, `web/pc-firebase/js/boards/table.js`, `web/pc-firebase/css/app.css`, `web/pc-firebase/index.html`, `web/pc-firebase/sw.js`, `web/pc-firebase/assets/rules/*.mp4`, `docs/FIREBASE_NET_MANUAL_FOR_AI.md`, `README4AI_Claude_Codex_Antigravity.md`
+- 確認: `origin/ccr-efc07031-6exjqs` (`4e1821e`・ルーレット刷新＆あそび箱49) 上へリベース後、`git diff --check`、`node --check` 全変更ファイル、既存テスト群 (`test_extra_12_games.mjs`, `test_roulette_core.mjs`, `check_transient_audio.cjs`, `check_cursor_send.cjs`, `check_firebase_ui.py`)、ルーレット動作確認および全24項目 E2E Playwright 検証すべて合格。
+
 ### 2026-11-19 / Codex / PC版の設定・盤面・カード演出を調整
 - 対局中の設定ウィンドウの大きさを固定し、タブ変更は右側の内容だけを更新する。歯車アイコンを差し替え、Chromeのボタン押下時のハイライトと対局終了画面の「待った」の補足を外した。収録49種に合わせて「あそび箱49」に更新した。
 - マインスイーパーは対戦と協力で設定の並びを統一し、使えない項目を無効化した。ライト・ダークの盤面色と見出し色を調整した。コネクトフォーは設定に応じて仮置き後に着手を確定する。

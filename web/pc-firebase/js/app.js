@@ -366,7 +366,7 @@ async function resume(s) {
   enterPlay();
 }
 async function enterPlay() {
-  busy = false; stopConcurrent();
+  busy = false; yachtCutJust = false; stopConcurrent();
   S.chatOpen = false; S.chatUnread = 0;
   concurrent = (online && !isSoloIdleMatch()) ? false : await call('isConcurrent', h); S.screen = 'play'; S.modal = null;
   bgCtx(); render();
@@ -654,7 +654,7 @@ function api() {
     board: (html, onTap) => {
       const wrap = $('#boardwrap'); if (!wrap) return;
       wrap.className = 'boardwrap k-' + (view.board ? view.board.kind : '');
-      wrap.onpointerdown = wrap.oncontextmenu = null;
+      wrap.onpointerdown = wrap.oncontextmenu = wrap.ondblclick = null;
       wrap.innerHTML = html.startsWith('<svg') ? `<div class="plate">${html}</div>` : html;
       wrap.onclick = (e) => { if (busy || cutOn() || dragJust || (online && isMySeatAutoCpu())) return; const t = e.target.closest('[data-sq],[data-roll],[data-spin],[data-off],[data-tok],[data-i],[data-col],[data-hand],[data-m],[data-z],[data-k],[data-e],[data-p],[data-pt],[data-d],[data-c],[data-a],[data-s],[data-t],[data-tgt],[data-card],[data-src],[data-dest],[data-draw],[data-lm],[data-guess],[data-bet],[data-pass],[data-pit],[data-die],[data-cat],[data-seat]') || e.target; onTap(t.dataset || {}, t); };
     },
@@ -685,6 +685,7 @@ let sideCustom = false, lastPlayed = -1, drawnView = null, animUntil = 0, pendSn
 function drawPlay(force) {
   if (S.screen !== 'play' || !view) return;
   if (!$('#boardwrap')) render();
+  if (typeof kickCursorLoop === 'function') kickCursorLoop();
   const keep = !force && drawnView === view && $('#boardwrap').firstChild;
   const b = view.board;
   const title = b?.kind==='oldmaid' && $('.stagehead h2');
@@ -727,27 +728,139 @@ function drawPlay(force) {
 }
 
 // 札をドラッグで出す(設定「駒の動かし方」がクリックの時は使わない)
+// o.getStack(src): まとめてドラッグする要素配列を返す。
+// 当たり判定はドラッグ中のカード矩形と移動先候補の重なり面積で判定し、カードの上端・下端のどこを掴んでも同じ感覚で置けるようにする。
 let dragJust = false;
 function setupDrag(o) {
   const wrap = $('#boardwrap'); if (!wrap || S.set.drag === 'クリック') return;
   wrap.onpointerdown = (e) => {
     if (e.button !== 0 || busy || cutOn() || (online && isMySeatAutoCpu()) || (!view.human && !concurrent)) return;
     const src = e.target.closest(o.src); if (!src || !wrap.contains(src)) return;
-    const sx = e.clientX, sy = e.clientY, r = src.getBoundingClientRect(); let ghost = null, over = null;
+    const sx = e.clientX, sy = e.clientY, r = src.getBoundingClientRect();
+    const rawStack = typeof o.getStack === 'function' ? o.getStack(src) : null;
+    const stackEls = Array.isArray(rawStack) && rawStack.length ? rawStack : [src];
+    const stackRects = stackEls.map((el) => el.getBoundingClientRect());
+    let sL = r.left, sT = r.top, sR = r.right, sB = r.bottom;
+    for (const sr of stackRects) {
+      if (sr.left < sL) sL = sr.left;
+      if (sr.top < sT) sT = sr.top;
+      if (sr.right > sR) sR = sr.right;
+      if (sr.bottom > sB) sB = sr.bottom;
+    }
+    let ghost = null, over = null;
+    const findBestTarget = (dx, dy) => {
+      // 先頭カードおよびスタック全体の現在位置矩形（掴んだ位置に依存しない）
+      const gL = r.left + dx, gT = r.top + dy, gR = r.right + dx, gB = r.bottom + dy;
+      const gCx = (gL + gR) * 0.5, gCy = (gT + gB) * 0.5;
+      const cands = wrap.querySelectorAll(o.dst);
+      let best = null, bestArea = 0, bestDist = Infinity;
+      for (const cand of cands) {
+        if (cand === src || stackEls.includes(cand)) continue;
+        if (src.parentElement && cand === src.parentElement && cand.hasAttribute('data-dest')) continue;
+        if (typeof o.canDrop === 'function' && !o.canDrop(src, cand)) continue;
+        const cr = cand.getBoundingClientRect();
+        if (cr.width <= 0 || cr.height <= 0) continue;
+        let cTop = cr.top, cBottom = cr.bottom, cLeft = cr.left, cRight = cr.right;
+        if (cand.matches && cand.matches('.spile[data-dest]')) {
+          const cards = cand.querySelectorAll('.pcard');
+          const last = cards.length ? cards[cards.length - 1] : null;
+          if (last) {
+            const lr = last.getBoundingClientRect();
+            cBottom = Math.max(cBottom, lr.bottom + 18);
+          }
+          cLeft -= 6; cRight += 6; cTop -= 6;
+        }
+        const iw = Math.max(0, Math.min(gR, cRight) - Math.max(gL, cLeft));
+        const ih = Math.max(0, Math.min(gB, cBottom) - Math.max(gT, cTop));
+        const area = iw * ih;
+        if (area <= 0) continue;
+        const cx = (cLeft + cRight) * 0.5, cy = (cTop + cBottom) * 0.5;
+        const dist = (gCx - cx) * (gCx - cx) + (gCy - cy) * (gCy - cy);
+        if (area > bestArea + 1 || (Math.abs(area - bestArea) <= 1 && dist < bestDist)) {
+          bestArea = area;
+          bestDist = dist;
+          best = cand;
+        }
+      }
+      return best;
+    };
     const move = (ev) => {
-      if (!ghost) { if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return; sfx.play('CARD_FLIP', { volume: .5 }); ghost = src.cloneNode(true); ghost.classList.add('dragghost'); Object.assign(ghost.style, { width: r.width + 'px', height: r.height + 'px', left: r.left + 'px', top: r.top + 'px' }); ghost.style.setProperty('--cw', r.width + 'px'); ghost.style.setProperty('--w', r.width + 'px'); const fs = getComputedStyle(src).fontSize; ghost.style.fontSize = fs; document.body.appendChild(ghost); src.classList.add('dragsrc'); }
-      ghost.style.transform = `translate(${ev.clientX - sx}px,${ev.clientY - sy}px) rotate(4deg)`;
-      const under = document.elementFromPoint(ev.clientX, ev.clientY), d = under && under.closest(o.dst);
-      if (over !== d) { if (over) over.classList.remove('dropover'); over = d && wrap.contains(d) ? d : null; if (over) over.classList.add('dropover'); }
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      const z = (document.body.style && parseFloat(document.body.style.zoom)) || 1;
+      if (!ghost) {
+        if (Math.hypot(dx, dy) < 6) return;
+        sfx.play('CARD_FLIP', { volume: .5 });
+        if (stackEls.length > 1) {
+          ghost = document.createElement('div');
+          ghost.className = 'dragghost dragstack';
+          Object.assign(ghost.style, {
+            position: 'fixed',
+            left: (r.left / z) + 'px',
+            top: (r.top / z) + 'px',
+            width: ((sR - r.left) / z) + 'px',
+            height: ((sB - r.top) / z) + 'px',
+            pointerEvents: 'none',
+          });
+          stackEls.forEach((el, idx) => {
+            const cr = stackRects[idx];
+            const cl = el.cloneNode(true);
+            cl.classList.remove('on', 'tap');
+            cl.classList.add('dragstack-item');
+            const fs = getComputedStyle(el).fontSize;
+            Object.assign(cl.style, {
+              position: 'absolute',
+              left: ((cr.left - r.left) / z) + 'px',
+              top: ((cr.top - r.top) / z) + 'px',
+              width: (cr.width / z) + 'px',
+              height: (cr.height / z) + 'px',
+              margin: '0',
+              fontSize: fs,
+              zIndex: String(idx + 1),
+            });
+            cl.style.setProperty('--cw', (cr.width / z) + 'px');
+            cl.style.setProperty('--w', (cr.width / z) + 'px');
+            ghost.appendChild(cl);
+          });
+        } else {
+          ghost = src.cloneNode(true);
+          ghost.classList.add('dragghost');
+          Object.assign(ghost.style, {
+            width: (r.width / z) + 'px',
+            height: (r.height / z) + 'px',
+            left: (r.left / z) + 'px',
+            top: (r.top / z) + 'px',
+          });
+          ghost.style.setProperty('--cw', (r.width / z) + 'px');
+          ghost.style.setProperty('--w', (r.width / z) + 'px');
+          ghost.style.fontSize = getComputedStyle(src).fontSize;
+        }
+        document.body.appendChild(ghost);
+        stackEls.forEach((el) => el.classList.add('dragsrc'));
+      }
+      ghost.style.transform = `translate(${dx / z}px,${dy / z}px) rotate(3.5deg)`;
+      const d = findBestTarget(dx, dy);
+      if (over !== d) {
+        if (over) over.classList.remove('dropover');
+        over = d && wrap.contains(d) ? d : null;
+        if (over) over.classList.add('dropover');
+      }
     };
     const up = () => {
-      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      window.removeEventListener('blur', up);
       if (!ghost) return;
-      ghost.remove(); src.classList.remove('dragsrc'); if (over) over.classList.remove('dropover');
+      ghost.remove();
+      stackEls.forEach((el) => el.classList.remove('dragsrc'));
+      if (over) over.classList.remove('dropover');
       dragJust = true; setTimeout(() => (dragJust = false), 0);
       if (over) { o.drop(src, over); } else sfx.play('CARD', { volume: .35, rate: .9 });
     };
-    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    window.addEventListener('blur', up);
   };
 }
 
@@ -852,7 +965,7 @@ function recordStat(won, lost) {
 }
 
 // 結果
-let resultShown = -1;
+let resultShown = -1, yachtCutJust = false;
 function showResult() {
   const o = view.outcome;
   const pass = mode === 'pass' && view.seats.filter((s) => s.human).length >= 2;
@@ -866,11 +979,13 @@ function showResult() {
     const winnerName = o.winner >= 0 ? (solo ? meName() : seatName(o.winner)) : '';
     const mate = /詰み|チェックメイト|checkmate/i.test(o.reason || '');
     if (cur.id === 'chess' && mate) cut({ text: 'Checkmate', tone: 'noir', font: 'yo', ms: 1600, afterAnim: true });
+    const delayWinCut = (cur.id === 'chess' && mate) || (cur.id === 'yacht' && yachtCutJust);
+    yachtCutJust = false;
     setTimeout(() => {
       if (key !== resultShown || !view || !view.outcome) return;
       if (o.winner < 0) cut({ text: '引き分け', tone: 'dark', ms: 1800, _tok: token, afterAnim: true });
       else cut({ who: null, text: `${winnerName} の勝利`, tone: o.winner === mySeat || pass ? 'gold' : 'dark', ms: 2000, _tok: token, afterAnim: true });
-    }, cur.id === 'chess' && mate ? 1700 : 0);
+    }, delayWinCut ? 1700 : 0);
   }
   const title = o.winner < 0 ? '引き分け' : solo ? (o.winner === 0 ? '成功' : '終了') : `${seatName(o.winner)} の勝利`;
   const sc = cur.id !== 'uno' && view.scores && view.scores.length >= 2 ? `<div class="rscore num">${view.scores.map((s, i) => `<span>${esc(seatName(i))} <b>${s}</b></span>`).join('')}</div>` : '';
@@ -904,6 +1019,16 @@ function detectEvents(a, b) {
   const info = (x) => (x.board && (x.board.info || '')) + '';
   if (cur.id === 'daifugo' && /革命/.test(info(b)) && !/革命/.test(info(a))) cut({ text: '革命', tone: 'red', font: 'dela', ms: 1600 });
   if (cur.id === 'hanafuda' && /こいこい/.test(info(b)) && !/こいこい/.test(info(a))) cut({ text: 'こいこい', tone: 'felt', font: 'wa', ms: 1400 });
+  if (k === 'yacht' && Array.isArray(b.board.sheets) && Array.isArray(a.board.sheets)) {
+    for (let p = 0; p < b.board.sheets.length; p++) {
+      const prevY = a.board.sheets[p] ? a.board.sheets[p][11] : -1;
+      const nextY = b.board.sheets[p] ? b.board.sheets[p][11] : -1;
+      if (prevY < 0 && nextY === 50) {
+        yachtCutJust = true;
+        cut({ text: `${seatName(p)} ヨット`, tone: 'gold', font: 'yo', ms: 1600, afterAnim: true, _tok: token });
+      }
+    }
+  }
   if (k === 'mahjong') {
     const nameOf = (p) => ({ name: seatName(p), av: p === mySeat ? meAv() : '' });
     for (let p = 0; p < 4; p++) if (b.board.riichi[p] != null && a.board.riichi[p] == null) cut({ who: nameOf(p), text: 'リーチ', tone: 'china', font: 'china', ms: 1300 });
@@ -912,15 +1037,23 @@ function detectEvents(a, b) {
   if (cur.id === 'uno' && b.board.tbl && a.board.tbl) {
     const topId = (x) => { const z = x.board.zones && x.board.zones[0]; return z && z.cards[0] ? z.cards[0].id : -1; };
     const ta = topId(a), tb = topId(b);
-    if (tb >= 0 && tb !== ta && Math.floor(tb / 10) !== Math.floor(ta / 10)) {
+    const mb = b.moves !== a.moves ? /^(\d+)枚出し/.exec(b.board.tbl.last || '') : null;
+    const bundleCnt = mb ? +mb[1] : 1;
+    if (tb >= 0 && (mb || (tb !== ta && Math.floor(tb / 10) !== Math.floor(ta / 10)))) {
       const card = Math.floor(tb / 10), k = card % 25, v = card >= 100 ? (card < 104 ? 13 : 14) : k === 0 ? 0 : (k + 1) >> 1;
       const COL = ['赤', '黄', '緑', '青'], chosen = tb % 10;
       const lm = b.board.tbl.lastMover, who = lm >= 0 ? { name: seatName(lm), av: lm === mySeat ? meAv() : '' } : null;
       const txt = { 10: 'スキップ', 11: 'リバース', 12: '+2', 13: 'ワイルド', 14: '+4' }[v];
-      if (txt) cut({ afterAnim: true, _tok: token, who, text: txt, sub: v >= 13 && chosen < 4 ? COL[chosen] : '', tone: 'uno' + (v >= 13 && chosen < 4 ? chosen : Math.floor(card / 25)), font: 'mo', ms: 1300 });
+      const tone = 'uno' + (v >= 13 && chosen < 4 ? chosen : Math.floor(card / 25));
+      if (txt) {
+        const label = bundleCnt > 1 ? `${txt} ×${bundleCnt}` : txt;
+        cut({ afterAnim: true, _tok: token, who, text: label, sub: v >= 13 && chosen < 4 ? COL[chosen] : (bundleCnt > 1 ? `${bundleCnt}枚まとめ出し` : ''), tone, font: 'mo', ms: 1300 });
+      } else if (bundleCnt > 1) {
+        cut({ afterAnim: true, _tok: token, who, text: `${bundleCnt}枚まとめ出し`, tone, font: 'mo', ms: 1150 });
+      }
       // +2・+4: 引くのは「次の人」(出した人の次)。重ね出しが無い時は、引いた人は 1 回休み
       if ((v === 12 || v === 14) && lm >= 0) {
-        const tb2 = b.board.tbl, total = tb2.n.length, victim = (lm + tb2.dir + total) % total, n = v === 12 ? 2 : 4;
+        const tb2 = b.board.tbl, total = tb2.n.length, victim = (lm + tb2.dir + total) % total, n = (v === 12 ? 2 : 4) * bundleCnt;
         if (tb2.pending > 0) cut({ afterAnim: true, _tok: token, who: { name: seatName(victim), av: victim === mySeat ? meAv() : '' }, text: `${tb2.pending}枚引くか重ねる`, tone: 'red', font: 'mo', ms: 1300 });
         else cut({ afterAnim: true, _tok: token, who: { name: seatName(victim), av: victim === mySeat ? meAv() : '' }, text: `${n}枚引いて1回休み`, tone: 'red', font: 'mo', ms: 1400 });
       }
@@ -967,7 +1100,7 @@ function cut(c) {
 // CPU のカーソル(打つ場所へ動かしてから打つ)
 const cursorOn = () => S.set.cursor !== '表示しない' && !S.set.reduce && !isMob() && !isTouchDevice();
 // 「あなたの番です」: 3 人以上の対局・手番ごとに交代・通信対戦で出す
-// 「あなたの番です」の音: 気づきやすい、上がる 2 つの音(効果音の設定に従う)
+// 「あなたの番です」の音: 自分の番になった時だけ鳴らし、他の人の手番開始時は鳴らさない
 function sfxYourTurn() {
   if (!S.set.sound) return;
   const ax = uiCtx(); if (!ax) return;
@@ -985,10 +1118,20 @@ function turnCut(a, b) {
   if (a && a.toMove === b.toMove && !(online && b.moves - a.moves >= 2)) return;
   const multi = online || mode === 'pass' || b.seats.length >= 3;
   if (!multi) return;
-  if (!S.set.cutin || S.set.reduce) { transientAudio.later(() => { if (view && view.toMove === b.toMove && view.human && !view.outcome) sfxYourTurn(); }, a ? 120 : 1450); return; }
+  const isSelfTurn = online
+    ? (b.mine >= 0 && b.toMove === b.mine && !b.remote && !isSeatAutoCpu(b.toMove))
+    : (mode === 'pass' ? b.toMove === 0 : (!!b.human && b.toMove === mySeat));
+  if (!S.set.cutin || S.set.reduce) {
+    if (isSelfTurn) transientAudio.later(() => { if (view && view.toMove === b.toMove && view.human && !view.outcome) sfxYourTurn(); }, a ? 120 : 1450);
+    return;
+  }
   const text = mode === 'pass' ? `${b.seats[b.toMove].name} の番です` : 'あなたの番です';
   turnPending = performance.now() + 6000;
-  transientAudio.later(() => { if (view && view.toMove === b.toMove && view.human && !view.outcome) { cut({ text, tone: 'gold', ms: 900, soft: true, afterAnim: true, _tok: token, onShow: sfxYourTurn, onEnd: () => { turnPending = 0; } }); } else turnPending = 0; }, a ? 120 : 1450);
+  transientAudio.later(() => {
+    if (view && view.toMove === b.toMove && view.human && !view.outcome) {
+      cut({ text, tone: 'gold', ms: 900, soft: true, afterAnim: true, _tok: token, onShow: isSelfTurn ? sfxYourTurn : undefined, onEnd: () => { turnPending = 0; } });
+    } else turnPending = 0;
+  }, a ? 120 : 1450);
 }
 // カードを切る音のあとに、札を配る(卓の真ん中から順に)
 function dealIntro() {
@@ -1704,7 +1847,13 @@ let tt; const toastEl = $('#toast');
 function toast(m) {
   if (m.chat && !S.set.notify) return;
   toastEl.style.transition = 'none'; toastEl.style.transform = '';
-  toastEl.innerHTML = `<small>${esc(m.w)}</small>${m.s != null ? stamp(m.s) : esc(m.t)}`; toastEl.hidden = false; clearTimeout(tt); tt = setTimeout(toastHide, 3000);
+  toastEl.classList.toggle('chat-toast', !!m.chat);
+  toastEl.classList.remove('chat-pop');
+  const badge = m.chat ? '<span class="chat-toast-badge">💬 チャット</span>' : '';
+  toastEl.innerHTML = `<small>${badge}${esc(m.w)}</small><div class="toast-body">${m.s != null ? stamp(m.s) : esc(m.t)}</div>`;
+  toastEl.hidden = false;
+  if (m.chat) { void toastEl.offsetWidth; toastEl.classList.add('chat-pop'); }
+  clearTimeout(tt); tt = setTimeout(toastHide, m.chat ? 5200 : 3000);
 }
 let drag = null; const toastHide = () => { toastEl.hidden = true; toastEl.style.transition = 'none'; toastEl.style.transform = ''; };
 toastEl.addEventListener('pointerdown', (e) => { toastEl.setPointerCapture(e.pointerId); clearTimeout(tt); toastEl.style.transition = 'none'; drag = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, vx: 0, vy: 0, t: performance.now(), moved: false }; });

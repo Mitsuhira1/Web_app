@@ -46,9 +46,42 @@
     const pos = (i) => { let x, y; if (i <= 5) { x = 170 + i * 92; y = 262; } else if (i === 6) { x = 730; y = 190; } else if (i <= 12) { x = 170 + (12 - i) * 92; y = 118; } else { x = 70; y = 190; } return flip ? [Wd - x, Ht - y] : [x, y]; };
     const old = prev.man && prev.man.h === A.handle ? prev.man.pits : null;
     // まいた順(まいた穴の次から反時計回り。相手の倉は飛ばす)
-    const order = {}; if (old && b.last >= 0 && b.last < 14) { const side = b.last <= 5 ? 0 : 1; let p = b.last, k = 0; for (let n = 0; n < 60; n++) { p = (p + 1) % 14; if (p === (side === 0 ? 13 : 6)) continue; if (order[p] == null) order[p] = []; order[p].push(k++); if (k >= old[b.last]) break; } }
+    const order = {};
+    let capSide = -1, capStore = -1, capLand = -1, capOpp = -1, capSteps = 0;
+    if (old && b.last >= 0 && b.last < 14) {
+      const side = b.last <= 5 ? 0 : 1;
+      let p = b.last, k = 0;
+      const steps = old[b.last] || 0;
+      for (let n = 0; n < 60 && k < steps; n++) {
+        p = (p + 1) % 14;
+        if (p === (side === 0 ? 13 : 6)) continue;
+        if (order[p] == null) order[p] = [];
+        order[p].push(k++);
+      }
+      if (b.captured > 0 && steps > 0 && p >= 0 && p !== 6 && p !== 13) {
+        capSide = side;
+        capStore = side === 0 ? 6 : 13;
+        capLand = p;
+        capOpp = 12 - p;
+        capSteps = steps;
+      }
+    }
+    const capStartDelay = capStore >= 0 ? Math.max(180, (capSteps - 0.25) * 240) * A.speed : 0;
+    // 横取り元の玉の初期座標を再現
+    const oppOrigins = [];
+    if (capOpp >= 0) {
+      const [ox, oy] = pos(capOpp);
+      const rOpp = rng(capOpp * 131 + 17);
+      const oppWas = old ? old[capOpp] : Math.max(0, b.captured - 1);
+      for (let k = 0; k < oppWas; k++) {
+        const a = rOpp() * 6.283, d = Math.sqrt(rOpp()) * (oppWas > 12 ? 1 : .9);
+        oppOrigins.push([ox + Math.cos(a) * d * 24, oy + Math.sin(a) * d * 24]);
+        rOpp();
+      }
+    }
     let s = `<svg viewBox="0 0 ${Wd} ${Ht}" role="img" aria-label="マンカラの盤"><defs>${GRAD}</defs>${wood(6, 6, Wd - 12, Ht - 12, 60, 'xWal')}`;
-    let maxDelay = 0; const drops = [];
+    let maxDelay = 0, capOverlay = '';
+    const drops = [];
     for (let i = 0; i < 14; i++) {
       const [x, y] = pos(i), store = i === 6 || i === 13, n = b.pits[i], rx = store ? 40 : 38, ry = store ? 118 : 38;
       s += `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="url(#fPit)" stroke="#2a180c" stroke-width="3"/><ellipse cx="${x}" cy="${y + 3}" rx="${rx}" ry="${ry}" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2.5"/>`;
@@ -56,22 +89,62 @@
       if (b.last === i && n === 0) s += `<circle cx="${x}" cy="${y}" r="44" fill="none" stroke="#fff" stroke-width="5" opacity=".9"/><circle cx="${x}" cy="${y}" r="44" fill="none" stroke="#E2553A" stroke-width="2.6"/>`;
       // 玉: 穴ごとに決まった並び(数が同じなら同じ場所)
       const r = rng(i * 131 + 17), was = old ? old[i] : n, add = n - was;
+      const capStartIdx = (i === capStore && b.captured > 0) ? Math.max(was, n - b.captured) : n;
       for (let k = 0; k < n; k++) {
         const a = r() * 6.283, d = Math.sqrt(r()) * (store ? 1 : 1) * (n > 12 ? 1 : .9), bx = x + Math.cos(a) * d * (rx - 14), by = y + Math.sin(a) * d * (ry - 14), col = 'RUGYP'[Math.floor(r() * 5)];
+        const stoneInner = `<circle cx="${bx + 1.5}" cy="${by + 3}" r="11" fill="#000" opacity=".35"/><circle cx="${bx}" cy="${by}" r="11" fill="url(#f${col})"/><ellipse cx="${bx - 3.4}" cy="${by - 5}" rx="4" ry="2.2" fill="#fff" opacity=".55" transform="rotate(-28 ${bx - 3.4} ${by - 5})"/>`;
+        if (old && i === capStore && k >= capStartIdx) {
+          const ci = k - capStartIdx;
+          const [ox, oy] = ci === 0 ? pos(capLand) : (oppOrigins[ci - 1] || pos(capOpp));
+          const dl = capStartDelay + ci * 45 * A.speed;
+          maxDelay = Math.max(maxDelay, dl + 420 * A.speed);
+          drops.push(dl + 220 * A.speed);
+          capOverlay += `<g class="mcap-stone" data-ox="${(ox - bx).toFixed(1)}" data-oy="${(oy - by).toFixed(1)}" data-dl="${Math.round(dl)}" style="opacity:0;transform-origin:${bx}px ${by}px" pointer-events="none">${stoneInner}</g>`;
+          continue;
+        }
         let cls = '', st = '';
         if (old && k >= was && add > 0) { const ord = (order[i] || [])[k - was]; const dl = (ord != null ? ord * 240 : 120) * A.speed; maxDelay = Math.max(maxDelay, dl); cls = 'mdrop'; st = `animation-delay:${dl}ms;`; drops.push(dl); }
-        s += `<g class="${cls}" style="${st}transform-origin:${bx}px ${by}px" pointer-events="none"><circle cx="${bx + 1.5}" cy="${by + 3}" r="11" fill="#000" opacity=".35"/><circle cx="${bx}" cy="${by}" r="11" fill="url(#f${col})"/><ellipse cx="${bx - 3.4}" cy="${by - 5}" rx="4" ry="2.2" fill="#fff" opacity=".55" transform="rotate(-28 ${bx - 3.4} ${by - 5})"/></g>`;
+        s += `<g class="${cls}" style="${st}transform-origin:${bx}px ${by}px" pointer-events="none">${stoneInner}</g>`;
       }
-      const ty = store ? (y + (flip === (i === 13) ? 0 : 0)) : 0;
       const tag = (tx, tyy) => `<g pointer-events="none"><rect x="${tx - 22}" y="${tyy - 16}" width="44" height="32" rx="8" fill="#FFFDF5" stroke="#B9AC8C" stroke-width="1.5"/><text x="${tx}" y="${tyy + 8}" text-anchor="middle" font-size="22" font-weight="900" fill="#15151A" font-family="inherit">${n}</text></g>`;
       const upper = (i > 6 && i < 13) !== flip;
       s += store ? tag(x, y - 140 + 0) : tag(x, upper ? y - 68 : y + 68);
       if (!store) s += `<circle cx="${x}" cy="${y}" r="46" fill="transparent" data-pit="${i}" class="${legal.has(i) ? 'mtap' : ''}"/>`;
     }
-    s += '</svg>';
+    if (capStore >= 0) {
+      const [lx, ly] = pos(capLand), [ox, oy] = pos(capOpp), [sx, sy] = pos(capStore);
+      const ringDl = Math.round(capStartDelay);
+      // 自分の空穴に着地した玉も見せてから倉へ飛ばす
+      const landDl = Math.max(0, Math.round((capSteps - 1) * 240 * A.speed));
+      capOverlay = `<g class="mdrop mcap-land" data-hide="${ringDl}" style="animation-delay:${landDl}ms;transform-origin:${lx}px ${ly}px" pointer-events="none"><circle cx="${lx + 1.5}" cy="${ly + 3}" r="11" fill="#000" opacity=".35"/><circle cx="${lx}" cy="${ly}" r="11" fill="url(#fY)"/><ellipse cx="${lx - 3.4}" cy="${ly - 5}" rx="4" ry="2.2" fill="#fff" opacity=".55" transform="rotate(-28 ${lx - 3.4} ${ly - 5})"/></g>` +
+        `<circle cx="${lx}" cy="${ly}" r="44" fill="none" stroke="#FFC65C" class="mcap-ring" style="animation-delay:${ringDl}ms" pointer-events="none"/>` +
+        `<circle cx="${ox}" cy="${oy}" r="46" fill="none" stroke="#FF6B4A" class="mcap-ring" style="animation-delay:${ringDl}ms" pointer-events="none"/>` +
+        `<path d="M${ox} ${oy} Q ${(ox + sx) / 2} ${Math.min(oy, sy) - 54} ${sx} ${sy}" fill="none" stroke="#FFC65C" stroke-width="3.5" stroke-dasharray="7 6" class="mcap-ring" style="animation-delay:${ringDl}ms" pointer-events="none"/>` +
+        capOverlay +
+        `<g class="mcap-tag" style="animation-delay:${Math.round(capStartDelay + 110 * A.speed)}ms;transform-origin:${sx}px ${sy}px" pointer-events="none"><rect x="${sx - 56}" y="${sy - 22}" width="112" height="36" rx="18" fill="#E2492F" stroke="#FFFDF5" stroke-width="2.5"/><text x="${sx}" y="${sy + 2}" text-anchor="middle" font-size="17" font-weight="900" fill="#FFFDF5" font-family="inherit">+${b.captured} 横取り!</text></g>`;
+    }
+    s += capOverlay + '</svg>';
     prev.man = { h: A.handle, pits: b.pits.slice() };
     A.board(s, (d) => { if (d.pit != null && legal.has(+d.pit)) A.play(+d.pit); });
-    if (drops.length) { drops.sort((a, c) => a - c).forEach((dl, k) => { if (k === 0 || dl - drops[k - 1] > 30) A.sfx('MARBLE', dl / A.speed + 120, { rate: 0.95 + Math.random() * 0.1 }); }); A.land(-1); A.anim(maxDelay / A.speed + 400); }
+    if (capStore >= 0) {
+      requestAnimationFrame(() => {
+        const landEl = document.querySelector('#boardwrap .mcap-land');
+        if (landEl) {
+          const hideAt = +landEl.dataset.hide || 200;
+          setTimeout(() => { if (landEl.isConnected) landEl.style.display = 'none'; }, hideAt);
+        }
+        document.querySelectorAll('#boardwrap .mcap-stone').forEach((el) => {
+          const dx = +el.dataset.ox || 0, dy = +el.dataset.oy || 0, dl = +el.dataset.dl || 0;
+          const midX = dx * 0.46, midY = dy * 0.46 - 56;
+          el.animate([
+            { transform: `translate(${dx}px,${dy}px) scale(1.05)`, opacity: 1, offset: 0 },
+            { transform: `translate(${midX.toFixed(1)}px,${midY.toFixed(1)}px) scale(1.28)`, opacity: 1, offset: 0.52 },
+            { transform: 'translate(0,0) scale(1)', opacity: 1, offset: 1 },
+          ], { duration: Math.max(240, 430 * A.speed), delay: dl, easing: 'cubic-bezier(.22,.88,.32,1)', fill: 'forwards' });
+        });
+      });
+    }
+    if (drops.length) { drops.sort((a, c) => a - c).forEach((dl, k) => { if (k === 0 || dl - drops[k - 1] > 30) A.sfx('MARBLE', dl / A.speed + 120, { rate: 0.95 + Math.random() * 0.1 }); }); A.land(-1); A.anim(maxDelay / A.speed + 450); }
   }
 
   // ---------------------------------------------------------------- ドット＆ボックス(白い紙。線は片側から伸びる)
@@ -172,7 +245,7 @@
   }
 
   // ---------------------------------------------------------------- ヨット(Android 版 YachtBoard 準拠)
-  const YN = ['1の目', '2の目', '3の目', '4の目', '5の目', '6の目', 'チョイス', 'フォーダイス', 'フルハウス', 'Sストレート', 'Bストレート', 'ヨット'];
+  const YN = ['1の目', '2の目', '3の目', '4の目', '5の目', '6の目', 'チョイス', 'フォーダイス<small class="ydesc">同じ目４個で、５個の合計</small>', 'フルハウス', 'Sストレート', 'Bストレート', 'ヨット'];
   function ysc(dice, cat) {
     const cnt = [0, 0, 0, 0, 0, 0, 0]; dice.forEach((v) => cnt[v]++); const sum = dice.reduce((a, c) => a + c, 0);
     if (cat <= 5) return cnt[cat + 1] * (cat + 1); if (cat === 6) return sum; if (cat === 7) return cnt.some((c) => c >= 4) ? sum : 0;
@@ -190,11 +263,20 @@
     A.strip(Array.from({ length: b.players }, (_, k) => `<div class="pl${turn === k && !over ? ' turn' : ''}">${k === me ? A.face(24) : `<span class="dot face">${esc(A.name(k)[0])}</span>`}<span class="who"><span class="nm">${esc(A.name(k))}</span><span class="nt">合計</span></span><span class="num">${tot(k)}</span></div>`).join(''));
     const old = prev.ya && prev.ya.h === A.handle ? prev.ya : null;
     const rolled = b.rollsLeft < 3, mine = A.view.human && !over;
-    if (!old || old.turn !== b.turn || !rolled) yKeep = 0;
-    // キープは、同じ番の間は残す(CPU や相手の手番では、残したサイコロを黄枠で見せる)
+    if (!old || old.turn !== b.turn || !rolled) {
+      yKeep = 0;
+      if (A.isOnline && mine && typeof window.syncOnlineYachtKeep === 'function') window.syncOnlineYachtKeep(b.turn, b.rollsLeft, 0);
+    }
+    // キープは、同じ番の間は残す(通信相手や CPU の手番でも、残したサイコロをリアルタイムで黄枠表示)
+    const remoteKeep = !mine && rolled && A.isOnline && typeof window.getOnlineYachtKeep === 'function' ? window.getOnlineYachtKeep(b.turn, b.rollsLeft) : 0;
     const cpuMask = !mine && rolled && old && old.turn === b.turn && A.lastMove >= 0 && A.lastMove < 32 ? A.lastMove : 0;
-    const mask = mine ? yKeep : cpuMask;
+    const mask = mine ? yKeep : (remoteKeep || cpuMask);
     const rolledNow = old && (old.left !== b.rollsLeft || old.turn !== b.turn) && rolled;
+    if (!old || old.left !== b.rollsLeft || old.turn !== b.turn) yRolling = false;
+    // 振っている間(サイコロが止まるまで)は、もう一度押せず、点数の候補も出さない(ネタバレ防止)
+    if (rolledNow) yRollUntil = performance.now() + 1000 * A.speed;
+    const shaking = performance.now() < yRollUntil;
+    if (shaking) setTimeout(() => { if (document.querySelector('.yroll')) A.redraw(); }, yRollUntil - performance.now() + 20);
     const dice = b.dice.map((v, i) => {
       const held = (mask >> i) & 1;
       const cls = ['yd', held ? 'held' : '', rolledNow && (old.turn !== b.turn || !held) ? 'roll' : ''].filter(Boolean).join(' ');
@@ -208,7 +290,7 @@
       const last = yLastCell === `${k}-${cat}` ? ' ylast' : '';
       if (v >= 0) return `<td class="ys${last}" ${at}><span class="ycell-in">${v}</span></td>`;
       const isTurnHuman = k === turn && !over && rolled && A.view.seats[k] && A.view.seats[k].human;
-      if ((k === me && canCat(cat)) || isTurnHuman) return `<td class="yp" ${at}><span class="ycell-in">${ysc(b.dice, cat)}</span></td>`;
+      if (!shaking && ((k === me && canCat(cat)) || isTurnHuman)) return `<td class="yp" ${at}><span class="ycell-in">${ysc(b.dice, cat)}</span></td>`;
       return `<td ${at}><span class="ycell-in"></span></td>`;
     };
     const rows = YN.map((nm, cat) => {
@@ -223,11 +305,6 @@
     }).join('');
     const head = Array.from({ length: b.players }, (_, k) => `<th class="${turn === k && !over ? 'on' : ''}">${esc(A.name(k))}</th>`).join('');
     prev.ya = { h: A.handle, left: b.rollsLeft, turn: b.turn, dice: b.dice.slice(), keepSent: prev.yaSent || 0, sheets: b.sheets.map((r) => r.slice()) }; prev.yaSent = 0;
-    if (!old || old.left !== b.rollsLeft || old.turn !== b.turn) yRolling = false;
-    // 振っている間(サイコロが止まるまで)は、もう一度押せない
-    if (rolledNow) yRollUntil = performance.now() + 1000 * A.speed;
-    const shaking = performance.now() < yRollUntil;
-    if (shaking) setTimeout(() => { if (document.querySelector('.yroll')) A.redraw(); }, yRollUntil - performance.now() + 20);
     const rollMove = rolled ? mask : 0;
     const canRoll = mine && legal.has(rollMove) && b.rollsLeft > 0 && (!rolled || mask !== 31) && !yRolling && !shaking;
     const turnName = turn >= 0 ? A.name(turn) : '';
@@ -248,9 +325,9 @@
         <button class="yroll ${A.remoteTurn && b.rollsLeft > 0 ? 'waiting' : ''}" data-roll="1" ${canRoll || (A.remoteTurn && b.rollsLeft > 0) ? '' : 'disabled'} ${!mine ? 'tabindex="-1"' : ''}>振る／振り直す</button>
       </div></div>
       <div class="ysheet"><table><thead><tr><th>役</th>${head}</tr></thead><tbody>${rows}<tr class="total"><th>合計</th>${Array.from({ length: b.players }, (_, k) => `<td class="ys">${tot(k)}</td>`).join('')}</tr></tbody></table></div></div>`, (d) => {
-      if (d.roll != null) { if (canRoll) { yRolling = true; const rb = document.querySelector('.yroll'); if (rb) rb.disabled = true; prev.yaSent = rolled ? mask : 0; A.play(rollMove); } return; }
-      if (d.die != null && mine && rolled) { yKeep = mask ^ (1 << +d.die); return A.redraw(); }
-      if (d.cat != null && mine && rolled && legal.has(100 + +d.cat)) { yKeep = 0; A.play(100 + +d.cat); }
+      if (d.roll != null) { if (canRoll) { yRolling = true; const rb = document.querySelector('.yroll'); if (rb) rb.disabled = true; prev.yaSent = rolled ? mask : 0; if (A.isOnline && typeof window.syncOnlineYachtKeep === 'function') window.syncOnlineYachtKeep(b.turn, b.rollsLeft, mask); A.play(rollMove); } return; }
+      if (d.die != null && mine && rolled) { yKeep = mask ^ (1 << +d.die); if (A.isOnline && typeof window.syncOnlineYachtKeep === 'function') window.syncOnlineYachtKeep(b.turn, b.rollsLeft, yKeep); return A.redraw(); }
+      if (d.cat != null && mine && rolled && legal.has(100 + +d.cat)) { yKeep = 0; if (A.isOnline && typeof window.syncOnlineYachtKeep === 'function') window.syncOnlineYachtKeep(b.turn, b.rollsLeft, 0); A.play(100 + +d.cat); }
     });
     if (rolledNow) {
       // ふるふる: 左右に振ってから、目が決まる
