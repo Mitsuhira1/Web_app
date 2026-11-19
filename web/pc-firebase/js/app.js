@@ -329,6 +329,8 @@ let concurrent = false, concTimer = null;
 let cur = null, h = -1, token = 0, view = null, mySeat = 0, sel = null, busy = false, clock = null, lastSeat = 0, mode = 'cpu', pcfg = null, lastRecord = '', prevView = null;
 const THINK = [300, 800, 1500];
 const PACE = { 短い: 250, ふつう: 450, 長い: 800 };
+// ルーレットは1人につき最大4操作＋確定。待ち時間は手番全体に分配する。
+const ROULETTE_CPU_BEAT = { 短い:340, ふつう:500, 長い:650 };
 const EXTRA_CPU_PACE = { 短い: 1000, ふつう: 2700, 長い: 3700 };
 const CPU_PACE_CHOICES = [['inherit','共通設定'],...Object.keys(PACE).map(label=>[label,label])];
 const cpuPaceSetting = choice => Object.hasOwn(PACE,choice) ? choice : S.set.cpuLen;
@@ -489,7 +491,12 @@ async function refresh() {
     try { ms = mainCore.onlineMovesFrom(h, previous.moves).split(',').filter((x) => x !== '').map(Number); if (ms.length) { pendSnd = ms[ms.length - 1]; lastPlayed = pendSnd; } } catch (e) {}
     // 相手(通信の人)の手も、CPU と同じカーソルの動きで見せる(前の盤の上で動かしてから、新しい盤を描く)
     // (PC 版どうしで、相手のカーソルがいつも見えている時は、この動きは出さない)
-    if (ms.length === 1 && !previous.human && previous.toMove >= 0 && cursorOn() && !NO_CURSOR.has(cur.id) && S.screen === 'play' && !liveCursorOf(previous.toMove)) {
+    const rouletteCpu = cur.id === 'roulette' && previous.toMove >= 0 &&
+      ((!previous.human && !previous.remote) || isSeatAutoCpu(previous.toMove));
+    const replayCursor = rouletteCpu
+      ? !isHostRoom() && S.set.cursor !== '表示しない'
+      : !previous.human && cursorOn() && !liveCursorOf(previous.toMove);
+    if (replayCursor && ms.length === 1 && previous.toMove >= 0 && !NO_CURSOR.has(cur.id) && S.screen === 'play') {
       const nv = view; view = previous;
       try { await runCursor(ms[0], my); } catch (e) {}
       if (my !== token || revision !== refreshRevision) return;
@@ -564,7 +571,7 @@ async function cpuTurn(my, opts = {}) {
   }
   if (my !== token) return;
   const choice = cpuPaceChoice();
-  const delay = usesExtraCpuPace(cur.id) ? extraCpuDelay(choice) : (PACE[choice] || 450) * Math.max(0.3, SPEED());
+  const delay = cur.id === 'roulette' ? 90 : usesExtraCpuPace(cur.id) ? extraCpuDelay(choice) : (PACE[choice] || 450) * Math.max(0.3, SPEED());
   const wait = delay - (performance.now() - t0);
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   if (my !== token) return;
@@ -1191,7 +1198,7 @@ function aimSteps(mv) {
       { const held = new Set([...W.querySelectorAll('.yd.held')].map((e) => +e.dataset.die)); return [...[0, 1, 2, 3, 4].filter((i) => b.rollsLeft < 3 && !!((mv >> i) & 1) !== held.has(i)).map((i) => q(`[data-die="${i}"]`)), q('[data-roll]')]; }
     case 'cards': return b.tbl && b.tbl.g === 'memory' ? [q(`[data-pos="${mv}"]`)] : [];
     case 'roulette': {
-      if (mv < 1000) return [q(`[data-roulette-chip="${Math.floor(mv / 200)}"]`), q(`[data-roulette-spot="${mv % 200}"]`)];
+      if (mv < 1000) return [q(`[data-roulette-spot="${mv % 200}"]`)];
       if (mv < 2000) return [q(`[data-roulette-spot="${mv - 1000}"]`)];
       return [q(`[data-roulette-action="${mv}"]`)];
     }
@@ -1200,32 +1207,60 @@ function aimSteps(mv) {
   }
 }
 async function runCursor(mv, my) {
-  if (!cursorOn() || !view) return;
+  if (!view) return;
+  if (view.board?.kind === 'roulette') {
+    const beat = ROULETTE_CPU_BEAT[cpuPaceChoice()] || 500;
+    const [target] = aimSteps(mv);
+    const chip = mv < 1000 ? $(`[data-roulette-chip="${Math.floor(mv/200)}"]`) : null;
+    const show = S.set.cursor !== '表示しない' && target;
+    if (show) {
+      target.classList.add('rq-cpu-target');
+      chip?.classList.add('rq-cpu-denom');
+      const area = target.closest('.k-roulette');
+      if (area) {
+        const a = area.getBoundingClientRect(), t = target.getBoundingClientRect();
+        if (t.top < a.top || t.bottom > a.bottom) area.scrollTop += (t.top+t.bottom-a.top-a.bottom)/2;
+      }
+    }
+    try {
+      if (show && cursorOn()) await moveCpuCursor(seatName(view.toMove),[target],()=>my===token,beat/630,chip);
+      else await new Promise(resolve=>setTimeout(resolve,beat));
+    } finally {
+      target?.classList.remove('rq-cpu-target');
+      chip?.classList.remove('rq-cpu-denom');
+    }
+    return;
+  }
+  if (!cursorOn()) return;
   const choice = cpuPaceChoice();
   const f = usesExtraCpuPace(cur.id)
     ? ({短い:.75,ふつう:1,長い:1.25}[choice] || 1)
     : (PACE[choice] || 450) / 450 * Math.max(0.4, SPEED());
   await moveCpuCursor(seatName(view.toMove),aimSteps(mv),()=>my===token,f);
 }
-async function moveCpuCursor(name, targets, current, f = 1) {
+async function moveCpuCursor(name, targets, current, f = 1, origin = null) {
   if (!cursorOn() || !current()) return;
   const steps = targets.filter(Boolean).filter((e, i, l) => i === 0 || e !== l[i - 1]); if (!steps.length) return;
   const stage = $('.stage'); if (!stage) return;
   const r0 = stage.getBoundingClientRect();
   let c = $('#cpuCur');
-  if (!c) { stage.insertAdjacentHTML('beforeend', rcurHtml('cpuCur', name, '#C8463C', true)); c = $('#cpuCur'); c.style.transform = `translate(${r0.width * 0.5}px,${r0.height + 20}px)`; c.getBoundingClientRect(); }
+  const zoom = r0.width / stage.offsetWidth || 1;
+  if (!c) {
+    stage.insertAdjacentHTML('beforeend', rcurHtml('cpuCur', name, '#C8463C', true));
+    c = $('#cpuCur');
+    const start = origin?.getBoundingClientRect();
+    const x = start ? start.left + start.width/2 - r0.left : r0.width/2;
+    const y = start ? start.top + start.height/2 - r0.top : r0.height+20;
+    c.style.transform = `translate(${x/zoom}px,${y/zoom}px)`;
+    c.getBoundingClientRect();
+  }
   c.style.transitionDuration = Math.round(420 * f) + 'ms';
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   for (let k = 0; k < steps.length; k++) {
     const el = steps[k]; if (!el.isConnected) continue;
-    const scrollArea = el.closest('.k-roulette');
-    if (scrollArea && el.matches('[data-roulette-spot]')) {
-      const a = scrollArea.getBoundingClientRect(), t = el.getBoundingClientRect();
-      if (t.top < a.top || t.bottom > a.bottom) scrollArea.scrollTop += (t.top + t.height / 2) - (a.top + a.height / 2);
-    }
     const r = el.getBoundingClientRect();
     const quick = el.matches('.yd') ? 0.4 : 1; c.style.transitionDuration = Math.round(420 * f * quick) + 'ms';
-    c.style.transform = `translate(${r.left - r0.left + r.width * 0.5}px,${r.top - r0.top + r.height * 0.55}px)`;
+    c.style.transform = `translate(${(r.left - r0.left + r.width * 0.5)/zoom}px,${(r.top - r0.top + r.height * 0.5)/zoom}px)`;
     await wait(470 * f * quick); if (!current() || !c.isConnected) return;
     c.classList.remove('click'); void c.offsetWidth; c.classList.add('click');
     sfxClick();

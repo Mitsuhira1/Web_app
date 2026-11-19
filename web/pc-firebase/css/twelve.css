@@ -29,18 +29,7 @@
 .twelve-scene .goita-table{position:absolute;inset:18px 59px 122px;border-radius:20px;background:repeating-linear-gradient(0deg,#d2ba823b 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,#9d89513d 0 1px,transparent 1px 3px),radial-gradient(ellipse at 40% 36%,#e9d9af,#c7b885);border:12px solid #705035;outline:2px solid #473827;box-shadow:inset 0 0 0 5px #526653,inset 0 0 0 7px #d4c694,inset 0 0 22px #796f4b,var(--sh-board)}
 .twelve-scene .goita-name{display:block;border-radius:4px;background:#344d41;color:#fff3d5;padding:4px 14px;font-weight:700}
 .twelve-scene .goita-name.team1{background:#70462e}
-.twelve-scene .goita-piece {
-  display:grid; place-items:center; width:var(--p); height:calc(var(--p)*1.29); position:relative;
-  border-radius:48% 48% 11% 11% / 30% 30% 8% 8%;
-  padding:2px 2px 6px; background:#a67842; box-shadow:1px 3px 3px #38261fa1;
-}
-.twelve-scene .goita-piece b {
-  display:grid; place-items:center; width:100%; height:100%; border:1px solid #956e3e;
-  border-radius:inherit; background:linear-gradient(132deg,#f9e7b7bd 4%,#ecce91c2 48%,#d9ad6ccc 100%),var(--grain),#e6c68d;
-  color:#2b190d; text-shadow:0 1px #fff2c477; box-shadow:inset 0 1px #fff4d4;
-  font:700 calc(var(--p)*.68)/1 "Yuji Boku","Noto Serif CJK JP",serif;
-}
-.twelve-scene .goita-piece b{inset:1px 1.5px 4px;display:grid;align-content:center;padding-top:3px;color:#33291e;background:var(--grain),linear-gradient(120deg,#f5dba1,#d6ad70);font:900 calc(var(--p)*.62)/1 "Noto Serif CJK JP",serif}
+.twelve-scene .goita-piece { display:block; width:var(--p); height:calc(var(--p)*1.29); overflow:visible; }
 .twelve-scene .goita-play{display:grid;justify-items:center;gap:5px;color:#5b513e;font-weight:700}
 .twelve-scene .attack-name{display:inline-flex;align-items:center;gap:15px;color:#6f523a;border-block:1px solid #aa9067;padding:5px 16px;font-weight:700}
 .twelve-scene .attack-name strong{font:800 36px/1.25 "Noto Serif CJK JP",serif;color:#3d2c1d}
@@ -63,27 +52,30 @@
 .twelve-scene .tile-rack{min-width:568px;display:grid;justify-items:start;gap:11px;padding:12px 25px 15px}
 .twelve-scene .tile-rack .rummi-tile{width:42px;height:54px;padding-top:5px;font-size:31px}
 .twelve-scene .peg-board {
-  width:498px;height:498px;border-radius:50%;position:relative;border:2px solid #45291d;
-  background:var(--grain),radial-gradient(ellipse at 36% 22%,#c48d60,#a36b46 61%,#7a4830);
-  box-shadow:inset 0 3px 3px #f2c89b,inset 0 0 0 8px #ac734e,inset 0 0 0 9px #5b3625,
-    inset 0 0 0 11px #ca9867,inset 0 0 35px #63381e80,0 4px #70432d,0 9px #45291d,var(--sh-board);
+  width:498px; height:498px; border-radius:50%; position:relative;
+  background:linear-gradient(112deg,#fff0cf88,#efcf96aa 58%,#dab47799),var(--grain),#f4d699;
+  box-shadow:inset 2px 4px 0 #fce5b9,inset -2px -3px 0 #dfbd83,0 4px #b58a53,0 12px #aa7945,0 15px #91643c,3px 21px 13px #3c271c65;
 }
+.twelve-scene .peg-board::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:repeating-linear-gradient(1.2deg,transparent 0 20px,#b7803520 22px 29px,transparent 32px 54px); }
 .twelve-scene .peg-inner{position:absolute;left:50%;top:50%;width:398px;height:398px;transform:translate(-50%,-50%)}
 .twelve-scene .peg-socket {
-  width:34px;height:34px;border-radius:50%;transform:translate(-50%,-50%);position:absolute;
-  border:1px solid #67412a;
-  --socket:radial-gradient(ellipse at 51% 87%,#8b5f40 5%,#563725 46%,#2b1d16 78%);
-  box-shadow:inset 0 3px 5px #25160fa6, 0 1.5px 0 #e6b689;
+  width:33px;height:31px;border-radius:50%;transform:translate(-50%,-50%);position:absolute;
+  --socket:linear-gradient(166deg,#6b482c,#976c40 54%,#ad8151);
+  box-shadow:inset 0 4px 4px #49301980,0 2px 1px #fff0c8;
 }
-.twelve-scene .glass-peg {
-  position:absolute; inset:-4px 1px 3px; border-radius:50%;
-  background:radial-gradient(ellipse at 29% 22%,#e2f5e4 0 3%,#a9d5bc 8%,#669c80 24%,#397455 48%,#193c2e 81%,#6f967a);
-  box-shadow:1px 4px 4px #231912a8,inset 0 -1px 2px #254635;
+.twelve-scene .wood-peg {
+  --lit:#659ad1; --paint:#326ca4; --shade:#244675;
+  position:absolute; inset:0; pointer-events:none; filter:drop-shadow(2px 4px 2px #40291780);
 }
-.twelve-scene .glass-peg::after {
-  content:""; position:absolute; inset:5px 16px auto 6px; height:4px; border-radius:50%;
-  background:#fff9; filter:blur(.6px); transform:rotate(-33deg);
-}
+.twelve-scene .wood-peg.red { --lit:#ef7772; --paint:#c44441; --shade:#872a28; }
+.twelve-scene .wood-peg.maple { --lit:#efd2a6; --paint:#c99d70; --shade:#956e49; }
+.twelve-scene .wood-peg::before { content:""; position:absolute; left:24%; right:24%; top:12%; bottom:12%;
+  border-radius:28% 28% 42% 42%; background:linear-gradient(90deg,var(--shade),var(--paint) 47%,var(--shade)); }
+.twelve-scene .wood-peg::after { content:""; position:absolute; left:-6%; top:-57%; width:112%; aspect-ratio:1; border-radius:50%;
+  background:radial-gradient(circle at 34% 24%,#fffc,transparent 17%),
+    radial-gradient(circle at 35% 29%,var(--lit),var(--paint) 55%,var(--shade) 91%);
+  box-shadow:0 2px 2px #281b132e; }
 .twelve-scene .chosen-peg,.twelve-scene .peg-socket.aim{outline:3px solid #ffd57a;outline-offset:3px}
 
 .twelve-scene .twelve-control,.twelve-scene .twelve-static{position:relative;display:grid;place-items:center;padding:0}

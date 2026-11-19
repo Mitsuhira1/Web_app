@@ -2692,6 +2692,10 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   z-index:3; transform:translate(-50%, -50%); width:min(var(--cx) * .51,27px); height:24px;
   border:0; background:transparent; border-radius:8px;
 }
+.rq-table .rq-spot.rq-cpu-target, .rq-tools .rq-denom.rq-cpu-denom, .rq-actions .rq-cpu-target {
+  outline:3px solid #ffdf82; outline-offset:-2px; z-index:7; opacity:1;
+  box-shadow:0 0 0 2px #56381d,0 0 10px #ffd78699;
+}
 .rq-pin.has-stakes { z-index:4; }
 .rq-pin.has-stakes:hover, .rq-pin.has-stakes:focus-visible { z-index:8; }
 .rq-pinmark, .rq-legend i { display:inline-block; width:7px; height:7px; background:#f1d89c; border:1px solid #695831; border-radius:50%; box-shadow:0 0 0 1px #23312588; }

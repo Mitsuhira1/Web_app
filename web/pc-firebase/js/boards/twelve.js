@@ -169,7 +169,7 @@ boards.vulture = (b,A) => {
   html+=at(450,87,lab(round))+at(450,490,row(b.myHand.map(n=>move(A,n,bid(n),n+'を出す')),5));
   return table(html,'handtable');
 };
-const piece=(v,b,size=56)=>`<span class="goita-piece" style="--p:${size}px"><b>${v<0?'':b.pieceNames[v]}</b></span>`;
+const piece=(v,b,size=56)=>`<svg class="goita-piece" style="--p:${size}px" viewBox="-23 -34 46 71" aria-hidden="true">${goitaStone(0,0,0,v<0?'':esc(b.pieceNames[v]))}</svg>`;
 boards.goita = (b,A) => {
   let html='<div class="goita-table"></div>';
   const places=[[450,342],[201,223],[450,104],[699,223]];
@@ -273,9 +273,11 @@ boards.pegsolitaire = (b,A) =>{
  const jumps=new Set([...A.legal].filter(m=>Math.floor(m/64)===from).map(m=>m%64));
  const sources=new Set([...A.legal].map(m=>Math.floor(m/64)));
  const holes=b.holes.map(([r,c],i)=>{
-   const triangle=b.boardType==='triangle', x=triangle ? 199+(c-r/2)*61 : 46+c*51;
-   const y=triangle ? 89+r*54 : 46+r*51;
-   const cell=b.cells[i] ? '<i class="glass-peg"></i>' : '';
+   const triangle=b.boardType==='triangle', x=triangle ? 199+(c-r/2)*70 : 13+c*62;
+   const y=triangle ? 75+r*62 : 13+r*62;
+   // A jump moves two holes in each affected direction, preserving both parities and the peg's finish.
+   const finish = c%2===0 ? 'blue' : r%2===0 ? 'red' : 'maple';
+   const cell=b.cells[i] ? `<i class="wood-peg ${finish}"></i>` : '';
    const attrs=`data-src="${i}" data-piece="peg-${i}" style="left:${x}px;top:${y}px"`;
    return control(cell,attrs,'穴 '+(i+1), A.canPlay&&(sources.has(i)||jumps.has(i)),`peg-socket ${i===from?'chosen-peg':''} ${jumps.has(i)&&A.hints?'aim':''}`);
  }).join('');
@@ -485,7 +487,7 @@ function animateMove(wrap,b,A,last) {
       }
       break;
     case 'pegsolitaire': {
-      const peg=wrap.querySelector(`[data-piece="peg-${b.lastTo}"] .glass-peg`);
+      const peg=wrap.querySelector(`[data-piece="peg-${b.lastTo}"] .wood-peg`);
       if(peg&&boxes.has('peg-'+b.lastFrom)) animateFrom(peg,boxes.get('peg-'+b.lastFrom),A);
       break;
     }
