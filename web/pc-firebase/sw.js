@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261119-improvements-3";
+const CACHE = "asobipcfb-20261119-improvements-3-original-icons";
 const FILES = [
 "./css/twelve.css",
 "./js/boards/twelve.js",
@@ -88,6 +88,10 @@ const FILES = [
 "./core/kotlin-kotlin-stdlib.mjs",
 "./core/kotlin_org_jetbrains_kotlin_kotlin_dom_api_compat.mjs",
 "./css/app.css",
+"./assets/game-icons/quarto.webp",
+"./assets/game-icons/pegsolitaire.webp",
+"./assets/game-icons/wolf.webp",
+"./assets/game-icons/chinese.webp",
 "./assets/slide-landscape.svg",
 "./assets/slide-alpine.webp",
 "./assets/slide-coast.webp",
