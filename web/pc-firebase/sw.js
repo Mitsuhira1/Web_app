@@ -1,9 +1,10 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261118-roulette-ui";
+const CACHE = "asobipcfb-20261119-roulette-spin-4";
 const FILES = [
 "./css/twelve.css",
 "./js/boards/twelve.js",
 "./js/boards/roulette.js",
+"./js/boards/roulette-motion.mjs",
 "./core/games/roulette.mjs",
 "./core/games/war.mjs",
 "./core/games/vulture.mjs",

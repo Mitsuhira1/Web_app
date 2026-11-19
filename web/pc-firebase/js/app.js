@@ -1162,6 +1162,10 @@ let lastModal = null;
 let ddOpen = null;
 function ddClose(focusBtn) { const k = ddOpen; if (!k) return; ddOpen = null; const w = $(`.dd.open`); if (w) { w.classList.remove('open'); const l = w.querySelector('.ddlist'); if (l) l.remove(); const b = w.querySelector('.ddbtn'); b.setAttribute('aria-expanded', 'false'); if (focusBtn) b.focus({ preventScroll: true }); } }
 function render() {
+  if (lastScreen === 'play' && S.screen !== 'play' && cur?.id === 'roulette') {
+    window.RENDER.roulette?.leave?.();
+    animUntil = 0;
+  }
   if (!['play','slidePlay','bunyoPlay','pakurisPlay','minePlay','wolfPlay','extraPlay'].includes(S.screen)) document.querySelectorAll('.rcur.live').forEach(e=>e.remove());
   const keepPlaySettings = ['play','slidePlay','bunyoPlay','pakurisPlay','minePlay','wolfPlay','extraPlay'].includes(S.screen) && !!$('#playsettings');
   document.documentElement.classList.toggle('lite', S.set.look === '軽量');
