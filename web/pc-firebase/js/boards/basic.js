@@ -150,9 +150,9 @@
     const legal = new Set(A.view.human ? A.view.legal : []);
     const col = (v) => (v === 1 ? 'r' : 'u');
     const lowest = (c) => { for (let r = 0; r < 6; r++) if (!b.cells[r * 7 + c]) return r; return -1; };
-    if (c4pre != null && !legal.has(c4pre)) c4pre = null;
+    const samePosition = prevC4?.h === A.handle && prevC4.cells.every((v, i) => v === b.cells[i]);
+    if (!samePosition || !A.pre || !legal.has(c4pre)) c4pre = null;
     const turnCol = col(b.turn + 1);
-    const land = c4pre != null ? lowest(c4pre) * 7 + c4pre : -1;
     const old = prevC4 && prevC4.h === A.handle ? prevC4.cells : null;
     const win = new Set(b.win || []);
     let discs = '';
@@ -192,6 +192,7 @@
     A.board(`<div class="c4"><div class="c4top">${top}</div><div class="c4board"><div class="c4discs">${discs}${ghostDiscs}</div><div class="c4wood"></div><div class="c4front">${front}</div>${wl}</div><div class="c4base"></div><div class="c4floor"></div></div>`, (d) => {
       if (d.col == null || !A.view.human) return;
       const c = +d.col; if (!legal.has(c)) return;
+      if (A.pre && c4pre !== c) { c4pre = c; A.redraw(); return; }
       c4pre = null; A.play(c);
     });
     if (winFill) winFill();
@@ -199,8 +200,9 @@
     if (root && A.view.human) {
       const hov = (c) => { root.querySelectorAll('.c4slot.h,.c4cell.land,.c4gh.on').forEach((e) => e.classList.remove('h', 'land', 'on')); if (c == null || !legal.has(c)) return;
         const sl = root.querySelector(`.c4slot[data-col="${c}"]`), ld = root.querySelector(`[data-land="${c}"]`), gh = root.querySelector(`[data-gc="${c}"]`); if (sl) sl.classList.add('h'); if (ld) ld.classList.add('land'); if (gh) gh.classList.add('on'); };
-      root.onmouseover = (e) => { const t = e.target.closest('[data-col]'); hov(t ? +t.dataset.col : null); };
-      root.onmouseleave = () => hov(null);
+      root.onmouseover = (e) => { const t = e.target.closest('[data-col]'); hov(t ? +t.dataset.col : c4pre); };
+      root.onmouseleave = () => hov(c4pre);
+      hov(c4pre);
     }
     requestAnimationFrame(() => {
       const d = document.querySelector('.c4d.fresh'); if (!d) return;

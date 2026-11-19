@@ -35,6 +35,7 @@ const ORDER = ['shogi', 'gogo', 'reversi', 'connect4', 'gomoku', 'hex', 'mancala
   'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mine', 'bozu', 'wolf', 'roulette',
   'war', 'takoyaki', 'butanoshippo', 'oldmaid', 'hearts', 'ginrummy', 'vulture',
   'goita', 'quarto', 'geister', 'rummikub', 'pegsolitaire'];
+const APP_NAME = `あそび箱${ORDER.length}`;
 const ART_ID = { gogo: 'minishogi' };
 const BREAK = { morris: 'ナインメンズ<wbr>モリス', chinese: 'チャイニーズ<wbr>チェッカー', dots: 'ドット＆<wbr>ボックス', holdem: 'テキサス<wbr>ポーカー', yacht: 'ヨット', blackjack: 'ブラック<wbr>ジャック', backgammon: 'バック<wbr>ギャモン', hitblow: 'ヒット＆<wbr>ブロー', life: '人生<wbr>すごろく', solitaire: 'ソリティア<wbr>(クロンダイク)' };
 let CAT = [];
@@ -67,7 +68,7 @@ const isTouchDevice = () => {
 };
 
 // ---------------------------------------------------------------- 共通の部品
-const seg = (key, opts, val, cls = '') => `<div class="seg ${cls}" data-seg="${key}">${opts.map((o) => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<button data-v="${esc(v)}" aria-pressed="${String(v) === String(val)}">${esc(l)}</button>`; }).join('')}</div>`;
+const seg = (key, opts, val, cls = '') => `<div class="seg ${cls}" data-seg="${key}">${opts.map((o) => { const [v, l, disabled] = Array.isArray(o) ? o : [o, o]; return `<button data-v="${esc(v)}" aria-pressed="${String(v) === String(val)}" ${disabled ? 'disabled' : ''}>${esc(l)}</button>`; }).join('')}</div>`;
 const sw = (key, on) => `<button class="switch" role="switch" aria-checked="${!!on}" data-sw="${key}" aria-label="${esc(key)}"></button>`;
 const QUIT_IC = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg>';
 function rail(cur) {
@@ -621,6 +622,29 @@ function statusText() {
 }
 const turnText = () => mode === 'pass' ? `${view.seats[view.toMove].name} の番です` : 'あなたの番です';
 const seatName = (seat) => seat === mySeat && mode !== 'pass' && (!online || (view && view.mine === seat)) ? meName() : view.seats[seat] && (view.seats[seat].human || view.seats[seat].remote) ? view.seats[seat].name : (view.seats.filter((s) => !s.human && !s.remote).length > 1 ? 'CPU ' + (seat + 1) : 'CPU');
+function flipCard(node, duration, cardClass) {
+  const faces = document.createElement('span');
+  faces.className = 'card-turn';
+  faces.setAttribute('aria-hidden', 'true');
+  const front = node.cloneNode(true);
+  for (const attribute of [...front.attributes]) {
+    if (attribute.name.startsWith('data-')) front.removeAttribute(attribute.name);
+  }
+  front.classList.remove('tap', 'on');
+  const back = document.createElement('span');
+  back.className = cardClass + ' back';
+  faces.append(front, back);
+  node.append(faces);
+  node.classList.add('turning-card');
+  const turn = faces.animate([{transform:'rotateY(-180deg)'}, {transform:'rotateY(0deg)'}],
+    {duration, easing:'ease-in-out'});
+  const finish = () => {
+    faces.remove();
+    node.classList.remove('turning-card');
+  };
+  turn.addEventListener('finish', finish, {once:true});
+  turn.addEventListener('cancel', finish, {once:true});
+}
 function api() {
   return {
     mySeat, view, handle: h, speed: SPEED(), game: cur ? cur.id : '',
@@ -652,6 +676,7 @@ function api() {
     sheet: (html, init) => { openSheet(html); if (init) init($('#sheet')); }, closeSheet,
     get sel() { return sel; }, set sel(v) { sel = v; },
     get hints() { return S.set.hints; }, get caps() { return S.set.caps; }, get pre() { return S.set.pre; },
+    flipCard: (node, ms, cardClass) => { if (!S.set.reduce) flipCard(node, ms * SPEED(), cardClass); },
     face: () => (online && view && view.mine < 0 ? `<span class="dot face">${esc((seatName(mySeat) || '?')[0])}</span>` : meAv()),
     call: (fn, ...a) => call(fn, ...a), sheetOpen: () => !!$('#sheetwrap'),
   };
@@ -863,9 +888,9 @@ function showResult() {
     const ready = ost ? ost.ready.length : 0, total = ost ? ost.members.length : 0;
     const mineReady = ost && ost.ready.includes(ost.mySlot);
     const isSpec = view && view.mine < 0;
-    p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3>${o.reason ? `<p>${esc(o.reason)}</p>` : ''}${rankHtml || sc}<p class="dimtxt">再戦の準備 ${ready}/${total}人</p><div class="rbtns">${ost && ost.undoOk && !isSpec ? `<button class="btn" data-undo>${ic('undo')}待った(戻して調べる)</button>` : ''}${isSpec ? `<button class="btn" data-go="room">部屋に戻る</button>` : `<button class="btn" data-olobby>同じ部屋でほかのゲーム</button>`}<button class="btn primary" data-oagain ${!isHostRoom() && mineReady ? 'disabled' : ''}>${isHostRoom() ? 'もう一度' : mineReady ? '準備できました' : isSpec ? '次の対局に参加する' : 'もう一度'}</button></div></div>`;
+    p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3>${o.reason ? `<p>${esc(o.reason)}</p>` : ''}${rankHtml || sc}<p class="dimtxt">再戦の準備 ${ready}/${total}人</p><div class="rbtns">${ost && ost.undoOk && !isSpec ? `<button class="btn" data-undo>${ic('undo')}待った</button>` : ''}${isSpec ? `<button class="btn" data-go="room">部屋に戻る</button>` : `<button class="btn" data-olobby>同じ部屋でほかのゲーム</button>`}<button class="btn primary" data-oagain ${!isHostRoom() && mineReady ? 'disabled' : ''}>${isHostRoom() ? 'もう一度' : mineReady ? '準備できました' : isSpec ? '次の対局に参加する' : 'もう一度'}</button></div></div>`;
   } else {
-    p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3>${o.reason ? `<p>${esc(o.reason)}</p>` : ''}${rankHtml || sc}<div class="rbtns">${view.undoAllowed !== false && view.moves > 0 ? `<button class="btn" data-undo>${ic('undo')}待った(戻して調べる)</button>` : ''}<button class="btn" data-go="menu">メニュー</button>${two ? `<button class="btn" data-again="${1 - lastSeat}">${mySeat === 0 ? '後手' : '先手'}でもう一度</button>` : ''}<button class="btn primary" data-again="${lastSeat}">もう一度</button></div></div>`;
+    p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3>${o.reason ? `<p>${esc(o.reason)}</p>` : ''}${rankHtml || sc}<div class="rbtns">${view.undoAllowed !== false && view.moves > 0 ? `<button class="btn" data-undo>${ic('undo')}待った</button>` : ''}<button class="btn" data-go="menu">メニュー</button>${two ? `<button class="btn" data-again="${1 - lastSeat}">${mySeat === 0 ? '後手' : '先手'}でもう一度</button>` : ''}<button class="btn primary" data-again="${lastSeat}">もう一度</button></div></div>`;
   }
   { const waitMs = Math.max(0, animUntil - performance.now(), cutBusy - performance.now()); setTimeout(() => { if ($('#result') && view && view.outcome) $('#result').hidden = false; }, (S.set.cutin && !S.set.reduce ? 2300 : 200) + waitMs); }
 }
@@ -1112,9 +1137,26 @@ function setRow([l, t, k, x]) {
 }
 if (window.__TAURI__) window.__TAURI__.core.invoke('data_folder_path').then((p) => { S.dataPath = p; if (S.screen === 'settings') render(); }).catch(() => {});
 const keyLabel = (k) => String(k).replace('Escape', 'Esc');
+function playSettingsPanel() {
+  return `<h3>${SCAT.find(([key]) => key === S.scat)[1]}</h3>${SDEF[S.scat].map(setRow).join('')}`;
+}
+function switchPlaySettingsTab(tab) {
+  if (S.scat === tab) return;
+  S.scat = tab;
+  S.rekey = null;
+  ddClose();
+  const settings = $('#playsettings');
+  for (const button of settings.querySelectorAll('[data-scat]')) {
+    if (button.dataset.scat === tab) button.setAttribute('aria-current', 'true');
+    else button.removeAttribute('aria-current');
+  }
+  const panel = settings.querySelector('.setpanel');
+  panel.innerHTML = playSettingsPanel();
+  panel.scrollTop = 0;
+}
 function openPlaySettings() {
   if (!['play','slidePlay','bunyoPlay','pakurisPlay','minePlay','wolfPlay','extraPlay'].includes(S.screen)) return;
-  openSheet(`<div id="playsettings"><div class="mhd"><h3>設定</h3><button class="btn" data-playsettingsclose aria-label="設定を閉じる">閉じる</button></div><div class="setwrap"><div class="setcats">${SCAT.map(([k,n])=>`<button data-scat="${k}" ${S.scat===k?'aria-current="true"':''}>${n}</button>`).join('')}</div><div class="panel setpanel"><h3>${SCAT.find(c=>c[0]===S.scat)[1]}</h3>${SDEF[S.scat].map(setRow).join('')}</div></div></div>`);
+  openSheet(`<div id="playsettings"><div class="mhd"><h3>設定</h3><button class="btn" data-playsettingsclose aria-label="設定を閉じる">閉じる</button></div><div class="setwrap"><div class="setcats">${SCAT.map(([k,n])=>`<button data-scat="${k}" ${S.scat===k?'aria-current="true"':''}>${n}</button>`).join('')}</div><div class="panel setpanel">${playSettingsPanel()}</div></div></div>`);
   $('#sheet').classList.add('play-settings-dialog');
   $('#sheet').setAttribute('aria-label','設定');
 }
@@ -1316,7 +1358,7 @@ app.addEventListener('click', async (e) => {
   if (d.modal) { S.modal = d.modal; return render(); }
   if (d.mclose != null || d.mback != null) { S.modal = null; if (PV) { PV = null; bgmStop(); if (S.set.bgm) bgmPick(); } return render(); }
   if (d.pv) { if (PV === d.pv) { PV = null; bgmStop(); if (S.set.bgm) bgmPick(); } else { PV = d.pv; bgmPlay(d.pv, 0, true); } return render(); }
-  if (d.scat && $('#playsettings')) { S.scat = d.scat; return openPlaySettings(); }
+  if (d.scat && $('#playsettings')) return switchPlaySettingsTab(d.scat);
   if (d.scat) { const ch = S.scat !== d.scat; S.scat = d.scat; S.rekey = null; render(); if (ch) { const p = $('.setpanel'); if (p) p.classList.add('enter'); } return; }
   if (d.av != null) { S.set.av = d.av === 'photo' ? 'photo' : +d.av < 0 ? null : +d.av; saveSet(); return render(); }
   if (d.rekey) { S.rekey = S.rekey === d.rekey ? null : d.rekey; return render(); }
@@ -1689,6 +1731,7 @@ toastEl.addEventListener('pointercancel', () => { drag = null; toastHide(); });
     }
     const [catalog] = await Promise.all([callW('catalogJson'), window.rouletteReady]);
     CAT = JSON.parse(catalog);
+    document.title = APP_NAME;
     CAT.push({id:'slide',name:'スライドパズル',intro:'1枚の絵をそろえよう。',players:'1〜6人',category:'BOARD',options:[]});
     CAT.push({id:'bunyo',name:'ぶにょぶにょ',intro:'同じ色を4個つなげて消そう。',players:'1〜6人',category:'BOARD',options:[]});
     CAT.push({id:'pakuris',name:'パクリス',intro:'ブロックをそろえて消そう。',players:'1〜6人',category:'BOARD',options:[]});

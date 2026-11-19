@@ -171,12 +171,8 @@ const mineVersus = (() => {
   function setupPanels() {
     const number = (key,label,min,max,value) => `<input type="number" data-mine-vs-pref="${key}" min="${min}" max="${max}" value="${value}" aria-label="${label}">`;
     const check = (key,value) => sw('mineVs:'+key,value);
-    const field = level(selectedLevel);
-    const difficulty = setupPanel('ルール',
-      setupRow('難易度',seg('mine-versus:level',levels.map(k=>[k,level(k).label]),selectedLevel)) +
-      setupRow('盤面',`<b>${field.w}×${field.h} / 地雷 ${field.mines}個</b>`) +
-      setupRow('終了条件',`<select data-mine-vs-pref="endRank" aria-label="終了条件">${[1,2,3,0].map(n=>`<option value="${n}" ${preferences.endRank===n?'selected':''}>${n?n+'位まで決まったら':'全員が終えたら'}</option>`).join('')}</select>`) +
-      setupRow('地雷を踏んだ後の凍結（秒）',number('penalty','地雷を踏んだ後の凍結（秒）',0,60,preferences.penalty)));
+    const finish = setupRow('終了条件',`<select data-mine-vs-pref="endRank" aria-label="終了条件">${[1,2,3,0].map(n=>`<option value="${n}" ${preferences.endRank===n?'selected':''}>${n?n+'位まで決まったら':'全員が終えたら'}</option>`).join('')}</select>`) +
+      setupRow('地雷を踏んだ後の凍結（秒）',number('penalty','地雷を踏んだ後の凍結（秒）',0,60,preferences.penalty));
     const sabotage = setupPanel('妨害',
       setupRow('妨害を使う',check('sabotage',preferences.sabotage)) +
       attacks.map((a,i)=>setupRow(a[1],`<div class="mine-attack-option">${check('enabled:'+i,preferences.enabled[i])}<label>${number('cost:'+i,a[1]+'の必要ポイント',1,999,costs()[i])} pt</label></div>`)).join('') +
@@ -184,7 +180,7 @@ const mineVersus = (() => {
       setupRow('盾をためる',check('stock',preferences.stock)) +
       setupRow('盾の待ち時間（秒）',number('lock','盾の待ち時間（秒）',0,120,preferences.lock)) +
       '<div class="row"><button class="btn" data-mine-vs-reset>対戦の設定を初期値に戻す</button></div>');
-    return {levels:`<div class="mine-versus-setup">${difficulty}</div>`,
+    return {finish:`<div class="mine-versus-setup">${finish}</div>`,
       rules:`<div class="mine-versus-setup">${sabotage}</div>`};
   }
   function pref(input){
@@ -252,6 +248,6 @@ const mineVersus = (() => {
   }
   setInterval(()=>{if(S.screen==='extraPlay'&&boardMatch.state?.game==='mineVersus')draw(boardMatch.state);},250);
   boardMatch.register('mineVersus',{initial,apply,html,draw,button,stop:()=>fields.clear()});
-  return {setupPanels,start,pref,togglePref,setLevel:v=>{if(levels.includes(v)){selectedLevel=v;store.set('mineVersusLevel',v);render();}},setTarget:v=>{target=v;draw(boardMatch.state);},
+  return {setupPanels,levels,get selectedLevel(){return selectedLevel;},start,pref,togglePref,setLevel:v=>{if(levels.includes(v)){selectedLevel=v;store.set('mineVersusLevel',v);render();}},setTarget:v=>{target=v;draw(boardMatch.state);},
     reset:()=>{const stored={...preferences.costs};delete stored[selectedLevel];preferences={...defaults(),costs:stored};store.set('mineVersusSettings',preferences);render();}};
 })();

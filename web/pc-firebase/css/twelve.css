@@ -29,8 +29,17 @@
 .twelve-scene .goita-table{position:absolute;inset:18px 59px 122px;border-radius:20px;background:repeating-linear-gradient(0deg,#d2ba823b 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,#9d89513d 0 1px,transparent 1px 3px),radial-gradient(ellipse at 40% 36%,#e9d9af,#c7b885);border:12px solid #705035;outline:2px solid #473827;box-shadow:inset 0 0 0 5px #526653,inset 0 0 0 7px #d4c694,inset 0 0 22px #796f4b,var(--sh-board)}
 .twelve-scene .goita-name{display:block;border-radius:4px;background:#344d41;color:#fff3d5;padding:4px 14px;font-weight:700}
 .twelve-scene .goita-name.team1{background:#70462e}
-.twelve-scene .goita-piece{display:grid;place-items:center;width:var(--p);height:calc(var(--p)*1.16);filter:drop-shadow(0 3px 1px #46341e88);position:relative}
-.twelve-scene .goita-piece:before,.twelve-scene .goita-piece b{content:"";position:absolute;inset:0;clip-path:polygon(50% 0,90% 14%,100% 98%,0 98%,10% 14%);background:#77512f}
+.twelve-scene .goita-piece {
+  display:grid; place-items:center; width:var(--p); height:calc(var(--p)*1.29); position:relative;
+  border-radius:48% 48% 11% 11% / 30% 30% 8% 8%;
+  padding:2px 2px 6px; background:#a67842; box-shadow:1px 3px 3px #38261fa1;
+}
+.twelve-scene .goita-piece b {
+  display:grid; place-items:center; width:100%; height:100%; border:1px solid #956e3e;
+  border-radius:inherit; background:linear-gradient(132deg,#f9e7b7bd 4%,#ecce91c2 48%,#d9ad6ccc 100%),var(--grain),#e6c68d;
+  color:#2b190d; text-shadow:0 1px #fff2c477; box-shadow:inset 0 1px #fff4d4;
+  font:700 calc(var(--p)*.68)/1 "Yuji Boku","Noto Serif CJK JP",serif;
+}
 .twelve-scene .goita-piece b{inset:1px 1.5px 4px;display:grid;align-content:center;padding-top:3px;color:#33291e;background:var(--grain),linear-gradient(120deg,#f5dba1,#d6ad70);font:900 calc(var(--p)*.62)/1 "Noto Serif CJK JP",serif}
 .twelve-scene .goita-play{display:grid;justify-items:center;gap:5px;color:#5b513e;font-weight:700}
 .twelve-scene .attack-name{display:inline-flex;align-items:center;gap:15px;color:#6f523a;border-block:1px solid #aa9067;padding:5px 16px;font-weight:700}
@@ -48,15 +57,33 @@
 .twelve-scene .dest-dot{position:absolute;bottom:6px;right:6px;border:2px solid #7c5f30;background:#ffe2a3;border-radius:50%;width:13px;height:13px}
 .twelve-scene .tile-melds{display:grid;grid-template-columns:repeat(3,max-content);gap:22px 36px;align-items:start;justify-items:start}
 .twelve-scene .tile-table{bottom:168px}
-.twelve-scene .rummi-tile{position:relative;display:grid;align-items:center;justify-items:center;width:43px;height:61px;border:1px solid #bba782;border-radius:6px;background:linear-gradient(130deg,#fff9e5,#ede0bc);box-shadow:inset 0 2px #fff9e9,1px 3px 0 #ad9b78,1px 5px 3px #1a221f75;color:#aa3930;font:700 34px/1 Georgia,serif}
-.twelve-scene .rummi-tile i{position:absolute;bottom:7px;width:11px;height:3px;border-radius:2px;background:currentColor}
+.twelve-scene .rummi-tile{position:relative;display:grid;align-items:start;justify-items:center;padding-top:6px;width:43px;height:61px;border:1px solid #bba782;border-radius:6px;background:linear-gradient(130deg,#fff9e5,#ede0bc);box-shadow:inset 0 2px #fff9e9,1px 3px 0 #ad9b78,1px 5px 3px #1a221f75;color:#aa3930;font:700 34px/1 Georgia,serif}
+.twelve-scene .rummi-tile i{position:absolute;bottom:6px;width:11px;height:2px;border-radius:2px;background:currentColor}
 .twelve-scene .rummi-tile.t1{color:#2a5e9d}.twelve-scene .rummi-tile.t2{color:#302d28}.twelve-scene .rummi-tile.t3{color:#a36712}.twelve-scene .rummi-tile.t4{color:#a73d60}
 .twelve-scene .tile-rack{min-width:568px;display:grid;justify-items:start;gap:11px;padding:12px 25px 15px}
-.twelve-scene .tile-rack .rummi-tile{width:42px;height:54px;font-size:31px}
-.twelve-scene .peg-board{width:498px;height:498px;border-radius:50%;position:relative;border:2px solid #5e3928;background:var(--grain),radial-gradient(ellipse at 35% 22%,#d6a473 0%,#b68152 70%,#a57048);box-shadow:inset 0 3px 2px #ecd0a4,inset 0 0 0 10px #ae794e,inset 0 0 0 12px #865c3e,inset 0 0 0 14px #e1b485,0 7px 0 #70492e,var(--sh-board)}
+.twelve-scene .tile-rack .rummi-tile{width:42px;height:54px;padding-top:5px;font-size:31px}
+.twelve-scene .peg-board {
+  width:498px;height:498px;border-radius:50%;position:relative;border:2px solid #45291d;
+  background:var(--grain),radial-gradient(ellipse at 36% 22%,#c48d60,#a36b46 61%,#7a4830);
+  box-shadow:inset 0 3px 3px #f2c89b,inset 0 0 0 8px #ac734e,inset 0 0 0 9px #5b3625,
+    inset 0 0 0 11px #ca9867,inset 0 0 35px #63381e80,0 4px #70432d,0 9px #45291d,var(--sh-board);
+}
 .twelve-scene .peg-inner{position:absolute;left:50%;top:50%;width:398px;height:398px;transform:translate(-50%,-50%)}
-.twelve-scene .peg-socket{width:34px;height:34px;border-radius:50%;transform:translate(-50%,-50%);position:absolute;background:radial-gradient(circle at 55% 83%,#88603f,#382619 80%);box-shadow:inset 1px 4px 5px #312317a6,0 1.5px 0 #efc79c}
-.twelve-scene .glass-peg{position:absolute;inset:-2px 0 2px;border-radius:50%;background:radial-gradient(ellipse at 29% 21%,#e8fff1 0 4%,#b6ddbb 7%,#81b093 19%,#438166 47%,#2e6550 70%,#204636 85%,#588670);box-shadow:1px 4px 3px #372c2299}
+.twelve-scene .peg-socket {
+  width:34px;height:34px;border-radius:50%;transform:translate(-50%,-50%);position:absolute;
+  border:1px solid #67412a;
+  --socket:radial-gradient(ellipse at 51% 87%,#8b5f40 5%,#563725 46%,#2b1d16 78%);
+  box-shadow:inset 0 3px 5px #25160fa6, 0 1.5px 0 #e6b689;
+}
+.twelve-scene .glass-peg {
+  position:absolute; inset:-4px 1px 3px; border-radius:50%;
+  background:radial-gradient(ellipse at 29% 22%,#e2f5e4 0 3%,#a9d5bc 8%,#669c80 24%,#397455 48%,#193c2e 81%,#6f967a);
+  box-shadow:1px 4px 4px #231912a8,inset 0 -1px 2px #254635;
+}
+.twelve-scene .glass-peg::after {
+  content:""; position:absolute; inset:5px 16px auto 6px; height:4px; border-radius:50%;
+  background:#fff9; filter:blur(.6px); transform:rotate(-33deg);
+}
 .twelve-scene .chosen-peg,.twelve-scene .peg-socket.aim{outline:3px solid #ffd57a;outline-offset:3px}
 
 .twelve-scene .twelve-control,.twelve-scene .twelve-static{position:relative;display:grid;place-items:center;padding:0}
@@ -70,12 +97,17 @@
 .twelve-scene .twelve-control.ghost-cell,.twelve-scene .twelve-static.ghost-cell{background:var(--noise),linear-gradient(130deg,#e2ceb2,#d4bd9b);border:1px solid #654f333e}
 .twelve-scene .twelve-control.ghost-cell.parity1,.twelve-scene .twelve-static.ghost-cell.parity1{background:var(--noise),linear-gradient(130deg,#b8ac92,#aa9d82)}
 .twelve-scene .twelve-control.ghost-cell.picked{background:#efd599}
-.twelve-scene .twelve-control.peg-socket,.twelve-scene .twelve-static.peg-socket{position:absolute;background:radial-gradient(circle at 55% 83%,#88603f,#382619 80%)}
+.twelve-scene .twelve-control.peg-socket,.twelve-scene .twelve-static.peg-socket{position:absolute;background:var(--socket)}
 .twelve-scene .maid-pointer-aim .pc{outline:3px solid var(--mark);outline-offset:2px}
 .twelve-scene .tile-set{display:flex;align-items:center;gap:4px}
 .twelve-scene .tile-set .piece-row{max-width:228px;flex-wrap:wrap}
 .twelve-scene .tile-add{border:1px dashed #ffdd91;color:#ffebb8;border-radius:5px;width:26px;height:40px}
-.twelve-scene .tile-picked{outline:3px solid var(--mark);border-radius:6px}
+.twelve-scene .tile-picked { z-index:1; }
+.twelve-scene .tile-picked .rummi-tile {
+  border-color:#6e4017; outline:2px solid #ffe184; outline-offset:1px;
+  background:linear-gradient(145deg,#fff3c9,#f3d58e);
+  box-shadow:inset 0 0 0 2px #a16628, inset 0 3px #fff6d0, 0 4px 6px #1b17179c;
+}
 .twelve-scene .tile-melds.scroll-table{width:740px;max-height:256px;overflow:auto;grid-template-columns:repeat(3,minmax(0,1fr));row-gap:22px;column-gap:20px;justify-items:center;padding:6px}
 .twelve-scene .tile-rack{max-width:814px;max-height:156px;overflow:auto;min-height:70px}
 .twelve-scene .tile-rack .piece-row{justify-content:flex-start;flex-wrap:wrap}

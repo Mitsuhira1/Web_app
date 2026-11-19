@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261119-roulette-spin-4";
+const CACHE = "asobipcfb-20261119-pc-ui-1";
 const FILES = [
 "./css/twelve.css",
 "./js/boards/twelve.js",
@@ -48,6 +48,8 @@ const FILES = [
 "./core/kotlin_org_jetbrains_kotlin_kotlin_dom_api_compat.mjs",
 "./css/app.css",
 "./assets/slide-landscape.svg",
+"./assets/slide-alpine.webp",
+"./assets/slide-coast.webp",
 "./assets/wolf-night.mp4",
 "./js/wolf.js",
 "./fonts/Cinzel.woff2",

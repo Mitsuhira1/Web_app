@@ -11,7 +11,7 @@ const card = (c,w=74,cls='',key='') => {
   const [s,...r]=c.t; return `<span class="pc ${'♥♦'.includes(s)?'r':''} ${cls}" ${style}><i class="ix">${r.join('')}<br>${s}</i><b>${s}</b></span>`;
 };
 const row=(html,gap=7)=>`<div class="piece-row" style="gap:${gap}px">${html.join('')}</div>`;
-const deck=(n,w=76)=>n>0?`<div class="card-stack">${card(null,w)}</div>`:slot(w);
+const deck=(n,w=76,key='')=>n>0?`<div class="card-stack" ${key ? `data-piece="${key}"` : ''}>${card(null,w)}</div>`:slot(w);
 const slot=(w=70)=>`<span class="pc slot" style="--cw:${w}px"></span>`;
 const table=(body,cls='')=>`<div class="twelve-table table ${cls}"><div class="feltin"></div></div>${body}`;
 const own=(text)=>lab(text || 'あなた');
@@ -36,7 +36,7 @@ boards.war = (b,A) => {
     const face=b.faceUp[i];
     const rem=b.warBlindLeft[i];
     const faceHtml=face ? card(face,114,i===b.lastWinner?'hi':'','war-face-'+i) : slot(114);
-    const stack=b.totalCounts[i] ? deck(b.deckCounts[i],69) : slot(69);
+    const stack=b.totalCounts[i] ? deck(b.deckCounts[i],69,'war-deck-'+i) : slot(69);
     body.push(seatAt(A,x,145,i),at(x,274,faceHtml),at(stock,271,
       i===b.turn ? move(A,0,stack,'札を出す') : stack));
     body.push(at(stock,347,note('山札 '+b.deckCounts[i]+'枚')),at(x,395,lab('獲得 '+b.wonCounts[i]+'枚')));
@@ -189,13 +189,35 @@ const qStone=id=>{
   const dark=id&1,tall=id&2,square=id&4,hole=id&8,H=tall?39:19;
   const [top,light,deep]=dark?['#a76742','#985d3e','#492e23']:['#ffe2a2','#e4ad61','#a16c3d'];
   const cap=square?`<path d="M0 -15 23 -3 0 10 -23 -3Z" fill="${top}"/>`:`<ellipse cy="-2" rx="21" ry="11" fill="${top}"/>`;
-  const sides=square?`<path d="M-23 -3 0 10 0 ${H+10} -23 ${H-3}Z" fill="${light}"/><path d="M0 10 23 -3 23 ${H-3} 0 ${H+10}Z" fill="${deep}"/>`:`<path d="M-21 -2H21V${H-2}a21 11 0 0 1 -42 0Z" fill="url(#q-${dark})"/>`;
+  const sides=square?`<path d="M-23 -3 0 10 0 ${H+10} -23 ${H-3}Z" fill="${light}"/><path d="M-23 -3 0 10V${H+10}L-23 ${H-3}Z" fill="url(#q-grain)" opacity=".45"/><path d="M0 10 23 -3 23 ${H-3} 0 ${H+10}Z" fill="${deep}"/>`:`<path d="M-21 -2H21V${H-2}a21 11 0 0 1 -42 0Z" fill="url(#q-${dark})"/>`;
   return `<ellipse cx="4" cy="2" rx="25" ry="12" fill="#381e17" opacity=".32"/><g transform="translate(0 ${-H})">${sides}${cap}${hole?'<ellipse cy="-2" rx="8" ry="4.7" fill="#503724"/><path d="M-7 -1Q0 3 7 -1" fill="none" stroke="#a47947" stroke-width="1.3"/>':''}</g>`;
 };
 boards.quarto = (b,A) =>{
   const pos=(r,c)=>[309+(c-r)*67,120+(r+c)*38];
-  let art=`<defs><linearGradient id="q-0"><stop stop-color="#bb814c"/><stop offset=".32" stop-color="#eed095"/><stop offset=".7" stop-color="#e4af69"/><stop offset="1" stop-color="#ad743e"/></linearGradient><linearGradient id="q-1"><stop stop-color="#5e3929"/><stop offset=".3" stop-color="#a66d47"/><stop offset="1" stop-color="#5c3827"/></linearGradient><linearGradient id="q-b" x2=".78" y2="1"><stop stop-color="#f0c58b"/><stop offset="1" stop-color="#bc8857"/></linearGradient></defs><path d="M26 231 309 70 592 231v16L309 409 26 247Z" fill="#5e3b26"/><path d="M26 231 309 70 592 231 309 393Z" fill="url(#q-b)" stroke="#986640" stroke-width="4"/><path d="M44 231 309 81 574 231 309 382Z" fill="none" stroke="#fae3bc" stroke-width="2"/>`;
-  b.board.forEach((p,i)=>{const [x,y]=pos(i>>2,i%4);art+=`<ellipse cx="${x}" cy="${y}" rx="35" ry="20" fill="#b48053" stroke="#f2ce95" stroke-width="2"/><ellipse data-quarto-cell="${i}" cx="${x}" cy="${y-1}" rx="32" ry="16" fill="#c89a6c" stroke="#976741"/>`;});
+  let art=`<defs>
+    <linearGradient id="q-0"><stop stop-color="#ba7f48"/><stop offset=".30" stop-color="#f4d69b"/><stop offset=".67" stop-color="#dfaa68"/><stop offset="1" stop-color="#9f693d"/></linearGradient>
+    <linearGradient id="q-1"><stop stop-color="#503022"/><stop offset=".30" stop-color="#ac714d"/><stop offset=".67" stop-color="#855237"/><stop offset="1" stop-color="#503022"/></linearGradient>
+    <linearGradient id="q-b" x2=".78" y2="1"><stop stop-color="#f2d09e"/><stop offset=".52" stop-color="#d9ab77"/><stop offset="1" stop-color="#a6734c"/></linearGradient>
+    <linearGradient id="q-edge" x2="1" y2=".3"><stop stop-color="#7f5138"/><stop offset="1" stop-color="#593a2a"/></linearGradient>
+    <radialGradient id="q-well" cx=".51" cy=".88" r=".9"><stop stop-color="#d6a579"/><stop offset=".68" stop-color="#ad7c54"/><stop offset="1" stop-color="#775139"/></radialGradient>
+    <radialGradient id="q-shadow"><stop stop-color="#321d17" stop-opacity=".37"/><stop offset="1" stop-color="#321d17" stop-opacity="0"/></radialGradient>
+    <pattern id="q-grain" width="136" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+      <path d="M-2 7q35-4 69 0t70 0M-2 19q58-4 89 0t50 0" fill="none" stroke="#62412a" stroke-opacity=".19" stroke-width="1.3"/>
+      <path d="M-2 12q52-4 82 0t57 0" fill="none" stroke="#fff3d2" stroke-opacity=".31"/>
+    </pattern>
+  </defs>
+  <ellipse cx="311" cy="315" rx="248" ry="99" fill="url(#q-shadow)"/>
+  <path d="M26 231 309 70 592 231v22L309 417 26 253Z" fill="url(#q-edge)" stroke="#5c3a28" stroke-width="3"/>
+  <path d="M27 246 309 407 591 246" fill="none" stroke="#dcab7a" stroke-opacity=".42" stroke-width="2"/>
+  <path d="M26 231 309 70 592 231 309 393Z" fill="url(#q-b)" stroke="#986640" stroke-width="4"/>
+  <path d="M26 231 309 70 592 231 309 393Z" fill="url(#q-grain)"/>
+  <path d="M39 231 309 78 579 231 309 384Z" fill="none" stroke="#f8d6a7" stroke-width="2"/>`;
+  b.board.forEach((_,i)=>{
+    const [x,y]=pos(i>>2,i%4);
+    art+=`<ellipse cx="${x}" cy="${y+1}" rx="35" ry="20" fill="#f1c993" stroke="#a06d47" stroke-width="1"/>
+    <ellipse data-quarto-cell="${i}" cx="${x}" cy="${y-1}" rx="32" ry="16" fill="url(#q-well)" stroke="#875e43"/>
+    <path d="M${x-30} ${y+3}a32 16 0 0 0 60 0" fill="none" stroke="#ffdcad" stroke-opacity=".55"/>`;
+  });
   b.board.map((p,i)=>({p,i})).sort((a,z)=>(a.i>>2)+a.i%4-(z.i>>2)-z.i%4).forEach(({p,i})=>{if(p<0)return;const [x,y]=pos(i>>2,i%4);art+=`<g transform="translate(${x},${y})"><g data-piece="quarto-${p}">${qStone(p)}</g></g>`;});
   const targets=b.board.map((p,i)=>{
     const [x,y]=pos(i>>2,i%4);
@@ -232,7 +254,7 @@ boards.geister = (b,A) =>{
   }).join('');
   return defs+at(450,270,`<div class="ghost-board">${squares}</div>`);
 };
-const tile=t=>`<span class="rummi-tile t${t.c}" data-piece="rummi-${t.id}"><b>${t.n||'★'}</b><i></i></span>`;
+const tile=t=>`<span class="rummi-tile t${t.c}" data-piece="rummi-${t.id}"><b>${t.n||'★'}</b>${t.n===6 || t.n===9 ? '<i></i>' : ''}</span>`;
 boards.rummikub = (b,A) =>{
  const scrollTable=b.table.length>9||b.table.some(set=>set.length>5);
  const groups=b.table.map((set,si)=>{
@@ -376,8 +398,9 @@ function animateFrom(node,from,A,flip=false) {
   const dx=(from.left+from.width/2-to.left-to.width/2)/scale;
   const dy=(from.top+from.height/2-to.top-to.height/2)/scale;
   if (!flip && Math.abs(dx)+Math.abs(dy)<3) return;
-  const start=`translate(${dx}px,${dy}px) rotate(${flip?(dx>0?24:-24):0}deg)`;
-  node.animate([{transform:start+(flip?' rotateY(86deg) scale(.85)':'')},{transform:'none'}],
+  const start = `translate(${dx}px,${dy}px)`;
+  if (flip && node.matches('.pc:not(.back, .slot)')) A.flipCard(node,360,'pc');
+  node.animate([{transform:start},{transform:'none'}],
     {duration:360*A.speed,easing:'cubic-bezier(.2,.9,.3,1)'});
   A.land(160);
   A.anim(380);
@@ -395,15 +418,15 @@ function animateMove(wrap,b,A,last) {
   const pile=(side)=>point(side,.37);
   switch(b.kind) {
     case 'war':
-      for(const i of [0,1]) if(b.faceUp[i]?.id!==old.faceUp[i]?.id) place('war-face-'+i,pile(i===ownSeat(b)?.17:.82),true);
+      for(const i of [0,1]) if(b.faceUp[i]?.id!==old.faceUp[i]?.id) place('war-face-'+i,boxes.get('war-deck-'+i)||pile(i===ownSeat(b)?.17:.82),true);
       break;
     case 'takoyaki':
-      if(m>=10&&m<20) place('tako-'+actor+'-'+(m-10),boxes.get('tako-held'),true);
-      if(b.held?.id!==old.held?.id) place('tako-held',m===1?boxes.get('tako-discard'):m>=10&&m<20?boxes.get('tako-'+actor+'-'+(m-10)):pile(.8),true);
+      if(m>=10&&m<20) place('tako-'+actor+'-'+(m-10),boxes.get('tako-held'));
+      if(b.held?.id!==old.held?.id) place('tako-held',m===1?boxes.get('tako-discard'):m>=10&&m<20?boxes.get('tako-'+actor+'-'+(m-10)):pile(.8),m===0);
       if(old.phase==='bomb'&&m>=30) place('tako-'+actor+'-'+(m-30),boxes.get('tako-'+actor+'-'+(m-30)),true);
       break;
     case 'butanoshippo':
-      if(b.pileTop?.id!==old.pileTop?.id) place('pig-pile',boxes.get('ring-'+m)||boxes.get('pig-hand-'+(m-100)),true);
+      if(b.pileTop?.id!==old.pileTop?.id) place('pig-pile',boxes.get('ring-'+m)||boxes.get('pig-hand-'+(m-100)),m<100);
       break;
     case 'oldmaid':
       if(m===100 && b.me===actor) {
@@ -427,7 +450,7 @@ function animateMove(wrap,b,A,last) {
     case 'hearts':
       if(b.phase==='play'){
         const from=boxes.get('hearts-hand-'+m)||point(.5,actor===b.me?.85:.27);
-        if(b.trick.some(t=>t.seat===actor)) place('hearts-trick-'+actor,from,true);
+        if(b.trick.some(t=>t.seat===actor)) place('hearts-trick-'+actor,from,actor!==b.me);
         else if(old.trick.length===3) {
           const cards=b.lastTrick?.cards || [...old.trick,{seat:actor,card:old.myHand.find(c=>c.id===m)}];
           flashHearts(wrap,b,A,cards,actor,from);
@@ -435,7 +458,7 @@ function animateMove(wrap,b,A,last) {
       }
       break;
     case 'ginrummy':
-      if(b.discardTop?.id!==old.discardTop?.id && old.phase==='discard') place('gin-discard',boxes.get('gin-hand-'+(m-(m>=100?100:10)))||point(.5,.24),true);
+      if(b.discardTop?.id!==old.discardTop?.id && old.phase==='discard') place('gin-discard',boxes.get('gin-hand-'+(m-(m>=100?100:10)))||point(.5,.24),actor!==b.me);
       break;
     case 'vulture':
       if(b.roundNo!==old.roundNo || A.view.outcome) flashVulture(wrap,b,A);

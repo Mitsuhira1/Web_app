@@ -5,7 +5,7 @@ const IC = {
   games:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
   room:'<circle cx="8" cy="9" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M2.5 19c.6-3.2 2.8-5 5.5-5s4.900 1.800 5.500 5M14.500 14.300c.8-.5 1.600-.7 2.500-.7 2.200 0 3.900 1.500 4.500 4"/>',
   rec:'<path d="M5 20V11M12 20V4M19 20v-6"/>',
-  set:'<circle cx="12" cy="12" r="3"/><path d="M12 3v2.500M12 18.500V21M3 12h2.500M18.500 12H21M5.600 5.600l1.800 1.800M16.600 16.600l1.800 1.800M5.600 18.400l1.800-1.800M16.600 7.400l1.800-1.800"/>',
+  set:'<path d="M9.5 2.5h5l.6 3 2 .9 2.6-1.4 2.5 4.3-2.1 2v2.3l2.1 2-2.5 4.3-2.6-1.4-2 .9-.6 3h-5l-.6-3-2-.9-2.6 1.4-2.5-4.3 2.1-2v-2.3l-2.1-2 2.5-4.3 2.6 1.4 2-.9z"/><circle cx="12" cy="12.5" r="3.2"/>',
   play:'<path d="M8 5.500v13l10.500-6.500z" fill="currentColor"/>',
   back:'<path d="M14.500 5.500L8 12l6.500 6.500"/>',
   undo:'<path d="M8 5L4 9l4 4"/><path d="M4 9h10a5 5 0 010 10h-3"/>',
@@ -256,7 +256,7 @@ const avGrid=()=>`<div class="avgrid"><button data-av="-1" aria-pressed="${S.set
 function avatarModal(){ return `<div class="modal"><button class="mback" data-mback aria-label="閉じる"></button><div class="mbox" style="width:min(620px,100%)" role="dialog" aria-label="アイコン"><div class="mhd"><h3>アイコン</h3><button class="btn" style="height:38px" data-photo>写真を選ぶ</button><button class="btn gold" data-mclose style="height:38px;width:110px">完了</button></div><div class="mbody" style="padding-top:16px">${avGrid()}</div></div></div>`; }
 /* ---- 初回起動(表示名とアイコン。どちらも飛ばせる) ---- */
 function first(){ return `<div class="screen" style="align-items:center;justify-content:center;overflow:auto"><div class="frbox">
-   <small>あそび箱30</small><h2>はじめまして</h2>
+   <small>${APP_NAME}</small><h2>はじめまして</h2>
    <div class="frtop">${meAv('big')}<div style="flex:1;min-width:0"><label for="nameIn">表示名</label><input id="nameIn" value="${esc(S.set.name)}" maxlength="12" placeholder="あなた" autocomplete="off"></div></div>
    <div class="frlab"><span>アイコン</span><button class="btn" style="height:36px" data-photo>写真を選ぶ</button></div>${avGrid()}
    <div class="frops"><button class="btn" data-firstdone>スキップ</button><button class="btn primary" data-firstdone>はじめる</button></div></div></div>`; }
@@ -404,6 +404,10 @@ const bFlat=c=>`<rect width="100" height="100" fill="${c}"/><rect width="100" he
 const eng=(d,w=1)=>`<path d="${d}" transform="translate(.5,.5)" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="${w}"/><path d="${d}" fill-rule="evenodd" fill="none" stroke="#6b4a24" stroke-opacity=".85" stroke-width="${w}" stroke-linecap="round"/>`;
 const KP2='M0 -21L12 -15L16 19H-16L-12 -15Z';
 const iKoma=(x,y,s,ch,rot=0)=>`<g transform="translate(${x},${y}) rotate(${rot}) scale(${s})" filter="url(#xSh)"><path d="${KP2}" fill="#b98f4c"/><path d="${KP2}" transform="translate(0,-1.6)" fill="url(#xKm)" stroke="#8a6a35" stroke-width=".8"/><text x="0" y="-3" font-family="Yuji Boku,serif" font-size="14" text-anchor="middle" fill="#1c140c">${ch[0]}</text><text x="0" y="12" font-family="Yuji Boku,serif" font-size="14" text-anchor="middle" fill="#1c140c">${ch[1]}</text></g>`;
+const goitaIcon=(x,y,angle,ch)=>`<g transform="translate(${x} ${y}) rotate(${angle})" filter="url(#xSh)">
+  <path d="M-20 29V-13Q-20-26 0-28Q20-26 20-13V29Q20 32 17 32H-17Q-20 32-20 29Z" fill="#a47540"/>
+  <path d="M-20 24V-15Q-20-28 0-30Q20-28 20-15V24Q20 28 17 28H-17Q-20 28-20 24Z" fill="url(#xKm)" stroke="#8a6a35"/>
+  <text y="14" text-anchor="middle" font-family="Yuji Boku,serif" font-size="34" font-weight="700" fill="#2a180c">${ch}</text></g>`;
 const iCard=(x,y,w,rk,su,rot=0,o={})=>{ const h=w*1.4, c=/[♥♦]/.test(su)?'#C8362E':'#1d2433';
   return `<g transform="rotate(${rot} ${x+w/2} ${y+h/2})" filter="url(#xSh)"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${w*.12}" fill="${o.back?'#B4332B':'url(#xIv)'}" stroke="${o.gold?'#E0A33A':o.back?'#F4EAD0':'#A89B7C'}" stroke-width="${o.gold?2.4:o.back?1.8:.9}"/>${o.back?`<rect x="${x+w*.17}" y="${y+w*.17}" width="${w*.66}" height="${h-w*.34}" rx="${w*.06}" fill="none" stroke="#F4EAD0" stroke-opacity=".55"/>`:`<text x="${x+w*.22}" y="${y+w*.42}" font-size="${w*.4}" font-weight="900" text-anchor="middle" fill="${c}">${rk}</text><text x="${x+w*.22}" y="${y+w*.76}" font-size="${w*.32}" text-anchor="middle" fill="${c}">${su}</text><text x="${x+w*.58}" y="${y+h*.82}" font-size="${w*.62}" text-anchor="middle" fill="${c}">${su}</text>`}</g>`; };
 const iDie=(x,y,s,n,rot=0)=>`<g transform="rotate(${rot} ${x+s/2} ${y+s/2})" filter="url(#xSh)"><rect x="${x}" y="${y}" width="${s}" height="${s}" rx="${s*.2}" fill="url(#xIv)" stroke="#B9AC8C" stroke-width=".8"/>${DP[n].map(i=>`<circle cx="${x+s*(.25+.25*(i%3))}" cy="${y+s*(.25+.25*(i/3|0))}" r="${s*(n===1?.13:.085)}" fill="${n===1?'#C8362E':'#15151A'}"/>`).join('')}</g>`;
@@ -546,7 +550,7 @@ Object.assign(AR,{
   hearts:I(bFelt(),iCard(13,29,34,'Q','♠',-16)+iCard(46,20,39,'A','♥',15)),
   ginrummy:I(bFelt(),iCard(12,24,30,'5','♠',-10)+iCard(35,19,30,'6','♠',0)+iCard(59,26,30,'7','♠',10)),
   vulture:I(bFelt(),`<rect x="27" y="8" width="46" height="65" rx="4" fill="#4b3544" stroke="#f1cd8c" stroke-width="2"/><path d="M32 23l15 6 3 3 5-5 14-10-4 10-11 11-5 8-4-9z" fill="#f0c37d"/><text x="50" y="62" fill="#f7d185" text-anchor="middle" font-size="20" font-family="Georgia,serif">+6</text>`+iExtraTile(18,70,'8','#8b5630',20,24)+iExtraTile(62,70,'12','#8b5630',20,24)),
-  goita:I(bWood('xKaya',.2),iKoma(33,47,1.2,' 香',-11)+iKoma(66,52,1.35,' 王',12)),
+  goita:I(bFlat('#715049'),goitaIcon(30,51,-15,'し')+goitaIcon(70,49,13,'香')),
   quarto:I(bWood('xOak'),`<path d="M6 62l44-23 44 23v7L50 95 6 70z" fill="#71472b"/><path d="M6 62l44-25 44 25-44 25z" fill="#d3a474" stroke="#f5d6ae"/><path d="M20 54a9 5 0 0 0 18 0V28H20z" fill="#e1ad65"/><ellipse cx="29" cy="28" rx="9" ry="5" fill="#ffe1a6"/><ellipse cx="29" cy="28" rx="3.5" ry="2" fill="#61482e"/><path d="M54 54l12-7 12 7v13l-12 7-12-7z" fill="#78492f"/><path d="M54 54l12-7 12 7-12 7z" fill="#aa714a"/>`),
   geister:I(bFlat('#cdb79b'),'<path d="M0 0H50V50H0ZM50 50H100V100H50Z" fill="#aa9d82"/>'+iExtraGhost(30,31,null)+iExtraGhost(67,49,'#368ab6')+iExtraGhost(34,70,'#c55c48')),
   rummikub:I(bFelt(),iExtraTile(12,16,'13','#aa3930')+iExtraTile(38,16,'13','#2a5e9d')+iExtraTile(64,16,'13','#302d28')+iExtraTile(12,52,'5','#a36712')+iExtraTile(38,52,'6','#a36712')+iExtraTile(64,52,'7','#a36712')),

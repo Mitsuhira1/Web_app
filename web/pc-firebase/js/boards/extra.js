@@ -40,7 +40,7 @@
     const hl = new Set(sel ? destsFor(sel.src, sel.n) : []);
     const found = b.found.map((f, i) => `<div class="slot ${hl.has(2 + i) ? 'can' : ''}" data-dest="${2 + i}">${f.length ? cardHtml(f[0], `data-src="${2 + i}" data-n="1"`) : `<span class="pcard empty"><b>${SU[i]}</b></span>`}</div>`).join('');
     const stock = `<div class="slot" data-draw="1">${b.stock ? backHtml('data-draw="1"', 'tap') : `<span class="pcard empty redo" data-draw="1">${legal.has(seat * SEAT) ? '↻' : ''}</span>`}</div>`;
-    // 捨て札は上の 3 枚だけ。いちばん新しい札が左(いちばん上)
+    // 捨て札は上の 3 枚だけ。左から右へ、いちばん新しい札が手前
     const oldRects = new Map([...document.querySelectorAll('#boardwrap .waste [data-wid]')].map((e) => [+e.dataset.wid, e.getBoundingClientRect()]));
     const stockR = (document.querySelector('#boardwrap .slot[data-draw]') || { getBoundingClientRect: () => null }).getBoundingClientRect();
     const vis = b.waste.slice(-3), topI = vis.length - 1;
@@ -64,12 +64,17 @@
       }
       if (d.dest != null && sel) { const m = enc(sel.src, sel.n, +d.dest); A.sel = null; if (legal.has(m)) return A.play(m); return A.redraw(); }
     });
-    // 引いた時: 残る札は右へずれ、はみ出た札はふわっと消え、新しい札が山札からめくれて来る
-    if (oldRects.size || vis.length) {
+    // 捨て札が流れ、山札から引いた札は表を返しながら手前に重なる。
+    if (!A.reduce && (oldRects.size || vis.length)) {
       const now = new Set(vis.map((c) => c.c));
       document.querySelectorAll('#boardwrap .waste [data-wid]').forEach((e) => { const id = +e.dataset.wid, r = e.getBoundingClientRect(), o = oldRects.get(id);
         if (o && (o.left !== r.left)) e.animate([{ transform: `translate(${o.left - r.left}px,${o.top - r.top}px)` }, { transform: 'none' }], { duration: 220 * A.speed, easing: 'ease-out' });
-        else if (!o && stockR && oldRects.size + 1 >= 0 && b.waste.length) e.animate([{ transform: `translate(${stockR.left - r.left}px,${stockR.top - r.top}px) rotateY(180deg)`, filter: 'brightness(.6)' }, { transform: 'none', filter: 'none' }], { duration: 260 * A.speed, easing: 'cubic-bezier(.3,.8,.4,1)' }); });
+        else if (!o && stockR) {
+          A.flipCard(e,260,'pcard');
+          e.animate([{transform:`translate(${stockR.left-r.left}px,${stockR.top-r.top}px)`}, {transform:'none'}],
+            {duration:260*A.speed,easing:'cubic-bezier(.3,.8,.4,1)'});
+        }
+      });
       for (const [id, o] of oldRects) if (!now.has(id) && stockR) {
         const g = document.createElement('div'); g.className = 'wghost'; g.innerHTML = cardHtml(b.waste.find((c) => c.c === id) || { c: id, r: id % 13 + 1, s: Math.floor(id / 13) }); const el = g.firstChild; Object.assign(el.style, { position: 'fixed', left: o.left + 'px', top: o.top + 'px', width: o.width + 'px', height: o.height + 'px', margin: 0, zIndex: 30, pointerEvents: 'none', '--w': o.width + 'px' }); document.body.appendChild(el);
         el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${o.width * .4}px)` }], { duration: 280 * A.speed, easing: 'ease-out', fill: 'forwards' }).onfinish = () => el.remove();

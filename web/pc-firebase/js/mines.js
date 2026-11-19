@@ -5,8 +5,10 @@ const minesGame=(()=>{
  let playType=store.get('minePlayType','coop')==='versus'?'versus':'coop';
  function personalOptions(coop,on) {
   const rows = [['confirm','退出前に確認'],['firstFlag','最初から旗モード'],['swapButtons','左右クリックを入れ替える']];
-  if (coop && on) rows.push(['show','相手のカーソルを表示'],['share','自分のカーソルを共有']);
-  return setupPanel('操作と表示', rows.map(([key,label])=>setupRow(label,sw('mine:'+key,personal[key]))).join(''));
+  const cursorRows = [['show','相手のカーソルを表示'],['share','自分のカーソルを共有']];
+  const rowFor = ([key,label]) => setupRow(label,sw('mine:'+key,personal[key]));
+  const cursor = `<fieldset class="setup-availability" ${coop && on ? '' : 'disabled'}>${cursorRows.map(rowFor).join('')}</fieldset>`;
+  return setupPanel('操作と表示', rows.map(rowFor).join('') + cursor);
  }
  function setPersonal(key,value){if(Object.hasOwn(personal,key)){personal[key]=value;store.set('minePersonal',personal);}}
  function exit(){
@@ -38,18 +40,23 @@ const minesGame=(()=>{
   const versus = playType==='versus';
   const room = roomActive();
   const on = versus ? room : (onlineMode || canStartExtraMatch()) && room;
-  const mode = setupPanel('遊び方', setupRow('プレイモード',seg('mine:mode', [['coop','協力'],['versus','対戦']], playType)) +
-    (versus && !room ? '<p class="dimtxt">対戦はルームの参加者と遊べます。</p>' : ''));
-  const details = versus ? mineVersus.setupPanels() : {
-    levels:setupPanel('ルール', setupRow('難易度', seg('mine:level',Object.entries(LEVELS).map(([id,v])=>[id,v.label]),level), '盤面の広さと地雷の数が変わります。') +
-      setupRow('盤面',`<b>${LEVELS[level].w}×${LEVELS[level].h} / 地雷 ${LEVELS[level].mines}個</b>`)),
-    rules:''
-  };
+  const mode = setupPanel('遊び方', setupRow('プレイモード',seg('mine:mode', [['coop','協力'],['versus','対戦']], playType)));
+  const activeLevel = versus ? mineVersus.selectedLevel : level;
+  const difficulty = Object.entries(LEVELS).map(([id, data]) =>
+    [id, data.label, versus && !mineVersus.levels.includes(id)]);
+  const levelKey = versus ? 'mine-versus:level' : 'mine:level';
+  const difficultyButtons = seg(levelKey, difficulty, activeLevel);
+  const field = LEVELS[activeLevel];
+  const details = mineVersus.setupPanels();
+  const onlyVersus = html => `<fieldset class="setup-availability" ${versus ? '' : 'disabled'}>${html}</fieldset>`;
+  const rules = setupPanel('ルール', setupRow('難易度',difficultyButtons,'盤面の広さと地雷の数が変わります。') +
+    setupRow('盤面',`<b>${field.w}×${field.h} / 地雷 ${field.mines}個</b>`) + onlyVersus(details.finish));
   const action = versus ? (room ? 'data-mine-vs-start' : 'data-go="room"') : 'data-mine-start';
-  const players = versus && !room ? '' : extraParticipants(on);
-  const personal = personalOptions(!versus,on);
-  return extraSetupLayout('mine', on, mode + details.levels + players + (versus?personal:''),
-    versus?details.rules:personal, action, {label:versus && !room?'ルームへ':'スタート',modeLabel:versus?'みんなで遊ぶ':undefined});
+  const participants = versus && !room
+    ? setupPanel('人数と相手', setupRow('対局', '<b>ルームで募集</b>'))
+    : extraParticipants(on);
+  return extraSetupLayout('mine', on, mode + rules + participants, onlyVersus(details.rules) + personalOptions(!versus,on),
+    action, {label:versus && !room?'ルームへ':'スタート',modeLabel:versus?'みんなで遊ぶ':undefined});
  }
  function start() {
   if (canStartExtraMatch()) onlineMode=true;
