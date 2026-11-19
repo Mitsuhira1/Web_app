@@ -30,7 +30,7 @@ const poetCards = (() => {
     for (let i=copy.length-1;i>0;i--) { const j=random[i]%(i+1); [copy[i],copy[j]]=[copy[j],copy[i]]; }
     return copy;
   };
-  let online, stacks, timer, animationKey, scoredId;
+  let online, stacks, timer, scoredId;
   const all = hundredPoems.map((_,i)=>i);
   function setup(id,on=false) { online=on; go('poetSetup'); }
   let preferences = {cpu:1, first:'player', ...store.get('bozuSetup', {})};
@@ -62,7 +62,6 @@ const poetCards = (() => {
       if (round.first === 'random') turn = shuffle(round.seats.map((_,i)=>i))[0];
     }
     round.seats = round.seats.map(p=>({...p,score:0}));
-    animationKey = '';
     const deck = shuffle(all);
     stacks = [0,1,2,3].map(i=>deck.slice(i*25,i*25+25));
     return {piles:[25,25,25,25],discard:0,turn,last:-1,finish:false};
@@ -74,6 +73,7 @@ const poetCards = (() => {
     if (!Number.isInteger(action.cell) || !pile?.length) return false;
     const p=state.seats[state.turn];
     state.last=pile.pop(); state.piles=stacks.map(a=>a.length);
+    p.lastCard=state.last;
     const role=cardRole(state.last);
     if (role==='bozu') {
       state.discard+=p.score;
@@ -122,26 +122,118 @@ const poetCards = (() => {
       status:'<div class="status" id="poetStatus"></div>', actions:ruleButton('bozu'), on:state.online});
     return `<div class="screen"><main class="stage poet-stage">
       ${playHeader('坊主めくり', playMode(state.online), 'data-extra-exit')}
-      <div class="poet-table" id="poetTable"></div>${playGear()}<div class="cutlayer" id="cutlayer"></div>
+      <div class="poet-table"><div class="poet-layout" id="poetTable"></div>${playGear()}</div><div class="cutlayer" id="cutlayer"></div>
       </main>${side}</div>`;
+  }
+  const roleName = {hime:'姫',bozu:'坊主',tono:'殿'};
+  const cpuIcons = ['ねこ','きつね','うさぎ','ふくろう','だるま'];
+  function seatIcon(state, player, index) {
+    if (player.id === boardMatch.myId()) return meAv();
+    const avatar = state.online ? fbState.players[player.id]?.avatar : AV.findIndex(([name]) => name === cpuIcons[index-1]);
+    if (Number.isInteger(avatar) && AV[avatar]) return `<span class="avatar av">${avSvg(avatar)}</span>`;
+    return `<span class="avatar">${esc([...player.name][0] || '？')}</span>`;
+  }
+  const stackDepth = (count, held = false) => Math.sqrt(count) * (held ? 1.8 : 3);
+  function stack(count, held = false) {
+    // 札の上面を持ち上げ、下端に紙の層を描く。卓上の山と小さい持ち札で同じ縮尺曲線を使う。
+    const depth = stackDepth(count,held);
+    return `<span class="poet-slot${held ? ' poet-hand' : ''}" data-count="${count}"
+      aria-hidden="true" style="--depth:${depth.toFixed(2)}px">${count ? '<span class="poet-card back"></span>' : ''}</span>`;
+  }
+  function place(state, index, front, mine) {
+    const player = state.seats[index];
+    const count = state.seats.length;
+    const offset = (index - front + count) % count;
+    // 手前は固定し、残りの席を上半分の楕円に沿って並べる。
+    const angle = count <= 2 ? 0 : (offset - count / 2) / (count - 2) * Math.PI * .84;
+    const x = offset ? 50 + 40 * Math.sin(angle) : 50;
+    const y = offset ? 38 - 26 * Math.cos(angle) : 78;
+    const drawer = (state.turn + count - 1) % count;
+    const last = player.lastCard ?? (index === drawer ? state.last : -1);
+    const role = last >= 0 ? roleName[cardRole(last)] : '';
+    const who = mine === index ? '自分' : '';
+    return `<div class="poet-place ${offset ? '' : 'front'} ${index===state.turn && !state.finish ? 'turn' : ''}"
+      data-poet-seat="${index}" style="left:${x}%;top:${y}%;--seat:${SEAT_COLORS[index%SEAT_COLORS.length]}">
+      <div class="poet-reveal" aria-label="直近の札">${last>=0 ? face(last) : ''}</div>
+      <div class="poet-tally"><span class="poet-identity">${seatIcon(state,player,index)}<span class="poet-name">${esc(player.name)}</span></span>
+      <span class="poet-holding">${stack(player.score,true)}<b data-score="${player.score}" aria-label="持ち札${player.score}枚">${player.score}<small>枚</small></b></span>
+      <span class="poet-role">${[who, role].filter(Boolean).join(' · ')}</span></div>
+    </div>`;
+  }
+  function pileRow(state, canDraw) {
+    const piles = state.piles.map((n,i)=>`<button class="poet-pick" data-extra-poet-pick="${i}"
+      ${canDraw && n ? '' : 'disabled'} aria-label="山札${i+1} 残り${n}枚">
+      ${stack(n)}<b>${n}枚</b></button>`).join('');
+    return `<div class="poet-piles${state.version === 0 ? ' dealing' : ''}" style="--row-depth:${stackDepth(Math.max(...state.piles,state.discard))}px">
+      <div class="poet-bank" role="group" aria-label="山札"><span class="poet-caption" aria-hidden="true">山札</span>${piles}</div>
+      <div class="poet-pot"><span class="poet-caption">場札</span>${stack(state.discard)}<b>${state.discard}枚</b></div></div>`;
+  }
+  function fly(table, state, pile, drawer, own) {
+    const origin = table.querySelector(`[data-extra-poet-pick="${pile}"] .poet-slot`);
+    const target = table.querySelector(`[data-poet-seat="${drawer}"] .poet-reveal`);
+    const start = (origin.firstElementChild || origin).getBoundingClientRect(), end = target.getBoundingClientRect();
+    if (!end.width || !start.width) return 0;
+    // 描画位置は着地点が基準。画面の拡大率に合わせて座標を CSS ピクセルへ戻す。
+    const zoom = end.width / target.offsetWidth;
+    const dx = (start.left + start.width/2 - end.left - end.width/2) / zoom;
+    const dy = (start.top + start.height/2 - end.top - end.height/2) / zoom;
+    const scale = start.width / end.width;
+    const flight = document.createElement('div');
+    flight.className = 'poet-flight';
+    flight.setAttribute('aria-hidden','true');
+    flight.innerHTML = `<span class="poet-card back"></span>${face(state.last)}`;
+    target.classList.add('receiving');
+    target.append(flight);
+    const pose = (x,y,size,angle) => `perspective(900px) translate(${x}px,${y}px) scale(${size}) rotateY(${angle}deg)`;
+    const lifted = own ? pose(dx*.55,dy*.62-12,(1+scale)/2,95) : pose(dx,dy-6,scale*1.12,180);
+    const duration = own ? 750 : 1100;
+    const motion = flight.animate([
+      {transform:pose(dx,dy,scale,0),offset:0},
+      {transform:lifted,offset:own ? .45 : .35},
+      ...(!own ? [{transform:lifted,offset:.60}] : []),
+      {transform:pose(0,0,1,180),offset:1}
+    ], {duration,easing:'ease-in-out',fill:'both'});
+    const settle = () => { target.classList.remove('receiving'); flight.remove(); };
+    motion.onfinish = settle;
+    motion.oncancel = settle;
+    return duration;
   }
   function draw(state) {
     const table=$('#poetTable');if(!table)return;
-    const seat=state.seats.find(p=>p.id===boardMatch.myId())?.id;
-    const actionKey=state.id+'|'+state.version;
-    const animate=actionKey!==animationKey;
-    animationKey=actionKey;
+    const key=state.id+'|'+state.version;
+    if(table.dataset.frame===key)return;
+    const consecutive=table.dataset.frame===state.id+'|'+(state.version-1);
+    const previousPiles=consecutive ? table.dataset.piles.split(',').map(Number) : [];
+    const pile=state.piles.findIndex((n,i)=>n<previousPiles[i]);
+    const drawer=(state.turn+state.seats.length-1)%state.seats.length;
+    const oldScore=table.querySelector(`[data-poet-seat="${drawer}"] [data-score]`)?.dataset.score;
+    table.dataset.frame=key;
+    table.dataset.piles=state.piles.join(',');
+    const mine=state.seats.findIndex(p=>p.id===boardMatch.myId());
+    const front=Math.max(0,mine);
     const active=state.seats[state.turn];
-    const winners=state.seats.filter(p=>p.score===Math.max(...state.seats.map(q=>q.score))).map(p=>p.name);
-    table.innerHTML=`<div class="poet-piles ${state.version===0?'dealing':''}">${state.piles.map((n,i)=>`<button class="poet-pick" data-extra-poet-pick="${i}" ${!n||state.finish||active.id!==seat?'disabled':''} aria-label="山札${i+1} 残り${n}枚"><span class="poet-card back"></span><b>${n}枚</b></button>`).join('')}</div>
-      <div class="poet-open"><b>場の札 ${state.discard}枚</b>${state.last>=0?`<div class="${animate?'poet-flip':''}">${face(state.last)}</div>`:''}</div>`;
+    const best=Math.max(...state.seats.map(p=>p.score));
+    const winners=state.seats.filter(p=>p.score===best).map(p=>p.name);
+    table.innerHTML=state.seats.map((_,i)=>place(state,i,front,mine)).join('')
+      +pileRow(state,!state.finish && state.turn===mine);
     $('#poetStatus').textContent=state.finish?winners.join('・')+'の勝ち':active.name+'の番';
-    if(animate&&state.last>=0){
-      sfx.play('CARD_FLIP');
-      const role=cardRole(state.last);
-      if(role!=='tono')transientAudio.later(()=>{if($('#poetTable')&&animationKey===actionKey)cut({text:role==='bozu'?'坊主':'姫',tone:role==='bozu'?'red':'gold',ms:1000});},240);
+    $('#poetScores').innerHTML=state.seats.map((p,i)=>`<div class="seat ${!state.finish && i===state.turn?'turn':''}">${seatIcon(state,p,i)}<span class="nm">${esc(p.name)}</span><b>${p.score}枚</b></div>`).join('');
+    if(pile<0 || state.last<0 || document.hidden)return;
+    const reduced=S.set.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const duration=reduced ? 0 : fly(table,state,pile,drawer,drawer===mine);
+    const delta=state.seats[drawer].score-Number(oldScore);
+    if(delta && !reduced){
+      const gain=document.createElement('span');
+      gain.className='poet-delta';
+      gain.textContent=(delta>0?'+':'−')+Math.abs(delta)+'枚';
+      gain.style.animationDelay=duration+'ms';
+      table.querySelector(`[data-poet-seat="${drawer}"] .poet-tally`).append(gain);
     }
-    $('#poetScores').innerHTML=state.seats.map((p,i)=>`<div class="seat ${p===active?'turn':''}"><i class="dot" style="background:${SEAT_COLORS[i]}"></i><span class="nm">${esc(p.name)}</span><b>${p.score}枚</b></div>`).join('');
+    sfx.play('CARD_FLIP');
+    const role=cardRole(state.last);
+    if(role!=='tono' && !reduced)transientAudio.later(()=>{
+      if(table.isConnected && table.dataset.frame===key)cut({text:roleName[role],tone:role==='bozu'?'red':'gold',ms:1000});
+    },duration);
   }
   function button(d) {
     const state=boardMatch.state;

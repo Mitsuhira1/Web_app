@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261119-improvements-3-original-icons";
+const CACHE = "asobipcfb-20261119-improvements-6-poet-center";
 const FILES = [
 "./css/twelve.css",
 "./js/boards/twelve.js",
