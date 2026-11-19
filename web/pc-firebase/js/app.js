@@ -76,7 +76,7 @@ function rail(cur) {
   const onMenu = cur === 'menu';
   const showQuit = !isMob() && !isTouchDevice();
   return `<nav class="rail">
-    <div class="brand"><strong>あそび箱 <i>30</i></strong></div>
+    <div class="brand"><strong>あそび箱 <i>${ORDER.length}</i></strong></div>
     <div class="tabs">${t.map(([s, i, n]) => `<button data-go="${s}" ${cur === s ? 'aria-current="page"' : ''}>${ic(i)}${n}</button>`).join('')}</div>
     <div class="rail-filter${onMenu ? '' : ' is-hidden'}"${onMenu ? '' : ' aria-hidden="true" inert'}><h4>人数</h4>${seg('filter', ['すべて', '1人', '2人', '3人以上'], S.filter, 'col')}</div>
     ${roomSummary()}
@@ -733,6 +733,7 @@ function drawPlay(force) {
 let dragJust = false;
 function setupDrag(o) {
   const wrap = $('#boardwrap'); if (!wrap || S.set.drag === 'クリック') return;
+  wrap.classList.add('drag-enabled');
   wrap.onpointerdown = (e) => {
     if (e.button !== 0 || busy || cutOn() || (online && isMySeatAutoCpu()) || (!view.human && !concurrent)) return;
     const src = e.target.closest(o.src); if (!src || !wrap.contains(src)) return;
@@ -785,6 +786,7 @@ function setupDrag(o) {
       return best;
     };
     const move = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
       const dx = ev.clientX - sx, dy = ev.clientY - sy;
       const z = (document.body.style && parseFloat(document.body.style.zoom)) || 1;
       if (!ghost) {
@@ -845,7 +847,8 @@ function setupDrag(o) {
         if (over) over.classList.add('dropover');
       }
     };
-    const up = () => {
+    const up = (ev) => {
+      if (ev.type !== 'blur' && ev.pointerId !== e.pointerId) return;
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
@@ -855,7 +858,8 @@ function setupDrag(o) {
       stackEls.forEach((el) => el.classList.remove('dragsrc'));
       if (over) over.classList.remove('dropover');
       dragJust = true; setTimeout(() => (dragJust = false), 0);
-      if (over) { o.drop(src, over); } else sfx.play('CARD', { volume: .35, rate: .9 });
+      if (ev.type === 'pointerup' && over) o.drop(src, over);
+      else sfx.play('CARD', { volume: .35, rate: .9 });
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);

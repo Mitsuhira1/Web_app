@@ -1466,6 +1466,7 @@ html.reduce .screen.col{animation:none}
 @keyframes bgpulse{0%,100%{opacity:.45}50%{opacity:1}}
 .sol .waste{display:flex;flex:none;justify-content:flex-start;align-items:flex-start;isolation:isolate}
 .sol .waste > .pcard{flex:none}
+.drag-enabled .sol .waste > [data-src]{touch-action:none;cursor:grab}
 .sol .waste > .pcard+.pcard{margin-inline-start:calc(var(--w)*-.60)}
 .lview:active{cursor:grabbing}
 .lmoney.ex{align-items:flex-start}
@@ -1616,7 +1617,7 @@ html.reduce .wfx .wpop{display:none!important}
 
 /* Inline SVG fill must survive the room's inherited currentColor defaults too. */
 .rcur.live svg path{fill:var(--cc);stroke:#fff}
-.play-settings{position:absolute;left:16px;bottom:16px;z-index:12;width:46px;height:46px;border-radius:50%;box-shadow:0 4px 12px #0004;background:var(--surface);display:grid;place-items:center}
+.play-settings{position:absolute;left:16px;bottom:26px;z-index:12;width:46px;height:46px;border-radius:50%;box-shadow:0 4px 12px #0004;background:var(--surface);display:grid;place-items:center}
 .play-settings svg{width:24px;height:24px}
 .mbox.sheet.play-settings-dialog{
   width:min(900px,94vw);height:min(660px,86dvh);max-height:86dvh;
@@ -2046,7 +2047,7 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
   .ops{gap:6px}
   .ops .btn{height:38px;font-size:12.5px;padding:0 4px}
   .online-ops .btn{height:34px;font-size:12px;padding:0 6px}
-  .play-settings{left:10px;bottom:10px;width:40px;height:40px}
+  .play-settings{left:10px;bottom:24px;width:40px;height:40px}
   .play-settings svg{width:20px;height:20px}
   .cols2{grid-template-columns:1fr;max-width:640px}
   .setcats{width:130px}
@@ -2900,6 +2901,10 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .ysheet tbody th .ydesc {
     font-size: 9px;
   }
+}
+
+@media (max-width:680px), (max-width:960px) and (max-height:540px) {
+  .ysheet tbody th .ydesc { display:none; }
 }
 
 /* ---- ルール説明: 盤面全体動画 (#14) ---- */
