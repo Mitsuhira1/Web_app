@@ -25,6 +25,7 @@
 
 ## 3. 作業の後
 - `README4AI_Claude_Codex_Antigravity.md` の 5 章の**先頭**に、短く記録を足す(日付 / AI / 何を・なぜ / 触ったファイル / 確かめたこと)。
+- ほかの版(exe・Android・スマホ版)にも入れるべき変更は `docs/PORTING_TODO.md`(他バージョンへの引継ぎメモ)の先頭に足す。
 - 確認してほしい項目は `docs/CHECKLIST_PENDING.md` に足す。
 
 ## 4. 読まないもの
