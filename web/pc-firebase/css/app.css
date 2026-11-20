@@ -2520,11 +2520,11 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-slot { position:relative; display:block; aspect-ratio:.68; border-radius:3px;
   outline:1px dashed #f8e7c363; outline-offset:-1px; }
 .poet-slot:not([data-count="0"])::before { content:""; position:absolute; inset:auto 0 0; height:var(--depth);
-  border-radius:0 0 3px 3px; border-inline:1px solid #435e52;
-  background:repeating-linear-gradient(to top,#46625b 0 1px,#d6c6a3 1px 2px,#9d9980 2px 3px);
+  border-radius:0 0 3px 3px; border-inline:1px solid #1b2747;
+  background:repeating-linear-gradient(to top,#2c3a5c 0 1px,#e6d8b6 1px 2px,#b3a585 2px 3px);
   box-shadow:0 2px 4px #071c1670; }
 .poet-slot > .poet-card.back { position:absolute; inset:0; height:100%; translate:0 calc(-1 * var(--depth));
-  box-shadow:0 1px 0 #334f49; }
+  box-shadow:inset 0 0 0 2px #24345e,inset 0 0 0 3px #d9b56a,0 1px 0 #1b2747; }
 .poet-pick:enabled:is(:hover,:focus-visible) .poet-card { outline:3px solid #e2372b; outline-offset:1px; }
 .poet-pot { position:relative; }
 .poet-pot::before { content:""; position:absolute; left:calc(-1 * clamp(11px,2.2cqw,25px)); inset-block:0 0;
@@ -2593,9 +2593,11 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   border:clamp(2px,.35vw,5px) solid #284e4e; border-radius:3px; box-shadow:0 2px 0 #182c2b,0 4px 8px #0005;
   background:repeating-linear-gradient(102deg,#fff2 0 1px,#ab80540a 1px 3px),linear-gradient(112deg,#fcf8eb,#f1e7cf);
   font-family:"Zen Antique","Yu Mincho",serif; font-weight:400; text-align:start; }
-.poet-card.back { border-color:#315b5b;
-  background:linear-gradient(115deg,#3c69682b,#193c431a),var(--noise),#2b5559;
-  box-shadow:0 2px 0 #637c74,0 3px 0 #254b4e,0 5px 0 #58716c,0 6px 0 #24474b,0 9px 11px #0005; }
+.poet-card.back { border-color:#1b2747;
+  background:
+    radial-gradient(circle at 50% 50%,transparent 0 21%,#d9b56a66 22% 23.5%,transparent 24.5%),
+    linear-gradient(115deg,#ffffff1a,#0000 45%,#0000002e),var(--noise),#24345e;
+  box-shadow:inset 0 0 0 2px #24345e,inset 0 0 0 3px #d9b56a,0 2px 0 #c9b48a,0 3px 0 #1b2747,0 5px 0 #c9b48a,0 6px 0 #1b2747,0 9px 11px #0006; }
 .poet-lines { position:absolute; inset:7% 8%; display:flex; flex-direction:row-reverse; justify-content:space-between;
   line-height:1.08; letter-spacing:.025em; }
 .poet-lines > span,.poet-author { writing-mode:vertical-rl; text-orientation:upright; white-space:nowrap; }
@@ -3008,7 +3010,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 
 /* 坊主めくり: めくれる札の坊主・姫の数 */
 .poet-omen { position:absolute; left:50%; bottom:calc(100% + var(--row-depth) + clamp(24px,3.6cqh,34px)); transform:translateX(-50%);
-  display:flex; align-items:baseline; gap:.7em; white-space:nowrap; padding:3px 12px; border-radius:999px;
+  display:flex; align-items:baseline; gap:.25em; white-space:nowrap; padding:3px 14px; border-radius:999px;
   background:#10291ed9; border:1px solid #f7df9e40; color:var(--on-felt-sub);
   font:600 clamp(11px,1.4cqw,14px)/1.4 "Zen Antique","Yu Mincho",serif; }
 .poet-omen b { font:700 1.25em/1 Georgia,serif; color:var(--on-felt); }
