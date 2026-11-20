@@ -2525,7 +2525,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   box-shadow:0 2px 4px #071c1670; }
 .poet-slot > .poet-card.back { position:absolute; inset:0; height:100%; translate:0 calc(-1 * var(--depth));
   box-shadow:0 1px 0 #334f49; }
-.poet-pick:enabled:is(:hover,:focus-visible) .poet-card { outline:2px solid #f3cd7c; }
+.poet-pick:enabled:is(:hover,:focus-visible) .poet-card { outline:3px solid #e2372b; outline-offset:1px; }
 .poet-pot { position:relative; }
 .poet-pot::before { content:""; position:absolute; left:calc(-1 * clamp(11px,2.2cqw,25px)); inset-block:0 0;
   border-left:1px solid #ebd8aa55; }
@@ -2535,7 +2535,6 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-place.front { width:max-content; max-width:90%; gap:clamp(10px,2cqw,24px); }
 .poet-place:has(.receiving) { z-index:3; pointer-events:none; }
 .poet-reveal { flex:none; position:relative; width:min(6.6cqw,8.5cqh); aspect-ratio:.68; }
-.poet-reveal:empty { border:1px dashed #f9edd142; border-radius:3px; }
 .poet-place.front .poet-reveal { width:min(35cqw,27cqh,280px); }
 .poet-tally { position:relative; display:grid; min-width:0; max-width:100%; text-align:left; align-content:center;
   border-left:4px solid var(--seat); padding:4px clamp(4px,.8cqw,12px);
@@ -2565,6 +2564,8 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-flight > .poet-card { position:absolute; inset:0; backface-visibility:hidden; }
 .poet-flight > .portrait { transform:rotateY(180deg); }
 .poet-reveal.receiving > .portrait { visibility:hidden; }
+.poet-reveal > .poet-under { position:absolute; inset:0; }
+.poet-reveal.receiving > .portrait.poet-under { visibility:visible; }
 /* 自分の札の溜め場: 引いた札を表向きに積み、持ち札の数は山の厚さで見せる */
 .poet-own { --depth:calc(var(--k,0) * 22px); }
 .poet-place.front .poet-own { --depth:calc(var(--k,0) * 40px); }
@@ -2573,7 +2574,6 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   background:repeating-linear-gradient(to top,#7b6c4e 0 1px,#f3e7c9 1px 2px,#d8c9a4 2px 3px);
   box-shadow:0 2px 4px #071c1670; }
 .poet-own > .portrait,.poet-own > .poet-flight { translate:0 calc(-1 * var(--depth)); }
-.poet-own[data-count="0"] > .portrait { opacity:.62; filter:saturate(.7); }
 @media (min-width:761px) {
   .poet-place.front { display:grid; width:90%; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); }
   .poet-place.front .poet-reveal { grid-column:2; }
@@ -3005,3 +3005,30 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   background: #f6f1e6;
   border-radius: 10px 10px 0 0;
 }
+
+/* 坊主めくり: めくれる札の坊主・姫の数 */
+.poet-omen { position:absolute; left:50%; bottom:calc(100% + var(--row-depth) + clamp(24px,3.6cqh,34px)); transform:translateX(-50%);
+  display:flex; align-items:baseline; gap:.7em; white-space:nowrap; padding:3px 12px; border-radius:999px;
+  background:#10291ed9; border:1px solid #f7df9e40; color:var(--on-felt-sub);
+  font:600 clamp(11px,1.4cqw,14px)/1.4 "Zen Antique","Yu Mincho",serif; }
+.poet-omen b { font:700 1.25em/1 Georgia,serif; color:var(--on-felt); }
+.poet-omen .bozu b { color:#ffb1a6; } .poet-omen .hime b { color:#ffc9da; }
+.poet-omen.danger { border-color:#e2372b99; }
+/* 坊主めくりのカットイン: 筆文字と和の色 */
+.cutin.f-fude .txt { font-family:"Yuji Boku","Kaisei Tokumin","Yu Mincho",serif; font-weight:400; letter-spacing:.16em; }
+.cutin.f-fude .txt small { font-family:"Zen Antique","Yu Mincho",serif; letter-spacing:.3em; }
+.cutin.wa-cut .band { background:
+    radial-gradient(ellipse 1.6cqh 1cqh at 8% 22%,var(--petal) 60%,transparent 64%),
+    radial-gradient(ellipse 1.2cqh .8cqh at 19% 78%,var(--petal) 60%,transparent 64%),
+    radial-gradient(ellipse 1.4cqh .9cqh at 33% 14%,var(--petal) 60%,transparent 64%),
+    radial-gradient(ellipse 1.1cqh .7cqh at 71% 84%,var(--petal) 60%,transparent 64%),
+    radial-gradient(ellipse 1.6cqh 1cqh at 86% 26%,var(--petal) 60%,transparent 64%),
+    radial-gradient(ellipse 1.2cqh .8cqh at 94% 70%,var(--petal) 60%,transparent 64%),
+    repeating-linear-gradient(96deg,#ffffff0c 0 2px,transparent 2px 7px),
+    linear-gradient(var(--c1),var(--c2));
+  border-block:.5cqh double var(--edge); border-block-width:1.1cqh; }
+.cutin.wa-cut .txt { text-shadow:0 .35cqh 0 var(--ts,#0003); }
+.cutin.sakura { --c1:#FBE3E9; --c2:#EFB4C4; --ct:#4E1830; --edge:#C99A4E; --petal:#e48aa5a8; --ts:#ffffff80; }
+.cutin.sakura .veil { background:rgba(70,20,40,.28); }
+.cutin.sumi { --c1:#5E5751; --c2:#2D2824; --ct:#F7EEDD; --edge:#B23A30; --petal:#ffffff14; --ts:#0008; }
+.cutin.murasaki { --c1:#8C6B98; --c2:#563A61; --ct:#FFF6FF; --edge:#D3AE62; --petal:#f4d8ff2e; --ts:#0006; }

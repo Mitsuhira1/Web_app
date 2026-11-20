@@ -32540,99 +32540,144 @@ function Yacht$Companion$simpleHold$lambda_0($this) {
     return tmp;
   };
 }
+// ヨットの CPU(Web 版で書き直し。規則は変えない)。
+// 残っている役ごとの「今つけた時の値打ち」を決め、振り直しを含めた期待値が最大になるように
+// 残す目と、役をつける時期を選ぶ。上級は残りの振り直し回数ぶん先まで、初級・中級は 1 回先まで読む。
+var YACHT_AI = (function () {
+  var FACT = [1, 1, 2, 6, 24, 120];
+  // 0〜5 個のさいころの出方(目の組と確率)
+  var ROLLS = [];
+  for (var k = 0; k <= 5; k++) {
+    var list = [];
+    (function gen(start, cur) {
+      if (cur.length === k) {
+        var cnt = [0, 0, 0, 0, 0, 0, 0], w = FACT[k];
+        for (var i = 0; i < cur.length; i++) cnt[cur[i]]++;
+        for (var f = 1; f <= 6; f++) w /= FACT[cnt[f]];
+        list.push({ dice: cur.slice(), p: w / Math.pow(6, k) });
+        return;
+      }
+      for (var f2 = start; f2 <= 6; f2++) { cur.push(f2); gen(f2, cur); cur.pop(); }
+    })(1, []);
+    ROLLS.push(list);
+  }
+  var key = function (d) { var x = 0; for (var i = 0; i < d.length; i++) x = x * 7 + d[i]; return x; };
+  var sortNum = function (a, b) { return a - b; };
+  // 5 個の目の組(252 通り)
+  var STATES = ROLLS[5].map(function (r) { return r.dice; });
+  // 各状態から残せる目の組(重複を除く)
+  var KEEPS = STATES.map(function (d) {
+    var seen = {}, out = [];
+    for (var m = 0; m < 32; m++) {
+      var kept = [];
+      for (var i = 0; i < 5; i++) if ((m >> i) & 1) kept.push(d[i]);
+      var kk = key(kept) * 10 + kept.length;
+      if (!seen[kk]) { seen[kk] = 1; out.push(kept); }
+    }
+    return out;
+  });
+  var score = function (c, d) {
+    var cnt = [0, 0, 0, 0, 0, 0, 0], sum = 0;
+    for (var i = 0; i < 5; i++) { cnt[d[i]]++; sum += d[i]; }
+    if (c <= 5) return cnt[c + 1] * (c + 1);
+    if (c === 6) return sum;
+    var has = function (n) { for (var f = 1; f <= 6; f++) if (cnt[f] === n) return true; return false; };
+    var max = 0; for (var f = 1; f <= 6; f++) max = Math.max(max, cnt[f]);
+    if (c === 7) return max >= 4 ? sum : 0;
+    if (c === 8) return has(3) && has(2) ? sum : 0;
+    var best = 0, cur = 0;
+    for (var g = 1; g <= 6; g++) { if (cnt[g] > 0) { cur++; best = Math.max(best, cur); } else cur = 0; }
+    if (c === 9) return best >= 4 ? 15 : 0;
+    if (c === 10) return best >= 5 ? 30 : 0;
+    if (c === 11) return max === 5 ? 50 : 0;
+    return 0;
+  };
+  // 役を後に残しておいた時に見込める点(つけてしまうと失う分)
+  var LATER = [2.1, 4.2, 6.3, 8.4, 10.5, 12.6, 22, 11, 10, 10, 12, 13];
+  function valuer(sheet, greedy) {
+    var open = [];
+    for (var c = 0; c < 12; c++) if (sheet[c] < 0) open.push(c);
+    var upper = 0, room = 0;
+    for (var u = 0; u < 6; u++) { if (sheet[u] >= 0) upper += sheet[u]; else room += 5 * (u + 1); }
+    var need = 63 - upper;
+    var bonusLive = need > 0 && room >= need;
+    var w = greedy ? 0 : Math.min(1, (open.length - 1) / 3);
+    return {
+      open: open,
+      value: function (c, d) {
+        var sc = score(c, d), v = sc;
+        if (!greedy) {
+          if (c <= 5 && bonusLive) {
+            v += (sc - 3 * (c + 1)) * 1.2;
+            if (sc >= need) v += 15; // この役でボーナスに届く
+          }
+          v -= LATER[c] * w;
+        }
+        return v;
+      }
+    };
+  }
+  function bestCat(V, d) {
+    var best = -1, bv = -Infinity;
+    for (var i = 0; i < V.open.length; i++) {
+      var c = V.open[i], v = V.value(c, d);
+      if (v > bv) { bv = v; best = c; }
+    }
+    return [best, bv];
+  }
+  // E[r][state] = 残り r 回振り直せる時の期待値
+  function tables(V, depth) {
+    var E = [{}];
+    for (var i = 0; i < STATES.length; i++) E[0][key(STATES[i])] = bestCat(V, STATES[i])[1];
+    for (var r = 1; r <= depth; r++) {
+      var prev = E[r - 1], cur = {};
+      for (var j = 0; j < STATES.length; j++) {
+        var best = prev[key(STATES[j])];
+        var keeps = KEEPS[j];
+        for (var q = 0; q < keeps.length; q++) {
+          var e = expectKeep(prev, keeps[q]);
+          if (e > best) best = e;
+        }
+        cur[key(STATES[j])] = best;
+      }
+      E.push(cur);
+    }
+    return E;
+  }
+  function expectKeep(table, kept) {
+    var rolls = ROLLS[5 - kept.length], e = 0;
+    for (var i = 0; i < rolls.length; i++) {
+      var d = kept.concat(rolls[i].dice).sort(sortNum);
+      e += rolls[i].p * table[key(d)];
+    }
+    return e;
+  }
+  var cache = { sig: '', E: null };
+  function choose(dice, rollsLeft, sheet, level) {
+    var greedy = level === 0;
+    var V = valuer(sheet, greedy);
+    var now = bestCat(V, Array.prototype.slice.call(dice).sort(sortNum));
+    if (rollsLeft <= 0) return 100 + now[0];
+    var depth = level === 2 ? rollsLeft : 1;
+    var sig = Array.prototype.join.call(sheet, ',') + '|' + depth + '|' + level;
+    if (cache.sig !== sig) { cache.sig = sig; cache.E = tables(V, depth - 1); }
+    var table = cache.E[depth - 1];
+    var bestMask = -1, bestE = now[1] + 1e-6;
+    for (var m = 0; m < 31; m++) {
+      var kept = [];
+      for (var i = 0; i < 5; i++) if ((m >> i) & 1) kept.push(dice[i]);
+      kept.sort(sortNum);
+      var e = expectKeep(table, kept);
+      if (e > bestE + 1e-9) { bestE = e; bestMask = m; }
+    }
+    return bestMask >= 0 ? bestMask : 100 + now[0];
+  }
+  return { choose: choose, score: score };
+})();
 function Yacht$Companion$brain$lambda(rules, s, seat, level, rng, budget) {
   if (s.g20_1 === 3)
     return 0;
-  var sheet = s.i20_1[seat];
-  var _destruct__k2r9zo = Companion_getInstance_29().o20(s.f20_1, sheet);
-  var cat = _destruct__k2r9zo.kc();
-  var nowV = _destruct__k2r9zo.lc();
-  if (s.g20_1 === 0)
-    return 100 + cat | 0;
-  var tmp;
-  switch (level.q1_1) {
-    case 0:
-      var tmp_0;
-      if (nowV >= 10) {
-        tmp_0 = 100 + cat | 0;
-      } else {
-        // Inline function 'kotlin.let' call
-        // Inline function 'kotlin.contracts.contract' call
-        // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-        var it = Companion_getInstance_29().p20(s.f20_1);
-        tmp_0 = it === 31 ? 100 + cat | 0 : it;
-      }
-
-      tmp = tmp_0;
-      break;
-    case 1:
-      var tmp_1;
-      if (nowV >= 28) {
-        tmp_1 = 100 + cat | 0;
-      } else {
-        // Inline function 'kotlin.let' call
-        // Inline function 'kotlin.contracts.contract' call
-        // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-        var it_0 = Companion_getInstance_29().p20(s.f20_1);
-        tmp_1 = it_0 === 31 ? 100 + cat | 0 : it_0;
-      }
-
-      tmp = tmp_1;
-      break;
-    case 2:
-      var bestMask = -1;
-      var bestE = nowV;
-      var seen = HashSet_init_$Create$();
-      var inductionVariable = 0;
-      if (inductionVariable < 31)
-        $l$loop_0: do {
-          var mask = inductionVariable;
-          inductionVariable = inductionVariable + 1 | 0;
-          // Inline function 'kotlin.collections.map' call
-          // Inline function 'kotlin.collections.filter' call
-          // Inline function 'kotlin.collections.filterTo' call
-          var this_0 = until(0, 5);
-          var destination = ArrayList_init_$Create$_0();
-          var inductionVariable_0 = this_0.x_1;
-          var last = this_0.y_1;
-          if (inductionVariable_0 <= last)
-            do {
-              var element = inductionVariable_0;
-              inductionVariable_0 = inductionVariable_0 + 1 | 0;
-              // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-              if (((mask >>> element | 0) & 1) === 1) {
-                destination.i(element);
-              }
-            }
-             while (!(element === last));
-          // Inline function 'kotlin.collections.mapTo' call
-          var destination_0 = ArrayList_init_$Create$(collectionSizeOrDefault(destination, 10));
-          var tmp0_iterator = destination.k();
-          while (tmp0_iterator.l()) {
-            var item = tmp0_iterator.m();
-            // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-            var tmp$ret$7 = s.f20_1[item];
-            destination_0.i(tmp$ret$7);
-          }
-          var key = joinToString(sorted(destination_0), ',');
-          if (!seen.i(key))
-            continue $l$loop_0;
-          var e = Companion_getInstance_29().q20(s.f20_1, mask, sheet, budget);
-          if (e > bestE + 0.5) {
-            bestE = e;
-            bestMask = mask;
-          }
-          if (budget.ot())
-            break $l$loop_0;
-        }
-         while (inductionVariable < 31);
-      tmp = bestMask >= 0 ? bestMask : 100 + cat | 0;
-      break;
-    default:
-      noWhenBranchMatchedException();
-      break;
-  }
-  return tmp;
+  return YACHT_AI.choose(s.f20_1, s.g20_1, s.i20_1[seat], level.q1_1);
 }
 function Yacht$Companion$def$lambda(it) {
   return new Yacht(coerceIn_0(it.it('players', 2), 1, 6));
