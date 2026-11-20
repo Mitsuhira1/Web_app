@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261119-improvements-7-cpu-and-wood";
+const CACHE = "asobipcfb-20261120-rejoin-bozu-1";
 const FILES = [
 "./css/twelve.css",
 "./js/boards/twelve.js",
@@ -92,7 +92,6 @@ const FILES = [
 "./assets/game-icons/quarto.webp",
 "./assets/game-icons/pegsolitaire.webp",
 "./assets/game-icons/wolf.webp",
-"./assets/game-icons/chinese.webp",
 "./assets/slide-landscape.svg",
 "./assets/slide-alpine.webp",
 "./assets/slide-coast.webp",

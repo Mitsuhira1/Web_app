@@ -56,6 +56,16 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-20 / Claude / マルチの切断・リロード復帰、名前の即時反映、坊主めくりのローカルルール ほか
+- 通信(`js/net.js`・`js/online.js`): 切断時に `players/{uid}` を消すのをやめ、`offline: true, offlineAt` の印を付ける(全員・ホスト1人の時も)。`.info/connected` でつながり直したら切断予約を付け直し、印を消す(席が消されていたら空き席に入り直し `onRejoined`)。ホストは切断中の人を 45 秒(`OFFLINE_GRACE_MS`)待ってから外し(`removePlayer`・席は CPU)、ゲストはホストが 45 秒戻らない時だけ引き継ぐ。全員が切断中のまま 10 分の部屋は `cleanupOldRooms` が消す。公開一覧は接続中の人だけ数える。原因: スマホで画面を離れると onDisconnect で自分が部屋から消え、戻っても観戦が止まる・メニューに取り残される。
+- リロード復帰: 部屋番号を `sessionStorage['asobi-fb-room']` に覚え、起動時に `tryRejoinRoom()`。`joinRoom` は同じ uid なら席・役割・観戦・CPU 委任を残す。前のホストは `promoteToHostFromState` で(知らせを出さずに)ホストに戻り対局画面へ。CPU 戦は `sessionStorage['asobi-play']` と保存済みの続き(`saved`)から `resume`。`ensureNet()` は同時に呼ばれても接続を1つだけ作る。
+- 名前・アイコン: 設定で変えると `players/{uid}` の name/avatar を書き換え(`pushMyProfile`)。表示は `liveSlotName`・`slotAvHtml` で players の今の値を使う(コアの名簿は変えない)。
+- スマホのマルチのメニュー: 1回目のタップは枠のハイライトと希望の送信だけ、同じゲームを2回目で説明。
+- ヨット: 数の目の合計が 63 に届いた時に「(名前) ボーナス +35」のカットイン。チャイニーズチェッカー: アイコンを SVG(六芒星の盤と4色の玉)に変え、写真 `chinese.webp` を削除。ソリティア: 場札の列の札にも `touch-action:none`(スマホでドラッグが取り消されていた)。
+- 坊主めくり(`js/poet-cards.js`): 設定に「姫で場札が無い時: そのまま/もう1枚引く」「蝉丸: 坊主と同じ/全員の札を場へ」(既定は従来どおり)。名前の横の枚数と小さな札束をやめ、各席の札の置き場に引いた札を表向きに積み、厚さで枚数を見せる。
+- ファイル: `web/pc-firebase/js/{net,online,app,art,poet-cards,rules}.js`・`css/app.css`・`sw.js`(キャッシュ名)・`assets/game-icons/chinese.webp`(削除)・`tools/tests/firebase-memory-net.js`(uid を sessionStorage に保存、pagehide で切断中の印、`removePlayer`)・`docs/FIREBASE_NET_MANUAL_FOR_AI.md` 15 章
+- 確かめたこと(Chromium・模擬通信): ゲスト・ホストのリロードで同じ席の対局画面に戻り続けて指せる(6 回)、ホストがタブを閉じると 45 秒後にゲストが引き継ぎ旧ホストを外す、名前変更が相手に即反映、CPU 戦のリロード再開、スマホのメニュー2段階、ソリティアのタッチドラッグ(直す前は場札で失敗)、坊主めくりのルール(札の総数 100 枚・姫のもう1枚・蝉丸)と PC/スマホの画面、ヨットのボーナス判定、既存テスト。本物の Firebase とスマホ実機は未確認。
+
 ### 2026-11-20 / Claude / 最初に読む START_HERE.md と、確認項目の置き場
 - 目的: AI が読むファイルを絞って文脈を節約する(ユーザーの指示)。このファイルを毎回全部読まないようにした。
 - `START_HERE.md`(新規): 方針・読む順番・読まないもの・49 種のゲームと描き方のファイル・守ること。`CLAUDE.md`・`AGENTS.md`・`GEMINI.md`(新規)・`README.md`・このファイルの冒頭を「先に START_HERE.md」に変更。

@@ -283,3 +283,14 @@ Firebase Rulesを独自に厳格化しているプロジェクトでは、本人
 - **ヨット (`yacht`) のサイコロ固定枠（黄色い枠）のリアルタイム同期 (`cursors/{uid}.ykeep`)**:
   - 手番プレイヤーがサイコロを固定/解除または振り直した際、`syncOnlineYachtKeep(turn, rollsLeft, mask)` により `cursors/{uid}` の任意フィールド `ykeep` (`{ t, r, m }`) にビットマスク `m` (`0`〜`31`) を即時送信する（既存の `cursors/{uid}` 書き込み権限のみで動作し、Firebase Rules の変更不要）。
   - 相手側（および観戦者）は `getOnlineYachtKeep(turn, rollsLeft)` で現在の手番・残り振り直し回数と一致する `m` を参照し、サイコロを振り直す前の段階から相手が固定したサイコロにリアルタイムで黄色い枠 (`.yd.held`) を表示する。
+
+## 15. 切断中の印・つながり直し・リロード復帰(2026-11-20)
+- **切断の扱いを変更**: `syncDisconnectPolicy()` は役割・人数に関係なく、`onDisconnect(players/{uid}).update({ offline: true, offlineAt: serverTimestamp() })` と `onDisconnect(cursors/{uid}).remove()` だけを予約する(部屋丸ごとの削除はしない)。7 章の (a) はこれに置き換わる。
+- 追加フィールド: `players/{uid}/offline`(boolean)・`players/{uid}/offlineAt`(時刻)。クライアントは「切断中」と表示する。Rules を厳格化する場合は本人のこの 2 つの更新と、ホストによる他プレイヤーの `players/{uid}`・`cursors/{uid}` の削除(`removePlayer`)を許可すること。
+- **つながり直し**: `.info/connected` が true に戻るたびに切断予約を付け直し、自分の `offline` を消す。自分のノードが消されていたら(猶予切れ)、前の slot か空いている slot で入り直し、`callbacks.onRejoined` でゲストの OnlineRoom を作り直す。
+- **猶予**: ホストは `offline` の人を `OFFLINE_GRACE_MS`(45 秒)待ってから `removePlayer()` で外す(既存の退出処理で席は CPU に)。ゲストはホストが 45 秒 `offline` のままの時だけ `maybeElectNewHost()` で引き継ぐ。ホスト候補は `offline` の人を除く。
+- **片付け**: `cleanupOldRooms()` は 3 時間の期限に加え、全員が 10 分以上 `offline` の部屋も消す。公開ルーム一覧は `offline` でない人だけ数え、0 人の部屋は出さない。
+- **リロード復帰**: 部屋番号をタブの `sessionStorage['asobi-fb-room']` に保存(退出・キック・解散で消す)。起動時に `tryRejoinRoom()` → `joinFirebaseRoom(code, { rejoin: true })`。`joinRoom()` は同じ uid のノードがあれば `update` で name・avatar・wolfKey だけを書き、slot・role・spectating・autoCpu を残す(返り値 `rejoined: true`)。`hostUid` が自分なら `promoteToHostFromState()` を `fbState.rejoin` 付きで呼び、知らせを出さずにホストへ戻って対局画面に入る。匿名ログインは indexedDB に残るので uid は変わらない。
+- **名前・アイコンの即時反映**: 設定の変更で本人の `players/{uid}` の `name`・`avatar` を `setPlayerFlags()` で更新。コアの名簿(`members`・席名)は書き換えず、画面は `liveSlotName(slot)`・`slotAvHtml()` で players の今の値を表示する。
+- 試験: `tools/tests/firebase-memory-net.js` は uid を `sessionStorage` に保存し、`pagehide` で `offline` の印を付ける(リロード・タブを閉じるの模擬)。
+

@@ -371,13 +371,15 @@ async function enterPlay() {
   busy = false; yachtCutJust = false; stopConcurrent();
   S.chatOpen = false; S.chatUnread = 0;
   concurrent = (online && !isSoloIdleMatch()) ? false : await call('isConcurrent', h); S.screen = 'play'; S.modal = null;
+  // リロードした時に、この対局へ戻れるように覚えておく(通信対戦は部屋に入り直して戻る)
+  try { if (!online) sessionStorage.setItem('asobi-play', cur.id); else sessionStorage.removeItem('asobi-play'); } catch (e) {}
   bgCtx(); render();
   dealPending = SHUFFLE_GAMES.has(cur.id) && (!view || !view.moves) && (!online || isSoloIdleMatch()) ? 1 : 0;
   if (SHUFFLE_GAMES.has(cur.id) && (!view || !view.moves)) transientAudio.later(sfxShuffle, 250);
   if (!view || !view.moves) setTimeout(() => cut({ text: '対局開始', tone: 'gold', ms: 1200 }), 150);
   refresh();
 }
-function leavePlay() { token++; busy = false; cpuTurnKey = ''; S.chatOpen = false; S.chatUnread = 0; stopClock(); stopConcurrent(); closeSheet(); if (online) leaveOnlinePlay(); h = -1; view = null; }
+function leavePlay() { try { sessionStorage.removeItem('asobi-play'); } catch (e) {} token++; busy = false; cpuTurnKey = ''; S.chatOpen = false; S.chatUnread = 0; stopClock(); stopConcurrent(); closeSheet(); if (online) leaveOnlinePlay(); h = -1; view = null; }
 const subText = () => online ? (view && view.mine < 0 ? 'みんなで遊ぶ・観戦中' : isSoloIdleMatch() ? '1人プレイ(待機中)' : 'みんなで遊ぶ') : mode === 'pass' ? '手番ごとに交代' : rouletteSolo(cur?.id, pcfg) ? 'ひとりで遊ぶ' : 'CPU ' + LV[pcfg ? pcfg.level : 1];
 function playChatPopHtml() {
   return `<button type="button" class="chatpop-back" data-chatclose aria-label="チャットを閉じる"></button>
@@ -628,7 +630,7 @@ function statusText() {
   }
 }
 const turnText = () => mode === 'pass' ? `${view.seats[view.toMove].name} の番です` : 'あなたの番です';
-const seatName = (seat) => seat === mySeat && mode !== 'pass' && (!online || (view && view.mine === seat)) ? meName() : view.seats[seat] && (view.seats[seat].human || view.seats[seat].remote) ? view.seats[seat].name : (view.seats.filter((s) => !s.human && !s.remote).length > 1 ? 'CPU ' + (seat + 1) : 'CPU');
+const seatName = (seat) => seat === mySeat && mode !== 'pass' && (!online || (view && view.mine === seat)) ? meName() : view.seats[seat] && (view.seats[seat].human || view.seats[seat].remote) ? (online && typeof liveSlotName === 'function' ? liveSlotName(seatToSlot(seat), view.seats[seat].name) : view.seats[seat].name) : (view.seats.filter((s) => !s.human && !s.remote).length > 1 ? 'CPU ' + (seat + 1) : 'CPU');
 function flipCard(node, duration, cardClass) {
   const faces = document.createElement('span');
   faces.className = 'card-turn';
@@ -1037,6 +1039,12 @@ function detectEvents(a, b) {
       if (prevY < 0 && nextY === 50) {
         yachtCutJust = true;
         cut({ text: `${seatName(p)} ヨット`, tone: 'gold', font: 'yo', ms: 1600, afterAnim: true, _tok: token });
+      }
+      // 数の目(1〜6)の合計が 63 に届いた時のボーナス(+35)
+      const upper = (s) => Array.isArray(s) ? s.slice(0, 6).reduce((x, c) => x + Math.max(c, 0), 0) : 0;
+      if (upper(a.board.sheets[p]) < 63 && upper(b.board.sheets[p]) >= 63) {
+        yachtCutJust = true;
+        cut({ text: `${seatName(p)} ボーナス +35`, tone: 'gold', font: 'yo', ms: 1600, afterAnim: true, _tok: token });
       }
     }
   }
@@ -1515,7 +1523,8 @@ app.addEventListener('click', async (e) => {
   if (d.quitapp != null) return askQuitApp();
   if (d.goprof != null) { S.scat = 'prof'; return go('settings'); }
   if (d.tile && (wolfGame.active() || boardMatch.active())) { S.sel=d.tile; return render(); }
-  if (d.tile && roomChoosing()) { S.sel = d.tile; chooseWish(d.tile); if (isMob()) S.mobDetail = true; return render(); }
+  // スマホ: 1回目のタップは枠のハイライトだけ(希望はほかの人にも見える)。同じゲームをもう1回タップで説明を出す
+  if (d.tile && roomChoosing()) { const again = S.sel === d.tile; S.sel = d.tile; chooseWish(d.tile); if (isMob()) S.mobDetail = again; return render(); }
   if (d.tile) {
     const id = d.tile;
     if (isMob()) {
@@ -1542,7 +1551,7 @@ app.addEventListener('click', async (e) => {
   if (d.pv) { if (PV === d.pv) { PV = null; bgmStop(); if (S.set.bgm) bgmPick(); } else { PV = d.pv; bgmPlay(d.pv, 0, true); } return render(); }
   if (d.scat && $('#playsettings')) return switchPlaySettingsTab(d.scat);
   if (d.scat) { const ch = S.scat !== d.scat; S.scat = d.scat; S.rekey = null; render(); if (ch) { const p = $('.setpanel'); if (p) p.classList.add('enter'); } return; }
-  if (d.av != null) { S.set.av = d.av === 'photo' ? 'photo' : +d.av < 0 ? null : +d.av; saveSet(); return render(); }
+  if (d.av != null) { S.set.av = d.av === 'photo' ? 'photo' : +d.av < 0 ? null : +d.av; saveSet(); if (typeof pushMyProfile === 'function') pushMyProfile(); return render(); }
   if (d.rekey) { S.rekey = S.rekey === d.rekey ? null : d.rekey; return render(); }
   if (d.clear) return askClear(d.clear);
   if (d.openfolder != null) return openDataFolder();
@@ -1614,7 +1623,7 @@ app.addEventListener('contextmenu', e => {
 });
 app.addEventListener('input', (e) => {
   const t = e.target;
-  if (t.id === 'nameIn') { S.set.name = t.value.trim().slice(0, 12); saveSet(); return; }
+  if (t.id === 'nameIn') { S.set.name = t.value.trim().slice(0, 12); saveSet(); if (typeof pushMyProfile === 'function') pushMyProfile(); return; }
   if (t.dataset.pname) { const c = cfg(S.setup.id); c.names[+t.dataset.pname] = t.value; saveCfg(S.setup.id, c); return; }
   if (t.id === 'volIn') return setVol(+t.value);
   if (t.dataset.rng) { S.set[t.dataset.rng] = +t.value; saveSet(); if (t.dataset.rng === 'master' && BG && !PL.paused) BG.g.gain.value = gv(); }
@@ -1675,7 +1684,7 @@ function cropPhoto(file) {
   img.onload = () => {
     const s = Math.min(img.width, img.height), c = document.createElement('canvas'); c.width = c.height = 160;
     c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 160, 160);
-    S.set.photo = c.toDataURL('image/jpeg', 0.85); S.set.av = 'photo'; saveSet(); render();
+    S.set.photo = c.toDataURL('image/jpeg', 0.85); S.set.av = 'photo'; saveSet(); if (typeof pushMyProfile === 'function') pushMyProfile(); render();
   };
   img.src = URL.createObjectURL(file);
 }
@@ -1930,6 +1939,13 @@ toastEl.addEventListener('pointercancel', () => { drag = null; toastHide(); });
     sfx.enabled = S.set.sound;
     S.screen = store.get('firstDone', false) ? 'menu' : 'first';
     render();
+    // プレイ中にリロードした時は、元の画面に戻る
+    {
+      let room = null, playId = null;
+      try { room = sessionStorage.getItem('asobi-fb-room'); playId = sessionStorage.getItem('asobi-play'); } catch (e) {}
+      if (room && typeof tryRejoinRoom === 'function') tryRejoinRoom();
+      else if (playId) { const s = store.get('saved', []).find((x) => x.id === playId); if (s) resume(s); }
+    }
     sfx.init();
     // 起動してすぐ BGM を流す(exe はクリックを待たずに鳴る。ブラウザでは最初のクリックで鳴り始める)
     try { bgCtx(true); } catch (e) {}

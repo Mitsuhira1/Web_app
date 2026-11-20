@@ -58,6 +58,30 @@ function playerBySlot(slot) {
   }
   return null;
 }
+// 名前・アイコンは players/{uid} の今の値を使う(入り直さなくても変更が反映される)
+function liveSlotName(slot, fallback) {
+  const p = playerBySlot(slot);
+  return (p && p.name) || fallback;
+}
+function liveMemberNames(o) {
+  if (o && Array.isArray(o.members)) o.members.forEach((m) => { if (m) m.name = liveSlotName(m.slot, m.name); });
+  return o;
+}
+function slotAvHtml(slot, name, i) {
+  const p = playerBySlot(slot);
+  if (p && Number.isInteger(p.avatar) && typeof AV !== 'undefined' && AV[p.avatar]) return `<span class="avatar av">${avSvg(p.avatar)}</span>`;
+  return `<span class="avatar" style="background:${SEAT_COLORS[i % 6]};color:#fff">${esc((name || '?')[0])}</span>`;
+}
+// 設定で名前・アイコンを変えた時に、部屋の自分の情報を書き換える
+let profilePushTimer = null;
+function pushMyProfile() {
+  if (!netApi || !fbState.roomId) return;
+  clearTimeout(profilePushTimer);
+  profilePushTimer = setTimeout(() => {
+    if (!netApi || !fbState.roomId) return;
+    netApi.setPlayerFlags({ name: meName(), avatar: Number.isInteger(S.set.av) ? S.set.av : null }).catch(() => {});
+  }, 250);
+}
 function playerUidBySlot(slot) {
   const p = playerBySlot(slot);
   return p ? p.uid : null;
@@ -483,7 +507,7 @@ function syncHostPlayers(playersMap) {
     }
   }
 
-  netApi.syncDisconnectPolicy(entries.length + 1).catch(() => {});
+  sweepOfflinePlayers(entries);
 
   if (newlyJoinedNames.length && fbState.soloIdle && ost && ost.phase === 'PLAYING') {
     const fresh = newlyJoinedNames.filter((_, idx) => {
@@ -512,7 +536,14 @@ function handleGuestActionOnHost(act) {
   }
 }
 
-async function ensureNet() {
+// 同時に呼ばれても(起動時の初期化と、リロード後の入り直し)、接続は1つだけ作る
+let netInitPromise = null;
+function ensureNet() {
+  if (netReady) return Promise.resolve();
+  if (!netInitPromise) netInitPromise = ensureNetOnce().catch((e) => { netInitPromise = null; throw e; });
+  return netInitPromise;
+}
+async function ensureNetOnce() {
   if (netReady) return;
   await coreReady;
   const bridge = createCoreBridge();
@@ -542,9 +573,39 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else setTimeout(startNetInit, 0);
 
 // ---------------------------------------------------------------- ホスト移譲・引き継ぎ・キック・フラグ操作
+// 切断中(リロード・スマホで画面を離れた等)の人は、この時間だけ席を残して戻るのを待つ
+const OFFLINE_GRACE_MS = 45000;
+const offlineSince = new Map(); // uid -> この端末で切断中に気づいた時刻
+function offlineWaitLeft(p) {
+  if (!p || !p.offline) { if (p) offlineSince.delete(p.uid); return 0; }
+  if (!offlineSince.has(p.uid)) offlineSince.set(p.uid, Date.now());
+  return Math.max(0, OFFLINE_GRACE_MS - (Date.now() - offlineSince.get(p.uid)));
+}
+let offlineTimer = null;
+function scheduleOfflineCheck(ms) {
+  if (offlineTimer) clearTimeout(offlineTimer);
+  offlineTimer = setTimeout(() => {
+    offlineTimer = null;
+    if (!fbState.roomId || !netApi) return;
+    if (netApi.role === 'host') syncHostPlayers(fbState.players);
+    else maybeElectNewHost();
+  }, ms + 200);
+}
+// ホスト: 猶予が切れた切断中の人を部屋から外す(席は CPU に変わる)。まだ待つ人がいれば時計を掛ける
+function sweepOfflinePlayers(entries) {
+  let wait = Infinity;
+  for (const p of entries) {
+    if (!p.offline) { offlineSince.delete(p.uid); continue; }
+    const left = offlineWaitLeft(p);
+    if (left <= 0) { offlineSince.delete(p.uid); netApi.removePlayer(p.uid).catch(() => {}); }
+    else wait = Math.min(wait, left);
+  }
+  if (wait < Infinity) scheduleOfflineCheck(wait);
+}
+
 function nextHostCandidateUid(excludeUid) {
   const candidates = Object.values(fbState.players || {})
-    .filter((p) => p && p.uid && p.uid !== excludeUid)
+    .filter((p) => p && p.uid && p.uid !== excludeUid && !p.offline)
     .sort((a, b) => ((+a.joinedAt || 0) - (+b.joinedAt || 0)) || ((a.slot ?? 99) - (b.slot ?? 99)) || String(a.uid).localeCompare(String(b.uid)));
   return candidates[0] ? candidates[0].uid : null;
 }
@@ -554,7 +615,12 @@ function maybeElectNewHost() {
   if (!fbState.hostUid) return;
   const players = fbState.players || {};
   if (!players[netApi.uid]) return;
-  if (players[fbState.hostUid]) return;
+  const hostP = players[fbState.hostUid];
+  if (hostP) {
+    const left = offlineWaitLeft(hostP);
+    if (!hostP.offline) return;
+    if (left > 0) { scheduleOfflineCheck(left); return; }
+  }
   const nextUid = nextHostCandidateUid(null);
   if (nextUid && nextUid === netApi.uid) {
     promoteToHostFromState(true);
@@ -645,7 +711,10 @@ async function promoteToHostFromState(isTakeover = false) {
     ost = JSON.parse(mainCore.onlineState());
     lastBeginSeq = ost.beginSeq;
 
-    if (wasPlaying && ost.phase === 'PLAYING' && res.matchHandle >= 0) {
+    const rejoin = !!fbState.rejoin;
+    if (rejoin && ost.phase === 'PLAYING' && res.matchHandle >= 0 && !(S.screen === 'play' && online)) {
+      startOnlinePlay(res.matchHandle);
+    } else if (wasPlaying && ost.phase === 'PLAYING' && res.matchHandle >= 0) {
       h = res.matchHandle;
       prevView = null;
       drawnView = null;
@@ -655,14 +724,16 @@ async function promoteToHostFromState(isTakeover = false) {
       refresh();
     }
 
-    if (isTakeover) {
+    if (rejoin) {
+      // リロードから戻っただけなので、知らせは出さない
+    } else if (isTakeover) {
       const msg = oldHostName ? `${oldHostName}が退出したため、${meName()}がホストを引き継ぎました` : `${meName()}がホストを引き継ぎました`;
       mainCore.onlineSystemChat(msg);
     } else {
       mainCore.onlineSystemChat(`${meName()}がホストになりました`);
     }
     flushHostStateToFirebase();
-    toast({ w: 'お知らせ', t: 'あなたがホストになりました' });
+    if (!rejoin) toast({ w: 'お知らせ', t: 'あなたがホストになりました' });
     onlineChanged();
   } catch (e) {
     console.warn('[Firebase] promoteToHostFromState error:', e);
@@ -816,11 +887,12 @@ function openMemberSheet() {
       isH ? '<span class="badge host">ホスト</span>' : '',
       spec ? '<span class="badge spec">観戦</span>' : '',
       cpu ? '<span class="badge cpu">CPUが操作中…</span>' : '',
+      p && p.offline ? '<span class="badge off">切断中</span>' : '',
     ].filter(Boolean).join('');
     const canManage = isHostRoom() && uid && uid !== myUid;
     return `<div class="seat" style="justify-content:space-between">
       <div style="display:flex;align-items:center;gap:8px;min-width:0">
-        ${isMe ? meAv() : `<span class="avatar" style="background:${SEAT_COLORS[i % 6]};color:#fff">${esc(m.name[0])}</span>`}
+        ${isMe ? meAv() : slotAvHtml(m.slot, m.name, i)}
         <span class="nm">${esc(m.name)}${isMe ? '(あなた)' : ''}<small>${badges || '参加者・接続中'}</small></span>
       </div>
       ${canManage ? `<div style="display:flex;gap:6px"><button class="btn" data-pm-host="${esc(uid)}">ホストを変更</button><button class="btn danger" data-pm-kick="${esc(uid)}">キック</button></div>` : ''}
@@ -1076,8 +1148,9 @@ function room() {
       const spec = isSlotSpectating(m.slot);
       const cpu = isSlotAutoCpu(m.slot);
       const canClick = host && uid && uid !== myUid;
-      const tags = [isH ? 'ホスト' : '参加者', '接続中', spec ? '観戦モード' : '', cpu ? 'CPUが操作中…' : ''].filter(Boolean).join('・');
-      const inner = `${isMe ? meAv() : `<span class="avatar" style="background:${SEAT_COLORS[i % 6]};color:#fff">${esc(m.name[0])}</span>`}<span class="nm">${esc(m.name)}${isMe ? '(あなた)' : ''}<small>${esc(tags)}</small></span>`;
+      const offP = uid ? playerByUid(uid) : null;
+      const tags = [isH ? 'ホスト' : '参加者', offP && offP.offline ? '切断中(戻るのを待っています)' : '接続中', spec ? '観戦モード' : '', cpu ? 'CPUが操作中…' : ''].filter(Boolean).join('・');
+      const inner = `${isMe ? meAv() : slotAvHtml(m.slot, m.name, i)}<span class="nm">${esc(m.name)}${isMe ? '(あなた)' : ''}<small>${esc(tags)}</small></span>`;
       return canClick
         ? `<button type="button" class="seat seat-btn" data-pmenu="${esc(uid)}" title="クリックしてホスト変更・キック">${inner}<span class="seat-act">管理 ▾</span></button>`
         : `<div class="seat">${inner}</div>`;
@@ -1192,6 +1265,7 @@ async function createFirebaseRoom() {
           else if (uid !== netApi.uid && netApi.role === 'host') demoteHostToGuest();
           onlineChanged();
         },
+        onRejoined() { onPresenceRestored(); },
         onKicked() {
           if (fbState.roomId) {
             leaveOnline('skip');
@@ -1215,6 +1289,7 @@ async function createFirebaseRoom() {
     fbState.roomSettings = res.settings || initSettings;
     fbState.knownPlayerUids = new Set([res.uid]);
     fbState.creating = false;
+    rememberRoom(res.roomId);
     syncPublicRoomsWatch();
     scheduleHostSync();
     onlineChanged();
@@ -1227,7 +1302,32 @@ async function createFirebaseRoom() {
   }
 }
 
-async function joinFirebaseRoom(codeInput) {
+// リロードしても同じ部屋に戻れるように、タブごとに部屋番号を覚えておく
+function rememberRoom(id) { try { sessionStorage.setItem('asobi-fb-room', String(id)); } catch (e) {} }
+function forgetRoom() { try { sessionStorage.removeItem('asobi-fb-room'); } catch (e) {} }
+async function tryRejoinRoom() {
+  let code = null;
+  try { code = sessionStorage.getItem('asobi-fb-room'); } catch (e) {}
+  if (!code || fbState.roomId) return;
+  try { await ensureNet(); await netApi.ensureAuth(); } catch (e) { return; }
+  if (fbState.roomId) return;
+  return joinFirebaseRoom(code, { rejoin: true });
+}
+// つながり直した時に席を取り直した(猶予切れで外されていた)ら、ゲストとして入り直す
+function onPresenceRestored() {
+  if (!netApi || !fbState.roomId || netApi.role === 'host') return;
+  startGuestOnlineRoom(meName());
+  if (fbState.roomState) applyRemoteStateOnGuest(fbState.roomState);
+  onlineChanged();
+}
+// 画面に戻った時(スマホで別のアプリから戻った等)に、今の部屋の状態を当て直す
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !netApi || !fbState.roomId) return;
+  if (netApi.role === 'guest' && fbState.roomState) applyRemoteStateOnGuest(fbState.roomState);
+  else if (netApi.role === 'host') syncHostPlayers(fbState.players);
+  queueMicrotask(onlineChanged);
+});
+async function joinFirebaseRoom(codeInput, opts = {}) {
   const code = String(codeInput || '').trim();
   if (!/^\d{4}$/.test(code)) {
     fbState.error = '4桁の数字を入力してください';
@@ -1239,6 +1339,7 @@ async function joinFirebaseRoom(codeInput) {
   fbState.error = null;
   fbState.soloIdle = false;
   fbState.takingOver = false;
+  fbState.rejoin = !!opts.rejoin;
   fbState.knownPlayerUids = new Set();
   fbState.kickedUids = new Set();
   fbState.promptedJoinUids = new Set();
@@ -1297,6 +1398,7 @@ async function joinFirebaseRoom(codeInput) {
           else if (uid !== netApi.uid && netApi.role === 'host') demoteHostToGuest();
           onlineChanged();
         },
+        onRejoined() { onPresenceRestored(); },
         onKicked() {
           if (fbState.roomId) {
             leaveOnline('skip');
@@ -1320,13 +1422,23 @@ async function joinFirebaseRoom(codeInput) {
     fbState.hostUid = res.hostUid || null;
     fbState.roomSettings = res.settings || Object.assign({}, DEFAULT_ROOM_SETTINGS);
     fbState.joining = false;
+    rememberRoom(res.roomId);
+    if (res.rejoined) fbState.knownPlayerUids = new Set(Object.keys(fbState.players || {}));
     syncPublicRoomsWatch();
     if (!wolfGame.active() && !boardMatch.active()) S.screen = 'menu';
     startGuestOnlineRoom(meName());
     if (fbState.roomState) applyRemoteStateOnGuest(fbState.roomState);
     onlineChanged();
+    // リロード前にホストだった時は、部屋の状態からホストに戻る(盤面・チャットはそのまま)
+    if (res.hostUid && res.hostUid === netApi.uid) {
+      for (let i = 0; i < 40 && !(fbState.players && fbState.players[netApi.uid] && fbState.roomState); i++) await new Promise((r) => setTimeout(r, 75));
+      await promoteToHostFromState(false);
+    }
+    fbState.rejoin = false;
   } catch (e) {
+    fbState.rejoin = false;
     fbState.joining = false;
+    if (opts.rejoin) { forgetRoom(); render(); toast({ w: 'お知らせ', t: '前の部屋には戻れませんでした' }); return; }
     fbState.error = (e && e.message) || '部屋に入れませんでした';
     render();
   }
@@ -1496,7 +1608,7 @@ function openSpectatorSelectSheet(g, total) {
     const isSpec = selectedSpecs.has(m.slot);
     return `<button type="button" class="seat seat-btn spec-row${isSpec ? ' is-spec' : ''}" data-spec-slot="${m.slot}">
       <span class="spec-left">
-        ${isMe ? meAv() : `<span class="avatar" style="background:${SEAT_COLORS[i % 6]};color:#fff">${esc(m.name[0])}</span>`}
+        ${isMe ? meAv() : slotAvHtml(m.slot, m.name, i)}
         <span class="nm">${esc(m.name)}${isMe ? '(あなた)' : ''}<small>${isH ? '<span class="badge host">ホスト</span>' : ''}${isSlotSpectating(m.slot) ? '<span class="badge spec">元々観戦</span>' : ''}</small></span>
       </span>
       <span class="badge ${isSpec ? 'spec' : 'lobby'}">${isSpec ? '観戦者' : '対局する'}</span>
@@ -1592,6 +1704,9 @@ function leaveOnlinePlay() {
   online = false;
 }
 function leaveOnline(mode = 'auto') {
+  forgetRoom();
+  offlineSince.clear();
+  if (offlineTimer) { clearTimeout(offlineTimer); offlineTimer = null; }
   wolfGame.reset();
   boardMatch.reset();
   if (pointerFlushTimer) { clearTimeout(pointerFlushTimer); pointerFlushTimer = null; }
@@ -1646,6 +1761,7 @@ function onlineChanged() {
     return;
   }
   ost = nextOst;
+  liveMemberNames(ost);
   if (ost.closed) { const msg = ost.closed; leaveOnline('skip'); S.screen = 'room'; render(); return toast({ w: 'お知らせ', t: msg }); }
   if (ost.flash !== lastFlash) {
     lastFlash = ost.flash; const t = ost.flash.slice(ost.flash.indexOf('|') + 1);
@@ -2198,7 +2314,8 @@ function roomSummary() {
   const cpu = isSlotAutoCpu(m.slot);
   const badges = (isH ? '<small class="badge host">ホスト</small>' : '') +
    (spec ? '<small class="badge spec">観戦</small>' : '') +
-   (cpu ? '<small class="badge cpu">CPU操作中</small>' : '');
+   (cpu ? '<small class="badge cpu">CPU操作中</small>' : '') +
+   (p && p.offline ? '<small class="badge off">切断中</small>' : '');
   const inner = `${playerBadge({ ...m, avatar: p ? p.avatar : null })}${badges}`;
   if (host && uid && uid !== myUid) {
    return `<button type="button" class="room-member-btn" data-pmenu="${esc(uid)}" title="ホスト変更・キック">${inner}</button>`;

@@ -14,6 +14,7 @@ export const firebaseConfig = (typeof globalThis !== "undefined" && globalThis.F
 
 const CDN = "https://www.gstatic.com/firebasejs/11.0.1";
 const ROOM_TTL_MS = 3 * 60 * 60 * 1000; // 3時間
+const ROOM_IDLE_MS = 10 * 60 * 1000; // 全員が切断中のまま 10 分たった部屋は片付ける
 
 export function isConfigPlaceholder(cfg = firebaseConfig) {
   return !cfg || !cfg.apiKey || cfg.apiKey === "YOUR_API_KEY" || String(cfg.apiKey).startsWith("YOUR_");
@@ -141,7 +142,10 @@ export async function createNet(core, hooks) {
     const removals = [];
     for (const [id, r] of Object.entries(all)) {
       const createdAt = r && typeof r.createdAt === "number" ? r.createdAt : (r && r.state && typeof r.state.createdAt === "number" ? r.state.createdAt : 0);
-      if (createdAt > 0 && now - createdAt >= ROOM_TTL_MS) {
+      const ps = r && r.players ? Object.values(r.players).filter((p) => p && p.uid) : [];
+      const allOffline = ps.every((p) => p.offline && typeof p.offlineAt === "number" && now - p.offlineAt >= ROOM_IDLE_MS);
+      const idle = createdAt > 0 && now - createdAt >= ROOM_IDLE_MS && allOffline;
+      if ((createdAt > 0 && now - createdAt >= ROOM_TTL_MS) || idle) {
         removals.push(remove(ref(d, `rooms/${id}`)).catch(() => {}));
       } else {
         activeIds.add(id);
@@ -182,29 +186,68 @@ export async function createNet(core, hooks) {
     roomCallbacks = null;
     for (const u of unsubs) { try { u(); } catch {} }
     unsubs = [];
+    if (connUnsub) { try { connUnsub(); } catch {} connUnsub = null; }
     for (const d of discHandles) { try { await d.cancel(); } catch {} }
     discHandles = [];
   }
 
+  // 切断(リロード・スマホで画面を離れた時など)は「切断中」の印だけを付け、席は残す。
+  // 戻らない人は、ホストが猶予の後に部屋から外す(online.js)。全員が切断中の部屋は cleanupOldRooms が片付ける。
   async function syncDisconnectPolicy(playerCount = 1) {
     for (const d of discHandles) { try { await d.cancel(); } catch {} }
     discHandles = [];
     if (!currentRoomId || !uid) return;
     const d = getDb();
     try {
-      if (currentRole === "host" && playerCount <= 1) {
-        const dcRoom = onDisconnect(ref(d, `rooms/${currentRoomId}`));
-        await dcRoom.remove();
-        discHandles.push(dcRoom);
-      } else {
-        const dcP = onDisconnect(ref(d, `rooms/${currentRoomId}/players/${uid}`));
-        const dcC = onDisconnect(ref(d, `rooms/${currentRoomId}/cursors/${uid}`));
-        await Promise.all([dcP.remove(), dcC.remove()]);
-        discHandles.push(dcP, dcC);
-      }
+      const dcP = onDisconnect(ref(d, `rooms/${currentRoomId}/players/${uid}`));
+      const dcC = onDisconnect(ref(d, `rooms/${currentRoomId}/cursors/${uid}`));
+      await Promise.all([dcP.update({ offline: true, offlineAt: serverTimestamp() }), dcC.remove()]);
+      discHandles.push(dcP, dcC);
     } catch (e) {
       console.warn("[Firebase] syncDisconnectPolicy error:", e);
     }
+  }
+
+  // つながり直した時: 切断の予約を付け直し、自分の席を「接続中」に戻す。
+  // 席が消されていたら(猶予切れ)、空いている席に入り直す。
+  let myInfo = null, mySlotCache = -1, connUnsub = null, wasConnected = false;
+  async function restorePresence() {
+    if (!currentRoomId || !uid) return;
+    const d = getDb(), roomId = currentRoomId;
+    await syncDisconnectPolicy();
+    const pRef = ref(d, `rooms/${roomId}/players/${uid}`);
+    const snap = await get(pRef).catch(() => null);
+    if (roomId !== currentRoomId) return;
+    if (snap && snap.exists()) {
+      const v = snap.val() || {};
+      if (typeof v.slot === "number") mySlotCache = v.slot;
+      if (v.offline) await update(pRef, { offline: null, offlineAt: null }).catch(() => {});
+      return;
+    }
+    const room = await get(ref(d, `rooms/${roomId}`)).catch(() => null);
+    if (!room || !room.exists() || roomId !== currentRoomId) return;
+    const players = (room.val() || {}).players || {};
+    const used = new Set(Object.values(players).map((p) => (p && typeof p.slot === "number" ? p.slot : -1)));
+    let slot = mySlotCache >= 0 && !used.has(mySlotCache) ? mySlotCache : -1;
+    for (let s2 = 0; slot < 0 && s2 < 6; s2++) if (!used.has(s2)) slot = s2;
+    if (slot < 0) return;
+    mySlotCache = slot;
+    const info = myInfo || {};
+    await set(pRef, {
+      uid, name: info.name || "プレイヤー", slot, role: "guest", proto: info.proto || 2, rules: info.rules || "",
+      avatar: Number.isInteger(info.avatar) ? info.avatar : null, spectating: false, autoCpu: false,
+      wolfKey: info.wolfKey || null, joinedAt: serverTimestamp(),
+    }).catch(() => {});
+    roomCallbacks && roomCallbacks.onRejoined && roomCallbacks.onRejoined(slot);
+  }
+  function watchConnection() {
+    if (connUnsub) return;
+    wasConnected = false;
+    connUnsub = onValue(ref(getDb(), ".info/connected"), (snap) => {
+      const on = snap.val() === true;
+      if (on && wasConnected === false && currentRoomId) restorePresence().catch(() => {});
+      wasConnected = on;
+    });
   }
 
   const DEFAULT_ROOM_SETTINGS = {
@@ -237,7 +280,7 @@ export async function createNet(core, hooks) {
       if (createdAt > 0 && now - createdAt >= ROOM_TTL_MS) continue;
       const settings = normalizeRoomSettings(r.settings);
       if (!settings.isPublic) continue;
-      const players = Object.values(r.players || {}).filter((p) => p && p.uid);
+      const players = Object.values(r.players || {}).filter((p) => p && p.uid && !p.offline);
       if (!players.length) continue;
       const st = r.state || {};
       const hostP = (r.hostUid && r.players && r.players[r.hostUid]) || players.find((p) => p.role === "host") || players[0];
@@ -278,6 +321,7 @@ export async function createNet(core, hooks) {
       else callbacks.onHostUid && callbacks.onHostUid(snap.val());
     });
     unsubs.push(uPlayers, uState, uSettings, uCursors, uRoot);
+    watchConnection();
     if (uid) {
       const uKicked = onValue(ref(d, `rooms/${roomId}/kicked/${uid}`), (snap) => {
         if (snap.exists()) callbacks.onKicked && callbacks.onKicked(snap.val());
@@ -344,6 +388,7 @@ export async function createNet(core, hooks) {
 
       currentRoomId = roomId;
       currentRole = "host";
+      myInfo = Object.assign({}, playerInfo); mySlotCache = 0;
       await syncDisconnectPolicy(1);
       watchRoom(roomId, callbacks);
       return { roomId, uid: myUid, slot: 0, settings };
@@ -378,7 +423,16 @@ export async function createNet(core, hooks) {
 
       const pRef = ref(d, `rooms/${roomId}/players/${myUid}`);
       await remove(ref(d, `rooms/${roomId}/kicked/${myUid}`)).catch(() => {});
-      await set(pRef, {
+      myInfo = Object.assign({}, playerInfo); mySlotCache = slot;
+      if (existing) {
+        // 同じ人(リロード・つながり直し)は、席・役割・観戦・CPU委任をそのまま残す
+        await update(pRef, {
+          name: playerInfo.name || existing.name || "プレイヤー",
+          avatar: Number.isInteger(playerInfo.avatar) ? playerInfo.avatar : null,
+          wolfKey: playerInfo.wolfKey || existing.wolfKey || null,
+          offline: null, offlineAt: null,
+        });
+      } else await set(pRef, {
         uid: myUid,
         name: playerInfo.name || "プレイヤー",
         slot,
@@ -396,7 +450,7 @@ export async function createNet(core, hooks) {
       currentRole = "guest";
       await syncDisconnectPolicy(Object.keys(players).length + (existing ? 0 : 1));
       watchRoom(roomId, callbacks);
-      return { roomId, uid: myUid, slot, hostUid: roomVal.hostUid || null, settings };
+      return { roomId, uid: myUid, slot, hostUid: roomVal.hostUid || null, settings, rejoined: !!existing };
     },
 
     // 公開ルーム一覧の取得・監視
@@ -459,6 +513,7 @@ export async function createNet(core, hooks) {
     // 自分自身のプレイヤー属性(spectating, autoCpu など)を更新
     async setPlayerFlags(partial) {
       if (!currentRoomId || !uid || !partial) return;
+      if (myInfo && ("name" in partial || "avatar" in partial)) Object.assign(myInfo, "name" in partial ? { name: partial.name } : {}, "avatar" in partial ? { avatar: partial.avatar } : {});
       await update(ref(getDb(), `rooms/${currentRoomId}/players/${uid}`), partial);
     },
 
@@ -497,6 +552,15 @@ export async function createNet(core, hooks) {
       const d = getDb();
       await update(ref(d, `rooms/${currentRoomId}`), {
         [`kicked/${targetUid}`]: serverTimestamp(),
+        [`players/${targetUid}`]: null,
+        [`cursors/${targetUid}`]: null,
+      });
+    },
+
+    // ホストが、戻らなかった(切断中のまま猶予が切れた)人を部屋から外す
+    async removePlayer(targetUid) {
+      if (!currentRoomId || !uid || currentRole !== "host" || !targetUid || targetUid === uid) return;
+      await update(ref(getDb(), `rooms/${currentRoomId}`), {
         [`players/${targetUid}`]: null,
         [`cursors/${targetUid}`]: null,
       });

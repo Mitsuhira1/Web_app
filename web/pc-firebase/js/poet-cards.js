@@ -33,7 +33,9 @@ const poetCards = (() => {
   let online, stacks, timer, scoredId;
   const all = hundredPoems.map((_,i)=>i);
   function setup(id,on=false) { online=on; go('poetSetup'); }
-  let preferences = {cpu:1, first:'player', ...store.get('bozuSetup', {})};
+  // ローカルルール: hime … 姫を引いた時に場札が無ければもう1枚引く / semi … 蝉丸を坊主と同じにするか、全員の札を場へ出すか
+  let preferences = {cpu:1, first:'player', hime:'off', semi:'bozu', ...store.get('bozuSetup', {})};
+  const SEMIMARU = 9; // 10番 蝉丸
   const cpuDelay = {短い:1800, ふつう:2700, 長い:3700};
   function setupHtml() {
     const people = online ? extraParticipants(true) : setupPanel('人数と相手',
@@ -41,13 +43,16 @@ const poetCards = (() => {
       setupRow('最初の手番', seg('bozu:first', [['player','自分'],['cpu','CPU'],['random','ランダム']], preferences.first)) +
       setupRow('CPUの手番の長さ', seg('bozu:pace', CPU_PACE_CHOICES, preferences.pace || 'inherit')));
     const deck = setupPanel('ルール', setupRow('山札', '<b>4つ・各25枚</b>') +
-      setupRow('蝉丸', '<b>坊主と同じ</b>'));
+      setupRow('姫で場札が無い時', seg('bozu:hime', [['off','そのまま'],['on','もう1枚引く']], preferences.hime)) +
+      setupRow('蝉丸', seg('bozu:semi', [['bozu','坊主と同じ'],['all','全員の札を場へ']], preferences.semi)));
     return extraSetupLayout('bozu', online, people, deck, 'data-poet-start');
   }
   function setOption(key,value) {
     if (key === 'cpu' && [1,2,3,4,5].includes(+value)) preferences.cpu = +value;
     if (key === 'first' && ['player','cpu','random'].includes(value)) preferences.first = value;
     if (key === 'pace' && CPU_PACE_CHOICES.some(([id])=>id===value)) preferences.pace=value;
+    if (key === 'hime' && ['on','off'].includes(value)) preferences.hime = value;
+    if (key === 'semi' && ['bozu','all'].includes(value)) preferences.semi = value;
     store.set('bozuSetup', preferences);
     render();
   }
@@ -64,7 +69,8 @@ const poetCards = (() => {
     round.seats = round.seats.map(p=>({...p,score:0}));
     const deck = shuffle(all);
     stacks = [0,1,2,3].map(i=>deck.slice(i*25,i*25+25));
-    return {piles:[25,25,25,25],discard:0,turn,last:-1,finish:false};
+    return {piles:[25,25,25,25],discard:0,turn,last:-1,finish:false,extra:false,
+      hime:round.hime==='on'?'on':'off', semi:round.semi==='all'?'all':'bozu'};
   }
   function apply(state,action) {
     if (state.finish || !state.seats.some(p=>p.id===action.uid)) return false;
@@ -75,7 +81,11 @@ const poetCards = (() => {
     state.last=pile.pop(); state.piles=stacks.map(a=>a.length);
     p.lastCard=state.last;
     const role=cardRole(state.last);
-    if (role==='bozu') {
+    const fieldBefore=state.discard;
+    if (role==='bozu' && state.last===SEMIMARU && state.semi==='all') {
+      // 蝉丸: 全員の持ち札を場へ
+      for (const q of state.seats) { state.discard+=q.score; q.score=0; if (q!==p) q.lastCard=-1; }
+    } else if (role==='bozu') {
       state.discard+=p.score;
       p.score=0;
     } else {
@@ -85,8 +95,10 @@ const poetCards = (() => {
         state.discard=0;
       }
     }
-    state.turn=(state.turn+1)%state.seats.length;
     state.finish=stacks.every(a=>!a.length);
+    // 姫を引いて場札が1枚も無かった時は、同じ人がもう1枚引く(続けて姫でも同じ)
+    state.extra=role==='hime' && fieldBefore===0 && state.hime==='on' && !state.finish;
+    if (!state.extra) state.turn=(state.turn+1)%state.seats.length;
     return true;
   }
   function changed(state) {
@@ -148,15 +160,15 @@ const poetCards = (() => {
     const angle = count <= 2 ? 0 : (offset - count / 2) / (count - 2) * Math.PI * .84;
     const x = offset ? 50 + 40 * Math.sin(angle) : 50;
     const y = offset ? 38 - 26 * Math.cos(angle) : 78;
-    const drawer = (state.turn + count - 1) % count;
+    const drawer = state.extra ? state.turn : (state.turn + count - 1) % count;
     const last = player.lastCard ?? (index === drawer ? state.last : -1);
     const role = last >= 0 ? roleName[cardRole(last)] : '';
     const who = mine === index ? '自分' : '';
     return `<div class="poet-place ${offset ? '' : 'front'} ${index===state.turn && !state.finish ? 'turn' : ''}"
       data-poet-seat="${index}" style="left:${x}%;top:${y}%;--seat:${SEAT_COLORS[index%SEAT_COLORS.length]}">
-      <div class="poet-reveal" aria-label="直近の札">${last>=0 ? face(last) : ''}</div>
+      <div class="poet-reveal poet-own" data-count="${player.score}" data-score="${player.score}" style="--k:${Math.min(1,Math.sqrt(player.score)/10).toFixed(3)}"
+        aria-label="持ち札${player.score}枚">${last>=0 ? face(last) : ''}</div>
       <div class="poet-tally"><span class="poet-identity">${seatIcon(state,player,index)}<span class="poet-name">${esc(player.name)}</span></span>
-      <span class="poet-holding">${stack(player.score,true)}<b data-score="${player.score}" aria-label="持ち札${player.score}枚">${player.score}<small>枚</small></b></span>
       <span class="poet-role">${[who, role].filter(Boolean).join(' · ')}</span></div>
     </div>`;
   }
@@ -205,7 +217,7 @@ const poetCards = (() => {
     const consecutive=table.dataset.frame===state.id+'|'+(state.version-1);
     const previousPiles=consecutive ? table.dataset.piles.split(',').map(Number) : [];
     const pile=state.piles.findIndex((n,i)=>n<previousPiles[i]);
-    const drawer=(state.turn+state.seats.length-1)%state.seats.length;
+    const drawer=state.extra?state.turn:(state.turn+state.seats.length-1)%state.seats.length;
     const oldScore=table.querySelector(`[data-poet-seat="${drawer}"] [data-score]`)?.dataset.score;
     table.dataset.frame=key;
     table.dataset.piles=state.piles.join(',');
@@ -216,7 +228,7 @@ const poetCards = (() => {
     const winners=state.seats.filter(p=>p.score===best).map(p=>p.name);
     table.innerHTML=state.seats.map((_,i)=>place(state,i,front,mine)).join('')
       +pileRow(state,!state.finish && state.turn===mine);
-    $('#poetStatus').textContent=state.finish?winners.join('・')+'の勝ち':active.name+'の番';
+    $('#poetStatus').textContent=state.finish?winners.join('・')+'の勝ち':active.name+(state.extra?'がもう1枚':'の番');
     $('#poetScores').innerHTML=state.seats.map((p,i)=>`<div class="seat ${!state.finish && i===state.turn?'turn':''}">${seatIcon(state,p,i)}<span class="nm">${esc(p.name)}</span><b>${p.score}枚</b></div>`).join('');
     if(pile<0 || state.last<0 || document.hidden)return;
     const reduced=S.set.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -231,8 +243,11 @@ const poetCards = (() => {
     }
     sfx.play('CARD_FLIP');
     const role=cardRole(state.last);
+    const semiAll=state.last===SEMIMARU && state.semi==='all';
     if(role!=='tono' && !reduced)transientAudio.later(()=>{
-      if(table.isConnected && table.dataset.frame===key)cut({text:roleName[role],tone:role==='bozu'?'red':'gold',ms:1000});
+      if(!table.isConnected || table.dataset.frame!==key)return;
+      cut({text:semiAll?'蝉丸 全員の札を場へ':roleName[role],tone:role==='bozu'?'red':'gold',ms:semiAll?1400:1000});
+      if(state.extra)setTimeout(()=>{ if(table.isConnected && table.dataset.frame===key)cut({text:'もう1枚',tone:'gold',ms:900}); },1050);
     },duration);
   }
   function button(d) {
@@ -241,5 +256,5 @@ const poetCards = (() => {
   }
   const stop=()=>{clearTimeout(timer);stacks=null;};
   boardMatch.register('bozu',{initial,apply,changed,html,draw,button,stop});
-  return {setup,setupHtml,setOption,start:()=>boardMatch.start('bozu',online,online?{}:preferences),face};
+  return {setup,setupHtml,setOption,start:()=>boardMatch.start('bozu',online,online?{hime:preferences.hime,semi:preferences.semi}:preferences),face};
 })();

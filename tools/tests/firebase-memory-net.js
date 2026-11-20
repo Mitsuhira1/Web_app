@@ -12,8 +12,12 @@ const normalizeSettings = (raw) => {
 };
 
 export async function createNet() {
- const uid = crypto.randomUUID(), bus = new BroadcastChannel('firebase-regression');
+ let uid0 = null; try { uid0 = sessionStorage.getItem('test-uid'); } catch {}
+ const uid = uid0 || crypto.randomUUID(), bus = new BroadcastChannel('firebase-regression');
+ try { sessionStorage.setItem('test-uid', uid); } catch {}
  let roomId = null, role = null, cb = {};
+ // 本物の onDisconnect と同じく、ページを離れたら「切断中」の印を付ける
+ addEventListener('pagehide', () => { if (!roomId) return; const ps = read('players') || {}; if (ps[uid]) { ps[uid] = { ...ps[uid], offline: true, offlineAt: Date.now() }; write('players', ps); bus.postMessage({ type: 'state' }); } });
  const pubWatchers = new Set();
  const read = (key) => JSON.parse(localStorage.getItem('test-' + key) || 'null');
  const write = (key, value) => localStorage.setItem('test-' + key, JSON.stringify(value));
@@ -110,10 +114,10 @@ export async function createNet() {
    const kicked = read('kicked') || {}; delete kicked[uid]; write('kicked', kicked);
    let slot = existing && typeof existing.slot === 'number' ? existing.slot : 1;
    if (!existing) { for (let s = 0; s < 6; s++) { if (!used.has(s)) { slot = s; break; } } }
-   players[uid] = { ...player, uid, slot, role: 'guest', spectating: false, autoCpu: false, joinedAt: Date.now() };
+   players[uid] = existing ? { ...existing, name: player.name, avatar: player.avatar, offline: null, offlineAt: null } : { ...player, uid, slot, role: 'guest', spectating: false, autoCpu: false, joinedAt: Date.now() };
    write('players', players);
    notify();
-   return { roomId, uid, slot, hostUid: read('hostUid'), settings };
+   return { roomId, uid, slot, hostUid: read('hostUid'), settings, rejoined: !!existing };
   },
   async listPublicRooms() {
    return buildPublicList();
@@ -159,6 +163,11 @@ export async function createNet() {
    const kicked = read('kicked') || {}; kicked[targetUid] = Date.now();
    localStorage.removeItem('test-cursor-' + targetUid);
    write('kicked', kicked); write('players', players); notify();
+  },
+  async removePlayer(targetUid) {
+   if (role !== 'host' || !targetUid || targetUid === uid) return;
+   const players = read('players') || {}; delete players[targetUid];
+   localStorage.removeItem('test-cursor-' + targetUid); write('players', players); notify();
   },
   async writeSlideProgress(slide) {
    if (!roomId || !uid) return;

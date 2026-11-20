@@ -1466,7 +1466,7 @@ html.reduce .screen.col{animation:none}
 @keyframes bgpulse{0%,100%{opacity:.45}50%{opacity:1}}
 .sol .waste{display:flex;flex:none;justify-content:flex-start;align-items:flex-start;isolation:isolate}
 .sol .waste > .pcard{flex:none}
-.drag-enabled .sol .waste > [data-src]{touch-action:none;cursor:grab}
+.drag-enabled .sol .waste > [data-src],.drag-enabled .sol .soltab [data-src]{touch-action:none;cursor:grab}
 .sol .waste > .pcard+.pcard{margin-inline-start:calc(var(--w)*-.60)}
 .lview:active{cursor:grabbing}
 .lmoney.ex{align-items:flex-start}
@@ -1672,6 +1672,7 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
 .badge.host{background:color-mix(in srgb,var(--gold) 24%,var(--surface2));color:var(--gold)}
 .badge.spec{background:color-mix(in srgb,#3F78C4 22%,var(--surface2));color:#6ea4ee}
 .badge.cpu{background:color-mix(in srgb,#3E9B63 22%,var(--surface2));color:#56c484}
+.badge.off{background:color-mix(in srgb,#8a8a8a 25%,var(--surface2));color:var(--ink2,#999)}
 .seat-btn{width:100%;text-align:left;cursor:pointer;background:var(--surface);transition:border-color .15s ease,background-color .15s ease}
 .seat-btn:hover,.seat-btn:focus-visible{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 8%,var(--surface))}
 .seat-act{font-size:11px;font-weight:900;color:var(--gold);padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--gold) 16%,transparent);flex:none;white-space:nowrap}
@@ -2564,6 +2565,15 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-flight > .poet-card { position:absolute; inset:0; backface-visibility:hidden; }
 .poet-flight > .portrait { transform:rotateY(180deg); }
 .poet-reveal.receiving > .portrait { visibility:hidden; }
+/* 自分の札の溜め場: 引いた札を表向きに積み、持ち札の数は山の厚さで見せる */
+.poet-own { --depth:calc(var(--k,0) * 22px); }
+.poet-place.front .poet-own { --depth:calc(var(--k,0) * 40px); }
+.poet-own:not([data-count="0"])::before { content:""; position:absolute; inset:auto 0 0; height:var(--depth);
+  border-radius:0 0 3px 3px; border-inline:1px solid #8a7a58;
+  background:repeating-linear-gradient(to top,#7b6c4e 0 1px,#f3e7c9 1px 2px,#d8c9a4 2px 3px);
+  box-shadow:0 2px 4px #071c1670; }
+.poet-own > .portrait,.poet-own > .poet-flight { translate:0 calc(-1 * var(--depth)); }
+.poet-own[data-count="0"] > .portrait { opacity:.62; filter:saturate(.7); }
 @media (min-width:761px) {
   .poet-place.front { display:grid; width:90%; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); }
   .poet-place.front .poet-reveal { grid-column:2; }
@@ -2576,6 +2586,8 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .poet-identity,.poet-holding { gap:2px; }
   .poet-name { max-width:15cqw; }
   .poet-tally { padding:2px 5px; }
+  .poet-place.front .poet-reveal { width:min(31cqw,23cqh,280px); }
+  .poet-place.front .poet-own { --depth:calc(var(--k,0) * 26px); }
 }
 .poet-card { position:relative; display:block; width:100%; aspect-ratio:.68; overflow:hidden; color:#262621;
   border:clamp(2px,.35vw,5px) solid #284e4e; border-radius:3px; box-shadow:0 2px 0 #182c2b,0 4px 8px #0005;
