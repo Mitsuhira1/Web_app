@@ -1894,7 +1894,8 @@ function updateMaidCursorAim(scene,index) {
   }
 }
 function getViewportBox() {
-  const bw = maidCursorScene() || $('#boardwrap') || $('.stage') || app || (typeof document !== 'undefined' ? document.body : null);
+  // 胸毛絶体絶命は盤(縦横比が決まっている)を基準にする。窓の大きさが違っても同じボタンの上に出る
+  const bw = maidCursorScene() || $('#boardwrap') || (S.screen === 'extraPlay' && $('#mnTable .mn-board')) || $('.stage') || app || (typeof document !== 'undefined' ? document.body : null);
   return bw ? bw.getBoundingClientRect() : null;
 }
 
