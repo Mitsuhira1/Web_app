@@ -56,6 +56,10 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-21 / Claude / 坊主めくりの音を枚数に合わせる、クアルトの結果の理由の文を消す
+- 坊主めくり(`js/poet-cards.js` の `cardSound`): 札が流れる音を、3 枚までは 1 枚ごとの `CARD`、4〜9 枚は `SHUFFLE` 1 回、10 枚以上は途中でもう 1 回。
+- クアルト(`core/games/quarto.mjs`): 結果の理由「同じ特徴が4つ並びました」「盤面がすべて埋まりました」を空に。ユーザーの指示「画面を見れば明らかなことは書かない」を CLAUDE.md に書いた。
+
 ### 2026-11-21 / Claude / メニューのアイコンを前もって作った画像に
 - ユーザーの提案: アイコンをその場で計算せず画像にすれば、軽く・安定する(スクロールが少し重い)。
 - `tools/build_game_icons.cjs`(新規): 画面を開いて `AR` の SVG を 320px で撮り、`assets/game-icons/<id>.webp`(46 個・合計約 2MB)と `js/icon-images.js`(`AR[id]=photoIcon(id)`、元の SVG は `window.__AR_SVG`)を作る。`index.html` で `app.js` の前に読む。`sw.js` の FILES に追加。
