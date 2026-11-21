@@ -56,6 +56,13 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-21 / Antigravity / スマホ版のソリティア組札・ほかドラッグ対応カードゲームのタッチドラッグを修正
+- ユーザーの報告「ソリティアで中央のカードをスマホ版でドラッグできない」に対し、場札(`.soltab [data-src]`)は `e4bb24f` で `touch-action:none` 対応済みだったが、組札(`.soltop [data-src]`)と他のドラッグ対応カードゲーム(スピード・大富豪・7ならべ・Oh, No!・花札)は `touch-action:auto` のままでタッチドラッグが効かなかった(iOS 向けの `-webkit-user-select:none` / `-webkit-touch-callout:none` も未指定)。
+- `web/pc-firebase/css/app.css`: `.drag-enabled .sol [data-src]`、`.drag-enabled .speed [data-card]`、`.drag-enabled .hand2 [data-card]`、`.drag-enabled .hand2 [data-k]` に `touch-action:none;cursor:grab;-webkit-user-select:none;-webkit-touch-callout:none` を適用。
+- `web/pc-firebase/sw.js`: キャッシュ名を `asobipcfb-20261121-mobile-drag-22` に更新。
+- ファイル: `web/pc-firebase/css/app.css`, `web/pc-firebase/sw.js`, `docs/CHECKLIST_PENDING.md`, `README4AI_Claude_Codex_Antigravity.md`
+- 確かめたこと(Chromium モバイル 390×844 / 390×560・実タッチイベント CDP): ソリティア(クロンダイク)の場札→組札・組札→場札・複数枚束ドラッグ・ダブルタップ自動移動、スパイダーの場札ドラッグ、スピード・Oh, No! の `touch-action:none`、`test_spider_core`・`test_extra_12_games`・`test_roulette_core`・`test_falling_rules`・`git diff --check`。未確認: スマホ実機(iOS Safari / Android Chrome)。
+
 ### 2026-11-21 / Claude / 坊主めくり: 名札の大きさを固定、「自分」を消す、戻る時の確認
 - 名札の 2 行目(殿・姫・坊主)は空でも「坊主」の幅と 1 行の高さを取る(`.poet-role`)。「自分」は出さない。引くたびに名札の大きさが変わっていた。PC・スマホ幅で 40 回引いて変化 0。
 - `js/board-match.js` の `exit()`: 1 人で遊ぶ時も、対局の途中(1 手以上・勝負がついていない)なら「対局を終了しますか」を出す(坊主めくり・胸毛絶体絶命など boardMatch のゲーム共通)。
