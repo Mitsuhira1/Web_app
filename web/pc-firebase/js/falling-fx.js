@@ -224,12 +224,15 @@ function bunyoSvg(st,c,fid,W=6,H=12) {
   if (st.pair) {
     const p=st.pair, ax=(p.x+.5)*c, ay=(p.y+.5)*c, sx2=ax+Math.sin(p.ang)*c, sy2=ay-Math.cos(p.ang)*c;
     for (const m of st.markers||[]) top+=`<circle cx="${(m.x+.5)*c}" cy="${(m.y+.72)*c}" r="${c*.13}" fill="${BUNYO_COLORS[m.k][0]}" stroke="#fff" stroke-width="${c*.04}" opacity="${(.65+.3*Math.sin(now/120)).toFixed(2)}"/>`;
-    /* 軸の粒は、粒全体が白っぽく明滅する */
-    const glow=.55*(.5+.5*Math.sin(now/70)), same=p.a===p.b, ka='PA', kb=same?ka:'PB';
-    L(ka,toWhite(BUNYO_COLORS[p.a][0],glow)).push(`<path d="${BUNYO_SHAPE}" transform="${bunyoTf(ax,ay,c)}"/>`);
+    /* 軸の粒は、中の色はそのままで、ふちだけが白く光る(動画と同じ)。明るさがゆっくり波打つ */
+    const glow=.5+.5*Math.sin(now/110), same=p.a===p.b, ka='PA', kb=same?ka:'PB';
+    const rim=`<g transform="${bunyoTf(ax,ay+c*.01,c,.95,.95)}" fill="none" stroke-linejoin="round">`+
+      `<path d="${BUNYO_SHAPE}" stroke="#fff" stroke-width=".2" opacity="${(.12+.2*glow).toFixed(2)}"/>`+
+      `<path d="${BUNYO_SHAPE}" stroke="#fff" stroke-width=".085" opacity="${(.55+.45*glow).toFixed(2)}"/></g>`;
+    L(ka,BUNYO_COLORS[p.a][0]).push(`<path d="${BUNYO_SHAPE}" transform="${bunyoTf(ax,ay,c)}"/>`);
     L(kb,BUNYO_COLORS[p.b][0]).push(`<path d="${BUNYO_SHAPE}" transform="${bunyoTf(sx2,sy2,c)}"/>`);
     if (same) L(ka).push(`<path d="M${ax} ${ay} L${sx2} ${sy2}" stroke="${BUNYO_COLORS[p.a][0]}" stroke-width="${c*.52}"/>`);
-    faces+=bunyoFace(ax,ay,c,1,1,p.a,false)+bunyoFace(sx2,sy2,c,1,1,p.b,false);
+    faces+=rim+bunyoFace(ax,ay,c,1,1,p.a,false)+bunyoFace(sx2,sy2,c,1,1,p.b,false);
   }
   let body=''; for (const {fill,items} of layers.values()) body+=`<g filter="url(#${fid})" fill="${fill}">${items.join('')}</g>`;
   return `<svg width="${W*c}" height="${H*c}" viewBox="0 0 ${W*c} ${H*c}" style="filter:drop-shadow(0 2px 2px #0002)"><defs>${bunyoFilter(fid,c)}</defs>${body}${faces}${top}</svg>`;
