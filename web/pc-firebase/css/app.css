@@ -11,8 +11,6 @@
 @font-face{font-family:"Zen Antique";src:url(../fonts/ZenAntique.woff2) format("woff2")}
 /* Zen Antique に無い字(百人一首の札で使う 6 字)だけを足す */
 @font-face{font-family:"Zen Antique";src:url(../fonts/ZenAntique-Extra.woff2) format("woff2");unicode-range:U+7BC1,U+8EAC,U+5C91,U+66B9,U+6BB7,U+6763}
-/* 坊主めくりのカットイン用の筆文字(Yuji Boku から必要な字だけ) */
-@font-face{font-family:"Yuji Boku Fude";src:url(../fonts/YujiBoku-Bozu.woff2) format("woff2");font-display:block}
 /* 並べ方: 左に細い柱(タブと人数)、中央に広い棚か盤、右に側板。机の上の実物(生成り・くるみ・フェルト・金) */
 :root{
   --bg:#F3EFE6; --bg2:#EFEADF; --surface:#FFFDF8; --surface2:#F1EBDF; --line:#E2D9C8;
@@ -3042,8 +3040,9 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 }
 
 /* 坊主めくりのカットイン: 筆文字と和の色 */
-.cutin.f-fude .txt { font-family:"Yuji Boku Fude","Kaisei Tokumin","Yu Mincho",serif; font-weight:400; letter-spacing:.16em; }
-.cutin.f-fude .txt small { font-family:"Yuji Boku Fude","Zen Antique","Yu Mincho",serif; font-weight:400; letter-spacing:.3em; }
+/* 坊主めくりのカットイン: 太い明朝(Kaisei Tokumin)。ユーザーが字体の見本から選んだ(C 案) */
+.cutin.f-fude .txt { font-family:"Kaisei Tokumin","Yu Mincho",serif; font-weight:800; letter-spacing:.14em; }
+.cutin.f-fude .txt small { font-family:"Kaisei Tokumin","Yu Mincho",serif; font-weight:800; letter-spacing:.28em; }
 .cutin.wa-cut .band { background:
     radial-gradient(ellipse 1.6cqh 1cqh at 8% 22%,var(--petal) 60%,transparent 64%),
     radial-gradient(ellipse 1.2cqh .8cqh at 19% 78%,var(--petal) 60%,transparent 64%),

@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261122-bozu-cut-22";
+const CACHE = "asobipcfb-20261122-bozu-kaisei-23";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",
@@ -106,7 +106,6 @@ const FILES = [
 "./fonts/DelaGothicOne.woff2",
 "./fonts/KaiseiTokumin-ExtraBold.woff2",
 "./fonts/ShipporiMinchoB1-ExtraBold.woff2",
-"./fonts/YujiBoku-Bozu.woff2",
 "./fonts/YujiBoku-Koma.woff2",
 "./fonts/ZenAntique-Extra.woff2",
 "./fonts/ZenAntique.woff2",

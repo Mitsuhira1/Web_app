@@ -1406,7 +1406,7 @@ async function fillList() {
 
 // ---------------------------------------------------------------- 画面を描く
 let lastScreen = null, lastScreenFocus = null;
-try { ['Kaisei Tokumin', 'Shippori Mincho B1', 'Cinzel', 'Zen Antique', 'Dela Gothic One', 'Yuji Boku', 'Yuji Boku Fude', 'Zen Maru Gothic'].forEach((f) => document.fonts.load(`900 40px "${f}"`, 'あ王手A')); } catch (e) {}
+try { ['Kaisei Tokumin', 'Shippori Mincho B1', 'Cinzel', 'Zen Antique', 'Dela Gothic One', 'Yuji Boku', 'Zen Maru Gothic'].forEach((f) => document.fonts.load(`900 40px "${f}"`, 'あ王手A')); } catch (e) {}
 let lastModal = null;
 // 自作のプルダウン(角の丸い選択肢)。開いている項目の名前
 let ddOpen = null;
