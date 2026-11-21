@@ -369,18 +369,20 @@ async function resume(s) {
   if (h < 0) return toast({ w: 'お知らせ', t: '続きを読み込めませんでした' });
   const v0 = JSON.parse(await call('viewJson', h, 0));
   mySeat = lastSeat = v0.mine >= 0 ? v0.mine : 0;
-  enterPlay();
+  enterPlay(true);
 }
-async function enterPlay() {
+// resumed: 途中から再開した時は、配る・対局開始などの「盤を組み立てる演出」を出さず、すぐ途中の盤を見せる
+async function enterPlay(resumed = false) {
   busy = false; yachtCutJust = false; stopConcurrent();
   S.chatOpen = false; S.chatUnread = 0;
   concurrent = (online && !isSoloIdleMatch()) ? false : await call('isConcurrent', h); S.screen = 'play'; S.modal = null;
   // リロードした時に、この対局へ戻れるように覚えておく(通信対戦は部屋に入り直して戻る)
   try { if (!online) sessionStorage.setItem('asobi-play', cur.id); else sessionStorage.removeItem('asobi-play'); } catch (e) {}
   bgCtx(); render();
-  dealPending = SHUFFLE_GAMES.has(cur.id) && (!view || !view.moves) && (!online || isSoloIdleMatch()) ? 1 : 0;
-  if (SHUFFLE_GAMES.has(cur.id) && (!view || !view.moves)) transientAudio.later(sfxShuffle, 250);
-  if (!view || !view.moves) setTimeout(() => cut({ text: '対局開始', tone: 'gold', ms: 1200 }), 150);
+  const fresh = !resumed && (!view || !view.moves);
+  dealPending = SHUFFLE_GAMES.has(cur.id) && fresh && (!online || isSoloIdleMatch()) ? 1 : 0;
+  if (SHUFFLE_GAMES.has(cur.id) && fresh) transientAudio.later(sfxShuffle, 250);
+  if (fresh) setTimeout(() => cut({ text: '対局開始', tone: 'gold', ms: 1200 }), 150);
   refresh();
 }
 function leavePlay() { try { sessionStorage.removeItem('asobi-play'); } catch (e) {} token++; busy = false; cpuTurnKey = ''; S.chatOpen = false; S.chatUnread = 0; stopClock(); stopConcurrent(); closeSheet(); if (online) leaveOnlinePlay(); h = -1; view = null; }

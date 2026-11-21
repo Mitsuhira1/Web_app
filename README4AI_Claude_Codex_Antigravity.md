@@ -60,6 +60,12 @@
 - 坊主めくり: 「姫ボーナス」のカットインをやめ、「姫」の後に「もう一枚引く」(場札が無い時)/「+〇枚」(場札があった時の枚数)を同じ筆文字で出す。山札の一番上の坊主・姫の数を見せる設定(peek・state.tops)は全部消した。カットインの字体はユーザーが見本から選んだ Kaisei Tokumin(太い明朝)に。Yuji Boku の筆文字の字体ファイル(YujiBoku-Bozu.woff2)は削除。
 - `.github/workflows/pages.yml`: アップロード(build)と公開(deploy)を別の作業に分け、公開が失敗したら 30 秒後にもう一度。`cancel-in-progress: false`。「No artifacts named github-pages」の失敗が続いたため。
 
+### 2026-11-21 / Claude / 途中から再開で盤を組み立て直さない・ルーレットの画面
+- 再開: `enterPlay` が再開でも新しい対局と同じに扱い(`view` がまだ無いので `moves` が 0 扱い)、配る演出・「対局開始」・シャッフル音を出していた → `resume()` から `enterPlay(true)` で呼び、出さない。
+- ルーレット: 回転盤をスマホと同じく PC でもふだん隠し、回る間だけ盤の上に浮かせる(暗い幕+ふわっと拡大。止まって 1.6 秒後か、押すとフェードで消える `closeWheel`・`is-leaving`)。`backdrop-filter` はやめた(Edge 対策)。空いた所はテーブルを大きく(広い画面は縦横比 14:5.6 のまま盤いっぱい、`--tw`)。字は数字 Cinzel・言葉しっぽり明朝。選んだチップは浮かせて白+金の輪・光・▲、PC は 60px。
+- ファイル: `js/app.js`・`js/boards/roulette.js`・`css/app.css`・`sw.js`(キャッシュ名)・`docs/CHECKLIST_PENDING.md`・`docs/PORTING_TODO.md`
+- 確かめたこと(Chromium): ソリティア・花札・戦争・麻雀を数手進めて再開 → 0.1 秒で途中の盤、帯なし。ルーレット 1400×860 と 390×844 でベット中・回転・止まった後・消える途中を撮影。`test_roulette_core` 通過。未確認: Edge、通信対戦、制限時間切れでの回転。
+
 ### 2026-11-21 / Antigravity / スマホ版のソリティア組札・ほかドラッグ対応カードゲームのタッチドラッグを修正
 - ユーザーの報告「ソリティアで中央のカードをスマホ版でドラッグできない」に対し、場札(`.soltab [data-src]`)は `e4bb24f` で `touch-action:none` 対応済みだったが、組札(`.soltop [data-src]`)と他のドラッグ対応カードゲーム(スピード・大富豪・7ならべ・Oh, No!・花札)は `touch-action:auto` のままでタッチドラッグが効かなかった(iOS 向けの `-webkit-user-select:none` / `-webkit-touch-callout:none` も未指定)。
 - `web/pc-firebase/css/app.css`: `.drag-enabled .sol [data-src]`、`.drag-enabled .speed [data-card]`、`.drag-enabled .hand2 [data-card]`、`.drag-enabled .hand2 [data-k]` に `touch-action:none;cursor:grab;-webkit-user-select:none;-webkit-touch-callout:none` を適用。
