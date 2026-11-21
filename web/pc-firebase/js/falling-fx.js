@@ -233,7 +233,7 @@ function bunyoSvg(st,c,fid,W=6,H=12) {
     faces+=bunyoFace(ax,ay,c,1,1,p.a,false)+bunyoFace(sx2,sy2,c,1,1,p.b,false);
   }
   let body=''; for (const {fill,items} of layers.values()) body+=`<g filter="url(#${fid})" fill="${fill}">${items.join('')}</g>`;
-  return `<svg width="${W*c}" height="${H*c}" viewBox="0 0 ${W*c} ${H*c}" style="filter:drop-shadow(0 2px 2px #0002)"><defs>${bunyoFilter(fid,c)}</defs>${body}${faces}${top}</svg>`;
+  return `<svg data-bunyo width="${W*c}" height="${H*c}" viewBox="0 0 ${W*c} ${H*c}" style="filter:drop-shadow(0 2px 2px #0002)"><defs>${bunyoFilter(fid,c)}</defs>${body}${faces}${top}</svg>`;
 }
 const bunyoPairSvg = (a,b,c,fid) => bunyoSvg({cells:[[b],[a]]},c,fid,1,2);
 

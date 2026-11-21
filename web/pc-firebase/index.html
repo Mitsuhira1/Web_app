@@ -22,8 +22,16 @@
 <div class="bgstrip" id="bgs" role="group" aria-label="BGM" hidden></div>
 <button class="toast" id="toast" hidden></button>
 <script>
-// 調査用: ?nofx の時は、画面のフィルター(SVG の光・ぼかし、CSS の filter)を全部止める
-if (/[?&]nofx/.test(location.search)) { document.documentElement.classList.add('nofx'); document.head.insertAdjacentHTML('beforeend', '<style>.nofx [filter]{filter:none!important}.nofx *,.nofx *::before,.nofx *::after{filter:none!important;backdrop-filter:none!important}</style>'); }
+// 調査用: ?nofx … 画面のフィルターを止める。nofx=bunyo(ぶにょぶにょの絵だけ)/nofx=svg(SVG のフィルターだけ)/nofx=css(CSS のフィルターだけ)/nofx(全部)
+(function () {
+  var m = location.search.match(/[?&]nofx(=(\w+))?/); if (!m) return;
+  var css = { bunyo: 'svg[data-bunyo],svg[data-bunyo] [filter]{filter:none!important}',
+    svg: '[filter]{filter:none!important}',
+    css: '*:not([filter]),*::before,*::after{filter:none!important;backdrop-filter:none!important}' }[m[2]]
+    || '[filter]{filter:none!important}*,*::before,*::after{filter:none!important;backdrop-filter:none!important}';
+  document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
+  document.documentElement.classList.add('nofx');
+})();
 </script>
 <script>
 // 固まる原因を調べるための記録(diag.html で見る)。起動の段階・エラー・長い処理・0.5 秒ごとの「動いている印」を残す。
