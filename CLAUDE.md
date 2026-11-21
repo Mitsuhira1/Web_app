@@ -21,6 +21,7 @@
 - **`<svg>` の中に入れる絵(入れ子の `<svg>`・`<g>` など)に、CSS の `filter` / `backdrop-filter` を付けない**。影やぼかしは、その絵の `<filter>` の中(`feDropShadow`・`feGaussianBlur`)で付ける。HTML に直接置いた `<svg>` に付ける CSS の `drop-shadow` は、今のところ Edge でも動いている(`app.css` の `.rcard svg` など)。
 - 画像処理(フィルター・影・ぼかし・光の計算)を新しく足した時、アイコン(`js/art.js` の `AR`)に使った時は、**公開の前に Edge でメニューを開き、マウスを動かしてスクロールできるか**を確かめる。手元の Chromium(Playwright)では再現しなかったので、手元の試験だけでは「大丈夫」と言わない。
 - 推測で直して「直した」と言わない。下の道具で原因を確かめてから直す。
+- **メニューのゲームのアイコンは、前もって作った画像(`assets/game-icons/<id>.webp`)を使う**(2026-11-21〜。ユーザーの提案: その場で SVG とフィルターを計算しないので、軽く安定する)。`js/icon-images.js` が `AR[id]` を画像に置き換え、元の SVG は `window.__AR_SVG` に残る。**アイコンの絵(`js/art.js` の `AR`、`js/falling-fx.js` の `AR.bunyo`・`AR.pakuris` など)を変えたら、`node tools/build_game_icons.cjs` で画像を作り直す**(`python3 -m http.server -d web 8400` を動かしてから)。`sw.js` の FILES とキャッシュ名も直す。
 
 **調べる道具(`web/pc-firebase/` に残してある)**
 - `?diag`: 起動の段階・エラー・長い処理・0.5 秒ごとの「動いている」印を記録する。`?diag=deep` は、アプリの関数に入った/出たも全部記録する(重い)。記録は別のタブで `diag.html` を開いて見る(アプリの部品を読まないので、アプリが固まっていても開ける)。「記録をコピー」で貼ってもらう。

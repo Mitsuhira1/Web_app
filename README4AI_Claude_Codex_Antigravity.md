@@ -56,6 +56,11 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-21 / Claude / メニューのアイコンを前もって作った画像に
+- ユーザーの提案: アイコンをその場で計算せず画像にすれば、軽く・安定する(スクロールが少し重い)。
+- `tools/build_game_icons.cjs`(新規): 画面を開いて `AR` の SVG を 320px で撮り、`assets/game-icons/<id>.webp`(46 個・合計約 2MB)と `js/icon-images.js`(`AR[id]=photoIcon(id)`、元の SVG は `window.__AR_SVG`)を作る。`index.html` で `app.js` の前に読む。`sw.js` の FILES に追加。
+- 確かめたこと(Chromium): 元の SVG と画像を並べて同じ見た目、メニュー・成績・設定画面で表示、画像の読み込み失敗 0。スクロールの軽さは手元(グラフィック機能なし)では元から 60 コマ/秒で差が出ず、Edge では未確認。
+
 ### 2026-11-21 / Claude / Edge で画面が固まる不具合(原因と再発防止は CLAUDE.md)
 - 原因: ぶにょぶにょの絵(`js/falling-fx.js` の `bunyoSvg`)の外側の `<svg>` に付けた CSS `filter: drop-shadow`。メニューのアイコンでは別の `<svg>` の中に入れて表示していて、Edge で描き直すと描画が終わらなくなる。CSS の影をやめ、SVG フィルターの最後の `feDropShadow` に置き換えた(光の計算は元のまま)。
 - 調べる道具を残した: `?diag`・`?diag=deep`(記録、見るのは `diag.html`)、`?nofx=bunyo|svg|css`(フィルターを止める)、起動で止まった時の安全装置(`index.html`)。記録は `?diag` の時だけ動く。
