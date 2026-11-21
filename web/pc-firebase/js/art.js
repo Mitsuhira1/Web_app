@@ -525,6 +525,7 @@ Object.assign(AR,{
    +`<path d="M32 80C26 74 27 64 30 59C32 55 34 52 35 47H65C66 52 68 55 70 59C73 64 74 74 68 80Z" fill="#3e444c" stroke="#121417" stroke-width="1.2"/><path d="M36 50Q34 64 38 78" stroke="#9aa3ad" stroke-width="3" fill="none" opacity=".7"/>`
    +`<path d="M31 66A19 5 0 0 0 69 66" stroke="#e2b75a" stroke-width="2.6" fill="none"/>`
    +`<ellipse cx="50" cy="46" rx="18" ry="5" fill="#0c0a09" stroke="#e2b75a" stroke-width="2"/>`
+   +`<path d="M40.5 33.5C34 33 30.5 37 31.5 44.5" stroke="#6a3c22" stroke-width="6.4" fill="none" stroke-linecap="round"/><path d="M40.5 33.5C34 33 30.5 37 31.5 44.5" stroke="#f2bc93" stroke-width="4.6" fill="none" stroke-linecap="round"/><path d="M59.5 33.5C66 33 69.5 37 68.5 44.5" stroke="#6a3c22" stroke-width="6.4" fill="none" stroke-linecap="round"/><path d="M59.5 33.5C66 33 69.5 37 68.5 44.5" stroke="#f2bc93" stroke-width="4.6" fill="none" stroke-linecap="round"/>`
    +`<path d="M37 47C36 38 38 31 43 29H57C62 31 64 38 63 47Z" fill="#f2bc93" stroke="#6a3c22" stroke-width="1"/>`
    +`<path d="M44 34l2 2M47 33l1.6 2.4M53 33l-1.6 2.4M56 34l-2 2M50 36v3M49 40l1 2.5M45 38l1.8 1.6M55 38l-1.8 1.6" stroke="#4a2c18" stroke-width=".9" stroke-linecap="round"/>`
    +`<ellipse cx="50" cy="20" rx="10.5" ry="11" fill="#f3c59d" stroke="#6a3c22" stroke-width="1"/><ellipse cx="46.5" cy="13" rx="3.5" ry="1.6" fill="#fff" opacity=".6"/>`
@@ -532,8 +533,7 @@ Object.assign(AR,{
    +`<circle cx="46" cy="19" r="2.6" fill="#fff" stroke="#2b1c14" stroke-width=".6"/><circle cx="54" cy="19" r="2.6" fill="#fff" stroke="#2b1c14" stroke-width=".6"/><circle cx="46.6" cy="19.4" r="1" fill="#2b1c14"/><circle cx="53.4" cy="19.4" r="1" fill="#2b1c14"/>`
    +`<path d="M43 15.5l5 1.4M57 15.5l-5 1.4" stroke="#2b1c14" stroke-width="1.6" stroke-linecap="round"/>`
    +`<path d="M50 24.5C47 23 43 23.5 41 26C40 27.5 38.5 27 38.5 25.5C38 29 42 29.5 44.5 28C47 26.6 49 26.5 50 27C51 26.5 53 26.6 55.5 28C58 29.5 62 29 61.5 25.5C61.5 27 60 27.5 59 26C57 23.5 53 23 50 24.5Z" fill="#2b1c14"/>`
-   +`<path d="M41 31.5C34 31 30 36 31.5 44.5" stroke="#6a3c22" stroke-width="6.4" fill="none" stroke-linecap="round"/><path d="M41 31.5C34 31 30 36 31.5 44.5" stroke="#f2bc93" stroke-width="4.6" fill="none" stroke-linecap="round"/>`
-   +`<path d="M59 31.5C66 31 70 36 68.5 44.5" stroke="#6a3c22" stroke-width="6.4" fill="none" stroke-linecap="round"/><path d="M59 31.5C66 31 70 36 68.5 44.5" stroke="#f2bc93" stroke-width="4.6" fill="none" stroke-linecap="round"/><ellipse cx="31.8" cy="46.2" rx="3.4" ry="2.6" fill="#f2bc93" stroke="#6a3c22" stroke-width=".9"/><ellipse cx="68.2" cy="46.2" rx="3.4" ry="2.6" fill="#f2bc93" stroke="#6a3c22" stroke-width=".9"/><path d="M30.6 46.4v1.6M32.2 46.6v1.7M67.8 46.6v1.7M69.4 46.4v1.6" stroke="#b9754f" stroke-width=".6" stroke-linecap="round"/>`
+      +`<ellipse cx="31.8" cy="46.2" rx="3.4" ry="2.6" fill="#f2bc93" stroke="#6a3c22" stroke-width=".9"/><ellipse cx="68.2" cy="46.2" rx="3.4" ry="2.6" fill="#f2bc93" stroke="#6a3c22" stroke-width=".9"/><path d="M30.6 46.4v1.6M32.2 46.6v1.7M67.8 46.6v1.7M69.4 46.4v1.6" stroke="#b9754f" stroke-width=".6" stroke-linecap="round"/>`
    +`<path d="M70 59C76 58 78 54 81 51" stroke="#8a6a44" stroke-width="1.6" fill="none"/><circle cx="81.5" cy="50.5" r="2.6" fill="#ffd23f"/><circle cx="81.5" cy="50.5" r="1.2" fill="#fff"/>`
    +`</g>`),
  roulette:I(bFelt(),(()=>{const cx=52,cy=49,n=18,da=2*Math.PI/n,ro=31,ri=19.5;
