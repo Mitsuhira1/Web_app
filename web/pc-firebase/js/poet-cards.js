@@ -299,6 +299,14 @@ const poetCards = (() => {
     });
     return (n - 1) * gap + each;
   }
+  // 札を動かす音は枚数に合わせる: 3 枚までは 1 枚ごとに「パサッ」、4〜9 枚はパラパラ 1 回、10 枚以上は途中でもう 1 回
+  function cardSound(n, ms, live) {
+    const few = n <= 3;
+    return {
+      start() { if (few) return; sfx.play('SHUFFLE', {volume: n < 10 ? .75 : 1}); if (n >= 10) setTimeout(() => { if (live()) sfx.play('SHUFFLE', {volume: .8}); }, ms / 2); },
+      each() { if (few && live()) sfx.play('CARD', {volume: .8}); }
+    };
+  }
   let busyUntil = 0; // 札を動かしている間は、CPU も自分も次を引かない
   let shown = null;  // 前に描いた時の札の並び(持ち札・場札)
   const snapshot = state => ({id:state.id, version:state.version, discard:state.discard,
@@ -366,14 +374,14 @@ const poetCards = (() => {
       if(groups.length){
         transientAudio.later(()=>{
           if(!live())return;
-          sfx.play('SHUFFLE');
+          const longestNow=Math.max(...groups.map(g=>g.cards.length));
+          const snd=cardSound(handTotal,(longestNow-1)*Math.min(95,1300/longestNow)+600,live); snd.start();
           for(const g of groups){
             const el=reveal(g.i);
             streamMs=Math.max(streamMs,stream(table,g.cards,()=>ownTop(el),()=>potTop(table),{faceUp:true,live,
-              onLeave:(k)=>{ if(!live())return; const rest=g.cards.length-1-k; showOwn(el,g.cards[k+1]??-1,rest); },
+              onLeave:(k)=>{ if(!live())return; snd.each(); const rest=g.cards.length-1-k; showOwn(el,g.cards[k+1]??-1,rest); },
               onArrive:()=>{ if(!live())return; arrived++; showPot(table,prev.discard+Math.round(moved*arrived/handTotal)); }}));
           }
-          if(streamMs>900) setTimeout(()=>{ if(live()) sfx.play('SHUFFLE'); },streamMs/2);
         },startAt);
         const longest=Math.max(...groups.map(g=>g.cards.length));
         streamMs=(longest-1)*Math.min(95,1300/longest)+600;
@@ -385,11 +393,11 @@ const poetCards = (() => {
       const seatEl=el.closest('.poet-place');
       transientAudio.later(()=>{
         if(!live())return;
-        sfx.play('SHUFFLE');
+        const snd=cardSound(cards.length,(cards.length-1)*Math.min(95,1300/cards.length)+600,live); snd.start();
         seatEl.classList.add('taking');
         let got=0;
         stream(table,cards,()=>potTop(table),()=>el,{faceUp:false,under:true,live,
-          onLeave:(k)=>{ if(live()) showPot(table,cards.length-1-k); },
+          onLeave:(k)=>{ if(!live())return; snd.each(); showPot(table,cards.length-1-k); },
           onArrive:()=>{ if(!live())return; got++; showOwn(el,state.last,before[drawer].score+1+got); }});
       },startAt);
       streamMs=(cards.length-1)*Math.min(95,1300/cards.length)+600;
