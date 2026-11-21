@@ -33,11 +33,13 @@
 .twelve-scene .goita-play{display:grid;justify-items:center;gap:5px;color:#5b513e;font-weight:700}
 .twelve-scene .attack-name{display:inline-flex;align-items:center;gap:15px;color:#6f523a;border-block:1px solid #aa9067;padding:5px 16px;font-weight:700}
 .twelve-scene .attack-name strong{font:800 36px/1.25 "Noto Serif CJK JP",serif;color:#3d2c1d}
-.twelve-scene .qtray{width:220px;text-align:center;padding:15px 10px 19px;border-radius:19px;background:var(--grain),linear-gradient(110deg,#9e744e,#62432f);border:5px solid #674832;box-shadow:inset 0 1px 1px #e1bc90,var(--sh-board);color:#fff1cd}
+.twelve-scene .qtray{width:244px;text-align:center;padding:13px 10px 14px;border-radius:19px;background:var(--grain),linear-gradient(110deg,#9e744e,#62432f);border:5px solid #674832;box-shadow:inset 0 1px 1px #e1bc90,var(--sh-board);color:#fff1cd}
 .twelve-scene .tray-title{font-size:15px;font-weight:700}
-.twelve-scene .qpool{display:grid;grid-template-columns:repeat(3,1fr);background:#4b382d;border-radius:11px;padding:5px 3px;box-shadow:inset 0 3px 5px #2b1e18;margin-top:8px}
-.twelve-scene .qpool svg{width:59px;height:62px}
-.twelve-scene .chosen{width:100px;background:#543c2e;border:1.5px solid #d9b579;border-radius:12px;margin:7px auto 14px;display:grid;place-items:center}
+.twelve-scene .qpool{display:grid;grid-template-columns:repeat(4,50px);grid-auto-rows:58px;justify-content:center;background:#4b382d;border-radius:11px;padding:5px 3px;box-shadow:inset 0 3px 5px #2b1e18;margin-top:8px}
+.twelve-scene .qpool .q-cell,.twelve-scene .qpool .q-empty{width:50px;height:58px;display:grid;place-items:center;overflow:visible}
+.twelve-scene .qpool svg{display:block;width:50px;height:62px}
+.twelve-scene .chosen{width:104px;height:104px;box-sizing:border-box;background:#543c2e;border:1.5px solid #d9b579;border-radius:12px;margin:7px auto 12px;display:grid;place-items:center;overflow:hidden}
+.twelve-scene .chosen svg{display:block;width:84px;height:100px}
 .twelve-scene .ghost-board{display:grid;grid-template-columns:repeat(6,76px);grid-template-rows:repeat(6,76px);border:13px solid #684d3b;border-radius:12px;outline:2px solid #443528;background:#79664d;box-shadow:inset 0 0 12px #473b23,var(--sh-board);overflow:hidden}
 .twelve-scene .ghost-cell{position:relative;display:grid;place-items:center;border:1px solid #654f333e;background:var(--noise),linear-gradient(130deg,#e2ceb2,#d4bd9b)}
 .twelve-scene .ghost-cell.parity1{background:var(--noise),linear-gradient(130deg,#b8ac92,#aa9d82)}
@@ -76,16 +78,22 @@
   background:radial-gradient(circle at 34% 24%,#fffc,transparent 17%),
     radial-gradient(circle at 35% 29%,var(--lit),var(--paint) 55%,var(--shade) 91%);
   box-shadow:0 2px 2px #281b132e; }
-.twelve-scene .chosen-peg,.twelve-scene .peg-socket.aim{outline:3px solid #ffd57a;outline-offset:3px}
+/* 当たり領域(見えない): 穴とペグの頭まで。隣の穴とは重ならない */
+.twelve-scene .peg-socket::before{content:"";position:absolute;left:-8px;right:-8px;top:-25px;bottom:-6px;border-radius:24px 24px 50% 50%}
+/* 選んだペグ: 穴の縁と頭の丸に沿って緑の輪 */
+.twelve-scene .peg-socket.chosen-peg{box-shadow:inset 0 4px 4px #49301980,0 0 0 2px #fff,0 0 0 4px #0f8a52}
+.twelve-scene .peg-socket.chosen-peg .wood-peg::after{box-shadow:0 0 0 2px #fff,0 0 0 4px #0f8a52,0 2px 6px #0f8a5299}
+.twelve-scene .peg-socket.aim::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px dashed #0f8a52;box-shadow:0 0 0 1px #fffc;pointer-events:none}
+.twelve-scene .twelve-control.peg-socket:not(.chosen-peg):hover{box-shadow:inset 0 4px 4px #49301980,0 0 0 2px #0f8a5299}
 
 .twelve-scene .twelve-control,.twelve-scene .twelve-static{position:relative;display:grid;place-items:center;padding:0}
 .twelve-scene .twelve-control{border:0;background:none;color:inherit;cursor:pointer}
 .twelve-scene .twelve-control:focus-visible{outline:3px solid var(--mark);outline-offset:3px}
 .twelve-scene .twelve-control:hover>.pc,.twelve-scene .twelve-control:hover>.bid,.twelve-scene .twelve-control:hover>.goita-piece{filter:brightness(1.09)}
 .twelve-scene .twelve-control .slot-num{pointer-events:none}
-.twelve-scene .q-target{display:block;width:65px;height:33px;border-radius:50%}
-.twelve-scene .twelve-control:hover .q-target,.twelve-scene .twelve-control:focus-visible .q-target{box-shadow:inset 0 0 0 3px var(--mark)}
-.twelve-scene .chosen{min-height:85px}
+.twelve-scene .q-target{display:block;border-radius:50%}
+.twelve-scene .twelve-control:hover .q-target,.twelve-scene .twelve-control:focus-visible .q-target{box-shadow:0 0 0 3px var(--mark)}
+.twelve-scene .q-ghost{opacity:0;pointer-events:none;transition:opacity .12s}
 .twelve-scene .twelve-control.ghost-cell,.twelve-scene .twelve-static.ghost-cell{background:var(--noise),linear-gradient(130deg,#e2ceb2,#d4bd9b);border:1px solid #654f333e}
 .twelve-scene .twelve-control.ghost-cell.parity1,.twelve-scene .twelve-static.ghost-cell.parity1{background:var(--noise),linear-gradient(130deg,#b8ac92,#aa9d82)}
 .twelve-scene .twelve-control.ghost-cell.picked{background:#efd599}

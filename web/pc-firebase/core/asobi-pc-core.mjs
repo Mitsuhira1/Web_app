@@ -1,4 +1,5 @@
 import { registerExtraGames, extraGameView } from './extra-games.mjs';
+import { SpiderSolitaire, spiderChoose } from './games/spider.mjs';
 import {
   THROW_IAE23kobfj9wdoxr as THROW_IAE,
   enumEntries20mr21zbe3az4 as enumEntries,
@@ -466,6 +467,8 @@ initMetadataForClass(SolitaireState, 'SolitaireState');
 initMetadataForClass(sam$jp_yonekou_asobi26_core_Brain$0_25, 'sam$jp_yonekou_asobi26_core_Brain$0', VOID, VOID, [Brain, FunctionAdapter]);
 initMetadataForCompanion(Companion_27);
 initMetadataForClass(Solitaire, 'Solitaire', Solitaire, VOID, [ConcurrentRules]);
+initMetadataForClass(SpiderSolitaire, 'SpiderSolitaire', VOID, VOID, [ConcurrentRules]);
+(function () { var raw = SpiderSolitaire.prototype.xs; SpiderSolitaire.prototype.xs = function (st) { var o = raw.call(this, st); return o == null ? null : new Outcome(o.winner, o.reason); }; })();
 initMetadataForClass(SpeedState, 'SpeedState');
 initMetadataForClass(sam$jp_yonekou_asobi26_core_Brain$0_26, 'sam$jp_yonekou_asobi26_core_Brain$0', VOID, VOID, [Brain, FunctionAdapter]);
 initMetadataForCompanion(Companion_28);
@@ -2188,7 +2191,7 @@ function Catalog() {
   var tmp_37 = new GameInfo('uno', 9, 'Oh, No!', tmp_34, '2\u301C6\u4EBA', '\u8272\u304B\u6570\u5B57\u304C\u540C\u3058\u30AB\u30FC\u30C9\u3092\u51FA\u3059\u3002\u6B8B\u308A1\u679A\u306B\u306A\u308B\u524D\u306B\u300COh, No!\u300D\u3068\u5BA3\u8A00\u3059\u308B\u3002', tmp_35, tmp_36, listOf([new OptionSpec('players', '\u4EBA\u6570', destination_1, '4'), new OptionSpec('penalty', '\u8A00\u3044\u5FD8\u308C\u30FB\u8A00\u3044\u307E\u3061\u304C\u3044\u3067\u5F15\u304F\u679A\u6570', listOf([to('0', '\u306A\u3057'), to('1', '1\u679A'), to('2', '2\u679A'), to('4', '4\u679A')]), '2'), new OptionSpec('bundle', 'まとめ出し', listOf([to('off', 'なし'), to('on', 'あり')]), 'off', 'local', '同じ数字・記号の札を2枚以上まとめて出せる')]));
   var tmp_38 = Category_CARD_getInstance();
   var tmp_39 = Companion_getInstance_27().wr_1;
-  var tmp_40 = listOf([new Section('\u6982\u8981\u3068\u76EE\u7684', '1\u4EBA\u306A\u3089\u30AF\u30ED\u30F3\u30C0\u30A4\u30AF\u3001\u591A\u4EBA\u6570\u306A\u3089\u540C\u3058\u914D\u672D\u3092\u5225\u3005\u306B\u89E3\u304F\u7AF6\u4E89\u3067\u3059\u3002\u5148\u306B4\u3064\u306E\u7D44\u672D\u3092\u5B8C\u6210\u3055\u305B\u307E\u3059\u3002'), new Section('\u6E96\u5099', '7\u5217\u306B1\u301C7\u679A\u3092\u914D\u308A\u3001\u5404\u5217\u306E\u4E00\u756A\u4E0A\u3092\u8868\u306B\u3057\u307E\u3059\u3002\u6B8B\u308A\u306F\u5C71\u672D\u3067\u3059\u30021\u679A\u3081\u304F\u308A\u30FB3\u679A\u3081\u304F\u308A\u3001\u5C71\u672D\u306E\u5468\u56DE\u7121\u5236\u9650\u30FB3\u56DE\u3092\u8A2D\u5B9A\u3067\u304D\u307E\u3059\u3002'), new Section('\u5834\u672D\u306E\u79FB\u52D5', '\u8D64\u3068\u9ED2\u304C\u4EA4\u4E92\u3001\u6570\u5B57\u306F1\u3064\u305A\u3064\u5C0F\u3055\u304F\u306A\u308B\u3088\u3046\u91CD\u306D\u307E\u3059\u3002\u8868\u5411\u304D\u3067\u3064\u306A\u304C\u3063\u305F\u672D\u306F\u307E\u3068\u3081\u3066\u79FB\u52D5\u53EF\u80FD\u3002\u7A7A\u306E\u5217\u306B\u306FK\u304B\u3089\u306E\u7D44\u3060\u3051\u7F6E\u3051\u307E\u3059\u3002\u96A0\u308C\u3066\u3044\u305F\u4E00\u756A\u4E0A\u306E\u672D\u306F\u81EA\u52D5\u3067\u8868\u306B\u306A\u308A\u307E\u3059\u3002'), new Section('\u7D44\u672D\u3068\u64CD\u4F5C', '\u7D44\u672D\u306F\u540C\u3058\u30DE\u30FC\u30AF\u3067A\u304B\u3089K\u306E\u9806\u3002\u672D\u306F\u6307\u3067\u30C9\u30E9\u30C3\u30B0\u3057\u3066\u884C\u304D\u5148\u306B\u843D\u3068\u3059\u304B\u3001\u30BF\u30C3\u30D7\u3067\u9078\u3093\u3067\u304B\u3089\u884C\u304D\u5148\u3092\u30BF\u30C3\u30D7\u3057\u3066\u52D5\u304B\u3057\u307E\u3059\u3002\u9078\u3093\u3060\u672D\u3092\u3082\u3046\u4E00\u5EA6\u30BF\u30C3\u30D7\u3059\u308B\u3068\u3001\u7D44\u672D(\u7F6E\u3051\u306A\u3051\u308C\u3070\u7F6E\u3051\u308B\u5217)\u3078\u81EA\u52D5\u3067\u52D5\u304D\u307E\u3059\u3002\u5DE6\u4E0A\u306E\u5C71\u672D\u3092\u30BF\u30C3\u30D7\u3059\u308B\u3068\u3081\u304F\u308A\u3001\u5C71\u672D\u304C\u306A\u304F\u306A\u3063\u305F\u3089\u3082\u3046\u4E00\u5EA6\u30BF\u30C3\u30D7\u3067\u623B\u3057\u307E\u3059\u3002\u300C\u7D44\u672D\u3078\u300D\u306F\u9078\u3093\u3060\u672D(\u9078\u3093\u3067\u3044\u306A\u3044\u6642\u306F\u7F6E\u3051\u308B\u672D)\u3092\u7D44\u672D\u3078\u52D5\u304B\u3057\u307E\u3059\u3002\u7D44\u672D\u304B\u3089\u5834\u672D\u3078\u623B\u3059\u3053\u3068\u3082\u3067\u304D\u307E\u3059\u3002', listOf_0('solitaire_play')), new Section('\u52DD\u6557', '4\u7D44\u3059\u3079\u3066\u5B8C\u6210\u3067\u6210\u529F\u3002\u89E3\u3051\u308B\u914D\u672D\u304C\u914D\u3089\u308C\u307E\u3059\u3002\u7D9A\u3051\u3089\u308C\u306A\u3044\u6642\u306F\u7D42\u4E86\u3067\u304D\u307E\u3059\u3002\u901A\u4FE1\u3067\u306F\u540C\u3058\u914D\u672D\u3067\u72EC\u7ACB\u3057\u3066\u9032\u3081\u3001\u6700\u521D\u306E\u5B8C\u6210\u8005\u304C\u52DD\u3061\u3001\u5168\u54E1\u7D42\u4E86\u306A\u3089\u5F15\u304D\u5206\u3051\u30021\u53F0\u306E\u4EA4\u4EE3\u5F62\u5F0F\u306B\u306F\u5BFE\u5FDC\u3057\u307E\u305B\u3093\u3002'), new Section('\u30B3\u30C4', '\u96A0\u308C\u305F\u672D\u3092\u591A\u304F\u958B\u304F\u3053\u3068\u3092\u512A\u5148\u3057\u307E\u3059\u3002K\u3092\u52D5\u304B\u305B\u308B\u7A7A\u5217\u3092\u78BA\u4FDD\u3057\u3001\u7D44\u672D\u3078\u6025\u3044\u3067\u79FB\u3059\u3053\u3068\u3067\u5834\u672D\u306E\u9023\u7D50\u3092\u59A8\u3052\u306A\u3044\u3088\u3046\u306B\u3057\u307E\u3057\u3087\u3046\u3002')]);
+  var tmp_40 = listOf([new Section('\u6982\u8981\u3068\u76EE\u7684', '1\u4EBA\u306A\u3089\u30AF\u30ED\u30F3\u30C0\u30A4\u30AF\u3001\u591A\u4EBA\u6570\u306A\u3089\u540C\u3058\u914D\u672D\u3092\u5225\u3005\u306B\u89E3\u304F\u7AF6\u4E89\u3067\u3059\u3002\u5148\u306B4\u3064\u306E\u7D44\u672D\u3092\u5B8C\u6210\u3055\u305B\u307E\u3059\u3002'), new Section('\u6E96\u5099', '7\u5217\u306B1\u301C7\u679A\u3092\u914D\u308A\u3001\u5404\u5217\u306E\u4E00\u756A\u4E0A\u3092\u8868\u306B\u3057\u307E\u3059\u3002\u6B8B\u308A\u306F\u5C71\u672D\u3067\u3059\u30021\u679A\u3081\u304F\u308A\u30FB3\u679A\u3081\u304F\u308A\u3001\u5C71\u672D\u306E\u5468\u56DE\u7121\u5236\u9650\u30FB3\u56DE\u3092\u8A2D\u5B9A\u3067\u304D\u307E\u3059\u3002'), new Section('\u5834\u672D\u306E\u79FB\u52D5', '\u8D64\u3068\u9ED2\u304C\u4EA4\u4E92\u3001\u6570\u5B57\u306F1\u3064\u305A\u3064\u5C0F\u3055\u304F\u306A\u308B\u3088\u3046\u91CD\u306D\u307E\u3059\u3002\u8868\u5411\u304D\u3067\u3064\u306A\u304C\u3063\u305F\u672D\u306F\u307E\u3068\u3081\u3066\u79FB\u52D5\u53EF\u80FD\u3002\u7A7A\u306E\u5217\u306B\u306FK\u304B\u3089\u306E\u7D44\u3060\u3051\u7F6E\u3051\u307E\u3059\u3002\u96A0\u308C\u3066\u3044\u305F\u4E00\u756A\u4E0A\u306E\u672D\u306F\u81EA\u52D5\u3067\u8868\u306B\u306A\u308A\u307E\u3059\u3002'), new Section('\u7D44\u672D\u3068\u64CD\u4F5C', '\u7D44\u672D\u306F\u540C\u3058\u30DE\u30FC\u30AF\u3067A\u304B\u3089K\u306E\u9806\u3002\u672D\u306F\u6307\u3067\u30C9\u30E9\u30C3\u30B0\u3057\u3066\u884C\u304D\u5148\u306B\u843D\u3068\u3059\u304B\u3001\u30BF\u30C3\u30D7\u3067\u9078\u3093\u3067\u304B\u3089\u884C\u304D\u5148\u3092\u30BF\u30C3\u30D7\u3057\u3066\u52D5\u304B\u3057\u307E\u3059\u3002\u9078\u3093\u3060\u672D\u3092\u3082\u3046\u4E00\u5EA6\u30BF\u30C3\u30D7\u3059\u308B\u3068\u3001\u7D44\u672D(\u7F6E\u3051\u306A\u3051\u308C\u3070\u7F6E\u3051\u308B\u5217)\u3078\u81EA\u52D5\u3067\u52D5\u304D\u307E\u3059\u3002\u5DE6\u4E0A\u306E\u5C71\u672D\u3092\u30BF\u30C3\u30D7\u3059\u308B\u3068\u3081\u304F\u308A\u3001\u5C71\u672D\u304C\u306A\u304F\u306A\u3063\u305F\u3089\u3082\u3046\u4E00\u5EA6\u30BF\u30C3\u30D7\u3067\u623B\u3057\u307E\u3059\u3002\u300C\u7D44\u672D\u3078\u300D\u306F\u9078\u3093\u3060\u672D(\u9078\u3093\u3067\u3044\u306A\u3044\u6642\u306F\u7F6E\u3051\u308B\u672D)\u3092\u7D44\u672D\u3078\u52D5\u304B\u3057\u307E\u3059\u3002\u7D44\u672D\u304B\u3089\u5834\u672D\u3078\u623B\u3059\u3053\u3068\u3082\u3067\u304D\u307E\u3059\u3002', listOf_0('solitaire_play')), new Section('\u52DD\u6557', '4\u7D44\u3059\u3079\u3066\u5B8C\u6210\u3067\u6210\u529F\u3002\u89E3\u3051\u308B\u914D\u672D\u304C\u914D\u3089\u308C\u307E\u3059\u3002\u7D9A\u3051\u3089\u308C\u306A\u3044\u6642\u306F\u7D42\u4E86\u3067\u304D\u307E\u3059\u3002\u901A\u4FE1\u3067\u306F\u540C\u3058\u914D\u672D\u3067\u72EC\u7ACB\u3057\u3066\u9032\u3081\u3001\u6700\u521D\u306E\u5B8C\u6210\u8005\u304C\u52DD\u3061\u3001\u5168\u54E1\u7D42\u4E86\u306A\u3089\u5F15\u304D\u5206\u3051\u30021\u53F0\u306E\u4EA4\u4EE3\u5F62\u5F0F\u306B\u306F\u5BFE\u5FDC\u3057\u307E\u305B\u3093\u3002'), new Section('\u30B3\u30C4', '\u96A0\u308C\u305F\u672D\u3092\u591A\u304F\u958B\u304F\u3053\u3068\u3092\u512A\u5148\u3057\u307E\u3059\u3002K\u3092\u52D5\u304B\u305B\u308B\u7A7A\u5217\u3092\u78BA\u4FDD\u3057\u3001\u7D44\u672D\u3078\u6025\u3044\u3067\u79FB\u3059\u3053\u3068\u3067\u5834\u672D\u306E\u9023\u7D50\u3092\u59A8\u3052\u306A\u3044\u3088\u3046\u306B\u3057\u307E\u3057\u3087\u3046\u3002'), new Section('スパイダー', '設定の「種類」でスパイダーを選ぶと、2組104枚で遊びます(マークの数は1種・2種・4種)。10列に配り(左4列は6枚、残りは5枚)、一番上だけ表です。札は数が1つ大きい札の上ならマークに関係なく置けますが、まとめて動かせるのは同じマークで1つずつ小さくつながった札だけです。空いた列にはどの札でも置けます。同じマークのKからAまでがそろうと自動で組札になり、8組そろえば成功。山札をタップすると全部の列に1枚ずつ配ります(空いた列がある時は配れません)。', emptyList())]);
   // Inline function 'kotlin.collections.map' call
   var this_3 = numberRangeToNumber(1, 6);
   // Inline function 'kotlin.collections.mapTo' call
@@ -2205,7 +2208,7 @@ function Catalog() {
       destination_2.i(tmp$ret$9);
     }
      while (!(item_2 === last_2));
-  tmp.xr_1 = registerExtraGames(listOf([tmp_0, tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_6, tmp_7, tmp_8, tmp_9, tmp_10, tmp_11, tmp_12, tmp_13, tmp_14, tmp_15, tmp_16, tmp_17, tmp_18, tmp_22, tmp_23, tmp_24, tmp_25, tmp_26, tmp_27, tmp_28, tmp_32, tmp_33, tmp_37, new GameInfo('solitaire', 10, '\u30BD\u30EA\u30C6\u30A3\u30A2(\u30AF\u30ED\u30F3\u30C0\u30A4\u30AF)', tmp_38, '1\u4EBA', '7\u3064\u306E\u5217\u3092\u6574\u7406\u3057\u3066\u30014\u3064\u306E\u7D44\u672D\u306BA\u304B\u3089K\u307E\u3067\u7A4D\u307F\u4E0A\u3052\u308B\u3002', tmp_39, tmp_40, listOf([new OptionSpec('players', '\u4EBA\u6570', destination_2, '1'), new OptionSpec('draw', '\u3081\u304F\u308B\u679A\u6570', listOf([to('1', '1\u679A'), to('3', '3\u679A')]), '1'), new OptionSpec('passes', '\u5C71\u672D\u306E\u5468\u56DE', listOf([to('0', '\u7121\u5236\u9650'), to('3', '3\u56DE')]), '0')]))]), { GameInfo: GameInfo, GameDef: GameDef, OptionSpec: OptionSpec, Section: Section, Outcome: Outcome, Category_BOARD: Category_BOARD_getInstance(), Category_CARD: Category_CARD_getInstance(), listOf: listOf, to: to, plus: plus, emptyList: emptyList });
+  tmp.xr_1 = registerExtraGames(listOf([tmp_0, tmp_1, tmp_2, tmp_3, tmp_4, tmp_5, tmp_6, tmp_7, tmp_8, tmp_9, tmp_10, tmp_11, tmp_12, tmp_13, tmp_14, tmp_15, tmp_16, tmp_17, tmp_18, tmp_22, tmp_23, tmp_24, tmp_25, tmp_26, tmp_27, tmp_28, tmp_32, tmp_33, tmp_37, new GameInfo('solitaire', 10, 'ソリティア', tmp_38, '1\u4EBA', 'クロンダイク(7列から4つの組札へAからKまで積む)と、スパイダー(10列で同じマークのKからAを8組そろえる)を設定で選べます。', tmp_39, tmp_40, listOf([new OptionSpec('players', '\u4EBA\u6570', destination_2, '1'), new OptionSpec('variant', '種類', listOf([to('klondike', 'クロンダイク'), to('spider', 'スパイダー')]), 'klondike'), new OptionSpec('draw', '\u3081\u304F\u308B\u679A\u6570', listOf([to('1', '1\u679A'), to('3', '3\u679A')]), '1'), new OptionSpec('passes', '\u5C71\u672D\u306E\u5468\u56DE', listOf([to('0', '\u7121\u5236\u9650'), to('3', '3\u56DE')]), '0'), new OptionSpec('suits', 'マークの数', listOf([to('1', '1種'), to('2', '2種'), to('4', '4種')]), '1')]))]), { GameInfo: GameInfo, GameDef: GameDef, OptionSpec: OptionSpec, Section: Section, Outcome: Outcome, Category_BOARD: Category_BOARD_getInstance(), Category_CARD: Category_CARD_getInstance(), listOf: listOf, to: to, plus: plus, emptyList: emptyList });
 }
 protoOf(Catalog).yr = function (id) {
   var tmp$ret$1;
@@ -31128,6 +31131,7 @@ protoOf(sam$jp_yonekou_asobi26_core_Brain$0_25).hashCode = function () {
   return hashCode(this.n2());
 };
 function Solitaire$Companion$brain$lambda(r, s, seat, lv, rng, _unused_var__etf5q3) {
+  if (r && r.isSpider) return spiderChoose(r, s, seat);
   var g = r instanceof Solitaire ? r : THROW_CCE();
   var legal = g.f1z(s, seat);
   var b = s.w1y_1.p(seat);
@@ -31219,6 +31223,7 @@ function Solitaire$Companion$brain$lambda(r, s, seat, lv, rng, _unused_var__etf5
   return tmp_0;
 }
 function Solitaire$Companion$def$lambda(it) {
+  if (it.jt('variant', 'klondike') === 'spider') return new SpiderSolitaire(coerceIn_0(it.it('players', 1), 1, 6), it.it('suits', 1) === 4 ? 4 : it.it('suits', 1) === 2 ? 2 : 1);
   return new Solitaire(coerceIn_0(it.it('players', 1), 1, 6), coerceIn_0(it.it('draw', 1), 1, 3), it.it('passes', 0));
 }
 function Solitaire$Companion$def$lambda_0(it) {
@@ -32540,99 +32545,144 @@ function Yacht$Companion$simpleHold$lambda_0($this) {
     return tmp;
   };
 }
+// ヨットの CPU(Web 版で書き直し。規則は変えない)。
+// 残っている役ごとの「今つけた時の値打ち」を決め、振り直しを含めた期待値が最大になるように
+// 残す目と、役をつける時期を選ぶ。上級は残りの振り直し回数ぶん先まで、初級・中級は 1 回先まで読む。
+var YACHT_AI = (function () {
+  var FACT = [1, 1, 2, 6, 24, 120];
+  // 0〜5 個のさいころの出方(目の組と確率)
+  var ROLLS = [];
+  for (var k = 0; k <= 5; k++) {
+    var list = [];
+    (function gen(start, cur) {
+      if (cur.length === k) {
+        var cnt = [0, 0, 0, 0, 0, 0, 0], w = FACT[k];
+        for (var i = 0; i < cur.length; i++) cnt[cur[i]]++;
+        for (var f = 1; f <= 6; f++) w /= FACT[cnt[f]];
+        list.push({ dice: cur.slice(), p: w / Math.pow(6, k) });
+        return;
+      }
+      for (var f2 = start; f2 <= 6; f2++) { cur.push(f2); gen(f2, cur); cur.pop(); }
+    })(1, []);
+    ROLLS.push(list);
+  }
+  var key = function (d) { var x = 0; for (var i = 0; i < d.length; i++) x = x * 7 + d[i]; return x; };
+  var sortNum = function (a, b) { return a - b; };
+  // 5 個の目の組(252 通り)
+  var STATES = ROLLS[5].map(function (r) { return r.dice; });
+  // 各状態から残せる目の組(重複を除く)
+  var KEEPS = STATES.map(function (d) {
+    var seen = {}, out = [];
+    for (var m = 0; m < 32; m++) {
+      var kept = [];
+      for (var i = 0; i < 5; i++) if ((m >> i) & 1) kept.push(d[i]);
+      var kk = key(kept) * 10 + kept.length;
+      if (!seen[kk]) { seen[kk] = 1; out.push(kept); }
+    }
+    return out;
+  });
+  var score = function (c, d) {
+    var cnt = [0, 0, 0, 0, 0, 0, 0], sum = 0;
+    for (var i = 0; i < 5; i++) { cnt[d[i]]++; sum += d[i]; }
+    if (c <= 5) return cnt[c + 1] * (c + 1);
+    if (c === 6) return sum;
+    var has = function (n) { for (var f = 1; f <= 6; f++) if (cnt[f] === n) return true; return false; };
+    var max = 0; for (var f = 1; f <= 6; f++) max = Math.max(max, cnt[f]);
+    if (c === 7) return max >= 4 ? sum : 0;
+    if (c === 8) return has(3) && has(2) ? sum : 0;
+    var best = 0, cur = 0;
+    for (var g = 1; g <= 6; g++) { if (cnt[g] > 0) { cur++; best = Math.max(best, cur); } else cur = 0; }
+    if (c === 9) return best >= 4 ? 15 : 0;
+    if (c === 10) return best >= 5 ? 30 : 0;
+    if (c === 11) return max === 5 ? 50 : 0;
+    return 0;
+  };
+  // 役を後に残しておいた時に見込める点(つけてしまうと失う分)
+  var LATER = [2.1, 4.2, 6.3, 8.4, 10.5, 12.6, 22, 11, 10, 10, 12, 13];
+  function valuer(sheet, greedy) {
+    var open = [];
+    for (var c = 0; c < 12; c++) if (sheet[c] < 0) open.push(c);
+    var upper = 0, room = 0;
+    for (var u = 0; u < 6; u++) { if (sheet[u] >= 0) upper += sheet[u]; else room += 5 * (u + 1); }
+    var need = 63 - upper;
+    var bonusLive = need > 0 && room >= need;
+    var w = greedy ? 0 : Math.min(1, (open.length - 1) / 3);
+    return {
+      open: open,
+      value: function (c, d) {
+        var sc = score(c, d), v = sc;
+        if (!greedy) {
+          if (c <= 5 && bonusLive) {
+            v += (sc - 3 * (c + 1)) * 1.2;
+            if (sc >= need) v += 15; // この役でボーナスに届く
+          }
+          v -= LATER[c] * w;
+        }
+        return v;
+      }
+    };
+  }
+  function bestCat(V, d) {
+    var best = -1, bv = -Infinity;
+    for (var i = 0; i < V.open.length; i++) {
+      var c = V.open[i], v = V.value(c, d);
+      if (v > bv) { bv = v; best = c; }
+    }
+    return [best, bv];
+  }
+  // E[r][state] = 残り r 回振り直せる時の期待値
+  function tables(V, depth) {
+    var E = [{}];
+    for (var i = 0; i < STATES.length; i++) E[0][key(STATES[i])] = bestCat(V, STATES[i])[1];
+    for (var r = 1; r <= depth; r++) {
+      var prev = E[r - 1], cur = {};
+      for (var j = 0; j < STATES.length; j++) {
+        var best = prev[key(STATES[j])];
+        var keeps = KEEPS[j];
+        for (var q = 0; q < keeps.length; q++) {
+          var e = expectKeep(prev, keeps[q]);
+          if (e > best) best = e;
+        }
+        cur[key(STATES[j])] = best;
+      }
+      E.push(cur);
+    }
+    return E;
+  }
+  function expectKeep(table, kept) {
+    var rolls = ROLLS[5 - kept.length], e = 0;
+    for (var i = 0; i < rolls.length; i++) {
+      var d = kept.concat(rolls[i].dice).sort(sortNum);
+      e += rolls[i].p * table[key(d)];
+    }
+    return e;
+  }
+  var cache = { sig: '', E: null };
+  function choose(dice, rollsLeft, sheet, level) {
+    var greedy = level === 0;
+    var V = valuer(sheet, greedy);
+    var now = bestCat(V, Array.prototype.slice.call(dice).sort(sortNum));
+    if (rollsLeft <= 0) return 100 + now[0];
+    var depth = level === 2 ? rollsLeft : 1;
+    var sig = Array.prototype.join.call(sheet, ',') + '|' + depth + '|' + level;
+    if (cache.sig !== sig) { cache.sig = sig; cache.E = tables(V, depth - 1); }
+    var table = cache.E[depth - 1];
+    var bestMask = -1, bestE = now[1] + 1e-6;
+    for (var m = 0; m < 31; m++) {
+      var kept = [];
+      for (var i = 0; i < 5; i++) if ((m >> i) & 1) kept.push(dice[i]);
+      kept.sort(sortNum);
+      var e = expectKeep(table, kept);
+      if (e > bestE + 1e-9) { bestE = e; bestMask = m; }
+    }
+    return bestMask >= 0 ? bestMask : 100 + now[0];
+  }
+  return { choose: choose, score: score };
+})();
 function Yacht$Companion$brain$lambda(rules, s, seat, level, rng, budget) {
   if (s.g20_1 === 3)
     return 0;
-  var sheet = s.i20_1[seat];
-  var _destruct__k2r9zo = Companion_getInstance_29().o20(s.f20_1, sheet);
-  var cat = _destruct__k2r9zo.kc();
-  var nowV = _destruct__k2r9zo.lc();
-  if (s.g20_1 === 0)
-    return 100 + cat | 0;
-  var tmp;
-  switch (level.q1_1) {
-    case 0:
-      var tmp_0;
-      if (nowV >= 10) {
-        tmp_0 = 100 + cat | 0;
-      } else {
-        // Inline function 'kotlin.let' call
-        // Inline function 'kotlin.contracts.contract' call
-        // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-        var it = Companion_getInstance_29().p20(s.f20_1);
-        tmp_0 = it === 31 ? 100 + cat | 0 : it;
-      }
-
-      tmp = tmp_0;
-      break;
-    case 1:
-      var tmp_1;
-      if (nowV >= 28) {
-        tmp_1 = 100 + cat | 0;
-      } else {
-        // Inline function 'kotlin.let' call
-        // Inline function 'kotlin.contracts.contract' call
-        // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-        var it_0 = Companion_getInstance_29().p20(s.f20_1);
-        tmp_1 = it_0 === 31 ? 100 + cat | 0 : it_0;
-      }
-
-      tmp = tmp_1;
-      break;
-    case 2:
-      var bestMask = -1;
-      var bestE = nowV;
-      var seen = HashSet_init_$Create$();
-      var inductionVariable = 0;
-      if (inductionVariable < 31)
-        $l$loop_0: do {
-          var mask = inductionVariable;
-          inductionVariable = inductionVariable + 1 | 0;
-          // Inline function 'kotlin.collections.map' call
-          // Inline function 'kotlin.collections.filter' call
-          // Inline function 'kotlin.collections.filterTo' call
-          var this_0 = until(0, 5);
-          var destination = ArrayList_init_$Create$_0();
-          var inductionVariable_0 = this_0.x_1;
-          var last = this_0.y_1;
-          if (inductionVariable_0 <= last)
-            do {
-              var element = inductionVariable_0;
-              inductionVariable_0 = inductionVariable_0 + 1 | 0;
-              // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-              if (((mask >>> element | 0) & 1) === 1) {
-                destination.i(element);
-              }
-            }
-             while (!(element === last));
-          // Inline function 'kotlin.collections.mapTo' call
-          var destination_0 = ArrayList_init_$Create$(collectionSizeOrDefault(destination, 10));
-          var tmp0_iterator = destination.k();
-          while (tmp0_iterator.l()) {
-            var item = tmp0_iterator.m();
-            // Inline function 'jp.yonekou.asobi26.core.games.Companion.brain.<anonymous>.<anonymous>' call
-            var tmp$ret$7 = s.f20_1[item];
-            destination_0.i(tmp$ret$7);
-          }
-          var key = joinToString(sorted(destination_0), ',');
-          if (!seen.i(key))
-            continue $l$loop_0;
-          var e = Companion_getInstance_29().q20(s.f20_1, mask, sheet, budget);
-          if (e > bestE + 0.5) {
-            bestE = e;
-            bestMask = mask;
-          }
-          if (budget.ot())
-            break $l$loop_0;
-        }
-         while (inductionVariable < 31);
-      tmp = bestMask >= 0 ? bestMask : 100 + cat | 0;
-      break;
-    default:
-      noWhenBranchMatchedException();
-      break;
-  }
-  return tmp;
+  return YACHT_AI.choose(s.f20_1, s.g20_1, s.i20_1[seat], level.q1_1);
 }
 function Yacht$Companion$def$lambda(it) {
   return new Yacht(coerceIn_0(it.it('players', 2), 1, 6));

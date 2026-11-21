@@ -777,6 +777,8 @@ html.reduce *,html.reduce *::before,html.reduce *::after{animation-duration:.001
   position:absolute; left:-1px; top:-1px; margin:0; backface-visibility:hidden; pointer-events:none;
 }
 .card-turn > .back { transform:rotateY(180deg); }
+/* 回転中の表と裏は、元の札と同じ大きさにする(盤ごとの --w の指定に負けると、めくり終わりに大きさが飛ぶ) */
+.card-turn > .pcard { --w:inherit!important; width:var(--w)!important; }
 
 .sol .soltab{display:grid;grid-template-columns:repeat(7,1fr);gap:1.4cqmin;flex:1;min-height:0}
 .sol .spile{display:flex;flex-direction:column;align-items:center;min-height:0;border-radius:10px}
@@ -1374,7 +1376,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--mark);outline-o
 .rkings{display:flex;gap:24px;margin-top:10px}
 .rkings figure{margin:0;text-align:center;font-size:13px;color:var(--sub)}
 .rkings svg{width:72px;height:72px;display:block}
-.dragghost{position:fixed;z-index:60;pointer-events:none;margin:0!important;box-shadow:0 14px 26px rgba(0,0,0,.45);opacity:.95}
+.dragghost{position:fixed;z-index:60;pointer-events:none;margin:0!important;box-shadow:0 14px 26px rgba(0,0,0,.45);opacity:.95;transition:none!important}
 .dragsrc{opacity:.3}
 .dropover{outline:4px solid #FFD94F!important;outline-offset:3px;border-radius:10px}
 .sol .soltop .pcard.tap:hover{transform:none;filter:brightness(1.07)}
@@ -2520,12 +2522,12 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-slot { position:relative; display:block; aspect-ratio:.68; border-radius:3px;
   outline:1px dashed #f8e7c363; outline-offset:-1px; }
 .poet-slot:not([data-count="0"])::before { content:""; position:absolute; inset:auto 0 0; height:var(--depth);
-  border-radius:0 0 3px 3px; border-inline:1px solid #435e52;
-  background:repeating-linear-gradient(to top,#46625b 0 1px,#d6c6a3 1px 2px,#9d9980 2px 3px);
+  border-radius:0 0 3px 3px; border-inline:1px solid #1b2747;
+  background:repeating-linear-gradient(to top,#2c3a5c 0 1px,#e6d8b6 1px 2px,#b3a585 2px 3px);
   box-shadow:0 2px 4px #071c1670; }
 .poet-slot > .poet-card.back { position:absolute; inset:0; height:100%; translate:0 calc(-1 * var(--depth));
-  box-shadow:0 1px 0 #334f49; }
-.poet-pick:enabled:is(:hover,:focus-visible) .poet-card { outline:2px solid #f3cd7c; }
+  box-shadow:inset 0 0 0 2px #24345e,inset 0 0 0 3px #d9b56a,0 1px 0 #1b2747; }
+.poet-pick:enabled:is(:hover,:focus-visible) .poet-card { outline:3px solid #e2372b; outline-offset:1px; }
 .poet-pot { position:relative; }
 .poet-pot::before { content:""; position:absolute; left:calc(-1 * clamp(11px,2.2cqw,25px)); inset-block:0 0;
   border-left:1px solid #ebd8aa55; }
@@ -2535,7 +2537,6 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-place.front { width:max-content; max-width:90%; gap:clamp(10px,2cqw,24px); }
 .poet-place:has(.receiving) { z-index:3; pointer-events:none; }
 .poet-reveal { flex:none; position:relative; width:min(6.6cqw,8.5cqh); aspect-ratio:.68; }
-.poet-reveal:empty { border:1px dashed #f9edd142; border-radius:3px; }
 .poet-place.front .poet-reveal { width:min(35cqw,27cqh,280px); }
 .poet-tally { position:relative; display:grid; min-width:0; max-width:100%; text-align:left; align-content:center;
   border-left:4px solid var(--seat); padding:4px clamp(4px,.8cqw,12px);
@@ -2565,6 +2566,8 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-flight > .poet-card { position:absolute; inset:0; backface-visibility:hidden; }
 .poet-flight > .portrait { transform:rotateY(180deg); }
 .poet-reveal.receiving > .portrait { visibility:hidden; }
+.poet-reveal > .poet-under { position:absolute; inset:0; }
+.poet-reveal.receiving > .portrait.poet-under { visibility:visible; }
 /* 自分の札の溜め場: 引いた札を表向きに積み、持ち札の数は山の厚さで見せる */
 .poet-own { --depth:calc(var(--k,0) * 22px); }
 .poet-place.front .poet-own { --depth:calc(var(--k,0) * 40px); }
@@ -2573,7 +2576,6 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   background:repeating-linear-gradient(to top,#7b6c4e 0 1px,#f3e7c9 1px 2px,#d8c9a4 2px 3px);
   box-shadow:0 2px 4px #071c1670; }
 .poet-own > .portrait,.poet-own > .poet-flight { translate:0 calc(-1 * var(--depth)); }
-.poet-own[data-count="0"] > .portrait { opacity:.62; filter:saturate(.7); }
 @media (min-width:761px) {
   .poet-place.front { display:grid; width:90%; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); }
   .poet-place.front .poet-reveal { grid-column:2; }
@@ -2593,9 +2595,11 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   border:clamp(2px,.35vw,5px) solid #284e4e; border-radius:3px; box-shadow:0 2px 0 #182c2b,0 4px 8px #0005;
   background:repeating-linear-gradient(102deg,#fff2 0 1px,#ab80540a 1px 3px),linear-gradient(112deg,#fcf8eb,#f1e7cf);
   font-family:"Zen Antique","Yu Mincho",serif; font-weight:400; text-align:start; }
-.poet-card.back { border-color:#315b5b;
-  background:linear-gradient(115deg,#3c69682b,#193c431a),var(--noise),#2b5559;
-  box-shadow:0 2px 0 #637c74,0 3px 0 #254b4e,0 5px 0 #58716c,0 6px 0 #24474b,0 9px 11px #0005; }
+.poet-card.back { border-color:#1b2747;
+  background:
+    radial-gradient(circle at 50% 50%,transparent 0 21%,#d9b56a66 22% 23.5%,transparent 24.5%),
+    linear-gradient(115deg,#ffffff1a,#0000 45%,#0000002e),var(--noise),#24345e;
+  box-shadow:inset 0 0 0 2px #24345e,inset 0 0 0 3px #d9b56a,0 2px 0 #c9b48a,0 3px 0 #1b2747,0 5px 0 #c9b48a,0 6px 0 #1b2747,0 9px 11px #0006; }
 .poet-lines { position:absolute; inset:7% 8%; display:flex; flex-direction:row-reverse; justify-content:space-between;
   line-height:1.08; letter-spacing:.025em; }
 .poet-lines > span,.poet-author { writing-mode:vertical-rl; text-orientation:upright; white-space:nowrap; }
@@ -2938,7 +2942,8 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 
 /* ---- ソリティア: 列の動的縮小ではみ出し防止 (#2, #10, #12) ※捨て札の左→右重ねは上の .sol .waste 規則(Codex)を使う ---- */
 .sol .soltop .slot > .pcard,
-.sol .spile > .pcard.pil {
+.sol .spile > .pcard.pil,
+.sol .spile > .pcard.empty {
   --w: var(--sol-w, clamp(46px, min(7.5cqw, 10.2cqh), 72px));
   width: var(--w);
 }
@@ -2955,6 +2960,18 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .sol .spile > .pcard.pil.open + .pcard.pil {
   margin-top: var(--sol-open, calc(var(--w) * -1.03));
 }
+
+/* 空いた列の枠は札と同じ大きさ(列の幅いっぱいにしない) */
+/* 汎用の .empty の余白(24px)が効くと、小さい札の枠が札より大きくなるので消す */
+.sol .pcard.empty { padding: 0; }
+.sol .spile > .pcard.empty { max-width: var(--w); display: grid; place-items: center; font-size: calc(var(--w) * .34); color: rgba(255,255,255,.35); }
+/* スパイダー: 10 列。左上の山札に残りの配る回数、右に組札の置き場 8 つ */
+.sol.spider .soltab { grid-template-columns: repeat(10, 1fr); }
+.sol.spider .soltop { gap: 4px; min-width: 0; }
+.sol.spider .soltop .pcard { --w: var(--sol-w, 40px) !important; }
+.sol.spider .soltab { gap: 3px; }
+.sol .pcard.back .deals { position: absolute; right: 4px; bottom: 3px; font-style: normal; font-weight: 900; font-size: calc(var(--w) * .26); line-height: 1; color: #fff; background: rgba(0,0,0,.45); border-radius: 99px; padding: 2px 6px; }
+.sol .pcard.back.dim { filter: brightness(.7); }
 
 /* ---- マンカラ: 横取りアニメーション (#3) ---- */
 .mcap-ring {
@@ -3005,3 +3022,34 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   background: #f6f1e6;
   border-radius: 10px 10px 0 0;
 }
+
+/* 坊主めくり: めくれる札の坊主・姫の数 */
+.poet-omen { position:absolute; left:50%; bottom:calc(100% + var(--row-depth) + clamp(24px,3.6cqh,34px)); transform:translateX(-50%);
+  display:flex; align-items:baseline; gap:.25em; white-space:nowrap; padding:3px 14px; border-radius:999px;
+  background:#10291ed9; border:1px solid #f7df9e40; color:var(--on-felt-sub);
+  font:600 clamp(11px,1.4cqw,14px)/1.4 "Zen Antique","Yu Mincho",serif; }
+.poet-omen b { font:700 1.25em/1 Georgia,serif; color:var(--on-felt); }
+.poet-omen .bozu b { color:#ffb1a6; } .poet-omen .hime b { color:#ffc9da; }
+.poet-omen.danger { border-color:#e2372b99; }
+/* 坊主めくりのカットイン: 筆文字と和の色 */
+.cutin.f-fude .txt { font-family:"Yuji Boku","Kaisei Tokumin","Yu Mincho",serif; font-weight:400; letter-spacing:.16em; }
+.cutin.f-fude .txt small { font-family:"Zen Antique","Yu Mincho",serif; letter-spacing:.3em; }
+.cutin.wa-cut .band { background:
+    radial-gradient(ellipse 1.6cqh 1cqh at 8% 22%,var(--petal) 60%,transparent 64%),
+    radial-gradient(ellipse 1.2cqh .8cqh at 19% 78%,var(--petal) 60%,transparent 64%),
+    radial-gradient(ellipse 1.4cqh .9cqh at 33% 14%,var(--petal) 60%,transparent 64%),
+    radial-gradient(ellipse 1.1cqh .7cqh at 71% 84%,var(--petal) 60%,transparent 64%),
+    radial-gradient(ellipse 1.6cqh 1cqh at 86% 26%,var(--petal) 60%,transparent 64%),
+    radial-gradient(ellipse 1.2cqh .8cqh at 94% 70%,var(--petal) 60%,transparent 64%),
+    repeating-linear-gradient(96deg,#ffffff0c 0 2px,transparent 2px 7px),
+    linear-gradient(var(--c1),var(--c2));
+  border-block:.5cqh double var(--edge); border-block-width:1.1cqh; }
+.cutin.wa-cut .txt { text-shadow:0 .35cqh 0 var(--ts,#0003); }
+.cutin.sakura { --c1:#FBE3E9; --c2:#EFB4C4; --ct:#4E1830; --edge:#C99A4E; --petal:#e48aa5a8; --ts:#ffffff80; }
+.cutin.sakura .veil { background:rgba(70,20,40,.28); }
+.cutin.sumi { --c1:#5E5751; --c2:#2D2824; --ct:#F7EEDD; --edge:#B23A30; --petal:#ffffff14; --ts:#0008; }
+.cutin.murasaki { --c1:#8C6B98; --c2:#563A61; --ct:#FFF6FF; --edge:#D3AE62; --petal:#f4d8ff2e; --ts:#0006; }
+
+/* 坊主めくり: 坊主で場へ・姫で手元へ流れる札 */
+.poet-stream { position:absolute; z-index:4; pointer-events:none; transform-origin:50% 50%; box-shadow:0 3px 6px #0006; }
+.poet-busy .poet-pick { pointer-events:none; }

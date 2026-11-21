@@ -33,8 +33,10 @@ const poetCards = (() => {
   let online, stacks, timer, scoredId;
   const all = hundredPoems.map((_,i)=>i);
   function setup(id,on=false) { online=on; go('poetSetup'); }
-  // ローカルルール: hime … 姫を引いた時に場札が無ければもう1枚引く / semi … 蝉丸を坊主と同じにするか、全員の札を場へ出すか
-  let preferences = {cpu:1, first:'player', hime:'off', semi:'bozu', ...store.get('bozuSetup', {})};
+  // ローカルルール: himeBonus … 姫ボーナス(姫を引いた時に場札が無ければもう1枚引く。既定で有効)
+  // semi … 蝉丸を坊主と同じにするか、全員の札を場へ出すか / peek … めくれる札(各山の一番上)の坊主・姫の数を見せる
+  let preferences = {cpu:1, first:'player', himeBonus:'on', semi:'bozu', peek:'on', ...store.get('bozuSetup', {})};
+  delete preferences.hime; // 以前の項目(既定が「そのまま」だった)は引き継がない
   const SEMIMARU = 9; // 10番 蝉丸
   const cpuDelay = {短い:1800, ふつう:2700, 長い:3700};
   function setupHtml() {
@@ -43,15 +45,17 @@ const poetCards = (() => {
       setupRow('最初の手番', seg('bozu:first', [['player','自分'],['cpu','CPU'],['random','ランダム']], preferences.first)) +
       setupRow('CPUの手番の長さ', seg('bozu:pace', CPU_PACE_CHOICES, preferences.pace || 'inherit')));
     const deck = setupPanel('ルール', setupRow('山札', '<b>4つ・各25枚</b>') +
-      setupRow('姫で場札が無い時', seg('bozu:hime', [['off','そのまま'],['on','もう1枚引く']], preferences.hime)) +
-      setupRow('蝉丸', seg('bozu:semi', [['bozu','坊主と同じ'],['all','全員の札を場へ']], preferences.semi)));
+      setupRow('姫ボーナス', seg('bozu:himeBonus', [['on','あり'],['off','なし']], preferences.himeBonus)) +
+      setupRow('蝉丸', seg('bozu:semi', [['bozu','坊主と同じ'],['all','全員の札を場へ']], preferences.semi)) +
+      setupRow('めくれる札の坊主・姫', seg('bozu:peek', [['on','数を見せる'],['off','見せない']], preferences.peek)));
     return extraSetupLayout('bozu', online, people, deck, 'data-poet-start');
   }
   function setOption(key,value) {
     if (key === 'cpu' && [1,2,3,4,5].includes(+value)) preferences.cpu = +value;
     if (key === 'first' && ['player','cpu','random'].includes(value)) preferences.first = value;
     if (key === 'pace' && CPU_PACE_CHOICES.some(([id])=>id===value)) preferences.pace=value;
-    if (key === 'hime' && ['on','off'].includes(value)) preferences.hime = value;
+    if (key === 'himeBonus' && ['on','off'].includes(value)) preferences.himeBonus = value;
+    if (key === 'peek' && ['on','off'].includes(value)) preferences.peek = value;
     if (key === 'semi' && ['bozu','all'].includes(value)) preferences.semi = value;
     store.set('bozuSetup', preferences);
     render();
@@ -70,7 +74,13 @@ const poetCards = (() => {
     const deck = shuffle(all);
     stacks = [0,1,2,3].map(i=>deck.slice(i*25,i*25+25));
     return {piles:[25,25,25,25],discard:0,turn,last:-1,finish:false,extra:false,
-      hime:round.hime==='on'?'on':'off', semi:round.semi==='all'?'all':'bozu'};
+      hime:round.hime==='off'?'off':'on', semi:round.semi==='all'?'all':'bozu', peek:round.peek==='off'?'off':'on', tops:topRoles()};
+  }
+  // 各山の一番上(次にめくれる札)にある坊主・姫の数。どの山かは知らせない。
+  function topRoles() {
+    const tops={bozu:0,hime:0};
+    for (const pile of stacks || []) if (pile.length) { const r=cardRole(pile[pile.length-1]); if (r in tops) tops[r]++; }
+    return tops;
   }
   function apply(state,action) {
     if (state.finish || !state.seats.some(p=>p.id===action.uid)) return false;
@@ -96,6 +106,7 @@ const poetCards = (() => {
       }
     }
     state.finish=stacks.every(a=>!a.length);
+    state.tops=topRoles();
     // 姫を引いて場札が1枚も無かった時は、同じ人がもう1枚引く(続けて姫でも同じ)
     state.extra=role==='hime' && fieldBefore===0 && state.hime==='on' && !state.finish;
     if (!state.extra) state.turn=(state.turn+1)%state.seats.length;
@@ -122,6 +133,10 @@ const poetCards = (() => {
       const current = () => S.screen==='extraPlay' && boardMatch.state?.id===id && boardMatch.state.version===turn;
       timer = setTimeout(async () => {
         if (!current()) return;
+        while (performance.now() < busyUntil) {
+          await new Promise(r => setTimeout(r, busyUntil - performance.now() + 30));
+          if (!current()) return;
+        }
         await moveCpuCursor(player.name,[$(`[data-extra-poet-pick="${cell}"]`)],current);
         if (!current()) return;
         hideCursor();
@@ -167,7 +182,7 @@ const poetCards = (() => {
     return `<div class="poet-place ${offset ? '' : 'front'} ${index===state.turn && !state.finish ? 'turn' : ''}"
       data-poet-seat="${index}" style="left:${x}%;top:${y}%;--seat:${SEAT_COLORS[index%SEAT_COLORS.length]}">
       <div class="poet-reveal poet-own" data-count="${player.score}" data-score="${player.score}" style="--k:${Math.min(1,Math.sqrt(player.score)/10).toFixed(3)}"
-        aria-label="持ち札${player.score}枚">${last>=0 ? face(last) : ''}</div>
+        aria-label="持ち札${player.score}枚">${last>=0 && player.score>0 ? face(last) : ''}</div>
       <div class="poet-tally"><span class="poet-identity">${seatIcon(state,player,index)}<span class="poet-name">${esc(player.name)}</span></span>
       <span class="poet-role">${[who, role].filter(Boolean).join(' · ')}</span></div>
     </div>`;
@@ -177,15 +192,42 @@ const poetCards = (() => {
       ${canDraw && n ? '' : 'disabled'} aria-label="山札${i+1} 残り${n}枚">
       ${stack(n)}<b>${n}枚</b></button>`).join('');
     return `<div class="poet-piles${state.version === 0 ? ' dealing' : ''}" style="--row-depth:${stackDepth(Math.max(...state.piles,state.discard))}px">
-      <div class="poet-bank" role="group" aria-label="山札"><span class="poet-caption" aria-hidden="true">山札</span>${piles}</div>
+      <div class="poet-bank" role="group" aria-label="山札"><span class="poet-caption" aria-hidden="true">山札</span>${omen(state)}${piles}</div>
       <div class="poet-pot"><span class="poet-caption">場札</span>${stack(state.discard)}<b>${state.discard}枚</b></div></div>`;
   }
-  function fly(table, state, pile, drawer, own) {
+  function omen(state) {
+    if (state.peek!=='on' || state.finish || !state.tops) return '';
+    const {bozu,hime}=state.tops;
+    return `<div class="poet-omen${bozu?' danger':''}" aria-live="polite" aria-label="めくれる札に 坊主${bozu}枚 姫${hime}枚">
+      <span class="bozu">坊主 <b>${bozu}</b>枚</span>・<span class="hime">姫 <b>${hime}</b>枚</span></div>`;
+  }
+  // 卓の中での位置(画面の拡大率を戻した CSS ピクセル)
+  function boxIn(table, el) {
+    const t = table.getBoundingClientRect(), r = el.getBoundingClientRect(), zoom = t.width / table.offsetWidth || 1;
+    return {x:(r.left-t.left)/zoom, y:(r.top-t.top)/zoom, w:r.width/zoom, h:r.height/zoom};
+  }
+  // 持ち札の置き場・場札の見た目だけを、指定の枚数にする(状態は変えない)
+  function showOwn(el, count) {
+    if (!el) return;
+    el.dataset.count = count;
+    el.style.setProperty('--k', Math.min(1, Math.sqrt(count) / 10).toFixed(3));
+  }
+  function showPot(table, count) {
+    const pot = table.querySelector('.poet-pot'); if (!pot) return;
+    const slot = pot.querySelector('.poet-slot');
+    slot.dataset.count = count;
+    slot.style.setProperty('--depth', stackDepth(count).toFixed(2) + 'px');
+    const back = slot.querySelector(':scope > .poet-card.back');
+    if (count && !back) slot.insertAdjacentHTML('beforeend', '<span class="poet-card back"></span>');
+    if (!count && back) back.remove();
+    const label = pot.querySelector(':scope > b'); if (label) label.textContent = count + '枚';
+  }
+  // 引いた札を山から席へ運ぶ。着地した時に onLand を呼ぶ。
+  function fly(table, state, pile, drawer, own, keep, onLand) {
     const origin = table.querySelector(`[data-extra-poet-pick="${pile}"] .poet-slot`);
     const target = table.querySelector(`[data-poet-seat="${drawer}"] .poet-reveal`);
     const start = (origin.firstElementChild || origin).getBoundingClientRect(), end = target.getBoundingClientRect();
-    if (!end.width || !start.width) return 0;
-    // 描画位置は着地点が基準。画面の拡大率に合わせて座標を CSS ピクセルへ戻す。
+    if (!end.width || !start.width) { onLand(); return 0; }
     const zoom = end.width / target.offsetWidth;
     const dx = (start.left + start.width/2 - end.left - end.width/2) / zoom;
     const dy = (start.top + start.height/2 - end.top - end.height/2) / zoom;
@@ -198,18 +240,52 @@ const poetCards = (() => {
     target.append(flight);
     const pose = (x,y,size,angle) => `perspective(900px) translate(${x}px,${y}px) scale(${size}) rotateY(${angle}deg)`;
     const lifted = own ? pose(dx*.55,dy*.62-12,(1+scale)/2,95) : pose(dx,dy-6,scale*1.12,180);
-    const duration = own ? 750 : 1100;
+    const travel = own ? 750 : 1100;
+    // 回転させる箱(.poet-flight)には透明度を付けない。付けると立体が平らになり、裏面が出てしまう。
     const motion = flight.animate([
       {transform:pose(dx,dy,scale,0),offset:0},
       {transform:lifted,offset:own ? .45 : .35},
       ...(!own ? [{transform:lifted,offset:.60}] : []),
       {transform:pose(0,0,1,180),offset:1}
-    ], {duration,easing:'ease-in-out',fill:'both'});
-    const settle = () => { target.classList.remove('receiving'); flight.remove(); };
-    motion.onfinish = settle;
+    ], {duration:travel,easing:'ease-in-out',fill:'both'});
+    let landed = false;
+    const land = () => { if (!landed) { landed = true; onLand(); } };
+    const settle = () => { land(); target.classList.remove('receiving'); flight.remove(); };
+    // 坊主などで手元に札が残らない時は、着地した後に表の札だけを薄くして消す
+    motion.onfinish = () => {
+      if (keep) return settle();
+      land();
+      const fade = flight.querySelector(':scope > .portrait')?.animate([{opacity:1},{opacity:1,offset:.45},{opacity:0}],{duration:650,fill:'both'});
+      if (!fade) return settle();
+      fade.onfinish = settle; fade.oncancel = settle;
+    };
     motion.oncancel = settle;
-    return duration;
+    return keep ? travel : travel + 650;
   }
+  // 札の束を from から to へ 1 枚ずつ流す。1 枚着くたびに step(着いた枚数, 流す枚数) を呼ぶ。
+  function stream(table, from, to, count, step, delay = 0) {
+    const n = Math.min(count, 14), gap = n > 1 ? Math.min(85, 700 / (n - 1)) : 0, each = 520;
+    const a = boxIn(table, from), b = boxIn(table, to);
+    for (let i = 0; i < n; i++) {
+      const card = document.createElement('span');
+      card.className = 'poet-card back poet-stream';
+      card.setAttribute('aria-hidden', 'true');
+      card.style.cssText = `left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px`;
+      table.append(card);
+      const sx = a.x + a.w/2 - (b.x + b.w/2), sy = a.y + a.h/2 - (b.y + b.h/2), k = a.w / b.w;
+      const tilt = (i % 3 - 1) * 7, lift = Math.min(60, Math.hypot(sx, sy) * .18);
+      const move = card.animate([
+        {transform:`translate(${sx}px,${sy}px) scale(${k}) rotate(${tilt}deg)`, opacity:0},
+        {transform:`translate(${sx}px,${sy}px) scale(${k}) rotate(${tilt}deg)`, opacity:1, offset:.08},
+        {transform:`translate(${sx*.5}px,${sy*.5 - lift}px) scale(${(k+1)/2}) rotate(${-tilt}deg)`, opacity:1, offset:.5},
+        {transform:'translate(0,0) scale(1) rotate(0deg)', opacity:1}
+      ], {duration:each, delay:delay + i*gap, easing:'cubic-bezier(.35,.1,.3,1)', fill:'backwards'});
+      const done = () => { card.remove(); step(Math.round((i + 1) * count / n), count); };
+      move.onfinish = done; move.oncancel = () => card.remove();
+    }
+    return delay + (n - 1) * gap + each;
+  }
+  let busyUntil = 0; // 札を動かしている間は CPU が次を引かない
   function draw(state) {
     const table=$('#poetTable');if(!table)return;
     const key=state.id+'|'+state.version;
@@ -218,9 +294,15 @@ const poetCards = (() => {
     const previousPiles=consecutive ? table.dataset.piles.split(',').map(Number) : [];
     const pile=state.piles.findIndex((n,i)=>n<previousPiles[i]);
     const drawer=state.extra?state.turn:(state.turn+state.seats.length-1)%state.seats.length;
-    const oldScore=table.querySelector(`[data-poet-seat="${drawer}"] [data-score]`)?.dataset.score;
+    // 描き直す前の見た目(席ごとの枚数・一番上の札、場札の枚数)
+    const before=state.seats.map((_,i)=>{
+      const el=table.querySelector(`[data-poet-seat="${i}"] .poet-reveal`);
+      return {score:Number(el?.dataset.score ?? 0), face:el?.querySelector(':scope > .portrait')?.outerHTML || ''};
+    });
+    const oldPot=Number(table.querySelector('.poet-pot .poet-slot')?.dataset.count ?? 0);
     table.dataset.frame=key;
     table.dataset.piles=state.piles.join(',');
+    table.classList.remove('poet-busy');
     const mine=state.seats.findIndex(p=>p.id===boardMatch.myId());
     const front=Math.max(0,mine);
     const active=state.seats[state.turn];
@@ -230,25 +312,85 @@ const poetCards = (() => {
       +pileRow(state,!state.finish && state.turn===mine);
     $('#poetStatus').textContent=state.finish?winners.join('・')+'の勝ち':active.name+(state.extra?'がもう1枚':'の番');
     $('#poetScores').innerHTML=state.seats.map((p,i)=>`<div class="seat ${!state.finish && i===state.turn?'turn':''}">${seatIcon(state,p,i)}<span class="nm">${esc(p.name)}</span><b>${p.score}枚</b></div>`).join('');
-    if(pile<0 || state.last<0 || document.hidden)return;
+    if(pile<0 || state.last<0 || document.hidden || !consecutive)return;
     const reduced=S.set.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const duration=reduced ? 0 : fly(table,state,pile,drawer,drawer===mine);
-    const delta=state.seats[drawer].score-Number(oldScore);
-    if(delta && !reduced){
-      const gain=document.createElement('span');
-      gain.className='poet-delta';
-      gain.textContent=(delta>0?'+':'−')+Math.abs(delta)+'枚';
-      gain.style.animationDelay=duration+'ms';
-      table.querySelector(`[data-poet-seat="${drawer}"] .poet-tally`).append(gain);
-    }
-    sfx.play('CARD_FLIP');
     const role=cardRole(state.last);
     const semiAll=state.last===SEMIMARU && state.semi==='all';
-    if(role!=='tono' && !reduced)transientAudio.later(()=>{
-      if(!table.isConnected || table.dataset.frame!==key)return;
-      cut({text:semiAll?'蝉丸 全員の札を場へ':roleName[role],tone:role==='bozu'?'red':'gold',ms:semiAll?1400:1000});
-      if(state.extra)setTimeout(()=>{ if(table.isConnected && table.dataset.frame===key)cut({text:'もう1枚',tone:'gold',ms:900}); },1050);
-    },duration);
+    sfx.play('CARD_FLIP');
+    if(!reduced){
+      const reveal=i=>table.querySelector(`[data-poet-seat="${i}"] .poet-reveal`);
+      const potSlot=()=>table.querySelector('.poet-pot .poet-slot');
+      const live=()=>table.isConnected && table.dataset.frame===key;
+      // 札が着くまでは前の枚数・前の札のまま見せる(厚みが先に変わらないように)
+      const under=(i)=>{ const el=reveal(i); if(before[i].face && el && !el.querySelector(':scope > .poet-under')){ el.insertAdjacentHTML('afterbegin',before[i].face); el.firstElementChild.classList.add('poet-under'); } };
+      const moving=state.seats.map((p,i)=>role==='bozu' && (i===drawer || semiAll) && before[i].score>0 ? before[i].score : 0);
+      state.seats.forEach((p,i)=>{ if(i===drawer || moving[i]){ under(i); showOwn(reveal(i),before[i].score); } });
+      showPot(table,oldPot);
+      const keep=state.seats[drawer].score>0;
+      const takeFromPot=role==='hime' ? oldPot : 0;
+      const landed=()=>{
+        if(!live())return;
+        if(role!=='bozu'){
+          showOwn(reveal(drawer),before[drawer].score+1);
+          reveal(drawer)?.querySelector(':scope > .poet-under')?.remove();
+        }
+      };
+      const duration=fly(table,state,pile,drawer,drawer===mine,keep,landed);
+      const total=moving.some(Boolean)||takeFromPot ? 1 : 0;
+      let end=duration;
+      if(total){
+        // カットインが終わってから札を流す
+        const wait=duration+(S.set.cutin ? (semiAll?1400:1000)*SPEED()+320 : 180);
+        table.classList.add('poet-busy');
+        let finish=wait;
+        transientAudio.later(()=>{
+          if(!live())return;
+          sfx.play('SHUFFLE');
+          const pot=potSlot();
+          if(role==='bozu'){
+            let potNow=oldPot;
+            moving.forEach((n,i)=>{
+              if(!n)return;
+              const from=reveal(i); let gone=0;
+              stream(table,from,pot,n,(arrived)=>{
+                if(!live())return;
+                potNow+=arrived-gone; gone=arrived;
+                showOwn(from,n-arrived); if(arrived>=n) from.querySelector(':scope > .poet-under')?.remove();
+                showPot(table,potNow);
+              });
+            });
+          }else{
+            const to=reveal(drawer), base=before[drawer].score+1;
+            stream(table,pot,to,takeFromPot,(arrived)=>{ if(!live())return; showPot(table,takeFromPot-arrived); showOwn(to,base+arrived); });
+          }
+        },wait);
+        const longest=Math.max(...moving,takeFromPot);
+        const n=Math.min(longest,14);
+        finish=wait+(n>1?(n-1)*Math.min(85,700/(n-1)):0)+520;
+        end=finish;
+        setTimeout(()=>{ if(!live())return; table.classList.remove('poet-busy');
+          // 最後は状態どおりの見た目にそろえる
+          state.seats.forEach((p,i)=>{ if(i===drawer||moving[i]) showOwn(reveal(i),p.score); });
+          showPot(table,state.discard);
+        },finish+40);
+      }
+      busyUntil=performance.now()+end;
+      const delta=state.seats[drawer].score-before[drawer].score;
+      if(delta){
+        const gain=document.createElement('span');
+        gain.className='poet-delta';
+        gain.textContent=(delta>0?'+':'−')+Math.abs(delta)+'枚';
+        gain.style.animationDelay=end+'ms';
+        table.querySelector(`[data-poet-seat="${drawer}"] .poet-tally`).append(gain);
+      }
+      if(role!=='tono')transientAudio.later(()=>{
+        if(!live())return;
+        // 筆文字・和の色(姫は桜色、坊主は墨色、蝉丸は古代紫)
+        cut({text:semiAll?'蝉丸':roleName[role],sub:semiAll?'全員の札を場へ':'',font:'fude',
+          tone:'wa-cut '+(semiAll?'murasaki':role==='bozu'?'sumi':'sakura'),ms:semiAll?1400:1000});
+        if(state.extra)setTimeout(()=>{ if(live())cut({text:'姫ボーナス',sub:'もう1枚',font:'fude',tone:'wa-cut sakura',ms:1000}); },1050);
+      },duration);
+    }
   }
   function button(d) {
     const state=boardMatch.state;
@@ -256,5 +398,6 @@ const poetCards = (() => {
   }
   const stop=()=>{clearTimeout(timer);stacks=null;};
   boardMatch.register('bozu',{initial,apply,changed,html,draw,button,stop});
-  return {setup,setupHtml,setOption,start:()=>boardMatch.start('bozu',online,online?{hime:preferences.hime,semi:preferences.semi}:preferences),face};
+  return {setup,setupHtml,setOption,start:()=>{const rules={hime:preferences.himeBonus,semi:preferences.semi,peek:preferences.peek};
+    return boardMatch.start('bozu',online,online?rules:{...preferences,...rules});},face};
 })();

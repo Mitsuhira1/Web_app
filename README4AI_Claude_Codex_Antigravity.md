@@ -64,6 +64,37 @@
 - `js/app.js`(画面を出る時の後片付け・「もう一度」・人数表記 1〜4人)・`js/gamepad.js`(左回転・すぐ落とす)・`js/rules.js`(操作・Tスピン・先取)・`index.html`・`sw.js`(キャッシュ名)。
 - 試験: 新規 `tools/tests/test_falling_rules.mjs`(11件)。Playwright(ファイルを直接返す方法、メモリ版通信)で、CPU 1〜3人の対戦、回の進行と優勝、ひとりの終了と Enter でやり直し、実際の盤での Tスピン ダブル(1200点・BACK to BACK 成立)、3人の通信対戦(つぎの受け渡し・勝ち数・優勝)、スマホ幅(横スクロールなし)を確認。音は耳では未確認。スマホ実機・本物の Firebase は未確認。
 
+### 2026-11-21 / Claude / 坊主めくり: 持ち札の厚みの時機、坊主・姫で札が流れる動き
+- `js/poet-cards.js` の `draw`: 描き直しの前に各席の枚数・一番上の札と場札の枚数を覚え、描き直した後は札が着くまで前の見た目にする(`showOwn`・`showPot`。状態は変えない)。原因: 引いた瞬間に描き直すため、厚み(`--k`)が先に増えていた。着地で +1。
+- 坊主(蝉丸で全員の時は全員分)は手元→場札、姫は場札→手元へ、札の裏を 1 枚ずつ流す(`stream`。最大 14 枚、間隔 85ms 以下、1 枚 520ms)。カットインの後に始め、`SHUFFLE` の音を鳴らす。1 枚着くたびに両方の枚数を少しずつ変え、最後に状態どおりにそろえる。
+- 流している間は山札を押せない(`.poet-busy`)。CPU は `busyUntil` まで次を引かない。
+- 確かめたこと(Chromium): 引いて 250ms 後は前の枚数のまま(6 回)、姫・坊主の流れのコマ、流し終わりの見た目が状態と一致(姫: 手元 8・場札 0、坊主: 手元 0・場札 17)。
+
+### 2026-11-21 / Claude / ソリティア: スパイダーを追加、めくり・ドラッグの演出、K の枠
+- スパイダー(`core/games/spider.mjs` 新規): 2組104枚・10列、マーク 1/2/4 種、K〜A が同じマークでそろうと自動で組札、8組で成功。配るのは空き列が無い時だけ。クロンダイクと同じ ConcurrentRules(多人数は同じ配札を各自で解く)、手の番号もクロンダイクと同じ形(列は 6+k)。`core/asobi-pc-core.mjs` は import・`initMetadataForClass(SpiderSolitaire…[ConcurrentRules])`・Outcome への包み・def と brain の分岐(`variant=spider`)・ゲーム名を「ソリティア」に・設定 `variant`(既定 klondike)と `suits` を足しただけ。**クロンダイクの規則は変えていない**。盤のデータは `kind:"solitaire", variant:"spider"`(盤の大きさの CSS `k-solitaire` をそのまま使うため)。
+- 設定画面(`js/app.js`): 種類に応じてクロンダイク用(めくる枚数・周回)/スパイダー用(マークの数)だけを出す。`BREAK` の「(クロンダイク)」を削除。ヒントは `js/rules.js`。
+- めくり(`css/app.css`): 回転中の表と裏が盤ごとの `--w` 指定で元の札より大きく(72→93px)、めくり終わりに大きさが飛んでいた → `.card-turn > .pcard{--w:inherit!important}`。`flipCard`(`js/app.js`)は複製の位置指定(position・left・top など)を消す(浮かせた札を返す時のため)。
+- ドラッグ(`js/app.js` の `setupDrag`): 置いた時、ゴーストを次に盤を描くまで残し(最大 0.8 秒)、離した位置を `A.takeDrop()` で渡す。ゴーストの CSS transition(0.16 秒の遅れの原因)を切った。ソリティアは離した所から行き先へ 0.17 秒で滑らせる。動く札は `body` に浮かせた複製で飛ばす(列の欄が `overflow:hidden` で切れていたため)。表になった列の札はめくる演出。ほかのゲームは `takeDrop` を使っていないので見た目はゴーストが少し長く残るだけ。
+- K の枠: `.sol .spile>.pcard.empty{width:100%}` と汎用 `.empty{padding:24px}` で札より大きかった → 札と同じ `--w`・余白 0。盤の外枠の大きさは変えていない。`fitSolitaire` は外枠の幅も上限にする(スパイダー10列がスマホではみ出したため)。
+- 方針: `CLAUDE.md` に「見た目を直す時の基本方針(盤面の表示部分の大きさを極力変えない)」、`START_HERE.md` の守ることに1行。
+- ファイル: `core/games/spider.mjs`(新規)・`core/asobi-pc-core.mjs`・`js/app.js`・`js/boards/extra.js`・`js/rules.js`・`css/app.css`・`sw.js`(キャッシュ名と spider.mjs)・`tools/tests/test_spider_core.mjs`(新規)・`CLAUDE.md`・`START_HERE.md`・`docs/CHECKLIST_PENDING.md`
+- 確かめたこと(Chromium・1280px と 390px): めくり中の札の大きさが最後まで 72px、ドラッグ(1枚・2枚)で離した位置から行き先へ動き元の場所に戻らない、K の枠が札と同じ大きさ、スパイダーの設定・盤・配る演出・スマホ幅で10列が収まる、`test_spider_core`・`test_extra_12_games`・`test_roulette_core`。未確認: 通信対戦でのスパイダー、組札へ飛ぶ演出(13枚そろう場面は手で作れなかった)、Python の UI 試験。
+
+### 2026-11-20 / Claude / クアルトを遠近法の 3D に、ペグの枠、坊主めくりの裏返り・山札の色
+- クアルト(`js/boards/twelve.js` の `Q3`・`qRaw`・`qFit`・`qPiece`・`qShadow`・`boards.quarto`): ユーザー「平面に描いた感が強い・穴にはまっていない」。盤・穴・駒を 3 次元の座標で作り、遠近法で写して奥から順に描く(回転 24°・見下ろし 47°)。穴は開口部の中に奥の壁と底が見え、駒は穴の底(y=−0.15)に立てて、沈んだ部分は開口部の `clipPath` の中だけに描く。四角い駒は表を向いた面だけ光の向きで塗る。影は光と逆向きに盤へ落としてぼかす。置ける穴の見本は盤の svg の中に描き、`:has()` でボタンに乗せた時だけ出す。
+- ペグ: 選んだ時の枠を、穴の縁(ソケットの box-shadow)と頭の丸(`.wood-peg::after`)に沿う緑の輪に変えた。当たり領域は見えない `::before` のまま。
+- 坊主めくり: 前回、札を消す動きで回転する `.poet-flight` に opacity を付けたため立体が平らになり、めくる時に裏面が出ていた。回転の後に表の札(`.portrait`)だけを薄くするよう直した。予告は山札(4つ)の中央の上に「坊主 n枚・姫 n枚」。札の裏を卓の緑と分かれる紺＋金の縁に(山の側面も)。
+- `sw.js` のキャッシュ名を更新。
+- 確かめたこと(Chromium): クアルトの盤・駒・見本、ペグの選択の枠、坊主めくりの自分・CPU のめくる途中のコマ(表が見える)、`test_extra_12_games`。
+
+### 2026-11-20 / Claude / クアルトの立体盤、ペグの当たり判定、ヨット CPU、坊主めくりの演出・設定
+- クアルト(`js/boards/twelve.js`・`css/twelve.css`): 盤・穴・駒を同じ投影(45°回転・縦 0.56 倍)で描き直し、盤の前2面の厚み・穴の内壁・駒の影を光の向き(左上)に合わせた。置く駒の欄は固定の 104px 四方、残りの駒は 4×4 の固定の枠(使った駒は空き)。置ける穴に乗せると駒の見本を薄く出す。
+- ペグ・ソリティア: 穴のボタンに `::before` の当たり領域(ペグの頭まで。隣とは重ならない)を足した。選んだペグは白＋緑の輪で持ち上げ、跳び先(ヒントあり)は緑の点線。
+- ヨット(`core/asobi-pc-core.mjs` の `YACHT_AI`・`Yacht$Companion$brain$lambda`): CPU を書き直し。役ごとの値打ち(点＋上段ボーナスへの寄与−後に残した時の見込み点)を決め、残す目を期待値で選ぶ(上級は残りの振り直し回数ぶん先まで、初級・中級は1回先。初級は今の点だけ見る)。規則・手の番号は変えていない。自動対局 200 回の平均: 初級 138→160・中級 147→182・上級 169→185 点。**Kotlin(Android)側の CPU は未反映**。
+- 坊主めくり(`js/poet-cards.js`・`css/app.css`・`js/rules.js`): 「姫で場札が無い時」を「姫ボーナス」(既定あり。保存キーを `himeBonus` に変え、前の `hime` は引き継がない)。新設定「めくれる札の坊主・姫」(既定は見せる): ホストが各山の一番上の役を数えて `state.tops` に入れ、山札の上に数だけ出す。カットインは `font:'fude'`(Yuji Boku)と `tone:'wa-cut sakura|sumi|murasaki'`、蝉丸(全員の札を場へ)は「蝉丸」、姫ボーナスのもう1枚は「姫ボーナス」。手札0枚の時は札を出さない(坊主の札は着地後に消える)。引いた時は前の札を `.poet-under` で着地まで残す。山札のホバー枠を赤に。
+- `sw.js` のキャッシュ名を更新。
+- 確かめたこと(Chromium): クアルト・ペグ・坊主めくりの PC 画面、坊主めくりのスマホ幅、ペグの頭を押して選び跳べる、ヨット CPU の場面別の判断と自動対局、`test_extra_12_games`・`test_roulette_core`。Python の UI 試験は playwright(Python)が無く未実行。通信対戦での坊主めくりの新設定は未確認。
+
 ### 2026-11-20 / Claude / マルチの切断・リロード復帰、名前の即時反映、坊主めくりのローカルルール ほか
 - 通信(`js/net.js`・`js/online.js`): 切断時に `players/{uid}` を消すのをやめ、`offline: true, offlineAt` の印を付ける(全員・ホスト1人の時も)。`.info/connected` でつながり直したら切断予約を付け直し、印を消す(席が消されていたら空き席に入り直し `onRejoined`)。ホストは切断中の人を 45 秒(`OFFLINE_GRACE_MS`)待ってから外し(`removePlayer`・席は CPU)、ゲストはホストが 45 秒戻らない時だけ引き継ぐ。全員が切断中のまま 10 分の部屋は `cleanupOldRooms` が消す。公開一覧は接続中の人だけ数える。原因: スマホで画面を離れると onDisconnect で自分が部屋から消え、戻っても観戦が止まる・メニューに取り残される。
 - リロード復帰: 部屋番号を `sessionStorage['asobi-fb-room']` に覚え、起動時に `tryRejoinRoom()`。`joinRoom` は同じ uid なら席・役割・観戦・CPU 委任を残す。前のホストは `promoteToHostFromState` で(知らせを出さずに)ホストに戻り対局画面へ。CPU 戦は `sessionStorage['asobi-play']` と保存済みの続き(`saved`)から `resume`。`ensureNet()` は同時に呼ばれても接続を1つだけ作る。
