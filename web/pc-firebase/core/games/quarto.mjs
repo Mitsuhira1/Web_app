@@ -118,7 +118,7 @@ function makeQuartoRules(opts) {
           turn: s.turn,
           winLine,
           winner: s.turn,
-          reason: 'クアルト成立！（同じ特徴が4つ並びました）',
+          reason: '',
           lastCell: m,
         });
       }
@@ -131,7 +131,7 @@ function makeQuartoRules(opts) {
           turn: s.turn,
           winLine: null,
           winner: -1,
-          reason: '引き分け（盤面がすべて埋まりました）',
+          reason: '',
           lastCell: m,
         });
       }

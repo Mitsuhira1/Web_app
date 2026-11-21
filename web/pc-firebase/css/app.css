@@ -1472,7 +1472,7 @@ html.reduce .screen.col{animation:none}
 @keyframes bgpulse{0%,100%{opacity:.45}50%{opacity:1}}
 .sol .waste{display:flex;flex:none;justify-content:flex-start;align-items:flex-start;isolation:isolate}
 .sol .waste > .pcard{flex:none}
-.drag-enabled .sol .waste > [data-src],.drag-enabled .sol .soltab [data-src]{touch-action:none;cursor:grab}
+.drag-enabled .sol [data-src],.drag-enabled .speed [data-card],.drag-enabled .hand2 [data-card],.drag-enabled .hand2 [data-k]{touch-action:none;cursor:grab;-webkit-user-select:none;-webkit-touch-callout:none}
 .sol .waste > .pcard+.pcard{margin-inline-start:calc(var(--w)*-.60)}
 .lview:active{cursor:grabbing}
 .lmoney.ex{align-items:flex-start}
@@ -2559,6 +2559,8 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-tally b { font:700 clamp(19px,min(3.4cqw,4.2cqh),34px)/1.12 Georgia,serif; font-variant-numeric:tabular-nums; }
 .poet-tally small,.poet-role { font:600 clamp(10px,1.3cqw,13px)/1.3 sans-serif; }
 .poet-tally small { margin-left:2px; } .poet-role { color:var(--on-felt-sub); }
+/* 名札の 2 行目(殿・姫・坊主)は、空の時も一番長い「坊主」の分の幅と高さを取る(引くたびに名札の大きさが変わらないように) */
+.poet-role { display:block; min-width:2.2em; white-space:nowrap; }
 .poet-delta { position:absolute; left:50%; bottom:100%; padding:2px 6px; border-radius:6px;
   white-space:nowrap; font-size:12px; font-weight:700; background:#fff1cc; color:#372b1f;
   pointer-events:none; animation:poetGain 1.25s ease-out both; }
@@ -3117,3 +3119,6 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-stream.under { z-index:1; }
 .poet-place.taking { z-index:3; }
 .poet-busy .poet-pick { pointer-events:none; }
+/* ソリティア: 札の大きさ(と数字・マークの大きさ)は、どの場所(山札・捨て札・組札・列)でも同じにする。
+   場所ごとの古い --w の指定(スマホの上の段は 7 列前提の式など)が効くと、置いた時に数字の大きさが変わって見えるため */
+.felt-table.sol .pcard { --w: var(--sol-w, 72px) !important; }

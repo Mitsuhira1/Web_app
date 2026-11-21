@@ -486,7 +486,11 @@ let observedWrap;
 function fitScene(wrap) {
   const scene=wrap.querySelector('.twelve-scene');
   if (!scene) return;
-  const ratio=Math.max(.1,Math.min((wrap.clientWidth-22)/900,(wrap.clientHeight-12)/560));
+  let ratio=Math.max(.1,Math.min((wrap.clientWidth-22)/900,(wrap.clientHeight-12)/560));
+  // ペグ・ソリティアは場面(900×560)の中に丸い盤(498px)だけを描く。スマホでは場面の幅で縮めると盤が小さすぎるので、
+  // 盤(影を含めて約 520×530)が横幅いっぱいになるように拡大する(PC の大きさは変えない)
+  if (scene.dataset.game==='pegsolitaire' && wrap.clientWidth<600)
+    ratio=Math.max(ratio,Math.min((wrap.clientWidth-12)/520,(wrap.clientHeight-12)/530));
   scene.style.setProperty('--scene-scale',ratio);
 }
 

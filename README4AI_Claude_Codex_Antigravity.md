@@ -62,6 +62,28 @@
 - ファイル: `js/app.js`・`js/boards/roulette.js`・`css/app.css`・`sw.js`(キャッシュ名)・`docs/CHECKLIST_PENDING.md`・`docs/PORTING_TODO.md`
 - 確かめたこと(Chromium): ソリティア・花札・戦争・麻雀を数手進めて再開 → 0.1 秒で途中の盤、帯なし。ルーレット 1400×860 と 390×844 でベット中・回転・止まった後・消える途中を撮影。`test_roulette_core` 通過。未確認: Edge、通信対戦、制限時間切れでの回転。
 
+### 2026-11-21 / Antigravity / スマホ版のソリティア組札・ほかドラッグ対応カードゲームのタッチドラッグを修正
+- ユーザーの報告「ソリティアで中央のカードをスマホ版でドラッグできない」に対し、場札(`.soltab [data-src]`)は `e4bb24f` で `touch-action:none` 対応済みだったが、組札(`.soltop [data-src]`)と他のドラッグ対応カードゲーム(スピード・大富豪・7ならべ・Oh, No!・花札)は `touch-action:auto` のままでタッチドラッグが効かなかった(iOS 向けの `-webkit-user-select:none` / `-webkit-touch-callout:none` も未指定)。
+- `web/pc-firebase/css/app.css`: `.drag-enabled .sol [data-src]`、`.drag-enabled .speed [data-card]`、`.drag-enabled .hand2 [data-card]`、`.drag-enabled .hand2 [data-k]` に `touch-action:none;cursor:grab;-webkit-user-select:none;-webkit-touch-callout:none` を適用。
+- `web/pc-firebase/sw.js`: キャッシュ名を `asobipcfb-20261121-mobile-drag-22` に更新。
+- ファイル: `web/pc-firebase/css/app.css`, `web/pc-firebase/sw.js`, `docs/CHECKLIST_PENDING.md`, `README4AI_Claude_Codex_Antigravity.md`
+- 確かめたこと(Chromium モバイル 390×844 / 390×560・実タッチイベント CDP): ソリティア(クロンダイク)の場札→組札・組札→場札・複数枚束ドラッグ・ダブルタップ自動移動、スパイダーの場札ドラッグ、スピード・Oh, No! の `touch-action:none`、`test_spider_core`・`test_extra_12_games`・`test_roulette_core`・`test_falling_rules`・`git diff --check`。未確認: スマホ実機(iOS Safari / Android Chrome)。
+
+### 2026-11-21 / Claude / 坊主めくり: 名札の大きさを固定、「自分」を消す、戻る時の確認
+- 名札の 2 行目(殿・姫・坊主)は空でも「坊主」の幅と 1 行の高さを取る(`.poet-role`)。「自分」は出さない。引くたびに名札の大きさが変わっていた。PC・スマホ幅で 40 回引いて変化 0。
+- `js/board-match.js` の `exit()`: 1 人で遊ぶ時も、対局の途中(1 手以上・勝負がついていない)なら「対局を終了しますか」を出す(坊主めくり・胸毛絶体絶命など boardMatch のゲーム共通)。
+
+### 2026-11-21 / Claude / 坊主めくりの音を枚数に合わせる、クアルトの結果の理由の文を消す
+- 坊主めくり(`js/poet-cards.js` の `cardSound`): 札が流れる音を、3 枚までは 1 枚ごとの `CARD`、4〜9 枚は `SHUFFLE` 1 回、10 枚以上は途中でもう 1 回。
+- クアルト(`core/games/quarto.mjs`): 結果の理由「同じ特徴が4つ並びました」「盤面がすべて埋まりました」を空に。ユーザーの指示「画面を見れば明らかなことは書かない」を CLAUDE.md に書いた。
+
+### 2026-11-21 / Claude / ソリティアの札の大きさを固定・効果音、スマホのペグの盤を拡大
+- 札の数字の大きさが変わる: スマホの上の段(捨て札・組札)は 7 列前提の古い `--w`(42px)、列は `--sol-w`(39px)で、置くと数字の大きさが変わっていた → `.felt-table.sol .pcard{--w:var(--sol-w)!important}`(`css/app.css` の最後)で全部同じに。描き直しの間も変わらないよう、前回の `--sol-w` を盤の HTML に入れる(`js/boards/extra.js` の `solLastW`)。**ユーザー: 現実の札と同じく、数字の大きさは絶対に変えない**。
+- 効果音: `js/sfx.js` の `moveSound` にソリティアが無く、手の音が一度も鳴っていなかった(PC はドラッグを始めた時の音だけ) → めくる=CARD_FLIP(スパイダーの配る=DEAL)・置く=CARD。見えない盤(CPU・ほかの人)の手は鳴らさない(`js/app.js` の `playMoveSound`)。
+- スマホのペグ・ソリティア: 場面(900×560)ごと縮めて盤が 193px だった → 盤の欄が 600px 未満の時は丸い盤(約 520×530)に合わせて拡大(`js/boards/twelve.js` の `fitScene`)。390px 幅で 343px。PC は 488px のまま。
+- ファイル: `css/app.css`・`js/boards/extra.js`・`js/sfx.js`・`js/app.js`・`js/boards/twelve.js`・`sw.js`(キャッシュ名)
+- 確かめたこと(Chromium): スマホ幅・PC で捨て札・列・組札・浮かせた札の数字の大きさが同じ、山札タップで音が呼ばれる、ペグの盤の大きさとスマホで跳べる、横にはみ出さない、`test_spider_core`・`test_extra_12_games`。未確認: 実機での音、Edge。
+
 ### 2026-11-21 / Claude / 胸毛絶体絶命: スマホで打ち上げのアニメの文字が切れる
 - 原因: アニメの文字の大きさを画面の高さ(cqh)だけで決めていたため、縦長の画面では横幅からはみ出した(「ゲームオーバー」の右、「ドーン!!」が大きく出る一瞬など)。
 - `js/munage.js`・`css/munage.css`: 文字(ひぃっ・!?・ジジジ…・ドーン!!・キラーン・ゲームオーバー・〇〇の負け)と文字の縁取りを `min(高さ, 幅)` に。縦長の画面では「ドーン!!」の出始めの拡大を 2.2→1.25 倍、導火線のカットは全体を収める(`preserveAspectRatio` を meet、背景は同じ色)。横長(PC)の見た目は変わらない。
