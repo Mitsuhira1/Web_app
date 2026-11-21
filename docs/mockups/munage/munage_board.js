@@ -6,44 +6,41 @@
   const rng = seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const SKIN = 'url(#mnSkin)', LINE = '#6a3c22';
 
-  // ---- 胸毛: ペンでくるくると描いたループの線 ----
-  // 案内の線(guide)に沿って進みながら輪を描く(トロコイド)。輪の大きさを少しずつ揺らして手描きらしくする。
-  function coil(guide, loops, b, seed) {
-    const r = rng(seed);
-    // 案内の線を細かく取る(Catmull-Rom)
-    const g = [];
-    for (let i = 0; i < guide.length - 1; i++) {
-      const p0 = guide[Math.max(0, i - 1)], p1 = guide[i], p2 = guide[i + 1], p3 = guide[Math.min(guide.length - 1, i + 2)];
-      for (let t = 0; t < 1; t += .02) {
-        const t2 = t * t, t3 = t2 * t, f = (a, b, c, d) => .5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
-        g.push([f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])]);
-      }
-    }
-    g.push(guide[guide.length - 1]);
-    const acc = [0];
-    for (let i = 1; i < g.length; i++) acc.push(acc[i - 1] + Math.hypot(g[i][0] - g[i - 1][0], g[i][1] - g[i - 1][1]));
-    const L = acc[acc.length - 1];
-    const at = s => { let i = 1; while (i < acc.length - 1 && acc[i] < s) i++; const k = (s - acc[i - 1]) / (acc[i] - acc[i - 1] || 1);
-      return [g[i - 1][0] + (g[i][0] - g[i - 1][0]) * k, g[i - 1][1] + (g[i][1] - g[i - 1][1]) * k, Math.atan2(g[i][1] - g[i - 1][1], g[i][0] - g[i - 1][0])]; };
-    const size = Array.from({length: loops + 2}, () => b * (.8 + r() * .4));
-    const steps = loops * 22;
-    let d = '';
-    for (let i = 0; i <= steps; i++) {
-      const u = i / steps, th = u * loops * Math.PI * 2, j = Math.floor(u * loops), f = u * loops - j;
-      const bb = size[j] + (size[j + 1] - size[j]) * f;
-      const [x, y, an] = at(u * L);
-      const tx = Math.cos(an), ty = Math.sin(an), nx = -ty, ny = tx;
-      const px = x - tx * bb * Math.sin(th) + nx * bb * (Math.cos(th) - 1);
-      const py = y - ty * bb * Math.sin(th) + ny * bb * (Math.cos(th) - 1);
-      d += `${i ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`;
-    }
-    return d;
+  // ---- 胸毛: 短い毛の線を 2〜4 本ずつ束にして、胸全体に体の丸みに沿って散らす(アニメの描き方) ----
+  // 1 本ずつ、両端が細く真ん中が太い形(塗り)で描く。
+  function hairStroke(x, y, an, L, w, bend) {
+    const ux = Math.cos(an), uy = Math.sin(an), nx = -uy, ny = ux;
+    const P = (t, o) => `${(x + ux * L * t + nx * o).toFixed(2)} ${(y + uy * L * t + ny * o).toFixed(2)}`;
+    return `M${P(0, 0)}Q${P(.5, bend + w)} ${P(1, 0)}Q${P(.5, bend - w)} ${P(0, 0)}Z`;
   }
   function chestHair() {
-    // 胸の上を左右へ 1 本、真ん中を へそ へ 1 本
-    const across = coil([[-30, -51], [-18, -60], [-6, -57], [0, -53], [6, -57], [18, -60], [30, -51]], 9, 4.2, 5);
-    const down = coil([[0, -51], [.5, -36], [-.5, -20], [.5, -2], [0, 14]], 7, 3.6, 9);
-    return `<path d="${across}${down}" fill="none" stroke="#3a2416" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const r = rng(23);
+    // 束の場所と向き(右半分。左は左右反転)。an は線の向き(0 = 右、正 = 下へ)
+    const tufts = [
+      // 胸の上(鎖骨の下)
+      [8, -72, .35], [20, -70, .5], [32, -66, .7], [44, -62, .9],
+      // 胸板の中ほど
+      [6, -60, .9], [17, -58, .45], [29, -55, .55], [41, -51, .75], [52, -46, 1],
+      // 胸板の下の縁(丸みに沿う)
+      [12, -46, .25], [25, -42, .2], [38, -40, .35], [50, -36, .6],
+      // 真ん中〜おなか
+      [4, -34, 1.2], [3, -22, 1.35], [8, -12, 1.2], [3, -2, 1.4], [9, 8, 1.25],
+      // 肩
+      [58, -70, 1.1], [64, -58, 1.3],
+    ];
+    let d = '';
+    for (const [x0, y0, an0] of tufts) {
+      for (const side of [1, -1]) {
+        const n = 2 + Math.floor(r() * 3), L = 8 + r() * 4.5, an = side > 0 ? an0 : Math.PI - an0;
+        for (let k = 0; k < n; k++) {
+          // 束の線は少しずつずらして並べる
+          const off = (k - (n - 1) / 2) * 3.1, ax = -Math.sin(an) * off, ay = Math.cos(an) * off;
+          const x = side * x0 + ax + (r() - .5) * 1.5, y = y0 + ay + (r() - .5) * 1.5 + (r() - .5) * 2;
+          d += hairStroke(x - Math.cos(an) * L / 2, y - Math.sin(an) * L / 2, an + (r() - .5) * .18, L * (.8 + r() * .4), 1.05, (r() - .5) * 2.4 * side);
+        }
+      }
+    }
+    return `<path d="${d}" fill="#4a2c18" opacity=".9"/>`;
   }
 
   // ---- 顔: worry(盤)・shock(驚く)・scream(飛ぶ) ----
