@@ -22,6 +22,79 @@
 <div class="bgstrip" id="bgs" role="group" aria-label="BGM" hidden></div>
 <button class="toast" id="toast" hidden></button>
 <script>
+// 調査用: ?nofx … 画面のフィルターを止める。nofx=bunyo(ぶにょぶにょの絵だけ)/nofx=svg(SVG のフィルターだけ)/nofx=css(CSS のフィルターだけ)/nofx(全部)
+(function () {
+  var m = location.search.match(/[?&]nofx(=(\w+))?/); if (!m) return;
+  var css = { bunyo: 'svg[data-bunyo],svg[data-bunyo] [filter]{filter:none!important}',
+    svg: '[filter]{filter:none!important}',
+    css: '*:not([filter]),*::before,*::after{filter:none!important;backdrop-filter:none!important}' }[m[2]]
+    || '[filter]{filter:none!important}*,*::before,*::after{filter:none!important;backdrop-filter:none!important}';
+  document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
+  document.documentElement.classList.add('nofx');
+})();
+</script>
+<script>
+// 固まる原因を調べるための記録(diag.html で見る)。起動の段階・エラー・長い処理・0.5 秒ごとの「動いている印」を残す。
+// URL に ?diag(関数の出入りまで見る時は ?diag=deep)を付けた時だけ動く。使い方は CLAUDE.md。
+(function () {
+  if (!/[?&]diag/.test(location.search)) return;
+  var KEY = 'asobi-diag', t0 = performance.now(), log = [];
+  var save = function () { try { localStorage.setItem(KEY, JSON.stringify({ ua: navigator.userAgent, at: Date.now(), log: log.slice(-150) })); } catch (e) {} };
+  var add = window.__diag = function (m) { log.push(Math.round(performance.now() - t0) + 'ms ' + m); save(); };
+  add('開始 ' + location.href + ' sw=' + !!(navigator.serviceWorker && navigator.serviceWorker.controller) + ' 画面 ' + innerWidth + 'x' + innerHeight + ' dpr=' + devicePixelRatio);
+  document.addEventListener('load', function (e) { var s = e.target; if (s && s.tagName === 'SCRIPT') add('読込+実行 ' + (s.getAttribute('src') || 'inline')); }, true);
+  window.addEventListener('error', function (e) { var t = e.target; if (t && t !== window && (t.src || t.href)) add('ファイル失敗 ' + (t.src || t.href)); else add('エラー ' + e.message + ' ' + (e.filename || '').split('/').pop() + ':' + e.lineno); }, true);
+  window.addEventListener('unhandledrejection', function (e) { add('Promiseエラー ' + String(e.reason && (e.reason.stack || e.reason.message) || e.reason).slice(0, 300)); });
+  try { new PerformanceObserver(function (l) { l.getEntries().forEach(function (x) { if (x.duration > 200) add('長い処理 ' + Math.round(x.duration) + 'ms (開始 ' + Math.round(x.startTime - t0) + 'ms)'); }); }).observe({ entryTypes: ['longtask'] }); } catch (e) {}
+  window.addEventListener('load', function () {
+    add('load 完了');
+    // ?diag=deep の時だけ: アプリの関数に入った/出たを全部残す(どこで止まったまま戻らないかを見る)
+    if (/[?&]diag=deep/.test(location.search)) {
+      var trail = [], depth = 0, wrapped = 0;
+      var keep = function (s) { trail.push(Math.round(performance.now() - t0) + ' ' + s); if (trail.length > 400) trail.splice(0, 100); try { localStorage.setItem('asobi-diag-deep', trail.join('\n')); } catch (e) {} };
+      var wrap = function (owner, name, label) {
+        var f = owner[name];
+        if (typeof f !== 'function' || f.__diag || /\[native code\]/.test(Function.prototype.toString.call(f)) || /^[A-Z]/.test(name)) return;
+        var w = function () {
+          depth++; keep(new Array(depth).join(' ') + '→' + label);
+          try { return f.apply(this, arguments); } finally { keep(new Array(depth).join(' ') + '←' + label); depth--; }
+        };
+        w.__diag = true;
+        try { owner[name] = w; wrapped++; } catch (e) {}
+      };
+      Object.getOwnPropertyNames(window).forEach(function (k) {
+        if (k === '__diag' || k === 'add') return;
+        var v; try { v = window[k]; } catch (e) { return; }
+        if (typeof v === 'function') wrap(window, k, k);
+        else if (v && typeof v === 'object' && !(v instanceof Node) && Object.getPrototypeOf(v) === Object.prototype && ['S', 'store', 'localStorage', 'sessionStorage'].indexOf(k) < 0) {
+          Object.keys(v).forEach(function (m) { try { if (typeof v[m] === 'function') wrap(v, m, k + '.' + m); } catch (e) {} });
+        }
+      });
+      // 後から作られる通信の窓口(netApi)も、作られたら包む
+      var netDone = false;
+      setInterval(function () { if (!netDone && typeof netApi !== 'undefined' && netApi && typeof netApi === 'object') { netDone = true; Object.keys(netApi).forEach(function (m) { if (typeof netApi[m] === 'function') wrap(netApi, m, 'netApi.' + m); }); add('netApi を記録対象に追加'); } }, 100);
+      add('詳しい記録 ' + wrapped + ' 個の関数');
+    }
+    var n = 0;
+    setInterval(function () {
+      n++;
+      var top = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+      var desc = top ? top.tagName.toLowerCase() + (top.id ? '#' + top.id : '') + (typeof top.className === 'string' && top.className ? '.' + top.className.trim().split(/\s+/).slice(0, 3).join('.') : '') : '-';
+      var scr = typeof S !== 'undefined' ? S.screen : '?';
+      var last = log[log.length - 1] || '';
+      var beat = '動いている ' + n + ' 画面=' + scr + ' 中央の要素=' + desc + ' app子=' + (document.getElementById('app') || {}).childElementCount;
+      if (last.indexOf('動いている ') >= 0) log[log.length - 1] = Math.round(performance.now() - t0) + 'ms ' + beat; else add(beat);
+      save();
+    }, 500);
+  });
+  var lastOp = {};
+  ['pointerdown', 'wheel', 'keydown'].forEach(function (ev) { window.addEventListener(ev, function (e) {
+    var now = Date.now(); if (now - (lastOp[ev] || 0) < 1500) return; lastOp[ev] = now;
+    var t = e.target; add('操作 ' + ev + ' → ' + (t && t.tagName ? t.tagName.toLowerCase() + (typeof t.className === 'string' && t.className ? '.' + t.className.trim().split(/\s+/)[0] : '') : '?'));
+  }, { capture: true, passive: true }); });
+})();
+</script>
+<script>
 // 起動で止まった時の安全装置: 画面が空のままなら、原因と「やり直す」を出す(真っ暗・真っ茶色のままにしない)
 (function () {
   var first = '';

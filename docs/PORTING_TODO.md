@@ -6,6 +6,9 @@
 
 ---
 
+## 2026-11-21(Claude) Edge で固まる不具合
+- ぶにょぶにょ・パクリスを他の版に入れる時: `<svg>` の中に入れる絵に CSS の `filter`(drop-shadow など)を付けない。影は SVG フィルターの `feDropShadow` で付ける(CLAUDE.md の「不具合の記録」)。
+
 ## 2026-11-20(Claude)
 
 ### 1. ヨットの CPU の書き直し(規則は変えない) — 未(Android・exe)

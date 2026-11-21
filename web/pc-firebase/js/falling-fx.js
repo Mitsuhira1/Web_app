@@ -175,7 +175,8 @@ function bunyoFilter(id,c) {
   <feDiffuseLighting in="bump" surfaceScale="${sc}" diffuseConstant="1.08" lighting-color="#fff" result="d"><feDistantLight azimuth="240" elevation="58"/></feDiffuseLighting>
   <feBlend in="shape" in2="d" mode="multiply" result="l0"/><feComposite in="l0" in2="shape" operator="in" result="lit"/>
   <feSpecularLighting in="bump" surfaceScale="${sc}" specularConstant=".55" specularExponent="16" lighting-color="#fff" result="s"><feDistantLight azimuth="235" elevation="52"/></feSpecularLighting>
-  <feComposite in="s" in2="shape" operator="in" result="s2"/><feComposite in="s2" in2="lit" operator="arithmetic" k2=".85" k3="1"/></filter>`;
+  <feComposite in="s" in2="shape" operator="in" result="s2"/><feComposite in="s2" in2="lit" operator="arithmetic" k2=".85" k3="1" result="body"/>
+  <feDropShadow in="body" dx="0" dy="2" stdDeviation="1" flood-color="#000" flood-opacity=".13"/></filter>`;
 }
 function bunyoFace(px,py,c,sx,sy,k,white) {
   let s=`<g transform="${bunyoTf(px,py,c,sx,sy)}"><ellipse cx="-.13" cy="-.27" rx=".14" ry=".07" fill="#fff" opacity="${white?.4:.8}" transform="rotate(-20 -.13 -.27)"/><circle cx=".08" cy="-.33" r=".03" fill="#fff" opacity=".7"/>`;
@@ -235,7 +236,7 @@ function bunyoSvg(st,c,fid,W=6,H=12) {
     faces+=rim+bunyoFace(ax,ay,c,1,1,p.a,false)+bunyoFace(sx2,sy2,c,1,1,p.b,false);
   }
   let body=''; for (const {fill,items} of layers.values()) body+=`<g filter="url(#${fid})" fill="${fill}">${items.join('')}</g>`;
-  return `<svg width="${W*c}" height="${H*c}" viewBox="0 0 ${W*c} ${H*c}" style="filter:drop-shadow(0 2px 2px #0002)"><defs>${bunyoFilter(fid,c)}</defs>${body}${faces}${top}</svg>`;
+  return `<svg data-bunyo width="${W*c}" height="${H*c}" viewBox="0 0 ${W*c} ${H*c}" overflow="visible"><defs>${bunyoFilter(fid,c)}</defs>${body}${faces}${top}</svg>`;
 }
 const bunyoPairSvg = (a,b,c,fid) => bunyoSvg({cells:[[b],[a]]},c,fid,1,2);
 
