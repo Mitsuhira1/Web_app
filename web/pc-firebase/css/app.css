@@ -1473,7 +1473,7 @@ html.reduce .screen.col{animation:none}
 .sol .waste{display:flex;flex:none;justify-content:flex-start;align-items:flex-start;isolation:isolate}
 .sol .waste > .pcard{flex:none}
 /* ドラッグできる札(捨て札・組札・列)は、指で動かした時にブラウザのスクロールにしない(付けないとスマホでドラッグが取り消される) */
-.drag-enabled .sol .waste > [data-src],.drag-enabled .sol .soltop .slot > [data-src],.drag-enabled .sol .soltab [data-src]{touch-action:none;cursor:grab}
+.drag-enabled .sol [data-src],.drag-enabled .speed [data-card],.drag-enabled .hand2 [data-card],.drag-enabled .hand2 [data-k]{touch-action:none;cursor:grab;-webkit-user-select:none;-webkit-touch-callout:none}
 .sol .waste > .pcard+.pcard{margin-inline-start:calc(var(--w)*-.60)}
 .lview:active{cursor:grabbing}
 .lmoney.ex{align-items:flex-start}
@@ -2785,10 +2785,6 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 #acts .rq-actions .btn { min-height:32px; height:35px; padding:0 11px; }
 .rq-actions { flex-wrap:wrap; }
 
-@container (max-width:875px) {
-  .rq-layout { grid-template-columns:minmax(0,1fr); }
-  .rq-wheel { width:min(88%, 60cqh, 440px); }
-}
 @container (max-width:610px) or ((max-width:875px) and (max-height:440px)) {
   .rq-layout { max-width:480px; }
   .rq-table { height:clamp(672px,179cqw,790px); --cx:calc(100% / 5.6); --cy:calc(100% / 14); }
@@ -2798,25 +2794,69 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .rq-spot.dozen .rq-spotlabel, .rq-spot.outside .rq-spotlabel { font-size:12px; }
   .rq-legend { gap:2px 8px; }
 }
-@container (min-width:520px) and (max-width:875px) and (max-height:440px) {
-  .rq-layout { max-width:none; grid-template-columns:minmax(0, 2fr) minmax(0, 3fr); }
-  .rq-wheel { width:min(100%, calc(100cqh - 18px)); }
+/* 回転盤はふだん隠し(PC・スマホとも)、ベットが終わって回る間だけ盤の中央に浮かせる。空いた所はベッティングテーブルを大きく出す */
+.rq-layout { grid-template-columns:minmax(0,1fr); }
+.rq-layout:not(.is-spinning, .is-settling, .is-leaving) .rq-wheel-panel { display:none; }
+.rq-layout:is(.is-spinning, .is-settling, .is-leaving) .rq-wheel-panel {
+  position:absolute; inset:0; z-index:20; border-radius:14px;
+  background:radial-gradient(ellipse at 50% 46%,#2a1810b3,#120a06d9 72%);
 }
-/* スマホ(1列の並び): 回転盤はふだん隠し、ベットが終わって回る間だけ盤の中央に浮かせる */
-@container (max-width:875px) and (min-height:441px), (max-width:519px) {
-  .rq-layout:not(.is-spinning, .is-settling) .rq-wheel-panel { display:none; }
-  .rq-layout:is(.is-spinning, .is-settling) .rq-wheel-panel {
-    position:absolute; inset:0; z-index:20; background:#1a0f0a8c; backdrop-filter:blur(2px);
-  }
-  .rq-layout.is-spinning .rq-wheel-panel { animation:rqRise .32s ease-out both; }
-  .rq-layout.is-spinning .rq-wheel { animation:rqRise2 .36s cubic-bezier(.2,.9,.3,1.15) both; }
-  .rq-layout.is-settling .rq-wheel-panel { cursor:pointer; }
-  .rq-layout:is(.is-spinning, .is-settling) .rq-wheel { width:min(92cqw, 82cqh, 440px); filter:drop-shadow(0 10px 18px #000a); }
-}
+.rq-layout.is-spinning .rq-wheel-panel { animation:rqRise .38s ease-out both; }
+.rq-layout.is-spinning .rq-wheel { animation:rqRise2 .5s cubic-bezier(.18,.9,.28,1.08) both; }
+.rq-layout.is-leaving .rq-wheel-panel { animation:rqFall .34s ease-in var(--rq-leave-delay,0ms) both; }
+.rq-layout.is-leaving .rq-wheel { animation:rqFall2 .34s ease-in var(--rq-leave-delay,0ms) both; }
+.rq-layout:is(.is-settling, .is-leaving) .rq-wheel-panel { cursor:pointer; }
+.rq-layout:is(.is-spinning, .is-settling, .is-leaving) .rq-wheel { width:min(92cqw, 84cqh, 600px); filter:drop-shadow(0 14px 22px #000b); }
 .play-screen .boardwrap.k-roulette:has(.rq-layout.is-spinning) { overflow:hidden; }
 @keyframes rqRise { from { opacity:0; } }
-@keyframes rqRise2 { from { transform:scale(.82) translateY(24px); } }
+@keyframes rqRise2 { from { opacity:0; transform:scale(.78) translateY(34px); } 60% { opacity:1; } }
+@keyframes rqFall { to { opacity:0; } }
+@keyframes rqFall2 { to { opacity:0; transform:scale(.9) translateY(18px); } }
 .reduce .rq-wheel-panel, .reduce .rq-wheel-panel .rq-wheel { animation:none !important; }
+.reduce .rq-layout.is-leaving .rq-wheel-panel { display:none; }
+/* ベッティングテーブルの字: 数字は Cinzel(ローマン体)、言葉はしっぽり明朝。金色がかった白で彫ったように */
+.rq-felt { --rq-num:"Cinzel","Shippori Mincho B1",serif; --rq-jp:"Shippori Mincho B1","Cinzel",serif; }
+.rq-tablehead b { font-family:var(--rq-jp); font-weight:800; letter-spacing:.14em; color:#f2d68e; text-shadow:0 1px 0 #00000080; }
+.rq-tablehead span, .rq-legend { font-family:var(--rq-jp); font-weight:800; letter-spacing:.04em; color:#ecdcb6; }
+.rq-cell { font-family:var(--rq-num); font-weight:700; color:#fbf1d6; text-shadow:0 1px 0 #000a, 0 0 6px #0005; border-color:#dcc58dbb; }
+.rq-cell.dozen, .rq-cell.outside, .rq-cell.column { font-family:var(--rq-jp); font-weight:800; letter-spacing:.04em; }
+.rq-cell.column .rq-spotlabel, .rq-cell.dozen .rq-spotlabel { font-family:var(--rq-num); }
+/* 広い画面: 回転盤の分が空いたので、テーブルを盤いっぱいに大きく(縦横の比は保つ) */
+@container (min-width:876px), (min-width:611px) and (min-height:441px) {
+  .rq-layout { --tw:min(100cqw - 8px, (100cqh - 255px) * 2.5 + 40px); gap:8px; margin:0 auto; }
+  .rq-result { padding:6px 12px; }
+  .rq-result th, .rq-result td { padding:2px 4px; }
+  .rq-bets { width:var(--tw); margin-inline:auto; }
+  .rq-felt { padding:14px 18px 12px; border-radius:20px; border:2px solid #c79a5e; box-shadow:inset 0 0 0 4px #0d2a2140, 0 6px 16px #21100540; }
+  .rq-table { height:auto; aspect-ratio:14 / 5.6; }
+  .rq-tablehead b { font-size:clamp(16px, calc(var(--tw) * .021), 24px); }
+  .rq-tablehead span, .rq-legend { font-size:clamp(11px, calc(var(--tw) * .013), 14px); }
+  .rq-cell { font-size:clamp(14px, calc(var(--tw) * .031), 36px); }
+  .rq-cell.dozen, .rq-cell.outside { font-size:clamp(13px, calc(var(--tw) * .026), 30px); }
+  .rq-cell.column { font-size:clamp(12px, calc(var(--tw) * .022), 26px); }
+  .rq-pin { width:min(var(--cx) * .51, 34px); height:28px; }
+  .rq-pinmark { width:10px; height:10px; }
+  .rq-pin.line .rq-pinmark { width:14px; height:6px; }
+}
+/* チップ: 大きく。選んでいるチップは浮かせて、白と金の二重の輪と光で目立たせる */
+.rq-denom { font-family:"Cinzel",serif; font-weight:700; transition:transform .14s ease-out, box-shadow .14s ease-out; position:relative; }
+.rq-denom[aria-pressed="true"] {
+  outline:none; transform:translateY(-6px) scale(1.1); z-index:1;
+  box-shadow:inset 0 0 0 2px #2a140b55, 0 0 0 3px #fffaf0, 0 0 0 6px #f0a81c, 0 0 18px 6px #ffc83dcc, 0 8px 10px #1a120d66;
+}
+.rq-denom[aria-pressed="true"]::after {
+  content:""; position:absolute; left:50%; bottom:-17px; width:0; height:0; transform:translateX(-50%);
+  border:6px solid transparent; border-bottom:8px solid #e2951a;
+}
+.rq-denom:not(:disabled):not([aria-pressed="true"]):hover { transform:translateY(-2px); }
+@media(min-width:1000px){
+  .rq-denoms { gap:14px; padding:8px 8px 4px; }
+  .rq-denom { width:60px; height:60px; font-size:17px; border-width:4px; }
+  .rq-wallet { font-size:13px; min-width:96px; }
+  .rq-wallet b { font-family:"Cinzel",serif; font-size:21px; }
+  .play-screen:has(.rq-layout) #acts { gap:8px; }
+}
+.reduce .rq-denom { transition:none; }
 @media (min-width:681px) and (min-height:541px) {
   .play-screen:has(.rq-layout) .rq-actions { margin-inline:44px; }
 }
