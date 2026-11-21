@@ -1809,7 +1809,7 @@ function onlineChanged() {
   if (['extraPlay','minePlay','slidePlay'].includes(S.screen)) { refreshChat(); return; }
   if (S.screen==='wolfPlay') { refreshChat(); wolfGame.update(); return; }
   if (S.screen==='wolfSetup' && wolfGame.refreshingSetup()) return keepInputs(render);
-  if (roomActive() && ['mineSetup','slideSetup','poetSetup','bunyoSetup','pakurisSetup'].includes(S.screen)) {
+  if (roomActive() && ['mineSetup','slideSetup','poetSetup','munageSetup','bunyoSetup','pakurisSetup'].includes(S.screen)) {
     const body = $('.setupbody');
     const signature = JSON.stringify(activeMembers().map(p => [p.slot,p.name]));
     if (body && body.dataset.members !== signature) {
@@ -1894,7 +1894,8 @@ function updateMaidCursorAim(scene,index) {
   }
 }
 function getViewportBox() {
-  const bw = maidCursorScene() || $('#boardwrap') || $('.stage') || app || (typeof document !== 'undefined' ? document.body : null);
+  // 胸毛絶体絶命は盤(縦横比が決まっている)を基準にする。窓の大きさが違っても同じボタンの上に出る
+  const bw = maidCursorScene() || $('#boardwrap') || (S.screen === 'extraPlay' && $('#mnTable .mn-board')) || $('.stage') || app || (typeof document !== 'undefined' ? document.body : null);
   return bw ? bw.getBoundingClientRect() : null;
 }
 

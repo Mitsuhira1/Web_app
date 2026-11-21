@@ -2799,6 +2799,21 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .rq-layout { max-width:none; grid-template-columns:minmax(0, 2fr) minmax(0, 3fr); }
   .rq-wheel { width:min(100%, calc(100cqh - 18px)); }
 }
+/* スマホ(1列の並び): 回転盤はふだん隠し、ベットが終わって回る間だけ盤の中央に浮かせる */
+@container (max-width:875px) and (min-height:441px), (max-width:519px) {
+  .rq-layout:not(.is-spinning, .is-settling) .rq-wheel-panel { display:none; }
+  .rq-layout:is(.is-spinning, .is-settling) .rq-wheel-panel {
+    position:absolute; inset:0; z-index:20; background:#1a0f0a8c; backdrop-filter:blur(2px);
+  }
+  .rq-layout.is-spinning .rq-wheel-panel { animation:rqRise .32s ease-out both; }
+  .rq-layout.is-spinning .rq-wheel { animation:rqRise2 .36s cubic-bezier(.2,.9,.3,1.15) both; }
+  .rq-layout.is-settling .rq-wheel-panel { cursor:pointer; }
+  .rq-layout:is(.is-spinning, .is-settling) .rq-wheel { width:min(92cqw, 82cqh, 440px); filter:drop-shadow(0 10px 18px #000a); }
+}
+.play-screen .boardwrap.k-roulette:has(.rq-layout.is-spinning) { overflow:hidden; }
+@keyframes rqRise { from { opacity:0; } }
+@keyframes rqRise2 { from { transform:scale(.82) translateY(24px); } }
+.reduce .rq-wheel-panel, .reduce .rq-wheel-panel .rq-wheel { animation:none !important; }
 @media (min-width:681px) and (min-height:541px) {
   .play-screen:has(.rq-layout) .rq-actions { margin-inline:44px; }
 }

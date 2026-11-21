@@ -34,7 +34,7 @@ const sfx = (() => { try { return createSfx(call); } catch (e) { return { init: 
 const ORDER = ['shogi', 'gogo', 'reversi', 'connect4', 'gomoku', 'hex', 'mancala', 'morris', 'checkers', 'chess', 'dots', 'hitblow', 'hare', 'chinese', 'ludo', 'backgammon', 'go', 'yacht', 'mahjong', 'life',
   'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mine', 'bozu', 'wolf', 'roulette',
   'war', 'takoyaki', 'butanoshippo', 'oldmaid', 'hearts', 'ginrummy', 'vulture',
-  'goita', 'quarto', 'geister', 'rummikub', 'pegsolitaire'];
+  'goita', 'quarto', 'geister', 'rummikub', 'pegsolitaire', 'munage'];
 const APP_NAME = `あそび箱${ORDER.length}`;
 const ART_ID = { gogo: 'minishogi' };
 const BREAK = { morris: 'ナインメンズ<wbr>モリス', chinese: 'チャイニーズ<wbr>チェッカー', dots: 'ドット＆<wbr>ボックス', holdem: 'テキサス<wbr>ポーカー', yacht: 'ヨット', blackjack: 'ブラック<wbr>ジャック', backgammon: 'バック<wbr>ギャモン', hitblow: 'ヒット＆<wbr>ブロー', life: '人生<wbr>すごろく' };
@@ -48,7 +48,7 @@ const PLAYABLE = new Set(ORDER);
 const newGameSetup = {
   slide:on=>slideGame.setup(on), bunyo:on=>bunyoGame.setup(on), pakuris:on=>pakurisGame.setup(on),
   mine:on=>minesGame.setup(on), wolf:on=>wolfGame.setup(on),
-  bozu:on=>poetCards.setup('bozu',on)
+  bozu:on=>poetCards.setup('bozu',on), munage:on=>munageGame.setup('munage',on)
 };
 const playable = (id) => Object.hasOwn(newGameSetup,id) || (PLAYABLE.has(id) && (window.RENDER[id] || window.RENDER[KIND_OF[id] || id] || (gInfo(id)?.category !== 'BOARD' && window.RENDER.cards)));
 const KIND_OF = { gogo: 'shogi', connect4: 'c4', chinese: 'chinese' };
@@ -1421,7 +1421,7 @@ function render() {
     const mob = isMob();
     document.body.style.height = (z === 1 || mob) ? '' : (100 / z) + 'vh'; document.body.style.width = (z === 1 || mob) ? '' : (100 / z) + 'vw'; }
   if (S.theme === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = S.theme;
-  const screens = { first, menu, setup, play, settings, records, room, slideSetup:slideGame.setupHtml, slidePlay:slideGame.playHtml, bunyoSetup:bunyoGame.setupHtml, bunyoPlay:bunyoGame.playHtml, pakurisSetup:pakurisGame.setupHtml, pakurisPlay:pakurisGame.playHtml, mineSetup:minesGame.setupHtml, minePlay:minesGame.playHtml, wolfSetup:wolfGame.setupHtml, wolfPlay:wolfGame.playHtml, poetSetup:poetCards.setupHtml, extraPlay:boardMatch.playHtml };
+  const screens = { first, menu, setup, play, settings, records, room, slideSetup:slideGame.setupHtml, slidePlay:slideGame.playHtml, bunyoSetup:bunyoGame.setupHtml, bunyoPlay:bunyoGame.playHtml, pakurisSetup:pakurisGame.setupHtml, pakurisPlay:pakurisGame.playHtml, mineSetup:minesGame.setupHtml, minePlay:minesGame.playHtml, wolfSetup:wolfGame.setupHtml, wolfPlay:wolfGame.playHtml, poetSetup:poetCards.setupHtml, munageSetup:munageGame.setupHtml, extraPlay:boardMatch.playHtml };
   if (S.screen === 'setup' && !gInfo(S.setup.id)) S.screen = 'menu';
   const fa = document.activeElement, fKey = fa && fa !== document.body && app.contains(fa) ? Object.entries(fa.dataset).slice(0, 2).map(([k, v]) => `[data-${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}="${CSS.escape(v)}"]`).join('') : '';
   const oldMain = $('.main'), keepTop = oldMain && lastScreen === S.screen ? oldMain.scrollTop : null;
@@ -1500,6 +1500,7 @@ app.addEventListener('click', async (e) => {
   if (d.extraExit != null) return boardMatch.exit();
   if (Object.keys(d).some(key=>key.startsWith('extra'))) return boardMatch.button(d);
   if (d.poetStart != null) return poetCards.start();
+  if (d.munageStart != null) return munageGame.start();
   if (d.mineVsStart != null) return mineVersus.start();
   if (d.mineVsReset != null) return mineVersus.reset();
   if (d.wolfStart != null) return wolfGame.start();
@@ -1600,6 +1601,7 @@ app.addEventListener('click', async (e) => {
     if(k.startsWith('wolf:'))return wolfGame.setOption(k.slice(5),v);
     if(k.startsWith('slide:'))return slideGame.setOption(k.slice(6),v);
     if(k.startsWith('bozu:'))return poetCards.setOption(k.slice(5),v);
+    if(k.startsWith('munage:'))return munageGame.setOption(k.slice(7),v);
     if(k.startsWith('bunyo:')||k.startsWith('pakuris:'))return fallingMatch.setOption(...k.split(':'),v);
     if(k==='mine:mode')return minesGame.setMode(v);
     if(k==='mine:level'){minesGame.level=v;return render();}
@@ -1750,7 +1752,7 @@ function goBack() {
   if (S.screen==='minePlay') return minesGame.exit();
 
   if (S.screen==='wolfPlay') return wolfGame.exit();
-  if (['slidePlay','slideSetup','bunyoPlay','bunyoSetup','pakurisPlay','pakurisSetup','mineSetup','poetSetup','wolfSetup'].includes(S.screen)) return go(roomActive()?'room':'menu');
+  if (['slidePlay','slideSetup','bunyoPlay','bunyoSetup','pakurisPlay','pakurisSetup','mineSetup','poetSetup','munageSetup','wolfSetup'].includes(S.screen)) return go(roomActive()?'room':'menu');
   if (S.screen === 'play') {
     if (online && view && view.mine < 0) return go('room');
     // 対局中は確かめてから終わる(まだ 1 手も指していない時は、そのまま戻る。通信対戦はいつも確かめる)
@@ -1950,6 +1952,7 @@ toastEl.addEventListener('pointercancel', () => { drag = null; toastHide(); });
     CAT.push({id:'mine',name:'マインスイーパー',intro:'協力して地雷を避けるか、同じ配置でクリアを競おう。',players:'1〜6人',category:'BOARD',options:[]});
     CAT.push({id:'mineVersus',name:'マインスイーパー（対戦）',intro:'同じ配置で競い、ポイントを使って相手を妨害しよう。',players:'2〜6人',category:'BOARD',options:[]});
     CAT.push({id:'bozu',name:'坊主めくり',intro:'4つの山から札を引き、持ち札の数を競おう。',players:'1〜6人',category:'CARD',options:[]});
+    CAT.push({id:'munage',name:'胸毛絶体絶命',intro:'大砲の中の胸毛のおっさん。順にボタンを押し、点火スイッチを押した人が飛ばしてしまう。',players:'2〜6人',category:'BOARD',options:[]});
     CAT.push({id:'wolf',name:'人狼',intro:'話し合いと投票で、村に潜む人狼を探そう。',players:'1〜6人',category:'BOARD',options:[]});
     sfx.enabled = S.set.sound;
     S.screen = store.get('firstDone', false) ? 'menu' : 'first';
