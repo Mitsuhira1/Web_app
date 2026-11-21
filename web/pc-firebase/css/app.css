@@ -778,7 +778,7 @@ html.reduce *,html.reduce *::before,html.reduce *::after{animation-duration:.001
 }
 .card-turn > .back { transform:rotateY(180deg); }
 /* 回転中の表と裏は、元の札と同じ大きさにする(盤ごとの --w の指定に負けると、めくり終わりに大きさが飛ぶ) */
-.card-turn > .pcard { --w:inherit!important; width:var(--w)!important; }
+.card-turn > .pcard { --w:inherit!important; width:var(--w)!important; margin:0!important; }
 
 .sol .soltab{display:grid;grid-template-columns:repeat(7,1fr);gap:1.4cqmin;flex:1;min-height:0}
 .sol .spile{display:flex;flex-direction:column;align-items:center;min-height:0;border-radius:10px}
@@ -3049,3 +3049,6 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .cutin.sakura .veil { background:rgba(70,20,40,.28); }
 .cutin.sumi { --c1:#5E5751; --c2:#2D2824; --ct:#F7EEDD; --edge:#B23A30; --petal:#ffffff14; --ts:#0008; }
 .cutin.murasaki { --c1:#8C6B98; --c2:#563A61; --ct:#FFF6FF; --edge:#D3AE62; --petal:#f4d8ff2e; --ts:#0006; }
+
+/* ---- ソリティア: 盤の下のボタンを置かないので、その欄を消して盤を広げる ---- */
+.play-screen .stage:has(> .boardwrap.k-solitaire) > .acts { display: none; }

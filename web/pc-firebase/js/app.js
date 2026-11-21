@@ -452,7 +452,7 @@ function play() {
   const chatBtn = online && mob ? `<button type="button" class="btn chatfab${chatOn ? '' : ' is-off'}${S.chatOpen ? ' is-open' : ''}${chatCnt ? ' has-unread' : ''}" data-chatfab aria-label="${S.chatOpen ? 'チャットを閉じる' : 'チャットを開く'}" aria-expanded="${!!S.chatOpen}" title="チャット">${ic('chat')}${chatCnt ? `<span class="chatfab-badge">${chatCnt > 99 ? '99+' : chatCnt}</span>` : ''}</button>` : '';
   const chatPop = online && mob && S.chatOpen ? playChatPopHtml() : '';
   const actions = `<button class="btn" data-undo ${canUndo ? '' : 'disabled'}>${ic('undo')}待った</button>${ruleButton(g.id)}
-    <button class="btn ${hasList(g.id) ? 'listbtn' : ''}" data-list ${hasList(g.id) ? '' : 'disabled'}>${ic('list')}${listLabel}</button><button class="btn" data-resign ${view && view.canResign && view.human && !view.outcome && !busy && !autoMe ? '' : 'disabled'}>${ic('flag')}降参</button>`;
+    <button class="btn ${hasList(g.id) ? 'listbtn' : ''}" data-list ${hasList(g.id) ? '' : 'disabled'}>${ic('list')}${listLabel}</button><button class="btn" data-resign ${view && (view.canResign && view.human || solQuitMove() != null) && !view.outcome && !busy && !autoMe ? '' : 'disabled'}>${ic('flag')}降参</button>`;
   const cpuButton = online && !soloMatch && view?.mine >= 0 ? `<button class="btn ${myAutoCpuOn() ? 'gold' : ''}" data-autocpu ${view.outcome ? 'disabled' : ''}>${myAutoCpuOn() ? 'CPU操作を解除' : 'CPUに操作を任せる'}</button>` : '';
   const side = playSide({seats:'<div class="seats" id="strip"></div>', status:'<div class="status" id="status"></div>',
     actions,on:online,extraClass:'',onlineActions:cpuButton,showChat:online&&!mob,
@@ -715,7 +715,7 @@ function drawPlay(force) {
   if (ops) {
     const canUndo = online ? !!(ost && ost.undoOk) && !busy && !autoMe && view.moves > 0 && !(ost && ost.undoAsk) : view.undoAllowed !== false && !busy && view.moves > 0 && (view.board?.kind==='pegsolitaire' || view.seats.some((s) => !s.human) || !!view.outcome);
     ops.querySelector('[data-undo]').disabled = !canUndo;
-    ops.querySelector('[data-resign]').disabled = !(view.canResign && view.human && !view.outcome && !busy && !autoMe);
+    ops.querySelector('[data-resign]').disabled = !((view.canResign && view.human || solQuitMove() != null) && !view.outcome && !busy && !autoMe);
   }
   const acBtn = $('.side [data-autocpu]');
   if (acBtn) {
@@ -1671,7 +1671,19 @@ function askQuit() {
   openSheet(`<h2>${isSpec ? '観戦を終了しますか' : '対局を終了しますか'}</h2><p>${!online ? '途中の対局は「続きから」で再開できます。' : view && view.outcome || isSpec ? '部屋に戻ります(部屋からは抜けません)。' : isHostRoom() ? '対局を終えて、全員で部屋に戻ります。' : '降参して、部屋に戻ります(部屋からは抜けません)。'}</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="qtYes">${isSpec ? '部屋に戻る' : '終了する'}</button></div>`);
   $('#qtYes').onclick = () => { closeSheet(); if (!isSpec) quitSound(); go(online ? 'room' : 'menu'); };
 }
+// ソリティアは同時に進めるので「降参」が使えない。代わりに「この配札をやめる」手(seat*1000000+1)を指す(盤の下の「やめる」ボタンの代わり)
+function solQuitMove() {
+  if (!cur || cur.id !== 'solitaire' || !view || !view.legal) return null;
+  const m = mySeat * 1000000 + 1;
+  return view.legal.includes(m) ? m : null;
+}
 function askResign() {
+  const quit = solQuitMove();
+  if (quit != null) {
+    setTimeout(focusPrimary, 0); openSheet('<h2>この配札をやめますか</h2><p>ここで終了します。</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="rgYes">やめる</button></div>');
+    $('#rgYes').onclick = () => { closeSheet(); humanMove(quit); };
+    return;
+  }
   setTimeout(focusPrimary, 0); openSheet('<h2>降参しますか</h2><p>この対局はあなたの負けになります。</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="rgYes">降参する</button></div>');
   $('#rgYes').onclick = async () => { closeSheet(); stopClock(); if (online) mainCore.onlineResign(); else await call('resignMatch', h, mySeat); refresh(); };
 }

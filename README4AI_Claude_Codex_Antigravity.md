@@ -56,6 +56,14 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-21 / Claude / ソリティア: 置いた後のちらつき、ダブルクリック、盤の下のボタンを廃止
+- ちらつき(ユーザー「置いた後、一瞬その上のカードに表示が切り替わって戻る」): ①捨て札を出すと下から見えてくる札を「山札から引いた札」とみなし、山札から裏返しで飛ばしていた → 捨て札の枚数(`wasteN`)が増えた時だけ飛ばす(`solPrevWasteN`)。②列で札がめくれる時、回転中の裏面に古い `.sol .spile .pcard+.pcard{margin-top:-108%}` が効いて上にずれていた → `.card-turn > .pcard{margin:0!important}`。
+- ダブルクリック: 選んだ札の読み方が誤り(`A.sel.sol` の値 1 を選んだ札にしていた)で、選択の印も2回目の「組札へ」も効いていなかった → `A.sel` を使う。1回目で描き直すのでブラウザの dblclick は届かず、2回目のクリック(選んで持ち上がった札の列の地を押した時も)で `autoMove`。`ondblclick` は使わない(2回動かないため)。クリックで動かした札は 0.36 秒でスーッと飛ぶ(ドラッグで置いた時は 0.17 秒)。
+- 盤の下のボタン(やめる・組札へ・配る)を廃止し、`#acts` を隠して盤を広げた(`css/app.css` の最後)。札の大きさの上限を 72→100px(`fitSolitaire`)。やめるは右の「降参」→「この配札をやめますか」(`js/app.js` の `solQuitMove`)。
+- 方針: `CLAUDE.md` に「明らかにいらないボタンは置かない(今後も)」。
+- ファイル: `js/boards/extra.js`・`js/app.js`・`css/app.css`・`sw.js`(キャッシュ名)・`CLAUDE.md`・`docs/CHECKLIST_PENDING.md`
+- 確かめたこと(Chromium): 捨て札→列・捨て札→組札・列→列・列→組札のドラッグを1コマずつ撮り、ちらつきが無いこと。ダブルクリック5回とも移動、盤が 845×675→904×731・札 72→100px、`test_spider_core`・`test_extra_12_games`。未確認: スマホでのダブルタップ、通信対戦。
+
 ### 2026-11-21 / Claude / ソリティア: スパイダーを追加、めくり・ドラッグの演出、K の枠
 - スパイダー(`core/games/spider.mjs` 新規): 2組104枚・10列、マーク 1/2/4 種、K〜A が同じマークでそろうと自動で組札、8組で成功。配るのは空き列が無い時だけ。クロンダイクと同じ ConcurrentRules(多人数は同じ配札を各自で解く)、手の番号もクロンダイクと同じ形(列は 6+k)。`core/asobi-pc-core.mjs` は import・`initMetadataForClass(SpiderSolitaire…[ConcurrentRules])`・Outcome への包み・def と brain の分岐(`variant=spider`)・ゲーム名を「ソリティア」に・設定 `variant`(既定 klondike)と `suits` を足しただけ。**クロンダイクの規則は変えていない**。盤のデータは `kind:"solitaire", variant:"spider"`(盤の大きさの CSS `k-solitaire` をそのまま使うため)。
 - 設定画面(`js/app.js`): 種類に応じてクロンダイク用(めくる枚数・周回)/スパイダー用(マークの数)だけを出す。`BREAK` の「(クロンダイク)」を削除。ヒントは `js/rules.js`。
