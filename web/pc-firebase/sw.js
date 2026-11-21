@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261122-bozu-kaisei-merge-24";
+const CACHE = "asobipcfb-20261122-bozu-kaisei-merge-25";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",

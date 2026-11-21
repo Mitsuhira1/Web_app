@@ -1470,6 +1470,7 @@ html.reduce .screen.col{animation:none}
 @keyframes bgpulse{0%,100%{opacity:.45}50%{opacity:1}}
 .sol .waste{display:flex;flex:none;justify-content:flex-start;align-items:flex-start;isolation:isolate}
 .sol .waste > .pcard{flex:none}
+/* ドラッグできる札(捨て札・組札・列)は、指で動かした時にブラウザのスクロールにしない(付けないとスマホでドラッグが取り消される) */
 .drag-enabled .sol [data-src],.drag-enabled .speed [data-card],.drag-enabled .hand2 [data-card],.drag-enabled .hand2 [data-k]{touch-action:none;cursor:grab;-webkit-user-select:none;-webkit-touch-callout:none}
 .sol .waste > .pcard+.pcard{margin-inline-start:calc(var(--w)*-.60)}
 .lview:active{cursor:grabbing}
