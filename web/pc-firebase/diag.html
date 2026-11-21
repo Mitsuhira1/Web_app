@@ -21,6 +21,8 @@ button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid #8a6a35;
 <p id="age"></p>
 <p><button id="copy">記録をコピー</button></p>
 <pre id="out">記録がありません。先にあそび箱を開いてください。</pre>
+<h1 id="deepH" hidden>詳しい記録(最後の方)</h1>
+<pre id="deep" hidden></pre>
 <script>
 // アプリの部品は読み込まない(アプリが固まっていても開けるように)。記録は localStorage の 'asobi-diag'。
 function show() {
@@ -29,10 +31,12 @@ function show() {
   var d = JSON.parse(raw), sec = Math.round((Date.now() - d.at) / 1000);
   document.getElementById('age').textContent = sec <= 2 ? 'あそび箱は動いています(最後の記録は ' + sec + ' 秒前)' : 'あそび箱は ' + sec + ' 秒前から記録が止まっています(固まっている可能性があります)';
   document.getElementById('out').textContent = 'ブラウザ: ' + d.ua + '\n\n' + d.log.join('\n');
+  var deep = null; try { deep = localStorage.getItem('asobi-diag-deep'); } catch (e) {}
+  if (deep) { document.getElementById('deepH').hidden = false; var el = document.getElementById('deep'); el.hidden = false; el.textContent = deep.split('\n').slice(-120).join('\n'); }
 }
 show(); setInterval(show, 1000);
 document.getElementById('copy').onclick = function () {
-  var text = document.getElementById('age').textContent + '\n' + document.getElementById('out').textContent;
+  var text = document.getElementById('age').textContent + '\n' + document.getElementById('out').textContent + '\n\n' + document.getElementById('deep').textContent;
   (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { document.getElementById('copy').textContent = 'コピーしました'; }, function () {
     var r = document.createRange(); r.selectNodeContents(document.getElementById('out')); var s = getSelection(); s.removeAllRanges(); s.addRange(r);
     document.getElementById('copy').textContent = '選んだ所を Ctrl+C でコピーしてください';

@@ -34,6 +34,33 @@
   try { new PerformanceObserver(function (l) { l.getEntries().forEach(function (x) { if (x.duration > 200) add('長い処理 ' + Math.round(x.duration) + 'ms (開始 ' + Math.round(x.startTime - t0) + 'ms)'); }); }).observe({ entryTypes: ['longtask'] }); } catch (e) {}
   window.addEventListener('load', function () {
     add('load 完了');
+    // ?diag=deep の時だけ: アプリの関数に入った/出たを全部残す(どこで止まったまま戻らないかを見る)
+    if (/[?&]diag=deep/.test(location.search)) {
+      var trail = [], depth = 0, wrapped = 0;
+      var keep = function (s) { trail.push(Math.round(performance.now() - t0) + ' ' + s); if (trail.length > 400) trail.splice(0, 100); try { localStorage.setItem('asobi-diag-deep', trail.join('\n')); } catch (e) {} };
+      var wrap = function (owner, name, label) {
+        var f = owner[name];
+        if (typeof f !== 'function' || f.__diag || /\[native code\]/.test(Function.prototype.toString.call(f)) || /^[A-Z]/.test(name)) return;
+        var w = function () {
+          depth++; keep(new Array(depth).join(' ') + '→' + label);
+          try { return f.apply(this, arguments); } finally { keep(new Array(depth).join(' ') + '←' + label); depth--; }
+        };
+        w.__diag = true;
+        try { owner[name] = w; wrapped++; } catch (e) {}
+      };
+      Object.getOwnPropertyNames(window).forEach(function (k) {
+        if (k === '__diag' || k === 'add') return;
+        var v; try { v = window[k]; } catch (e) { return; }
+        if (typeof v === 'function') wrap(window, k, k);
+        else if (v && typeof v === 'object' && !(v instanceof Node) && Object.getPrototypeOf(v) === Object.prototype && ['S', 'store', 'localStorage', 'sessionStorage'].indexOf(k) < 0) {
+          Object.keys(v).forEach(function (m) { try { if (typeof v[m] === 'function') wrap(v, m, k + '.' + m); } catch (e) {} });
+        }
+      });
+      // 後から作られる通信の窓口(netApi)も、作られたら包む
+      var netDone = false;
+      setInterval(function () { if (!netDone && typeof netApi !== 'undefined' && netApi && typeof netApi === 'object') { netDone = true; Object.keys(netApi).forEach(function (m) { if (typeof netApi[m] === 'function') wrap(netApi, m, 'netApi.' + m); }); add('netApi を記録対象に追加'); } }, 100);
+      add('詳しい記録 ' + wrapped + ' 個の関数');
+    }
     var n = 0;
     setInterval(function () {
       n++;
