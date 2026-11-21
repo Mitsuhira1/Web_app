@@ -1809,7 +1809,7 @@ function onlineChanged() {
   if (['extraPlay','minePlay','slidePlay'].includes(S.screen)) { refreshChat(); return; }
   if (S.screen==='wolfPlay') { refreshChat(); wolfGame.update(); return; }
   if (S.screen==='wolfSetup' && wolfGame.refreshingSetup()) return keepInputs(render);
-  if (roomActive() && ['mineSetup','slideSetup','poetSetup','bunyoSetup','pakurisSetup'].includes(S.screen)) {
+  if (roomActive() && ['mineSetup','slideSetup','poetSetup','munageSetup','bunyoSetup','pakurisSetup'].includes(S.screen)) {
     const body = $('.setupbody');
     const signature = JSON.stringify(activeMembers().map(p => [p.slot,p.name]));
     if (body && body.dataset.members !== signature) {

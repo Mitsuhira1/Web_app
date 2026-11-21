@@ -9,10 +9,10 @@
 ---
 
 ## 1. いまの方針(ユーザーの指示)
-- **主開発は `web/pc-firebase/`**(PC ブラウザ版・Firebase 通信・「あそび箱49」)。スマホブラウザ版もこちらに移行した。
+- **主開発は `web/pc-firebase/`**(PC ブラウザ版・Firebase 通信・「あそび箱50」)。スマホブラウザ版もこちらに移行した。
   ここで十分に作り込んでから、ほかの版(exe・Android など)に広げる。公開: https://mitsuhira1.github.io/Web_app/pc-firebase/
 - 通信は **Firebase Realtime Database**(4 桁の部屋コード)。WebRTC・招待コード/返信コード・ntfy は**廃止**。
-- ゲームは **49 種**(下の 5 章)。
+- ゲームは **50 種**(下の 5 章)。
 - **進め方**: ユーザーがバグ・改善をその都度伝える → その分だけ直す。**返事にチェックリストを貼らない**。確認してほしい項目は `docs/CHECKLIST_PENDING.md` に追記する(チャットには「追記した」とだけ書く)。
 - 公開・既定のブランチは `ccr-efc07031-6exjqs`(プッシュすると GitHub Pages に出る)。AI ごとの作業ブランチは `README4AI…` の 1 章。**コミット・プッシュはユーザーが言った時だけ**。
 
@@ -62,6 +62,7 @@
 | `boards/twelve.js`(規則は `core/games/<id>.mjs`) | 戦争・たこ焼き・ぶたのしっぽ・ババ抜き・ハーツ・ジンラミー・ハゲタカ・ごいた・クアルト・ガイスター・ラミィキューブ・ペグ・ソリティア |
 | `boards/roulette.js`(＋ `roulette-motion.mjs`・`core/games/roulette.mjs`) | ルーレット |
 | `slide.js` / `bunyo.js` / `pakuris.js` / `mines.js`・`mine-versus.js` / `poet-cards.js` / `wolf.js` | スライドパズル / ぶにょぶにょ / パクリス / マインスイーパー / 坊主めくり / 人狼 |
+| `munage.js`(＋ `css/munage.css`。見本は `docs/mockups/munage/`) | 胸毛絶体絶命(盤・アニメ・効果音・CPU すべてこの 1 ファイル) |
 
 (`ORDER` は `js/app.js` 34 行目。ゲームを足したらここと上の表を直す)
 
