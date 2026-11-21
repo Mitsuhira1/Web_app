@@ -3077,3 +3077,6 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-stream.under { z-index:1; }
 .poet-place.taking { z-index:3; }
 .poet-busy .poet-pick { pointer-events:none; }
+/* ソリティア: 札の大きさ(と数字・マークの大きさ)は、どの場所(山札・捨て札・組札・列)でも同じにする。
+   場所ごとの古い --w の指定(スマホの上の段は 7 列前提の式など)が効くと、置いた時に数字の大きさが変わって見えるため */
+.felt-table.sol .pcard { --w: var(--sol-w, 72px) !important; }

@@ -31,6 +31,9 @@
 
   // ---------------------------------------------------------------- ソリティア(クロンダイク・スパイダー)
   let solRO = null;
+  // 前回の札の大きさ。描き直した盤に最初から入れて、描き直しの間も札(と数字)の大きさが変わらないようにする
+  const solLastW = {};
+  const solWStyle = (cols) => (solLastW[cols] ? ` style="--sol-w:${solLastW[cols]}px"` : '');
   function fitSolitaire() {
     const sol = document.querySelector('#boardwrap .felt-table.sol');
     if (!sol) return;
@@ -40,6 +43,7 @@
     const solW = Math.min(sol.clientWidth || 640, (sol.parentElement && sol.parentElement.clientWidth) || 9999), solH = sol.clientHeight || 420;
     const cardW = Math.floor(Math.max(cols > 7 ? 24 : 36, Math.min(100, (solW - 60) / (cols + 0.5), solH * 0.165)));
     sol.style.setProperty('--sol-w', cardW + 'px');
+    solLastW[cols] = cardW;
     const cardH = cardW * 1.4;
     const topH = topEl ? topEl.offsetHeight : cardH + 6;
     const tabH = Math.max(110, (tabEl && tabEl.clientHeight ? tabEl.clientHeight : solH - topH - 36) - 6);
@@ -170,7 +174,7 @@
       if (f != null) { A.sel = null; A.play(enc(src, n, f)); return true; }
       return false;
     };
-    A.board(`<div class="felt-table sol"><div class="soltop">${stock}${waste}<span class="grow"></span>${found}</div><div class="soltab">${piles}</div></div>`, (d, el) => {
+    A.board(`<div class="felt-table sol"${solWStyle(7)}><div class="soltop">${stock}${waste}<span class="grow"></span>${found}</div><div class="soltab">${piles}</div></div>`, (d, el) => {
       if (d.draw != null) { if (legal.has(seat * SEAT)) { A.sel = null; A.play(seat * SEAT); } return; }
       if (d.src != null) {
         const src = +d.src, n = +d.n;
@@ -266,7 +270,7 @@
       return ds.slice().sort((x, y) => score(y) - score(x))[0];
     };
     const autoMove = (src, n) => { const d = bestDest(src, n); if (d != null) { A.sel = null; A.play(enc(src, n, d)); return true; } return false; };
-    A.board(`<div class="felt-table sol spider"><div class="soltop">${stock}<span class="grow"></span>${done}</div><div class="soltab">${piles}</div></div>`, (d, el) => {
+    A.board(`<div class="felt-table sol spider"${solWStyle(10)}><div class="soltop">${stock}<span class="grow"></span>${done}</div><div class="soltab">${piles}</div></div>`, (d, el) => {
       if (d.draw != null) { if (canDeal) { A.sel = null; A.play(seat * SEAT); } return; }
       if (d.src != null) {
         const src = +d.src, n = +d.n;

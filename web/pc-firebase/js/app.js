@@ -609,7 +609,11 @@ async function humanMove(m) {
   if (ok) { if (!online) pendSnd = m; lastPlayed = m; }
   if (my === token) await refresh();
 }
-function playMoveSound(m) { const r = moveSound(cur.id, m); if (r) sfx.play(r[0], r[1] || {}); }
+function playMoveSound(m) {
+  // ソリティアは各自の盤を同時に進めるので、見えていない盤(CPU・ほかの人)の手では鳴らさない
+  if (cur.id === 'solitaire' && Math.floor(m / 1000000) !== (view && view.board ? view.board.me : mySeat)) return;
+  const r = moveSound(cur.id === 'solitaire' && view?.board?.variant === 'spider' ? 'spider' : cur.id, m); if (r) sfx.play(r[0], r[1] || {});
+}
 const setStatus = (t) => { const e = $('#status'); if (e) e.textContent = t || ''; };
 function statusText() {
   const b = view.board;
