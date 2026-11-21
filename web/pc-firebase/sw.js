@@ -1,7 +1,8 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261120-rejoin-bozu-1";
+const CACHE = "asobipcfb-20261121-falling-1";
 const FILES = [
 "./css/twelve.css",
+"./css/falling.css",
 "./js/boards/twelve.js",
 "./js/boards/roulette.js",
 "./js/boards/roulette-motion.mjs",
@@ -69,6 +70,7 @@ const FILES = [
 "./js/mine-versus.js",
 "./js/poet-cards.js",
 "./js/poems.js",
+"./js/falling-fx.js",
 "./js/falling-match.js",
 "./js/board-match.js",
 "./",
