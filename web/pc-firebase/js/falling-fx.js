@@ -239,3 +239,30 @@ const bunyoPairSvg = (a,b,c,fid) => bunyoSvg({cells:[[b],[a]]},c,fid,1,2);
 /* ---------------------------------------------------------------- パクリスのブロック */
 const PAKURIS_COLORS = { I:'#2EC4E6', O:'#F7C531', T:'#A24BD6', S:'#4CC84A', Z:'#E8394C', J:'#2D6FE0', L:'#F28A22', G:'#A39C90' };
 const pakurisBlock = (x,y,k,c,cls='',style='') => `<span class="fblk ${cls}" style="left:${x*c}px;top:${y*c}px;--k:${PAKURIS_COLORS[k]};${style}"><i></i></span>`;
+
+/* ---------------------------------------------------------------- メニューのアイコン(今の盤と同じ描き方で作る) */
+(() => {
+  if (typeof AR === 'undefined') return;
+  const bg = '<rect width="100" height="100" fill="#F3EFE6"/>';
+  const frame = (x,y,w,h,c) => `<rect x="${x-1}" y="${y-1}" width="${w+2}" height="${h+2}" rx="3" fill="none" stroke="#CFC4AE" stroke-width="1.6"/>`+
+    Array.from({length:Math.round(w/c)-1},(_,i)=>`<path d="M${x+(i+1)*c} ${y}V${y+h}" stroke="#2A2118" stroke-opacity=".08" stroke-width=".6"/>`).join('')+
+    Array.from({length:Math.round(h/c)-1},(_,i)=>`<path d="M${x} ${y+(i+1)*c}H${x+w}" stroke="#2A2118" stroke-opacity=".08" stroke-width=".6"/>`).join('');
+  /* ぶにょぶにょ: 盤の下6段 + 落ちてくる組 */
+  const rows = ['..r...','..b...','p....y','p...yy','bbg.rp','bggnrp'];
+  const cells = rows.map(r=>[...r].map(ch=>ch==='.'?null:ch));
+  const bsvg = bunyoSvg({cells},14,'icBunyo',6,6).replace('<svg ','<svg x="8" y="8" ');
+  AR.bunyo = `<svg viewBox="0 0 100 100" aria-hidden="true">${bg}${frame(8,8,84,84,14)}${bsvg}</svg>`;
+  /* パクリス: 盤の下10段、落ちてくる T とその影、通った道の光 */
+  const c=8, ox=10, oy=10, blk=(x,y,k,ghost)=>{ const col=PAKURIS_COLORS[k], X=ox+x*c, Y=oy+y*c;
+    if (ghost) return `<rect x="${X+.6}" y="${Y+.6}" width="${c-1.2}" height="${c-1.2}" rx=".8" fill="${col}" fill-opacity=".16" stroke="${col}" stroke-width="1.1"/>`;
+    return `<g><rect x="${X}" y="${Y}" width="${c}" height="${c}" rx=".8" fill="${col}"/><rect x="${X}" y="${Y}" width="${c}" height="${c*.16}" fill="#fff" opacity=".35"/>`+
+      `<rect x="${X}" y="${Y+c*.7}" width="${c}" height="${c*.3}" fill="#000" opacity=".14"/><rect x="${X+c*.15}" y="${Y+c*.07}" width="${c*.7}" height="${c*.08}" fill="#fff" opacity=".7"/>`+
+      `<rect x="${X+.3}" y="${Y+.3}" width="${c-.6}" height="${c-.6}" rx=".8" fill="none" stroke="#000" stroke-opacity=".35" stroke-width=".6"/></g>`; };
+  const prow = ['..........','..........','..........','..........','.....LL...','......L...','JJ....L.ZZ','J..O..IZZ.','J.SOO.IIIS','OOSSLLIISS'];
+  let p=''; prow.forEach((r,y)=>[...r].forEach((k,x)=>{ if (k!=='.') p+=blk(x,y,k); }));
+  const T=[[1,0],[0,1],[1,1],[2,1]], tx=2, ty=1, gy=5;
+  const trail=`<defs><linearGradient id="icPakTr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A24BD6" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".9"/></linearGradient></defs>`+
+    `<rect x="${ox+(tx)*c}" y="${oy+(ty+2)*c}" width="${3*c}" height="${(gy-ty-1)*c}" fill="url(#icPakTr)" opacity=".75"/>`;
+  p+=T.map(([x,y])=>blk(tx+x,gy+y,'T',true)).join('')+trail+T.map(([x,y])=>blk(tx+x,ty+y,'T')).join('');
+  AR.pakuris = `<svg viewBox="0 0 100 100" aria-hidden="true">${bg}${frame(ox,oy,80,80,c)}${p}</svg>`;
+})();
