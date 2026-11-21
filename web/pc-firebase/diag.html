@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>あそび箱の記録</title>
+<style>
+:root{color-scheme:light dark}
+body{margin:0;padding:16px;font:14px/1.6 sans-serif;background:#F3EFE6;color:#2A1A08}
+@media (prefers-color-scheme:dark){body{background:#1C1712;color:#F3EFE6}}
+h1{font-size:18px;margin:0 0 8px}
+p{margin:4px 0}
+#age{font-weight:bold}
+pre{white-space:pre-wrap;word-break:break-all;background:#0001;padding:10px;border-radius:8px;font:12px/1.5 monospace}
+button{font:inherit;padding:6px 14px;border-radius:8px;border:1px solid #8a6a35;background:#fff8;cursor:pointer}
+</style>
+</head>
+<body>
+<h1>あそび箱の動きの記録</h1>
+<p>あそび箱を別のタブで開いたまま、このページを見てください(1 秒ごとに新しくなります)。</p>
+<p id="age"></p>
+<p><button id="copy">記録をコピー</button></p>
+<pre id="out">記録がありません。先にあそび箱を開いてください。</pre>
+<script>
+// アプリの部品は読み込まない(アプリが固まっていても開けるように)。記録は localStorage の 'asobi-diag'。
+function show() {
+  var raw = null; try { raw = localStorage.getItem('asobi-diag'); } catch (e) {}
+  if (!raw) return;
+  var d = JSON.parse(raw), sec = Math.round((Date.now() - d.at) / 1000);
+  document.getElementById('age').textContent = sec <= 2 ? 'あそび箱は動いています(最後の記録は ' + sec + ' 秒前)' : 'あそび箱は ' + sec + ' 秒前から記録が止まっています(固まっている可能性があります)';
+  document.getElementById('out').textContent = 'ブラウザ: ' + d.ua + '\n\n' + d.log.join('\n');
+}
+show(); setInterval(show, 1000);
+document.getElementById('copy').onclick = function () {
+  var text = document.getElementById('age').textContent + '\n' + document.getElementById('out').textContent;
+  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { document.getElementById('copy').textContent = 'コピーしました'; }, function () {
+    var r = document.createRange(); r.selectNodeContents(document.getElementById('out')); var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    document.getElementById('copy').textContent = '選んだ所を Ctrl+C でコピーしてください';
+  });
+};
+</script>
+</body>
+</html>
