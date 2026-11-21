@@ -6,29 +6,73 @@
   const rng = seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const SKIN = 'url(#mnSkin)', LINE = '#6a3c22';
 
-  // ---- 胸毛: 胸の真ん中から外・下へ流れる短い毛を少しだけ。地肌に薄い影 ----
-  function chestHair(seed) {
-    const r = rng(seed);
-    const dens = (x, y) => Math.min(1,
-      Math.exp(-((x / 15) ** 2) - ((y + 56) / 20) ** 2)            // 胸の真ん中
-      + .55 * Math.exp(-(((x + 21) / 13) ** 2) - ((y + 62) / 11) ** 2)
-      + .55 * Math.exp(-(((x - 21) / 13) ** 2) - ((y + 62) / 11) ** 2)
-      + (y > -40 && y < 22 ? .75 * Math.exp(-((x / 4.5) ** 2)) : 0));   // へそへの細い筋
-    let d = '', n = 0;
-    for (let i = 0; i < 3000 && n < 62; i++) {
-      const x = (r() - .5) * 84, y = -88 + r() * 112;
-      if (r() > dens(x, y) * .8) continue;
-      n++;
-      const phi = Math.max(-1.25, Math.min(1.25, x / 24)) + (r() - .5) * .5;   // 外へ開きながら下向き
-      const L = 6 + r() * 5, sx = Math.sin(phi), sy = Math.cos(phi);
-      const curl = (r() < .5 ? -1 : 1) * (2 + r() * 2);
-      const ex = x + sx * L, ey = y + sy * L;
-      const cx = x + sx * L * .5 - sy * curl, cy = y + sy * L * .5 + sx * curl;
-      d += `M${x.toFixed(1)} ${y.toFixed(1)}Q${cx.toFixed(1)} ${cy.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`;
+  // ---- 胸毛 ----
+  // 形: 胸の上で左右に広がり、真ん中から へそ へ細く伸びる。輪郭は Catmull-Rom で滑らかにしてから等間隔に取り直す。
+  function hairOutline(step) {
+    const half = [[0, -71], [10, -73], [20, -70], [29, -64], [33, -56], [30, -49], [22, -44], [13, -41], [7, -34], [4.5, -22], [3.4, -8], [2.4, 6], [.8, 16]];
+    const P = half.concat(half.slice(1, -1).reverse().map(([x, y]) => [-x, y]));
+    const dense = [];
+    for (let i = 0; i < P.length; i++) {
+      const p0 = P[(i - 1 + P.length) % P.length], p1 = P[i], p2 = P[(i + 1) % P.length], p3 = P[(i + 2) % P.length];
+      for (let t = 0; t < 1; t += .05) {
+        const t2 = t * t, t3 = t2 * t, f = (a, b, c, d) => .5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+        dense.push([f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])]);
+      }
     }
-    return `<ellipse cx="0" cy="-54" rx="30" ry="24" fill="#8a5636" opacity=".13"/>
-      <ellipse cx="0" cy="-12" rx="6" ry="26" fill="#8a5636" opacity=".1"/>
-      <path d="${d}" fill="none" stroke="#3a2416" stroke-width="1.9" stroke-linecap="round" opacity=".9"/>`;
+    const out = [dense[0]]; let acc = 0;
+    for (let i = 1; i < dense.length; i++) {
+      acc += Math.hypot(dense[i][0] - dense[i - 1][0], dense[i][1] - dense[i - 1][1]);
+      if (acc >= step) { out.push(dense[i]); acc = 0; }
+    }
+    return out;
+  }
+  // 小さな巻き毛 1 本(右向き。dir=-1 で左右反転)
+  const curl = (x, y, s, dir = 1) => {
+    const X = u => (x + u * s * dir).toFixed(1), Y = v => (y + v * s).toFixed(1);
+    return `M${X(-1)} ${Y(.5)}C${X(-1.3)} ${Y(-.8)} ${X(.9)} ${Y(-1.1)} ${X(.65)} ${Y(0)}C${X(.45)} ${Y(.65)} ${X(-.2)} ${Y(.45)} ${X(-.05)} ${Y(-.15)}`;
+  };
+  function chestHair() {
+    const kind = window.MN_HAIR || 'b';
+    if (kind === 'a') {
+      // A: 毛の塊を 1 つの形で描き、縁を小さな巻き毛の波にする(アニメ・漫画の描き方)
+      const pts = hairOutline(5.2);
+      let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+      for (let i = 0; i < pts.length; i++) {
+        const [x1, y1] = pts[i], [x2, y2] = pts[(i + 1) % pts.length];
+        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, len = Math.hypot(x2 - x1, y2 - y1) || 1;
+        // 時計回りなので外向きの法線は (dy, -dx)
+        const nx = (y2 - y1) / len, ny = -(x2 - x1) / len;
+        d += `Q${(mx + nx * 3.6).toFixed(1)} ${(my + ny * 3.6).toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+      }
+      const inner = [[9, -64, 3], [20, -61, 3.2], [26, -53, 2.8], [13, -51, 3], [5, -43, 2.6]]
+        .flatMap(([x, y, k]) => [curl(x, y, k, 1), curl(-x, y, k, -1)]).join('') + curl(0, -57, 3) + curl(.5, -26, 2.3) + curl(-.5, -10, 2.1, -1);
+      return `<path d="${d}Z" fill="#553321"/>
+        <path d="${d}Z" fill="none" stroke="#2c180c" stroke-width="1.2" opacity=".55"/>
+        <path d="${inner}" fill="none" stroke="#8a5a36" stroke-width="1.5" stroke-linecap="round" opacity=".85"/>`;
+    }
+    if (kind === 'b') {
+      // B: 短い波線を、胸の真ん中から外・下へ扇のように(漫画の描き方)
+      const wave = (x, y, L, k = 1) => {
+        const an = Math.PI / 2 - x / 34, ux = Math.cos(an), uy = Math.sin(an), px = -uy * 2.2 * k, py = ux * 2.2 * k;
+        const P = (t, o) => `${(x + ux * L * t + px * o).toFixed(1)} ${(y + uy * L * t + py * o).toFixed(1)}`;
+        return `M${P(0, 0)}C${P(.33, 1)} ${P(.66, -1)} ${P(1, 0)}`;
+      };
+      const rows = [[-64, [-22, -11, 0, 11, 22], 10], [-55, [-17, -6, 6, 17], 10], [-46, [-10, 0, 10], 9], [-35, [0], 8], [-24, [0], 7.5], [-13, [0], 7], [-2, [0], 6]];
+      const d = rows.flatMap(([y, xs, L], j) => xs.map((x, i) => wave(x, y, L, (i + j) % 2 ? 1 : -1))).join('');
+      return `<path d="${d}" fill="none" stroke="#3a2416" stroke-width="2.3" stroke-linecap="round"/>`;
+    }
+    // C: ぼかした毛の地と、縁から外へ流れる細い毛(写実寄り)
+    const pts = hairOutline(3.4), r = rng(7);
+    const poly = pts.map(p => p.map(v => v.toFixed(1)).join(' ')).join(' L');
+    let fur = '';
+    for (let i = 0; i < pts.length; i++) {
+      const [x1, y1] = pts[i], [x2, y2] = pts[(i + 1) % pts.length], len = Math.hypot(x2 - x1, y2 - y1) || 1;
+      const nx = (y2 - y1) / len, ny = -(x2 - x1) / len, L = 2 + r() * 2.6;
+      const ex = x1 + nx * L * .7, ey = y1 + ny * L * .7 + L * .8;   // 外へ、下へ流す
+      fur += `M${(x1 - nx * 2).toFixed(1)} ${(y1 - ny * 2).toFixed(1)}Q${(x1 + nx * L * .6).toFixed(1)} ${(y1 + ny * L * .4).toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`;
+    }
+    return `<path d="M${poly}Z" fill="#4a2c1a" opacity=".62" filter="url(#mnFur)"/>
+      <path d="${fur}" fill="none" stroke="#3a2416" stroke-width="1" stroke-linecap="round" opacity=".6"/>`;
   }
 
   // ---- 顔: worry(盤)・shock(驚く)・scream(飛ぶ) ----
@@ -69,7 +113,7 @@
       <path d="M-16 -86 h32 v-10 h-32 z" fill="${SKIN}"/>
       <path d="M-44 -46 C-30 -36 -12 -38 -4 -46 M44 -46 C30 -36 12 -38 4 -46" fill="none" stroke="#cf8e66" stroke-width="2" opacity=".75"/>
       <circle cx="-26" cy="-50" r="2.6" fill="#c97a5e"/><circle cx="26" cy="-50" r="2.6" fill="#c97a5e"/>
-      ${chestHair(11)}`;
+      ${chestHair()}`;
   const arm = d => `<path d="${d}" fill="none" stroke="${LINE}" stroke-width="27" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${SKIN}" stroke-width="22" stroke-linecap="round"/>`;
 
   const manInCannon = `${arm('M-62 -66 C-96 -54 -112 -22 -104 6')}${arm('M62 -66 C96 -54 112 -22 104 6')}${torso()}${head('worry')}`;
@@ -95,6 +139,7 @@
     <linearGradient id="mnWoodTop" x2="0" y2="1"><stop stop-color="#d4a86f"/><stop offset="1" stop-color="#b98952"/></linearGradient>
     <linearGradient id="mnDrum" x1="0" x2="1"><stop stop-color="#16285a"/><stop offset=".3" stop-color="#3d63b8"/><stop offset=".55" stop-color="#2a4a96"/><stop offset="1" stop-color="#121f45"/></linearGradient>
     <radialGradient id="mnDrumTop" cx=".4" cy=".35"><stop stop-color="#e0574b"/><stop offset="1" stop-color="#a2241d"/></radialGradient>
+    <filter id="mnFur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter>
     <filter id="mnBlur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
     <filter id="mnBlurL" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="26"/></filter>
     <clipPath id="mnMouthBack"><path d="M380 -80 H620 V186 A110 29 0 0 1 390 186 Z"/></clipPath>
