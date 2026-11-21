@@ -50,7 +50,7 @@
 .mn-anime .cut svg { position:absolute; inset:0; width:100%; height:100%; }
 .mn-anime .bar { position:absolute; left:0; right:0; height:9cqh; background:#000; z-index:5; }
 .mn-anime .bar.t { top:0; } .mn-anime .bar.b { bottom:0; }
-.mn-anime .word { position:absolute; z-index:3; color:#fff; -webkit-text-stroke:.9cqh #1a0e08; paint-order:stroke fill; white-space:nowrap; line-height:1; }
+.mn-anime .word { position:absolute; z-index:3; color:#fff; -webkit-text-stroke:min(.9cqh,1.3cqw) #1a0e08; paint-order:stroke fill; white-space:nowrap; line-height:1; }
 .mn-anime .speed line { stroke:#fff; stroke-linecap:round; }
 .mn-anime .cutin { z-index:6; }
 .mn-skip { position:absolute; right:2.4cqw; bottom:2.2cqh; z-index:7; color:#fff9; font:700 max(11px,1.8cqh)/1 var(--font); }
@@ -59,3 +59,5 @@
   .mn-wrap { margin-bottom:0; }
   #mnNote .mn-more { display:none; }
 }
+.mn-anime .cutin .txt small { font-size:min(5.4cqh,6.5cqw); }
+.mn-anime .cut.b { background:#1b0c08; }

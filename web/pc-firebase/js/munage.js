@@ -183,8 +183,8 @@ const munageGame = (() => {
         <g class="shake"><ellipse cx="800" cy="850" rx="640" ry="64" fill="#0c0a09"/>
           <g transform="translate(800 860) scale(3)">${torso()}${head('shock')}</g>
           <path d="M120 846 A680 70 0 0 0 1480 846 L1480 930 H120 Z" fill="url(#mnGold)" stroke="#5a3c16" stroke-width="6"/></g>
-      </svg><div class="word" style="right:9cqw;top:18cqh;font-size:13cqh;transform:rotate(8deg)">!?</div>
-      <div class="word" style="left:8cqw;top:20cqh;font-size:8cqh;transform:rotate(-8deg)">ひぃっ</div></div>`;
+      </svg><div class="word" style="right:9cqw;top:18cqh;font-size:min(13cqh,20cqw);transform:rotate(8deg)">!?</div>
+      <div class="word" style="left:8cqw;top:20cqh;font-size:min(8cqh,12cqw);transform:rotate(-8deg)">ひぃっ</div></div>`;
     // カット B: 導火線を火が走る
     const cutB = `<div class="cut b"><svg ${S}>${DEFS}
         <rect width="1600" height="900" fill="#1b0c08"/>${focusLines(1300, 300, 110, '#5a1d10', 9)}
@@ -193,12 +193,12 @@ const munageGame = (() => {
         <path class="burnt" d="M-40 860 C300 760 520 820 760 640 C980 470 1100 420 1660 250" fill="none" stroke="#2b1a10" stroke-width="36" stroke-linecap="round" pathLength="1" stroke-dasharray="0 1"/>
         <g class="spark"><g fill="#ffd23f">${burst(0, 0, 9, 22, 70, 5)}</g><circle r="26" fill="#fff8d0"/>
           <g stroke="#ffcc33" stroke-width="5" stroke-linecap="round">${Array.from({length: 10}, (_, i) => { const a = i * .63; return `<line x1="${Math.cos(a) * 40}" y1="${Math.sin(a) * 40}" x2="${Math.cos(a) * 96}" y2="${Math.sin(a) * 96}"/>`; }).join('')}</g></g>
-      </svg><div class="word" style="left:7cqw;top:16cqh;font-size:9cqh;color:#ffe27a">ジジジ…</div></div>`;
+      </svg><div class="word" style="left:7cqw;top:16cqh;font-size:min(9cqh,13cqw);color:#ffe27a">ジジジ…</div></div>`;
     // カット C: ドーン(白黒反転の一瞬の絵)
     const cutC = `<div class="cut c"><svg ${S}>
         <rect width="1600" height="900" fill="#fff"/>${focusLines(800, 520, 140, '#111', 21)}
         <g fill="#111">${burst(800, 560, 22, 160, 430, 8)}</g><g fill="#fff">${burst(800, 560, 16, 70, 210, 12)}</g>
-      </svg><div class="word" style="left:50%;top:40%;font-size:22cqh;transform:translate(-50%,-50%) rotate(-6deg);color:#111;-webkit-text-stroke:1.2cqh #fff">ドーン!!</div></div>`;
+      </svg><div class="word" style="left:50%;top:40%;font-size:min(22cqh,17cqw);transform:translate(-50%,-50%) rotate(-6deg);color:#111;-webkit-text-stroke:min(1.2cqh,1cqw) #fff">ドーン!!</div></div>`;
     // カット D: 打ち上げ(カメラが追って空へ)
     const clouds = [[220, 300, 1.3], [1350, 120, 1.6], [560, -380, 1.1], [1250, -700, 1.4], [300, -1150, 1.7], [1100, -1600, 1.2], [480, -2050, 1.5], [1380, -2450, 1.1]].map(c => cloud(...c)).join('');
     const smoke = [[650, 560, 1.2], [960, 540, 1.1], [800, 500, 1.4]].map(([x, y, s]) => `<g class="puff" transform="translate(${x} ${y}) scale(${s})"><circle r="90" fill="#fff" stroke="#8a8a8a" stroke-width="5"/><circle cx="-60" cy="30" r="64" fill="#fff" stroke="#8a8a8a" stroke-width="5"/><circle cx="66" cy="24" r="70" fill="#fff" stroke="#8a8a8a" stroke-width="5"/><ellipse cx="0" cy="60" rx="110" ry="26" fill="#d9d9d9"/></g>`).join('');
@@ -214,7 +214,7 @@ const munageGame = (() => {
         <g class="speed">${Array.from({length: 26}, (_, i) => `<line x1="${(i * 131) % 1600}" y1="${-200 - (i * 97) % 600}" x2="${(i * 131) % 1600}" y2="${-200 - (i * 97) % 600 + 260}" stroke-width="${3 + (i % 3) * 2}"/>`).join('')}</g>
         <g class="flyer"><g class="spin"><g transform="scale(1.25)">${flyerBody}</g></g></g>
         <g class="twinkle" transform="translate(800 170)" opacity="0"><g fill="#fffbe0">${star(0, 0, 70)}</g><circle r="16" fill="#fff"/></g>
-      </svg><div class="word kira" style="left:50%;top:30%;font-size:9cqh;transform:translateX(-50%);color:#fff7b0;opacity:0">キラーン</div></div>`;
+      </svg><div class="word kira" style="left:50%;top:30%;font-size:min(9cqh,15cqw);transform:translateX(-50%);color:#fff7b0;opacity:0">キラーン</div></div>`;
     return `${cutA}${cutB}${cutC}${cutD}<div class="bar t"></div><div class="bar b"></div><div class="mn-cut"></div>`;
   }
 
@@ -581,7 +581,7 @@ const munageGame = (() => {
       board.classList.add('fired');
       L.querySelectorAll('.bar').forEach((b, i) => b.animate([{transform: 'none'}, {transform: `translateY(${i ? 100 : -100}%)`}], {duration: 200, fill: 'forwards'}));
       q('.mn-skip')?.remove();
-      q('.mn-cut').outerHTML = `<button class="cutin red f-mo tall" tabindex="-1" data-mn-close><span class="veil"></span><span class="band"></span><span class="txt"><span class="mainl" style="font-size:min(12cqh,13cqw)">ゲームオーバー</span><small>${esc(loser)}の${win ? '勝ち' : '負け'}</small></span></button>`;
+      q('.mn-cut').outerHTML = `<button class="cutin red f-mo tall" tabindex="-1" data-mn-close><span class="veil"></span><span class="band"></span><span class="txt"><span class="mainl" style="font-size:min(12cqh,10.5cqw)">ゲームオーバー</span><small>${esc(loser)}の${win ? '勝ち' : '負け'}</small></span></button>`;
       snd.ending(win);
       timers.forEach(clearTimeout); timers.length = 0;
       at(2300, () => { L.animate([{opacity: 1}, {opacity: 0}], {duration: 300, fill: 'forwards'}).onfinish = stopAnime; });
@@ -599,6 +599,8 @@ const munageGame = (() => {
     // B: 導火線
     at(800, () => {
       cut('.b'); snd.fuse(.65);
+      // 縦長の画面では左右が切れて火花がすぐ外へ出るので、導火線全体を収める
+      if (innerWidth < innerHeight) q('.b svg').setAttribute('preserveAspectRatio', 'xMidYMid meet');
       const path = q('.b .fuse'), spark = q('.b .spark'), burnt = q('.b .burnt'), len = path.getTotalLength(), t0 = performance.now();
       const step = now => {
         const t = Math.min(1, (now - t0) / 600), e = t * t * (1.6 - .6 * t), pt = path.getPointAtLength(e * len);
@@ -613,7 +615,7 @@ const munageGame = (() => {
     at(1450, () => {
       cut('.c'); snd.boom();
       q('.c').animate([{transform: 'translate(0,0) scale(1.06)'}, {transform: 'translate(-18px,10px) scale(1.03)'}, {transform: 'translate(14px,-12px)'}, {transform: 'translate(-6px,6px)'}, {transform: 'none'}], {duration: 300});
-      q('.c .word').animate([{transform: 'translate(-50%,-50%) rotate(-6deg) scale(2.2)'}, {transform: 'translate(-50%,-50%) rotate(-6deg) scale(1)'}], {duration: 160, easing: 'ease-out', fill: 'both'});
+      q('.c .word').animate([{transform: `translate(-50%,-50%) rotate(-6deg) scale(${innerWidth < innerHeight ? 1.25 : 2.2})`}, {transform: 'translate(-50%,-50%) rotate(-6deg) scale(1)'}], {duration: 160, easing: 'ease-out', fill: 'both'});
     });
     // D: 打ち上げ → キラーン
     at(1750, () => {
