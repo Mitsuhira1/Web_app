@@ -62,6 +62,7 @@
 | `boards/twelve.js`(規則は `core/games/<id>.mjs`) | 戦争・たこ焼き・ぶたのしっぽ・ババ抜き・ハーツ・ジンラミー・ハゲタカ・ごいた・クアルト・ガイスター・ラミィキューブ・ペグ・ソリティア |
 | `boards/roulette.js`(＋ `roulette-motion.mjs`・`core/games/roulette.mjs`) | ルーレット |
 | `slide.js` / `bunyo.js` / `pakuris.js` / `mines.js`・`mine-versus.js` / `poet-cards.js` / `wolf.js` | スライドパズル / ぶにょぶにょ / パクリス / マインスイーパー / 坊主めくり / 人狼 |
+| `falling-match.js`(対戦・先取・並び)・`falling-fx.js`(光・音・ぷよの描き方)・`css/falling.css` | ぶにょぶにょ・パクリス共通(規則の試験: `tools/tests/test_falling_rules.mjs`) |
 
 (`ORDER` は `js/app.js` 34 行目。ゲームを足したらここと上の表を直す)
 

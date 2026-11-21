@@ -96,6 +96,7 @@ function go(screen) {
   if (S.screen === 'minePlay' && screen !== 'minePlay') minesGame.stop();
   if (S.screen === 'extraPlay' && screen !== 'extraPlay') { if (!boardMatch.active()) boardMatch.reset(); }
   if (S.screen === 'wolfPlay' && screen !== 'wolfPlay') wolfGame.stop();
+  if ((S.screen === 'bunyoPlay' || S.screen === 'pakurisPlay') && screen !== S.screen) fallingMatch.leave();
   S.screen = screen; S.stOpen = false; S.modal = null; S.mobDetail = false; S.chatOpen = false; S.chatUnread = 0; ddOpen = null;
   bgCtx(); render();
 }
@@ -1512,6 +1513,7 @@ app.addEventListener('click', async (e) => {
   if (d.slideGuide != null) return slideGame.showGuide();
   if (d.slideStart != null) return slideGame.start();
   if (d.slidePicture != null) {slideGame.picture=d.slidePicture;return render();}
+  if (d.fallingAgain != null) return fallingMatch.again();
   if (d.bunyoStart != null) return bunyoGame.start();
   if (d.bunyoExit != null) return go('menu');
   if (d.bunyo != null) return bunyoGame.action(d.bunyo);
@@ -1943,8 +1945,8 @@ toastEl.addEventListener('pointercancel', () => { drag = null; toastHide(); });
     CAT = JSON.parse(catalog);
     document.title = APP_NAME;
     CAT.push({id:'slide',name:'スライドパズル',intro:'1枚の絵をそろえよう。',players:'1〜6人',category:'BOARD',options:[]});
-    CAT.push({id:'bunyo',name:'ぶにょぶにょ',intro:'同じ色を4個つなげて消そう。',players:'1〜6人',category:'BOARD',options:[]});
-    CAT.push({id:'pakuris',name:'パクリス',intro:'ブロックをそろえて消そう。',players:'1〜6人',category:'BOARD',options:[]});
+    CAT.push({id:'bunyo',name:'ぶにょぶにょ',intro:'同じ色を4個つなげて消そう。',players:'1〜4人',category:'BOARD',options:[]});
+    CAT.push({id:'pakuris',name:'パクリス',intro:'ブロックをそろえて消そう。',players:'1〜4人',category:'BOARD',options:[]});
     CAT.push({id:'mine',name:'マインスイーパー',intro:'協力して地雷を避けるか、同じ配置でクリアを競おう。',players:'1〜6人',category:'BOARD',options:[]});
     CAT.push({id:'mineVersus',name:'マインスイーパー（対戦）',intro:'同じ配置で競い、ポイントを使って相手を妨害しよう。',players:'2〜6人',category:'BOARD',options:[]});
     CAT.push({id:'bozu',name:'坊主めくり',intro:'4つの山から札を引き、持ち札の数を競おう。',players:'1〜6人',category:'CARD',options:[]});
