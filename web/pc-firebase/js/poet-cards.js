@@ -70,10 +70,10 @@ const poetCards = (() => {
       if (round.first === 'cpu') turn = 1;
       if (round.first === 'random') turn = shuffle(round.seats.map((_,i)=>i))[0];
     }
-    round.seats = round.seats.map(p=>({...p,score:0}));
+    round.seats = round.seats.map(p=>({...p,score:0,pile:[]}));
     const deck = shuffle(all);
     stacks = [0,1,2,3].map(i=>deck.slice(i*25,i*25+25));
-    return {piles:[25,25,25,25],discard:0,turn,last:-1,finish:false,extra:false,
+    return {piles:[25,25,25,25],discard:0,field:[],turn,last:-1,finish:false,extra:false,
       hime:round.hime==='off'?'off':'on', semi:round.semi==='all'?'all':'bozu', peek:round.peek==='off'?'off':'on', tops:topRoles()};
   }
   // 各山の一番上(次にめくれる札)にある坊主・姫の数。どの山かは知らせない。
@@ -92,18 +92,25 @@ const poetCards = (() => {
     p.lastCard=state.last;
     const role=cardRole(state.last);
     const fieldBefore=state.discard;
+    // 札の並び(下→上)は見せ方のためだけに持つ。枚数(score・discard)の数え方は今までどおり。
+    const field=state.field||(state.field=[]);
+    const own=q=>q.pile||(q.pile=[]);
     if (role==='bozu' && state.last===SEMIMARU && state.semi==='all') {
       // 蝉丸: 全員の持ち札を場へ
-      for (const q of state.seats) { state.discard+=q.score; q.score=0; if (q!==p) q.lastCard=-1; }
+      for (const q of state.seats) { state.discard+=q.score; q.score=0; field.push(...own(q)); q.pile=[]; if (q!==p) q.lastCard=-1; }
     } else if (role==='bozu') {
       state.discard+=p.score;
       p.score=0;
+      field.push(...own(p)); p.pile=[];
     } else {
       p.score++;
       if (role==='hime') {
         p.score+=state.discard;
         state.discard=0;
+        // 場札は姫の下へ入れ、姫が一番上
+        own(p).push(...field); field.length=0;
       }
+      own(p).push(state.last);
     }
     state.finish=stacks.every(a=>!a.length);
     state.tops=topRoles();
@@ -133,6 +140,10 @@ const poetCards = (() => {
       const current = () => S.screen==='extraPlay' && boardMatch.state?.id===id && boardMatch.state.version===turn;
       timer = setTimeout(async () => {
         if (!current()) return;
+        while (performance.now() < busyUntil) {
+          await new Promise(r => setTimeout(r, busyUntil - performance.now() + 30));
+          if (!current()) return;
+        }
         await moveCpuCursor(player.name,[$(`[data-extra-poet-pick="${cell}"]`)],current);
         if (!current()) return;
         hideCursor();
@@ -173,12 +184,13 @@ const poetCards = (() => {
     const y = offset ? 38 - 26 * Math.cos(angle) : 78;
     const drawer = state.extra ? state.turn : (state.turn + count - 1) % count;
     const last = player.lastCard ?? (index === drawer ? state.last : -1);
+    const top = player.pile?.length ? player.pile[player.pile.length-1] : last;
     const role = last >= 0 ? roleName[cardRole(last)] : '';
     const who = mine === index ? '自分' : '';
     return `<div class="poet-place ${offset ? '' : 'front'} ${index===state.turn && !state.finish ? 'turn' : ''}"
       data-poet-seat="${index}" style="left:${x}%;top:${y}%;--seat:${SEAT_COLORS[index%SEAT_COLORS.length]}">
       <div class="poet-reveal poet-own" data-count="${player.score}" data-score="${player.score}" style="--k:${Math.min(1,Math.sqrt(player.score)/10).toFixed(3)}"
-        aria-label="持ち札${player.score}枚">${last>=0 && player.score>0 ? face(last) : ''}</div>
+        aria-label="持ち札${player.score}枚">${top>=0 && player.score>0 ? face(top) : ''}</div>
       <div class="poet-tally"><span class="poet-identity">${seatIcon(state,player,index)}<span class="poet-name">${esc(player.name)}</span></span>
       <span class="poet-role">${[who, role].filter(Boolean).join(' · ')}</span></div>
     </div>`;
@@ -197,58 +209,117 @@ const poetCards = (() => {
     return `<div class="poet-omen${bozu?' danger':''}" aria-live="polite" aria-label="めくれる札に 坊主${bozu}枚 姫${hime}枚">
       <span class="bozu">坊主 <b>${bozu}</b>枚</span>・<span class="hime">姫 <b>${hime}</b>枚</span></div>`;
   }
-  function fly(table, state, pile, drawer, own, under) {
+  // 卓の中での位置(画面の拡大率を戻した CSS ピクセル)
+  function boxIn(table, el) {
+    const t = table.getBoundingClientRect(), r = el.getBoundingClientRect(), zoom = t.width / table.offsetWidth || 1;
+    return {x:(r.left-t.left)/zoom, y:(r.top-t.top)/zoom, w:r.width/zoom, h:r.height/zoom};
+  }
+  // 持ち札の置き場の見た目だけを「一番上の札・枚数」にする(状態は変えない)
+  function showOwn(el, top, count) {
+    if (!el) return;
+    el.dataset.count = count;
+    el.style.setProperty('--k', Math.min(1, Math.sqrt(count) / 10).toFixed(3));
+    el.querySelectorAll(':scope > .portrait').forEach(c => c.remove());
+    if (count > 0 && top >= 0) el.insertAdjacentHTML('afterbegin', face(top));
+  }
+  function showPot(table, count) {
+    const pot = table.querySelector('.poet-pot'); if (!pot) return;
+    const slot = pot.querySelector('.poet-slot');
+    slot.dataset.count = count;
+    slot.style.setProperty('--depth', stackDepth(count).toFixed(2) + 'px');
+    const back = slot.querySelector(':scope > .poet-card.back');
+    if (count && !back) slot.insertAdjacentHTML('beforeend', '<span class="poet-card back"></span>');
+    if (!count && back) back.remove();
+    const label = pot.querySelector(':scope > b'); if (label) label.textContent = count + '枚';
+  }
+  // 置き場・場札の一番上の札の位置(厚みの分だけ上にずれている)
+  const ownTop = el => el.querySelector(':scope > .portrait') || el;
+  const potTop = table => { const slot = table.querySelector('.poet-pot .poet-slot'); return slot.querySelector(':scope > .poet-card.back') || slot; };
+  const pose = (x,y,size,angle) => `perspective(900px) translate(${x}px,${y}px) scale(${size}) rotateY(${angle}deg)`;
+  // 引いた札を山から席へ運ぶ。着地した時に onLand を呼ぶ。
+  function fly(table, state, pile, drawer, own, onLand) {
     const origin = table.querySelector(`[data-extra-poet-pick="${pile}"] .poet-slot`);
     const target = table.querySelector(`[data-poet-seat="${drawer}"] .poet-reveal`);
     const start = (origin.firstElementChild || origin).getBoundingClientRect(), end = target.getBoundingClientRect();
-    if (!end.width || !start.width) return 0;
-    // 描画位置は着地点が基準。画面の拡大率に合わせて座標を CSS ピクセルへ戻す。
+    if (!end.width || !start.width) { onLand(); return 0; }
     const zoom = end.width / target.offsetWidth;
+    // 着地点は、今の厚みの上(一番上の札の位置)。札は厚みの分だけ上にずらして描かれる。
+    const topCard = target.querySelector(':scope > .portrait');
+    const depth = topCard ? (end.top - topCard.getBoundingClientRect().top) / (end.width / target.offsetWidth) : 0;
     const dx = (start.left + start.width/2 - end.left - end.width/2) / zoom;
-    const dy = (start.top + start.height/2 - end.top - end.height/2) / zoom;
+    const dy = (start.top + start.height/2 - end.top - end.height/2) / zoom + depth;
     const scale = start.width / end.width;
     const flight = document.createElement('div');
     flight.className = 'poet-flight';
     flight.setAttribute('aria-hidden','true');
     flight.innerHTML = `<span class="poet-card back"></span>${face(state.last)}`;
-    target.classList.add('receiving');
-    // 着地するまで、前に積んであった札を見せたままにする
-    if (under) { target.insertAdjacentHTML('afterbegin', under); target.firstElementChild.classList.add('poet-under'); }
-    const keep = !!target.querySelector(':scope > .portrait:not(.poet-under)');
+    target.classList.add('landing');
     target.append(flight);
-    const pose = (x,y,size,angle) => `perspective(900px) translate(${x}px,${y}px) scale(${size}) rotateY(${angle}deg)`;
     const lifted = own ? pose(dx*.55,dy*.62-12,(1+scale)/2,95) : pose(dx,dy-6,scale*1.12,180);
     const travel = own ? 750 : 1100;
-    // 回転させる箱(.poet-flight)には透明度を付けない。付けると立体が平らになり、裏面が出てしまう。
+    // 回転させる箱には透明度を付けない(付けると立体が平らになり、裏面が出る)
     const motion = flight.animate([
       {transform:pose(dx,dy,scale,0),offset:0},
       {transform:lifted,offset:own ? .45 : .35},
       ...(!own ? [{transform:lifted,offset:.60}] : []),
       {transform:pose(0,0,1,180),offset:1}
     ], {duration:travel,easing:'ease-in-out',fill:'both'});
-    const settle = () => { target.classList.remove('receiving'); flight.remove(); target.querySelector(':scope > .poet-under')?.remove(); };
-    // 坊主などで手元に札が残らない時は、着地した後に表の札だけを薄くして消す
-    motion.onfinish = () => {
-      if (keep) return settle();
-      const fade = flight.querySelector(':scope > .portrait')?.animate([{opacity:1},{opacity:1,offset:.45},{opacity:0}],{duration:650,fill:'both'});
-      if (!fade) return settle();
-      fade.onfinish = settle; fade.oncancel = settle;
-    };
-    motion.oncancel = settle;
-    return keep ? travel : travel + 650;
+    const settle = () => { onLand(); target.classList.remove('landing'); flight.remove(); };
+    motion.onfinish = settle;
+    motion.oncancel = () => { target.classList.remove('landing'); flight.remove(); };
+    return travel;
   }
+  // 札を 1 枚ずつ from から to へ流す。cards は流す順(一番上から)の札(-1 は裏しか分からない札)。
+  // faceUp: 表向きで持ち上げ、飛びながら裏返す。under: 行き先の札の下へ入れる(z を下げる)。
+  function stream(table, cards, fromEl, toEl, {faceUp, under, live, onLeave, onArrive}) {
+    const n = cards.length; if (!n) return 0;
+    const gap = Math.min(95, 1300 / n), each = 600;
+    cards.forEach((card, i) => {
+      setTimeout(() => {
+        if (!live()) return;
+        const a = boxIn(table, fromEl()), b = boxIn(table, toEl());
+        const el = document.createElement('div');
+        el.className = 'poet-stream' + (under ? ' under' : '');
+        el.setAttribute('aria-hidden', 'true');
+        el.style.cssText = `left:${a.x}px;top:${a.y}px;width:${a.w}px;height:${a.h}px`;
+        el.innerHTML = `<span class="poet-card back"></span>${card >= 0 ? face(card) : '<span class="poet-card back portrait"></span>'}`;
+        table.append(el);
+        onLeave(i);
+        const dx = b.x + b.w/2 - (a.x + a.w/2), dy = b.y + b.h/2 - (a.y + a.h/2), k = b.w / a.w;
+        const lift = Math.min(70, Math.hypot(dx, dy) * .22), tilt = (i % 3 - 1) * 5;
+        const s0 = faceUp ? 180 : 0;
+        const motion = el.animate([
+          {transform:`${pose(0,0,1,s0)} rotate(0deg)`},
+          {transform:`${pose(dx*.5,dy*.5-lift,(1+k)/2,faceUp ? 90 : 0)} rotate(${tilt}deg)`, offset:.5},
+          {transform:`${pose(dx,dy,k,0)} rotate(0deg)`}
+        ], {duration:each, easing:'cubic-bezier(.4,.1,.3,1)', fill:'both'});
+        motion.onfinish = () => { el.remove(); onArrive(i); };
+        motion.oncancel = () => el.remove();
+      }, i * gap);
+    });
+    return (n - 1) * gap + each;
+  }
+  let busyUntil = 0; // 札を動かしている間は、CPU も自分も次を引かない
+  let shown = null;  // 前に描いた時の札の並び(持ち札・場札)
+  const snapshot = state => ({id:state.id, version:state.version, discard:state.discard,
+    field:state.field ? state.field.slice() : null,
+    seats:state.seats.map(p=>({score:p.score, pile:p.pile ? p.pile.slice() : null, top:p.pile?.length ? p.pile[p.pile.length-1] : (p.score>0 ? (p.lastCard ?? -1) : -1)}))});
+  // 並びが分からない札は -1(裏)で埋める。一番上だけは分かる。
+  const pileOf = (seat) => seat.pile || Array.from({length:seat.score}, (_, i) => i === seat.score - 1 ? seat.top : -1);
   function draw(state) {
     const table=$('#poetTable');if(!table)return;
     const key=state.id+'|'+state.version;
     if(table.dataset.frame===key)return;
+    const prev=shown && shown.id===state.id && shown.version===state.version-1 ? shown : null;
+    shown=snapshot(state);
     const consecutive=table.dataset.frame===state.id+'|'+(state.version-1);
     const previousPiles=consecutive ? table.dataset.piles.split(',').map(Number) : [];
     const pile=state.piles.findIndex((n,i)=>n<previousPiles[i]);
     const drawer=state.extra?state.turn:(state.turn+state.seats.length-1)%state.seats.length;
-    const oldScore=table.querySelector(`[data-poet-seat="${drawer}"] [data-score]`)?.dataset.score;
-    const oldFace=table.querySelector(`[data-poet-seat="${drawer}"] .poet-reveal > .portrait`)?.outerHTML || '';
     table.dataset.frame=key;
     table.dataset.piles=state.piles.join(',');
+    table.classList.remove('poet-busy');
+    table.querySelectorAll(':scope > .poet-stream').forEach(e=>e.remove());
     const mine=state.seats.findIndex(p=>p.id===boardMatch.myId());
     const front=Math.max(0,mine);
     const active=state.seats[state.turn];
@@ -258,33 +329,100 @@ const poetCards = (() => {
       +pileRow(state,!state.finish && state.turn===mine);
     $('#poetStatus').textContent=state.finish?winners.join('・')+'の勝ち':active.name+(state.extra?'がもう1枚':'の番');
     $('#poetScores').innerHTML=state.seats.map((p,i)=>`<div class="seat ${!state.finish && i===state.turn?'turn':''}">${seatIcon(state,p,i)}<span class="nm">${esc(p.name)}</span><b>${p.score}枚</b></div>`).join('');
-    if(pile<0 || state.last<0 || document.hidden)return;
+    if(pile<0 || state.last<0 || document.hidden || !consecutive || !prev)return;
     const reduced=S.set.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const duration=reduced ? 0 : fly(table,state,pile,drawer,drawer===mine,oldFace);
-    const delta=state.seats[drawer].score-Number(oldScore);
-    if(delta && !reduced){
+    const role=cardRole(state.last);
+    const semiAll=state.last===SEMIMARU && state.semi==='all';
+    sfx.play('CARD_FLIP');
+    if(reduced)return;
+    const reveal=i=>table.querySelector(`[data-poet-seat="${i}"] .poet-reveal`);
+    const live=()=>table.isConnected && table.dataset.frame===key;
+    // 札が着くまでは、前の一番上の札と枚数のまま見せる(厚みが先に変わらないように)
+    const before=prev.seats;
+    const affected=state.seats.map((_,i)=>i===drawer || (role==='bozu' && semiAll && before[i].score>0));
+    affected.forEach((on,i)=>{ if(on) showOwn(reveal(i),before[i].top,before[i].score); });
+    showPot(table,prev.discard);
+    table.classList.add('poet-busy');
+    const duration=fly(table,state,pile,drawer,drawer===mine,()=>{
+      if(!live())return;
+      // 引いた札が一番上に乗る(坊主もいったん乗せる)
+      showOwn(reveal(drawer),state.last,before[drawer].score+1);
+    });
+    let end=duration;
+    const cutMs=role==='tono'||!S.set.cutin ? 0 : (semiAll?1400:1000)*SPEED()+(state.extra?1100:0)+300;
+    const startAt=duration+cutMs+120;
+    let streamMs=0;
+    if(role==='bozu'){
+      // 手元の札を、一番上(坊主)から順に場札へ流す。持ち上げた時は表、飛びながら裏返す。
+      const groups=state.seats.map((_,i)=>{
+        if(!affected[i])return null;
+        const cards=pileOf(before[i]).slice().reverse();
+        if(i===drawer) cards.unshift(state.last);
+        return cards.length?{i,cards}:null;
+      }).filter(Boolean);
+      const handTotal=groups.reduce((n,g)=>n+g.cards.length,0);
+      const moved=state.discard-prev.discard;
+      let arrived=0;
+      if(groups.length){
+        transientAudio.later(()=>{
+          if(!live())return;
+          sfx.play('SHUFFLE');
+          for(const g of groups){
+            const el=reveal(g.i);
+            streamMs=Math.max(streamMs,stream(table,g.cards,()=>ownTop(el),()=>potTop(table),{faceUp:true,live,
+              onLeave:(k)=>{ if(!live())return; const rest=g.cards.length-1-k; showOwn(el,g.cards[k+1]??-1,rest); },
+              onArrive:()=>{ if(!live())return; arrived++; showPot(table,prev.discard+Math.round(moved*arrived/handTotal)); }}));
+          }
+          if(streamMs>900) setTimeout(()=>{ if(live()) sfx.play('SHUFFLE'); },streamMs/2);
+        },startAt);
+        const longest=Math.max(...groups.map(g=>g.cards.length));
+        streamMs=(longest-1)*Math.min(95,1300/longest)+600;
+      }
+    }else if(role==='hime' && prev.discard>0){
+      // 場札を、一番上から順に姫の下へ滑り込ませる(裏のまま)
+      const cards=(prev.field || Array(prev.discard).fill(-1)).slice().reverse();
+      const el=reveal(drawer);
+      const seatEl=el.closest('.poet-place');
+      transientAudio.later(()=>{
+        if(!live())return;
+        sfx.play('SHUFFLE');
+        seatEl.classList.add('taking');
+        let got=0;
+        stream(table,cards,()=>potTop(table),()=>el,{faceUp:false,under:true,live,
+          onLeave:(k)=>{ if(live()) showPot(table,cards.length-1-k); },
+          onArrive:()=>{ if(!live())return; got++; showOwn(el,state.last,before[drawer].score+1+got); }});
+      },startAt);
+      streamMs=(cards.length-1)*Math.min(95,1300/cards.length)+600;
+    }
+    end=streamMs?startAt+streamMs:duration+cutMs;
+    busyUntil=performance.now()+end;
+    setTimeout(()=>{ if(!live())return; table.classList.remove('poet-busy');
+      reveal(drawer)?.closest('.poet-place')?.classList.remove('taking');
+      // 最後は状態どおりの見た目にそろえる
+      state.seats.forEach((p,i)=>{ if(affected[i]) showOwn(reveal(i),p.pile?.length?p.pile[p.pile.length-1]:(p.score>0?p.lastCard:-1),p.score); });
+      showPot(table,state.discard);
+    },end+60);
+    const delta=state.seats[drawer].score-before[drawer].score;
+    if(delta){
       const gain=document.createElement('span');
       gain.className='poet-delta';
       gain.textContent=(delta>0?'+':'−')+Math.abs(delta)+'枚';
-      gain.style.animationDelay=duration+'ms';
+      gain.style.animationDelay=end+'ms';
       table.querySelector(`[data-poet-seat="${drawer}"] .poet-tally`).append(gain);
     }
-    sfx.play('CARD_FLIP');
-    const role=cardRole(state.last);
-    const semiAll=state.last===SEMIMARU && state.semi==='all';
-    if(role!=='tono' && !reduced)transientAudio.later(()=>{
-      if(!table.isConnected || table.dataset.frame!==key)return;
+    if(role!=='tono')transientAudio.later(()=>{
+      if(!live())return;
       // 筆文字・和の色(姫は桜色、坊主は墨色、蝉丸は古代紫)
       cut({text:semiAll?'蝉丸':roleName[role],sub:semiAll?'全員の札を場へ':'',font:'fude',
         tone:'wa-cut '+(semiAll?'murasaki':role==='bozu'?'sumi':'sakura'),ms:semiAll?1400:1000});
-      if(state.extra)setTimeout(()=>{ if(table.isConnected && table.dataset.frame===key)cut({text:'姫ボーナス',sub:'もう1枚',font:'fude',tone:'wa-cut sakura',ms:1000}); },1050);
+      if(state.extra)setTimeout(()=>{ if(live())cut({text:'姫ボーナス',sub:'もう1枚',font:'fude',tone:'wa-cut sakura',ms:1000}); },1050);
     },duration);
   }
   function button(d) {
     const state=boardMatch.state;
     if(d.extraPoetPick!==undefined) return boardMatch.send('draw',{cell:+d.extraPoetPick,turn:state.version});
   }
-  const stop=()=>{clearTimeout(timer);stacks=null;};
+  const stop=()=>{clearTimeout(timer);stacks=null;shown=null;};
   boardMatch.register('bozu',{initial,apply,changed,html,draw,button,stop});
   return {setup,setupHtml,setOption,start:()=>{const rules={hime:preferences.himeBonus,semi:preferences.semi,peek:preferences.peek};
     return boardMatch.start('bozu',online,online?rules:{...preferences,...rules});},face};

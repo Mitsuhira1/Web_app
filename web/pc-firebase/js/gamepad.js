@@ -280,15 +280,19 @@
     if (isBunyo && typeof bunyoGame !== 'undefined') {
       const mapDir = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'rotate', ArrowDown: 'down' };
       if (dirKey && mapDir[dirKey]) { bunyoGame.action(mapDir[dirKey]); return true; }
-      if (buttonIdx === 0 || buttonIdx === 2) { bunyoGame.action('rotate'); return true; }
-      if (buttonIdx === 3) { bunyoGame.action('down'); return true; }
+      if (buttonIdx === 0) { bunyoGame.action('rotate'); return true; }
+      if (buttonIdx === 1 || buttonIdx === 2) { bunyoGame.action('rotateL'); return true; }
+      if (buttonIdx === 3) { bunyoGame.action('drop'); return true; }
+      if (buttonIdx === 9) { bunyoGame.action('again'); return true; }
     }
     const isPakuris = (S.screen === 'pakurisPlay' || (S.screen === 'extraPlay' && typeof boardMatch !== 'undefined' && boardMatch.state?.game === 'pakuris'));
     if (isPakuris && typeof pakurisGame !== 'undefined') {
       const mapDir = { ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down', ArrowUp: 'rotate' };
       if (dirKey && mapDir[dirKey]) { pakurisGame.action(mapDir[dirKey]); return true; }
-      if (buttonIdx === 0 || buttonIdx === 2) { pakurisGame.action('rotate'); return true; }
+      if (buttonIdx === 0) { pakurisGame.action('rotate'); return true; }
+      if (buttonIdx === 1 || buttonIdx === 2) { pakurisGame.action('rotateL'); return true; }
       if (buttonIdx === 3) { pakurisGame.action('drop'); return true; }
+      if (buttonIdx === 9) { pakurisGame.action('again'); return true; }
     }
     return false;
   }

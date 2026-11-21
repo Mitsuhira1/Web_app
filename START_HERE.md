@@ -9,10 +9,10 @@
 ---
 
 ## 1. いまの方針(ユーザーの指示)
-- **主開発は `web/pc-firebase/`**(PC ブラウザ版・Firebase 通信・「あそび箱49」)。スマホブラウザ版もこちらに移行した。
+- **主開発は `web/pc-firebase/`**(PC ブラウザ版・Firebase 通信・「あそび箱50」)。スマホブラウザ版もこちらに移行した。
   ここで十分に作り込んでから、ほかの版(exe・Android など)に広げる。公開: https://mitsuhira1.github.io/Web_app/pc-firebase/
 - 通信は **Firebase Realtime Database**(4 桁の部屋コード)。WebRTC・招待コード/返信コード・ntfy は**廃止**。
-- ゲームは **49 種**(下の 5 章)。
+- ゲームは **50 種**(下の 5 章)。
 - **進め方**: ユーザーがバグ・改善をその都度伝える → その分だけ直す。**返事にチェックリストを貼らない**。確認してほしい項目は `docs/CHECKLIST_PENDING.md` に追記する(チャットには「追記した」とだけ書く)。
 - 公開・既定のブランチは `ccr-efc07031-6exjqs`(プッシュすると GitHub Pages に出る)。AI ごとの作業ブランチは `README4AI…` の 1 章。**コミット・プッシュはユーザーが言った時だけ**。
 
@@ -47,7 +47,7 @@
 | 見た目 | `css/app.css`(3000 行。後ろほど新しい)・追加ゲームは `css/twelve.css` |
 | みんなで遊ぶ(部屋・同期・チャット・スタンプ・カーソル) | `js/online.js`(2240 行)・`js/net.js`(Firebase) |
 | ルール説明 | `js/rules.js`(動画は `assets/rules/<id>.mp4`) |
-| 絵(アイコン・スタンプ・駒・札) | `js/art.js` |
+| 絵(アイコン・スタンプ・駒・札) | `js/art.js`(メニューのアイコンは画像 `assets/game-icons/`。絵を変えたら `node tools/build_game_icons.cjs`) |
 | 効果音 / BGM / ゲームパッド | `js/sfx.js` / `js/bgm.js` / `js/gamepad.js` |
 | オフラインの保存(ファイルを足した時) | `sw.js` の `FILES` とキャッシュ名 |
 
@@ -62,6 +62,8 @@
 | `boards/twelve.js`(規則は `core/games/<id>.mjs`) | 戦争・たこ焼き・ぶたのしっぽ・ババ抜き・ハーツ・ジンラミー・ハゲタカ・ごいた・クアルト・ガイスター・ラミィキューブ・ペグ・ソリティア |
 | `boards/roulette.js`(＋ `roulette-motion.mjs`・`core/games/roulette.mjs`) | ルーレット |
 | `slide.js` / `bunyo.js` / `pakuris.js` / `mines.js`・`mine-versus.js` / `poet-cards.js` / `wolf.js` | スライドパズル / ぶにょぶにょ / パクリス / マインスイーパー / 坊主めくり / 人狼 |
+| `falling-match.js`(対戦・先取・並び)・`falling-fx.js`(光・音・ぷよの描き方)・`css/falling.css` | ぶにょぶにょ・パクリス共通(規則の試験: `tools/tests/test_falling_rules.mjs`) |
+| `munage.js`(＋ `css/munage.css`。見本は `docs/mockups/munage/`) | 胸毛絶体絶命(盤・アニメ・効果音・CPU すべてこの 1 ファイル) |
 
 (`ORDER` は `js/app.js` 34 行目。ゲームを足したらここと上の表を直す)
 
@@ -71,6 +73,7 @@
 - 個人の情報(メールアドレスなど)をファイル・コミット・外のサービスに入れない。
 - ユーザーとのやりとりは日本語。直したこと・変えたファイル・確かめたこと/確かめていないことを分けて書く。返事の最後に「次にやること」を番号つきで短く。
 - 画面を大きく変える時は、先に見本を見せて了承を得る。
+- **左上の戻る・右の側板・左下の設定(歯車)は全ゲーム共通**。新しいゲームも作り直さず、盤(`#boardwrap`)だけを描く。見本も PC 版の実際の対局画面の中で作る。詳しくは `CLAUDE.md` の「全ゲーム共通の画面部品」。
 - 見た目を直す時は、**盤面の表示部分の大きさをできるだけ変えず**、中の部品(札・駒・枠)の大きさや並びで直す。空き枠は札・駒と同じ大きさに。詳しくは `CLAUDE.md` の「見た目を直す時の基本方針」。
 
 ## 7. 試す(コマンドだけ)
