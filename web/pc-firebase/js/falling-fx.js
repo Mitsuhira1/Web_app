@@ -168,15 +168,15 @@ const BUNYO_SHAPE = 'M-.47 .04C-.47 -.3 -.27 -.45 0 -.45C.27 -.45 .47 -.3 .47 .0
 const BUNYO_DROP = 'M0 -.62C.12 -.48 .44 -.24 .43 .08C.42 .36 .28 .47 0 .47C-.28 .47 -.42 .36 -.43 .08C-.44 -.24 -.12 -.48 0 -.62Z';
 const bunyoTf = (px,py,c,sx=1,sy=1) => `translate(${px.toFixed(2)} ${(py+.47*c).toFixed(2)}) scale(${(c*sx).toFixed(3)} ${(c*sy).toFixed(3)}) translate(0 -.47)`;
 function bunyoFilter(id,c) {
-  // 光の計算(feDiffuseLighting・feSpecularLighting)は使わない。グラフィックの機能が使えない環境(Edge など)で
-  // 描き直すたびに非常に重くなり、画面が固まったため。丸みは右下の内側の影で出し、つやは bunyoFace の白い楕円で出す。
-  const blur=c*.07, sh=c*.09;
+  const blur=c*.07, bump=c*.2, sc=c*.075;
   return `<filter id="${id}" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
   <feGaussianBlur in="SourceGraphic" stdDeviation="${blur}" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 26 -12" result="shape"/>
-  <feOffset in="shape" dx="${-sh}" dy="${-sh}" result="o"/><feComposite in="shape" in2="o" operator="out" result="rim"/>
-  <feGaussianBlur in="rim" stdDeviation="${c*.06}" result="rimb"/><feFlood flood-color="#000" flood-opacity=".32" result="fl"/>
-  <feComposite in="fl" in2="rimb" operator="in" result="d"/><feComposite in="d" in2="shape" operator="in" result="d2"/>
-  <feMerge><feMergeNode in="shape"/><feMergeNode in="d2"/></feMerge></filter>`;
+  <feGaussianBlur in="shape" stdDeviation="${bump}" result="bump"/>
+  <feDiffuseLighting in="bump" surfaceScale="${sc}" diffuseConstant="1.08" lighting-color="#fff" result="d"><feDistantLight azimuth="240" elevation="58"/></feDiffuseLighting>
+  <feBlend in="shape" in2="d" mode="multiply" result="l0"/><feComposite in="l0" in2="shape" operator="in" result="lit"/>
+  <feSpecularLighting in="bump" surfaceScale="${sc}" specularConstant=".55" specularExponent="16" lighting-color="#fff" result="s"><feDistantLight azimuth="235" elevation="52"/></feSpecularLighting>
+  <feComposite in="s" in2="shape" operator="in" result="s2"/><feComposite in="s2" in2="lit" operator="arithmetic" k2=".85" k3="1" result="body"/>
+  <feDropShadow in="body" dx="0" dy="2" stdDeviation="1" flood-color="#000" flood-opacity=".13"/></filter>`;
 }
 function bunyoFace(px,py,c,sx,sy,k,white) {
   let s=`<g transform="${bunyoTf(px,py,c,sx,sy)}"><ellipse cx="-.13" cy="-.27" rx=".14" ry=".07" fill="#fff" opacity="${white?.4:.8}" transform="rotate(-20 -.13 -.27)"/><circle cx=".08" cy="-.33" r=".03" fill="#fff" opacity=".7"/>`;
@@ -233,7 +233,7 @@ function bunyoSvg(st,c,fid,W=6,H=12) {
     faces+=bunyoFace(ax,ay,c,1,1,p.a,false)+bunyoFace(sx2,sy2,c,1,1,p.b,false);
   }
   let body=''; for (const {fill,items} of layers.values()) body+=`<g filter="url(#${fid})" fill="${fill}">${items.join('')}</g>`;
-  return `<svg data-bunyo width="${W*c}" height="${H*c}" viewBox="0 0 ${W*c} ${H*c}" style="filter:drop-shadow(0 2px 2px #0002)"><defs>${bunyoFilter(fid,c)}</defs>${body}${faces}${top}</svg>`;
+  return `<svg data-bunyo width="${W*c}" height="${H*c}" viewBox="0 0 ${W*c} ${H*c}" overflow="visible"><defs>${bunyoFilter(fid,c)}</defs>${body}${faces}${top}</svg>`;
 }
 const bunyoPairSvg = (a,b,c,fid) => bunyoSvg({cells:[[b],[a]]},c,fid,1,2);
 
