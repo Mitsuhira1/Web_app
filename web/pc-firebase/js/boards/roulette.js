@@ -213,7 +213,7 @@ window.rouletteReady = Promise.all([
       if (duration) {
         A.anim(plan.duration);
         const impacts = plan.impacts.map(hit => ({...hit, at: hit.at * A.speed}));
-        wheel.cancelSound = sfx.rouletteSpin?.({duration, impacts, panAt: plan.panAt});
+        wheel.cancelSound = sfx.rouletteSpin?.({duration, impacts, panAt: plan.panAt, poseAt: plan.poseAt});
         const current = wheel;
         current.timer = setTimeout(() => {
           if (wheel !== current || token !== match || S.screen !== 'play') return;
