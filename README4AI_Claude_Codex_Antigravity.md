@@ -62,6 +62,16 @@
 - 流している間は山札を押せない(`.poet-busy`)。CPU は `busyUntil` まで次を引かない。
 - 確かめたこと(Chromium): 引いて 250ms 後は前の枚数のまま(6 回)、姫・坊主の流れのコマ、流し終わりの見た目が状態と一致(姫: 手元 8・場札 0、坊主: 手元 0・場札 17)。
 
+### 2026-11-21 / Claude / ソリティア: スパイダーを追加、めくり・ドラッグの演出、K の枠
+- スパイダー(`core/games/spider.mjs` 新規): 2組104枚・10列、マーク 1/2/4 種、K〜A が同じマークでそろうと自動で組札、8組で成功。配るのは空き列が無い時だけ。クロンダイクと同じ ConcurrentRules(多人数は同じ配札を各自で解く)、手の番号もクロンダイクと同じ形(列は 6+k)。`core/asobi-pc-core.mjs` は import・`initMetadataForClass(SpiderSolitaire…[ConcurrentRules])`・Outcome への包み・def と brain の分岐(`variant=spider`)・ゲーム名を「ソリティア」に・設定 `variant`(既定 klondike)と `suits` を足しただけ。**クロンダイクの規則は変えていない**。盤のデータは `kind:"solitaire", variant:"spider"`(盤の大きさの CSS `k-solitaire` をそのまま使うため)。
+- 設定画面(`js/app.js`): 種類に応じてクロンダイク用(めくる枚数・周回)/スパイダー用(マークの数)だけを出す。`BREAK` の「(クロンダイク)」を削除。ヒントは `js/rules.js`。
+- めくり(`css/app.css`): 回転中の表と裏が盤ごとの `--w` 指定で元の札より大きく(72→93px)、めくり終わりに大きさが飛んでいた → `.card-turn > .pcard{--w:inherit!important}`。`flipCard`(`js/app.js`)は複製の位置指定(position・left・top など)を消す(浮かせた札を返す時のため)。
+- ドラッグ(`js/app.js` の `setupDrag`): 置いた時、ゴーストを次に盤を描くまで残し(最大 0.8 秒)、離した位置を `A.takeDrop()` で渡す。ゴーストの CSS transition(0.16 秒の遅れの原因)を切った。ソリティアは離した所から行き先へ 0.17 秒で滑らせる。動く札は `body` に浮かせた複製で飛ばす(列の欄が `overflow:hidden` で切れていたため)。表になった列の札はめくる演出。ほかのゲームは `takeDrop` を使っていないので見た目はゴーストが少し長く残るだけ。
+- K の枠: `.sol .spile>.pcard.empty{width:100%}` と汎用 `.empty{padding:24px}` で札より大きかった → 札と同じ `--w`・余白 0。盤の外枠の大きさは変えていない。`fitSolitaire` は外枠の幅も上限にする(スパイダー10列がスマホではみ出したため)。
+- 方針: `CLAUDE.md` に「見た目を直す時の基本方針(盤面の表示部分の大きさを極力変えない)」、`START_HERE.md` の守ることに1行。
+- ファイル: `core/games/spider.mjs`(新規)・`core/asobi-pc-core.mjs`・`js/app.js`・`js/boards/extra.js`・`js/rules.js`・`css/app.css`・`sw.js`(キャッシュ名と spider.mjs)・`tools/tests/test_spider_core.mjs`(新規)・`CLAUDE.md`・`START_HERE.md`・`docs/CHECKLIST_PENDING.md`
+- 確かめたこと(Chromium・1280px と 390px): めくり中の札の大きさが最後まで 72px、ドラッグ(1枚・2枚)で離した位置から行き先へ動き元の場所に戻らない、K の枠が札と同じ大きさ、スパイダーの設定・盤・配る演出・スマホ幅で10列が収まる、`test_spider_core`・`test_extra_12_games`・`test_roulette_core`。未確認: 通信対戦でのスパイダー、組札へ飛ぶ演出(13枚そろう場面は手で作れなかった)、Python の UI 試験。
+
 ### 2026-11-20 / Claude / クアルトを遠近法の 3D に、ペグの枠、坊主めくりの裏返り・山札の色
 - クアルト(`js/boards/twelve.js` の `Q3`・`qRaw`・`qFit`・`qPiece`・`qShadow`・`boards.quarto`): ユーザー「平面に描いた感が強い・穴にはまっていない」。盤・穴・駒を 3 次元の座標で作り、遠近法で写して奥から順に描く(回転 24°・見下ろし 47°)。穴は開口部の中に奥の壁と底が見え、駒は穴の底(y=−0.15)に立てて、沈んだ部分は開口部の `clipPath` の中だけに描く。四角い駒は表を向いた面だけ光の向きで塗る。影は光と逆向きに盤へ落としてぼかす。置ける穴の見本は盤の svg の中に描き、`:has()` でボタンに乗せた時だけ出す。
 - ペグ: 選んだ時の枠を、穴の縁(ソケットの box-shadow)と頭の丸(`.wood-peg::after`)に沿う緑の輪に変えた。当たり領域は見えない `::before` のまま。

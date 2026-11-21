@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261121-bozu-stream-4";
+const CACHE = "asobipcfb-20261121-spider-bozu-stream-5";
 const FILES = [
 "./css/twelve.css",
 "./js/boards/twelve.js",
@@ -53,6 +53,7 @@ const FILES = [
 "./core/games/rummikub.mjs",
 "./core/games/quarto.mjs",
 "./core/games/pegsolitaire.mjs",
+"./core/games/spider.mjs",
 "./core/games/oldmaid.mjs",
 "./core/games/hearts.mjs",
 "./core/games/goita.mjs",

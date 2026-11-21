@@ -37,7 +37,7 @@ const ORDER = ['shogi', 'gogo', 'reversi', 'connect4', 'gomoku', 'hex', 'mancala
   'goita', 'quarto', 'geister', 'rummikub', 'pegsolitaire'];
 const APP_NAME = `あそび箱${ORDER.length}`;
 const ART_ID = { gogo: 'minishogi' };
-const BREAK = { morris: 'ナインメンズ<wbr>モリス', chinese: 'チャイニーズ<wbr>チェッカー', dots: 'ドット＆<wbr>ボックス', holdem: 'テキサス<wbr>ポーカー', yacht: 'ヨット', blackjack: 'ブラック<wbr>ジャック', backgammon: 'バック<wbr>ギャモン', hitblow: 'ヒット＆<wbr>ブロー', life: '人生<wbr>すごろく', solitaire: 'ソリティア<wbr>(クロンダイク)' };
+const BREAK = { morris: 'ナインメンズ<wbr>モリス', chinese: 'チャイニーズ<wbr>チェッカー', dots: 'ドット＆<wbr>ボックス', holdem: 'テキサス<wbr>ポーカー', yacht: 'ヨット', blackjack: 'ブラック<wbr>ジャック', backgammon: 'バック<wbr>ギャモン', hitblow: 'ヒット＆<wbr>ブロー', life: '人生<wbr>すごろく' };
 let CAT = [];
 const gInfo = (id) => CAT.find((g) => g.id === id);
 const artOf = (id) => art(ART_ID[id] || id) || '';
@@ -282,7 +282,10 @@ function setup() {
       : setupRow(o.label, '', hint) + `<div class="row below">${seg('o:' + o.key, o.values, v, 'wide')}</div>`;
   };
   const time = g.options.filter(o => o.key==='moveSeconds' || o.group==='online');
-  const rule = g.options.filter((o) => o.key !== 'players' && o.group === 'rule');
+  // 種類で使わない設定は出さない(ソリティア: クロンダイクはめくる枚数・周回、スパイダーはマークの数)
+  const spiderOn = id === 'solitaire' && (c.opts.variant ?? 'klondike') === 'spider';
+  const optShown = (o) => id !== 'solitaire' || (['draw', 'passes'].includes(o.key) ? !spiderOn : o.key === 'suits' ? spiderOn : true);
+  const rule = g.options.filter((o) => o.key !== 'players' && o.group === 'rule' && optShown(o));
   const local = g.options.filter((o) => o.group === 'local');
   const seatNames = g.seatNames && g.seatNames.length >= 2 ? g.seatNames : ['先手', '後手'];
   let pidx = 0; if (ps) pidx = Math.max(0, ps.values.findIndex(([v]) => v === c.opts.players));
@@ -640,6 +643,8 @@ function flipCard(node, duration, cardClass) {
     if (attribute.name.startsWith('data-')) front.removeAttribute(attribute.name);
   }
   front.classList.remove('tap', 'on');
+  // 浮かせて動かしている札(position:fixed など)を返す時も、表と裏は札の中に重ねる
+  for (const k of ['position', 'left', 'top', 'right', 'bottom', 'zIndex', 'transform', 'margin', 'visibility']) front.style[k] = '';
   const back = document.createElement('span');
   back.className = cardClass + ' back';
   faces.append(front, back);
@@ -662,6 +667,7 @@ function api() {
     strip: (html) => { const e = $('#strip'); if (e) e.innerHTML = html; },
     board: (html, onTap) => {
       const wrap = $('#boardwrap'); if (!wrap) return;
+      if (dragHold) { const f = dragHold; dragHold = null; f(); }
       wrap.className = 'boardwrap k-' + (view.board ? view.board.kind : '');
       wrap.onpointerdown = wrap.oncontextmenu = wrap.ondblclick = null;
       wrap.innerHTML = html.startsWith('<svg') ? `<div class="plate">${html}</div>` : html;
@@ -681,6 +687,7 @@ function api() {
     get isOnline() { return online; },
     get remoteTurn() { return online && view && ((!view.human && view.remote) || isMySeatAutoCpu()); }, cut: (c) => cut(Object.assign({ _tok: token }, c)), animClear: () => { animUntil = performance.now(); },
     drag: (o) => setupDrag(o),
+    takeDrop: () => { const d = dragDrop; dragDrop = null; return d && performance.now() - d.at < 1500 ? d : null; },
     get cfg() { return pcfg || {}; }, get lastMove() { return lastPlayed; }, get reduce() { return !!S.set.reduce; },
     sheet: (html, init) => { openSheet(html); if (init) init($('#sheet')); }, closeSheet,
     get sel() { return sel; }, set sel(v) { sel = v; },
@@ -739,7 +746,7 @@ function drawPlay(force) {
 // 札をドラッグで出す(設定「駒の動かし方」がクリックの時は使わない)
 // o.getStack(src): まとめてドラッグする要素配列を返す。
 // 当たり判定はドラッグ中のカード矩形と移動先候補の重なり面積で判定し、カードの上端・下端のどこを掴んでも同じ感覚で置けるようにする。
-let dragJust = false;
+let dragJust = false, dragDrop = null, dragHold = null;
 function setupDrag(o) {
   const wrap = $('#boardwrap'); if (!wrap || S.set.drag === 'クリック') return;
   wrap.classList.add('drag-enabled');
@@ -757,7 +764,7 @@ function setupDrag(o) {
       if (sr.right > sR) sR = sr.right;
       if (sr.bottom > sB) sB = sr.bottom;
     }
-    let ghost = null, over = null;
+    let ghost = null, over = null, lastDx = 0, lastDy = 0;
     const findBestTarget = (dx, dy) => {
       // 先頭カードおよびスタック全体の現在位置矩形（掴んだ位置に依存しない）
       const gL = r.left + dx, gT = r.top + dy, gR = r.right + dx, gB = r.bottom + dy;
@@ -848,6 +855,7 @@ function setupDrag(o) {
         document.body.appendChild(ghost);
         stackEls.forEach((el) => el.classList.add('dragsrc'));
       }
+      lastDx = dx; lastDy = dy;
       ghost.style.transform = `translate(${dx / z}px,${dy / z}px) rotate(3.5deg)`;
       const d = findBestTarget(dx, dy);
       if (over !== d) {
@@ -863,12 +871,17 @@ function setupDrag(o) {
       window.removeEventListener('pointercancel', up);
       window.removeEventListener('blur', up);
       if (!ghost) return;
-      ghost.remove();
-      stackEls.forEach((el) => el.classList.remove('dragsrc'));
       if (over) over.classList.remove('dropover');
       dragJust = true; setTimeout(() => (dragJust = false), 0);
-      if (ev.type === 'pointerup' && over) o.drop(src, over);
-      else sfx.play('CARD', { volume: .35, rate: .9 });
+      const restore = () => { ghost.remove(); stackEls.forEach((el) => el.classList.remove('dragsrc')); };
+      if (ev.type === 'pointerup' && over) {
+        // 置いた札は、離した所から行き先へ動かす(元の場所に一度戻さない)。
+        // 見本(ゴースト)は次に盤を描くまで残し、盤の描き方は takeDrop() で離した位置を受け取る。
+        dragDrop = { at: performance.now(), rot: 3.5, items: stackEls.map((el, i) => ({ el, cid: el.dataset.cid, rect: { left: stackRects[i].left + lastDx, top: stackRects[i].top + lastDy, width: stackRects[i].width, height: stackRects[i].height } })) };
+        dragHold = restore;
+        setTimeout(() => { if (dragHold === restore) { dragHold = null; restore(); } }, 800);
+        o.drop(src, over);
+      } else { restore(); sfx.play('CARD', { volume: .35, rate: .9 }); }
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
