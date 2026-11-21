@@ -1,4 +1,4 @@
-// 胸毛の案(a・b・c)を、盤の上とアニメの大写しで並べる。node compare_hair.cjs [出力先]
+// 胸毛を、盤の上とアニメの大写しで並べて撮る(hair_compare.png)。node compare_hair.cjs [出力先]
 const { chromium } = require('playwright');
 const fs = require('fs');
 const { execFileSync } = require('child_process');
@@ -6,7 +6,7 @@ const OUT = (process.argv[2] || __dirname) + '/';
 const code = fs.readFileSync(__dirname + '/munage_board.js', 'utf8');
 (async () => {
   const b = await chromium.launch();
-  for (const kind of ['a', 'b', 'c']) {
+  for (const kind of ['now']) {
     const ctx = await b.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 });
     const p = await ctx.newPage();
     await p.addInitScript(() => localStorage.setItem('asobi30pc', JSON.stringify({ firstDone: true })));
@@ -29,19 +29,15 @@ const code = fs.readFileSync(__dirname + '/munage_board.js', 'utf8');
 from PIL import Image, ImageDraw, ImageFont
 O='${OUT}'
 cols=[]
-for k in 'abc':
+for k in ['now']:
     a=Image.open(O+'hair_%s_board.png'%k).resize((600,436),Image.LANCZOS)
     c=Image.open(O+'hair_%s_close.png'%k).resize((600,560),Image.LANCZOS)
     col=Image.new('RGB',(600,436+560+70),'#f3efe6'); col.paste(a,(0,70)); col.paste(c,(0,70+436))
     cols.append(col)
-W=Image.new('RGB',(600*3+40,436+560+70),'#f3efe6')
-d=ImageDraw.Draw(W)
-f=ImageFont.truetype('/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf',38)
-labels=['A 形で描く(縁が巻き毛)','B 波線で描く(漫画風)','C ぼかし(写実寄り)']
-for i,col in enumerate(cols):
-    W.paste(col,(i*620,0)); d.text((i*620+18,14),labels[i],fill='#2a2118',font=f)
+a=cols[0].crop((0,70,600,506)); c=cols[0].crop((0,506,600,1066))
+W=Image.new('RGB',(1220,560),'#f3efe6'); W.paste(a.resize((600*560//436,560)).crop((0,0,600,560)),(0,0)); W.paste(c,(620,0))
 W.save(O+'hair_compare.png')
 import os
-for k in 'abc':
+for k in ['now']:
     os.remove(O+'hair_%s_board.png'%k); os.remove(O+'hair_%s_close.png'%k)`]);
 })();
