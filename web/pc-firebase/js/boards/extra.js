@@ -31,6 +31,9 @@
 
   // ---------------------------------------------------------------- ソリティア(クロンダイク・スパイダー)
   let solRO = null;
+  // 前回の札の大きさ。描き直した盤に最初から入れて、描き直しの間も札(と数字)の大きさが変わらないようにする
+  const solLastW = {};
+  const solWStyle = (cols) => (solLastW[cols] ? ` style="--sol-w:${solLastW[cols]}px"` : '');
   function fitSolitaire() {
     const sol = document.querySelector('#boardwrap .felt-table.sol');
     if (!sol) return;
@@ -38,8 +41,9 @@
     const cols = sol.classList.contains('spider') ? 10 : 7;
     // 札が大きすぎると盤が外枠より広がるので、外枠の幅も上限にする
     const solW = Math.min(sol.clientWidth || 640, (sol.parentElement && sol.parentElement.clientWidth) || 9999), solH = sol.clientHeight || 420;
-    const cardW = Math.floor(Math.max(cols > 7 ? 24 : 36, Math.min(72, (solW - 60) / (cols + 0.5), solH * 0.165)));
+    const cardW = Math.floor(Math.max(cols > 7 ? 24 : 36, Math.min(100, (solW - 60) / (cols + 0.5), solH * 0.165)));
     sol.style.setProperty('--sol-w', cardW + 'px');
+    solLastW[cols] = cardW;
     const cardH = cardW * 1.4;
     const topH = topEl ? topEl.offsetHeight : cardH + 6;
     const tabH = Math.max(110, (tabEl && tabEl.clientHeight ? tabEl.clientHeight : solH - topH - 36) - 6);
@@ -111,7 +115,7 @@
     let done = false;
     const land = () => { if (done) return; done = true; e.style.visibility = ''; el.remove(); };
     solFlying.push(land);
-    el.animate([{ transform: `translate(${from.left - r.left}px,${from.top - r.top}px)${rot ? ` rotate(${rot}deg)` : ''}` }, { transform: 'none' }], { duration: ms, delay, easing: 'cubic-bezier(.22,.9,.3,1)', fill: 'backwards' }).onfinish = land;
+    el.animate([{ transform: `translate(${from.left - r.left}px,${from.top - r.top}px)${rot ? ` rotate(${rot}deg)` : ''}` }, { transform: 'none' }], { duration: ms, delay, easing: rot || ms < 200 * A.speed ? 'cubic-bezier(.22,.9,.3,1)' : 'cubic-bezier(.4,0,.2,1)', fill: 'backwards' }).onfinish = land;
     // 配る札は、山札を離れる時に表へ返す(それまでは山札の裏に隠れている)
     if (flip) { if (delay) { el.style.visibility = 'hidden'; setTimeout(() => { if (!done) { el.style.visibility = ''; A.flipCard(el, 260, 'pcard'); } }, delay); } else A.flipCard(el, 260, 'pcard'); }
   }
@@ -136,7 +140,8 @@
       }
       const r = e.getBoundingClientRect();
       if (!d && Math.hypot(from.left - r.left, from.top - r.top) <= 4) return;
-      const ms = (d ? 170 : 250) * A.speed;
+      // ドラッグで置いた札は短く収め、クリック・ダブルクリックで動かした札はスーッと飛ぶ様子が見える長さにする
+      const ms = (d ? 170 : 360) * A.speed;
       solFly(A, e, from, ms, 0, d ? drop.rot || 0 : 0, false);
       longest = Math.max(longest, ms);
     });
@@ -144,12 +149,13 @@
     return drop;
   }
 
+  let solPrevWasteN = 0;
   function solitaire(b, A) {
     if (b.variant === 'spider') return spider(b, A);
     const SEAT = 1000000, seat = b.me;
     const legal = new Set(A.view.legal);
     const enc = (src, n, dest) => seat * SEAT + src * 10000 + n * 100 + dest;
-    const sel = A.sel && A.sel.sol;
+    const sel = A.sel && A.sel.sol ? A.sel : null;
     A.strip(b.others.map(([i, f, g]) => `<div class="pl ${i === seat ? 'turn' : ''}"><span class="dot" style="background:${['#C8463C', '#3F78C4', '#3E9B63', '#E0AE36', '#7A5AC0', '#5A3A22'][i]}"></span><span class="who"><span class="nm">${E(A.name(i))}</span><span class="nt">${g ? 'やめた' : `組札 ${f}/52`}</span></span></div>`).join(''));
     const destsFor = (src, n) => { const out = []; for (let d = 2; d <= 12; d++) if (legal.has(enc(src, n, d))) out.push(d); return out; };
     const hl = new Set(sel ? destsFor(sel.src, sel.n) : []);
@@ -168,7 +174,7 @@
       if (f != null) { A.sel = null; A.play(enc(src, n, f)); return true; }
       return false;
     };
-    A.board(`<div class="felt-table sol"><div class="soltop">${stock}${waste}<span class="grow"></span>${found}</div><div class="soltab">${piles}</div></div>`, (d, el) => {
+    A.board(`<div class="felt-table sol"${solWStyle(7)}><div class="soltop">${stock}${waste}<span class="grow"></span>${found}</div><div class="soltab">${piles}</div></div>`, (d, el) => {
       if (d.draw != null) { if (legal.has(seat * SEAT)) { A.sel = null; A.play(seat * SEAT); } return; }
       if (d.src != null) {
         const src = +d.src, n = +d.n;
@@ -181,24 +187,20 @@
         if (destsFor(src, n).length) { A.sel = { sol: 1, src, n }; return A.redraw(); }
         A.sel = null; return A.redraw();
       }
+      // 選んだ札は少し持ち上がるので、2回目のクリックが同じ列の地に当たった時も「もう一度押した」とみなす
+      if (d.dest != null && sel && +d.dest === sel.src) { if (autoMove(sel.src, sel.n)) return; A.sel = null; return A.redraw(); }
       if (d.dest != null && sel) { const m = enc(sel.src, sel.n, +d.dest); A.sel = null; if (legal.has(m)) return A.play(m); return A.redraw(); }
     });
-    const wrapEl = document.getElementById('boardwrap');
-    if (wrapEl) {
-      wrapEl.ondblclick = (e) => {
-        const el = e.target.closest('#boardwrap [data-src]');
-        if (!el) return;
-        e.preventDefault();
-        autoMove(+el.dataset.src, +el.dataset.n);
-      };
-    }
+    // ダブルクリック: 1回目で札を選び(盤を描き直す)、2回目で上の「同じ札をもう一度」の処理が組札(無ければ置ける列)へ動かす。
+    // 描き直しでブラウザの dblclick は届かないので使わない(届いた時に2回動かないよう、消しておく)
     watchSolitaire();
     // 捨て札が流れ、山札から引いた札は表を返しながら手前に重なる。
     if (!A.reduce && (snap.wid.size || vis.length)) {
       const now = new Set(vis.map((c) => c.c));
       document.querySelectorAll('#boardwrap .waste [data-wid]').forEach((e) => { const id = +e.dataset.wid, r = e.getBoundingClientRect(), o = snap.wid.get(id);
         if (o && (o.r.left !== r.left)) e.animate([{ transform: `translate(${o.r.left - r.left}px,${o.r.top - r.top}px)` }, { transform: 'none' }], { duration: 220 * A.speed, easing: 'ease-out' });
-        else if (!o && snap.stock && !snap.cid.has(id)) {
+        // 山札から引いて捨て札が増えた時だけ山札から飛ばす。捨て札を出して下から見えてきた札は動かさない
+        else if (!o && snap.stock && !snap.cid.has(id) && b.wasteN > solPrevWasteN) {
           A.flipCard(e,260,'pcard');
           e.animate([{transform:`translate(${snap.stock.left-r.left}px,${snap.stock.top-r.top}px)`}, {transform:'none'}],
             {duration:260*A.speed,easing:'cubic-bezier(.3,.8,.4,1)'});
@@ -211,13 +213,14 @@
       }
       if (vis.length && [...snap.wid.keys()].join() !== vis.map((c) => c.c).join()) A.anim(300);
     }
+    solPrevWasteN = b.wasteN;
     // 捨て札から出した札も、列・組札へすべらせる
     for (const [id, o] of snap.wid) if (!snap.cid.has(id)) snap.cid.set(id, o);
     // 列・組札へ移動したカードのスライドアニメーション(ダブルクリック・タップ・ドラッグ共通)。開いた札はめくる
     solSlide(A, snap, { reveal: true });
     solDrag(A, legal, enc);
-    const auto = [...legal].find((m) => { const c = m % SEAT; const dest = c % 100; return c > 1 && dest >= 2 && dest <= 5; });
-    A.acts([{ label: 'やめる', move: seat * SEAT + 1, enabled: legal.has(seat * SEAT + 1) }, { label: '組札へ', move: auto ?? -1, enabled: auto != null }]);
+    // 盤の下のボタンは置かない(やめる=右の「降参」、組札へ=ダブルクリック、配る=山札をタップ)
+    A.acts([]);
   }
   function solDrag(A, legal, enc) {
     A.drag({
@@ -244,7 +247,7 @@
     const legal = new Set(A.view.legal);
     const enc = (src, n, dest) => seat * SEAT + src * 10000 + n * 100 + dest;
     const rk = (c) => (c.r === 14 ? 1 : c.r);
-    const sel = A.sel && A.sel.spi;
+    const sel = A.sel && A.sel.spi ? A.sel : null;
     A.strip(b.others.map(([i, f, g]) => `<div class="pl ${i === seat ? 'turn' : ''}"><span class="dot" style="background:${['#C8463C', '#3F78C4', '#3E9B63', '#E0AE36', '#7A5AC0', '#5A3A22'][i]}"></span><span class="who"><span class="nm">${E(A.name(i))}</span><span class="nt">${g ? 'やめた' : `組 ${f}/8`}</span></span></div>`).join(''));
     const destsFor = (src, n) => { const out = []; for (let d = 6; d <= 15; d++) if (legal.has(enc(src, n, d))) out.push(d); return out; };
     const hl = new Set(sel ? destsFor(sel.src, sel.n) : []);
@@ -267,7 +270,7 @@
       return ds.slice().sort((x, y) => score(y) - score(x))[0];
     };
     const autoMove = (src, n) => { const d = bestDest(src, n); if (d != null) { A.sel = null; A.play(enc(src, n, d)); return true; } return false; };
-    A.board(`<div class="felt-table sol spider"><div class="soltop">${stock}<span class="grow"></span>${done}</div><div class="soltab">${piles}</div></div>`, (d, el) => {
+    A.board(`<div class="felt-table sol spider"${solWStyle(10)}><div class="soltop">${stock}<span class="grow"></span>${done}</div><div class="soltab">${piles}</div></div>`, (d, el) => {
       if (d.draw != null) { if (canDeal) { A.sel = null; A.play(seat * SEAT); } return; }
       if (d.src != null) {
         const src = +d.src, n = +d.n;
@@ -276,10 +279,10 @@
         if (destsFor(src, n).length) { A.sel = { spi: 1, src, n }; return A.redraw(); }
         A.sel = null; return A.redraw();
       }
+      // 選んだ札は少し持ち上がるので、2回目のクリックが同じ列の地に当たった時も「もう一度押した」とみなす
+      if (d.dest != null && sel && +d.dest === sel.src) { if (autoMove(sel.src, sel.n)) return; A.sel = null; return A.redraw(); }
       if (d.dest != null && sel) { const m = enc(sel.src, sel.n, +d.dest); A.sel = null; if (legal.has(m)) return A.play(m); return A.redraw(); }
     });
-    const wrapEl = document.getElementById('boardwrap');
-    if (wrapEl) wrapEl.ondblclick = (e) => { const el = e.target.closest('#boardwrap [data-src]'); if (!el) return; e.preventDefault(); autoMove(+el.dataset.src, +el.dataset.n); };
     watchSolitaire();
     solSlide(A, snap, { deal: b.last === 0, reveal: b.last !== 0 });
     // そろった 13 枚は、列から組札の置き場へ飛ばす
@@ -298,7 +301,7 @@
       }
     }
     solDrag(A, legal, enc);
-    A.acts([{ label: 'やめる', move: seat * SEAT + 1, enabled: legal.has(seat * SEAT + 1) }, { label: b.stock ? `配る(残り${b.deals}回)` : '配る', move: canDeal ? seat * SEAT : -1, enabled: canDeal }]);
+    A.acts([]);
   }
 
   // ---------------------------------------------------------------- 麻雀

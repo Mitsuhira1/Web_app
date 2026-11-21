@@ -169,8 +169,10 @@ const BUNYO_DROP = 'M0 -.62C.12 -.48 .44 -.24 .43 .08C.42 .36 .28 .47 0 .47C-.28
 const bunyoTf = (px,py,c,sx=1,sy=1) => `translate(${px.toFixed(2)} ${(py+.47*c).toFixed(2)}) scale(${(c*sx).toFixed(3)} ${(c*sy).toFixed(3)}) translate(0 -.47)`;
 function bunyoFilter(id,c) {
   const blur=c*.07, bump=c*.2, sc=c*.075;
+  /* しきい値の傾き: 急だとふちがギザギザになる。ぼかしの大きさに合わせ、ふちが約1画素で切り替わる傾きにする */
+  const m=Math.max(4,Math.min(26,blur/.42)), off=-(m*.46).toFixed(2);
   return `<filter id="${id}" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
-  <feGaussianBlur in="SourceGraphic" stdDeviation="${blur}" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 26 -12" result="shape"/>
+  <feGaussianBlur in="SourceGraphic" stdDeviation="${blur}" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 ${m.toFixed(2)} ${off}" result="shape"/>
   <feGaussianBlur in="shape" stdDeviation="${bump}" result="bump"/>
   <feDiffuseLighting in="bump" surfaceScale="${sc}" diffuseConstant="1.08" lighting-color="#fff" result="d"><feDistantLight azimuth="240" elevation="58"/></feDiffuseLighting>
   <feBlend in="shape" in2="d" mode="multiply" result="l0"/><feComposite in="l0" in2="shape" operator="in" result="lit"/>
@@ -178,6 +180,9 @@ function bunyoFilter(id,c) {
   <feComposite in="s" in2="shape" operator="in" result="s2"/><feComposite in="s2" in2="lit" operator="arithmetic" k2=".85" k3="1" result="body"/>
   <feDropShadow in="body" dx="0" dy="2" stdDeviation="1" flood-color="#000" flood-opacity=".13"/></filter>`;
 }
+const bunyoRim = (px,py,c,glow) => `<g transform="${bunyoTf(px,py+c*.01,c,.95,.95)}" fill="none" stroke-linejoin="round">`+
+  `<path d="${BUNYO_SHAPE}" stroke="#fff" stroke-width=".2" opacity="${(.12+.2*glow).toFixed(2)}"/>`+
+  `<path d="${BUNYO_SHAPE}" stroke="#fff" stroke-width=".085" opacity="${(.55+.45*glow).toFixed(2)}"/></g>`;
 function bunyoFace(px,py,c,sx,sy,k,white) {
   let s=`<g transform="${bunyoTf(px,py,c,sx,sy)}"><ellipse cx="-.13" cy="-.27" rx=".14" ry=".07" fill="#fff" opacity="${white?.4:.8}" transform="rotate(-20 -.13 -.27)"/><circle cx=".08" cy="-.33" r=".03" fill="#fff" opacity=".7"/>`;
   if (c < 14) { // 小さな盤は目を簡単に
@@ -213,6 +218,7 @@ function bunyoSvg(st,c,fid,W=6,H=12) {
     if (k!=='n') { const same=(xx,yy)=>at(xx,yy)===k&&popMode(xx,yy)!=='off'&&(popMode(xx,yy)==='white')===white;
       if (same(x+1,y)) items.push(`<rect x="${px}" y="${py-c*.26}" width="${c}" height="${c*.52}"/>`);
       if (same(x,y+1)) items.push(`<rect x="${px-c*.26}" y="${py}" width="${c*.52}" height="${c}"/>`); }
+    if (st.preview&&st.preview.has(i)&&!pm) faces+=bunyoRim(px,py,c,.5+.5*Math.sin(now/110));
     faces+=bunyoFace(px,py,c,sx,sy,k,white);
   }
   for (const f of st.fallers||[]) {
@@ -227,9 +233,7 @@ function bunyoSvg(st,c,fid,W=6,H=12) {
     for (const m of st.markers||[]) top+=`<circle cx="${(m.x+.5)*c}" cy="${(m.y+.72)*c}" r="${c*.13}" fill="${BUNYO_COLORS[m.k][0]}" stroke="#fff" stroke-width="${c*.04}" opacity="${(.65+.3*Math.sin(now/120)).toFixed(2)}"/>`;
     /* 軸の粒は、中の色はそのままで、ふちだけが白く光る(動画と同じ)。明るさがゆっくり波打つ */
     const glow=.5+.5*Math.sin(now/110), same=p.a===p.b, ka='PA', kb=same?ka:'PB';
-    const rim=`<g transform="${bunyoTf(ax,ay+c*.01,c,.95,.95)}" fill="none" stroke-linejoin="round">`+
-      `<path d="${BUNYO_SHAPE}" stroke="#fff" stroke-width=".2" opacity="${(.12+.2*glow).toFixed(2)}"/>`+
-      `<path d="${BUNYO_SHAPE}" stroke="#fff" stroke-width=".085" opacity="${(.55+.45*glow).toFixed(2)}"/></g>`;
+    const rim=bunyoRim(ax,ay,c,glow);
     L(ka,BUNYO_COLORS[p.a][0]).push(`<path d="${BUNYO_SHAPE}" transform="${bunyoTf(ax,ay,c)}"/>`);
     L(kb,BUNYO_COLORS[p.b][0]).push(`<path d="${BUNYO_SHAPE}" transform="${bunyoTf(sx2,sy2,c)}"/>`);
     if (same) L(ka).push(`<path d="M${ax} ${ay} L${sx2} ${sy2}" stroke="${BUNYO_COLORS[p.a][0]}" stroke-width="${c*.52}"/>`);

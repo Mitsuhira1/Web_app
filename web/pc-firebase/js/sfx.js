@@ -219,6 +219,9 @@ function moveSound(id, m) {
     case "quarto": case "geister": return ["WOOD"];
     case "rummikub": return [m === 0 ? "DEAL" : "TILE"];
     case "pegsolitaire": return ["PEG"];
+    // ソリティア: 山札をめくる(スパイダーは配る)・札を置く。やめる(1)は鳴らさない
+    case "solitaire": { const c = m % 1000000; return c === 1 ? null : c === 0 ? ["CARD_FLIP"] : ["CARD"]; }
+    case "spider": { const c = m % 1000000; return c === 1 ? null : c === 0 ? ["DEAL"] : ["CARD"]; }
     case "sevens": case "daifugo": return ["CARD"];
     default: return null;
   }

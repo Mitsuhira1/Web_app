@@ -88,8 +88,17 @@ const bunyoGame = (() => {
       const [[ax],[bx,by]]=this.places(p);
       if (ax===bx) { const y=landRow(this.cells,ax); const top=by<p.y; this.st.markers=[{x:ax,y:top?y:y-1,k:p.a},{x:ax,y:top?y-1:y,k:p.b}]; }
       else this.st.markers=[{x:ax,y:landRow(this.cells,ax),k:p.a},{x:bx,y:landRow(this.cells,bx),k:p.b}];
+      this.st.preview=this.popPreview();
     }
-    finish() { if (this.over) return; this.over=true; this.pair=null; this.st.pair=null; this.st.markers=[]; this.dirty(); this.hooks.over?.(this); }
+    /* 今の位置で落とした時に、最初に消える盤の粒(連鎖で消える粒は含めない)。2色消える時は両方 */
+    popPreview() {
+      const c=this.cells.map(r=>r.slice()), mine=new Set();
+      for (const m of this.st.markers) { if (m.y<0||m.y>=H) return null; c[m.y][m.x]=m.k; mine.add(m.y*W+m.x); }
+      const g=groupsOf(c); if (!g.length) return null;
+      const set=new Set(); for (const i of popSet(c,g)) if (!mine.has(i)) set.add(i);
+      return set.size?set:null;
+    }
+    finish() { if (this.over) return; this.over=true; this.pair=null; this.st.pair=null; this.st.markers=[]; this.st.preview=null; this.dirty(); this.hooks.over?.(this); }
     receive(n) { this.garbage+=n; this.hooks.notice?.(this); }
     progress() { return {score:this.score, over:this.over,
       board:this.cells.flat().map(v=>v==='n'?'8':v?String(C.indexOf(v)):'.').join(''),
@@ -99,7 +108,7 @@ const bunyoGame = (() => {
     async lock() {
       if (!this.canAct()) return;
       const gen=this.gen, p=this.pair, places=this.places(p);
-      this.pair=null; this.st.pair=null; this.st.markers=[];
+      this.pair=null; this.st.pair=null; this.st.markers=[]; this.st.preview=null;
       if (places.some(([,y])=>y<0)) { this.finish(); return; }
       this.busy=true; const now=performance.now();
       places.forEach(([x,y],k)=>{ this.cells[y][x]=k?p.b:p.a; this.st.land.set(y*W+x,now); });
