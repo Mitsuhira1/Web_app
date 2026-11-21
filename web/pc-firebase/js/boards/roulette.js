@@ -170,6 +170,8 @@ window.rouletteReady = Promise.all([
     if (!wheel) return;
     cancelAnimationFrame(wheel.frame);
     clearTimeout(wheel.timer);
+    clearTimeout(wheel.settleTimer);
+    wheel.settleUntil = 0;
     wheel.cancelSound?.();
     wheel.duration = 0;
   }
@@ -196,6 +198,13 @@ window.rouletteReady = Promise.all([
         current.timer = setTimeout(() => {
           if (wheel !== current || token !== match || S.screen !== 'play') return;
           current.duration = 0;
+          // スマホでは止まった後も少しだけ浮かせたまま出目を見せる(押すと閉じる)。
+          current.settleUntil = performance.now() + 1600;
+          current.settleTimer = setTimeout(() => {
+            if (wheel !== current || token !== match || S.screen !== 'play') return;
+            current.settleUntil = 0;
+            $('#boardwrap .rq-layout')?.classList.remove('is-settling');
+          }, 1600);
           A.redraw();
         }, duration);
       } else if (A.reduce) {
@@ -320,7 +329,8 @@ window.rouletteReady = Promise.all([
       controls(b, A, can, chipIndex, true);
       return;
     }
-    A.board(`<div class="rq-layout${spinning ? ' is-spinning' : ''}" data-ready="${ready}">
+    const settling = !spinning && wheel.settleUntil > performance.now();
+    A.board(`<div class="rq-layout${spinning ? ' is-spinning' : settling ? ' is-settling' : ''}" data-ready="${ready}">
       <section class="rq-wheel-panel" aria-label="${b.wheelType === 'amer' ? 'アメリカン' : 'ヨーロピアン'}ルーレット">
         ${wheelGraphic(b)}
       </section>
@@ -333,6 +343,12 @@ window.rouletteReady = Promise.all([
       event.preventDefault();
       const move = 1000 + Number(spot.dataset.rouletteSpot);
       if (can(move)) A.play(move);
+    };
+    const panel = root.querySelector('.rq-wheel-panel');
+    if (panel) panel.onclick = () => {
+      if (!root.querySelector('.rq-layout.is-settling')) return;
+      wheel.settleUntil = 0;
+      root.querySelector('.rq-layout').classList.remove('is-settling');
     };
     controls(b, A, can, chipIndex, spinning);
     wheel.scene = spinning ? root.firstElementChild : null;

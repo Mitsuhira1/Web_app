@@ -21,12 +21,13 @@ const BASE = process.env.BASE || 'http://localhost:8400/pc-firebase/';
   await p.goto(BASE + '?icons-build');
   await p.waitForFunction(() => typeof CAT !== 'undefined' && CAT.length > 0);
   await p.evaluate(() => document.fonts.ready);
+  await p.waitForTimeout(1500); // あとから一覧に足されるゲーム(胸毛絶体絶命など)を待つ
   // 画像にするアイコン(すでに画像のものは除く)。描くのは今の SVG(icon-images.js で置き換える前のもの)
   const keys = await p.evaluate(() => {
     const out = [];
     for (const g of CAT) {
       const key = (typeof ART_ID !== 'undefined' && ART_ID[g.id]) || g.id;
-      const svg = (window.__AR_SVG || AR)[key];
+      const svg = (window.__AR_SVG && window.__AR_SVG[key]) || AR[key];
       if (svg && !out.includes(key) && !/assets\/game-icons\//.test(svg)) out.push(key);
     }
     return out;
@@ -40,7 +41,7 @@ const BASE = process.env.BASE || 'http://localhost:8400/pc-firebase/';
         box.style.cssText = `position:fixed;left:0;top:0;width:${size}px;height:${size}px;z-index:99999;background:transparent`;
         document.body.append(box);
       }
-      box.innerHTML = (window.__AR_SVG || AR)[key];
+      box.innerHTML = (window.__AR_SVG && window.__AR_SVG[key]) || AR[key];
       const s = box.firstElementChild; s.setAttribute('width', size); s.setAttribute('height', size); s.style.display = 'block';
     }, {key, size: SIZE});
     await p.waitForTimeout(150);

@@ -1,8 +1,9 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261121-icon-images-16";
+const CACHE = "asobipcfb-20261121-icons-munage-17";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",
+"./css/munage.css",
 "./js/boards/twelve.js",
 "./js/boards/roulette.js",
 "./js/boards/roulette-motion.mjs",
@@ -70,6 +71,7 @@ const FILES = [
 "./assets/poets/sheet-4.webp",
 "./js/mine-versus.js",
 "./js/poet-cards.js",
+"./js/munage.js",
 "./js/poems.js",
 "./js/falling-fx.js",
 "./js/falling-match.js",
@@ -200,6 +202,7 @@ const FILES = [
 "./assets/game-icons/war.webp",
 "./assets/game-icons/yacht.webp",
 "./js/icon-images.js",
+"./assets/game-icons/munage.webp",
 "./manifest.webmanifest",
 "./pwa.js",
 "./worker.js"
