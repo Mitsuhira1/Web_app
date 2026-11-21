@@ -188,14 +188,14 @@ const poetCards = (() => {
       ${canDraw && n ? '' : 'disabled'} aria-label="山札${i+1} 残り${n}枚">
       ${stack(n)}<b>${n}枚</b></button>`).join('');
     return `<div class="poet-piles${state.version === 0 ? ' dealing' : ''}" style="--row-depth:${stackDepth(Math.max(...state.piles,state.discard))}px">
-      <div class="poet-bank" role="group" aria-label="山札"><span class="poet-caption" aria-hidden="true">山札</span>${piles}</div>
-      <div class="poet-pot"><span class="poet-caption">場札</span>${stack(state.discard)}<b>${state.discard}枚</b></div>${omen(state)}</div>`;
+      <div class="poet-bank" role="group" aria-label="山札"><span class="poet-caption" aria-hidden="true">山札</span>${omen(state)}${piles}</div>
+      <div class="poet-pot"><span class="poet-caption">場札</span>${stack(state.discard)}<b>${state.discard}枚</b></div></div>`;
   }
   function omen(state) {
     if (state.peek!=='on' || state.finish || !state.tops) return '';
     const {bozu,hime}=state.tops;
-    return `<div class="poet-omen${bozu?' danger':''}" aria-live="polite">めくれる札に
-      <span class="bozu">坊主 <b>${bozu}</b>枚</span><span class="hime">姫 <b>${hime}</b>枚</span></div>`;
+    return `<div class="poet-omen${bozu?' danger':''}" aria-live="polite" aria-label="めくれる札に 坊主${bozu}枚 姫${hime}枚">
+      <span class="bozu">坊主 <b>${bozu}</b>枚</span>・<span class="hime">姫 <b>${hime}</b>枚</span></div>`;
   }
   function fly(table, state, pile, drawer, own, under) {
     const origin = table.querySelector(`[data-extra-poet-pick="${pile}"] .poet-slot`);
@@ -219,20 +219,23 @@ const poetCards = (() => {
     const pose = (x,y,size,angle) => `perspective(900px) translate(${x}px,${y}px) scale(${size}) rotateY(${angle}deg)`;
     const lifted = own ? pose(dx*.55,dy*.62-12,(1+scale)/2,95) : pose(dx,dy-6,scale*1.12,180);
     const travel = own ? 750 : 1100;
-    // 坊主などで手元に札が残らない時は、着地した後に札を消す
-    const duration = keep ? travel : travel + 650;
-    const k = travel / duration;
+    // 回転させる箱(.poet-flight)には透明度を付けない。付けると立体が平らになり、裏面が出てしまう。
     const motion = flight.animate([
-      {transform:pose(dx,dy,scale,0),opacity:1,offset:0},
-      {transform:lifted,opacity:1,offset:(own ? .45 : .35)*k},
-      ...(!own ? [{transform:lifted,opacity:1,offset:.60*k}] : []),
-      {transform:pose(0,0,1,180),opacity:1,offset:k},
-      ...(!keep ? [{transform:pose(0,0,1,180),opacity:1,offset:k+(1-k)*.55},{transform:pose(0,-6,.96,180),opacity:0,offset:1}] : [])
-    ], {duration,easing:'ease-in-out',fill:'both'});
+      {transform:pose(dx,dy,scale,0),offset:0},
+      {transform:lifted,offset:own ? .45 : .35},
+      ...(!own ? [{transform:lifted,offset:.60}] : []),
+      {transform:pose(0,0,1,180),offset:1}
+    ], {duration:travel,easing:'ease-in-out',fill:'both'});
     const settle = () => { target.classList.remove('receiving'); flight.remove(); target.querySelector(':scope > .poet-under')?.remove(); };
-    motion.onfinish = settle;
+    // 坊主などで手元に札が残らない時は、着地した後に表の札だけを薄くして消す
+    motion.onfinish = () => {
+      if (keep) return settle();
+      const fade = flight.querySelector(':scope > .portrait')?.animate([{opacity:1},{opacity:1,offset:.45},{opacity:0}],{duration:650,fill:'both'});
+      if (!fade) return settle();
+      fade.onfinish = settle; fade.oncancel = settle;
+    };
     motion.oncancel = settle;
-    return duration;
+    return keep ? travel : travel + 650;
   }
   function draw(state) {
     const table=$('#poetTable');if(!table)return;

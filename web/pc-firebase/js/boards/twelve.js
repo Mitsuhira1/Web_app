@@ -185,91 +185,153 @@ boards.goita = (b,A) => {
 };
 const svg=(w,h,body)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${body}</svg>`;
 const qName=p=>[p&1?'濃色':'淡色',p&2?'高':'低',p&4?'四角':'丸',p&8?'穴あり':'穴なし'].join('・');
-// クアルト: 盤・穴・駒を同じ投影(45°回転し、縦を QK 倍に縮める)で描く。光は左上から。
-const QK=.56, QA=54, QCOS=Math.sqrt(1-QK*QK);
-const qStone=id=>{
-  const dark=id&1,tall=id&2,square=id&4,hole=id&8,H=tall?48:26;
-  const g=dark?'1':'0';
-  const [top,rim]=dark?['#9b6142','#6e4029']:['#f6d9a0','#d3a061'];
-  const [lit,deep]=dark?['#8a5638','#4a2b1d']:['#e8bb79','#a8723f'];
-  const shadow=`<ellipse cx="9" cy="3" rx="${square?27:24}" ry="${(square?27:24)*QK}" fill="#2c180f" opacity=".30"/>`;
-  let body;
-  if(square){
-    const W=25,h=W*QK;
-    const left=`<path d="M${-W} 0 0 ${h}V${h-H}L${-W} ${-H}Z" fill="${lit}"/>`;
-    const right=`<path d="M0 ${h} ${W} 0V${-H}L0 ${h-H}Z" fill="${deep}"/>`;
-    const grain=`<path d="M${-W} 0 0 ${h} ${W} 0V${-H}L0 ${h-H} ${-W} ${-H}Z" fill="url(#q-grain)" opacity=".35"/>`;
-    const cap=`<path d="M0 ${-h-H} ${W} ${-H} 0 ${h-H} ${-W} ${-H}Z" fill="${top}" stroke="${rim}" stroke-width=".8"/>`;
-    const edge=`<path d="M${-W} ${-H} 0 ${h-H} ${W} ${-H}" fill="none" stroke="#fff6dc" stroke-opacity="${dark?.25:.55}" stroke-width="1.2"/>`;
-    body=left+right+grain+cap+edge;
+// クアルト: 盤・穴・駒を 3 次元の座標で作り、遠近法で写して描く(奥から順に塗る)。
+// 座標: 盤の上面が y=0、x は右、z は手前。升は 1。光は左手前の上から。
+const Q3={yaw:24*Math.PI/180, pitch:47*Math.PI/180, dist:11, holeR:.37, holeD:.15, light:(()=>{const v=[-.55,1,.42],n=Math.hypot(...v);return v.map(x=>x/n);})()};
+const qRaw=(x,y,z)=>{
+  const c=Math.cos(Q3.yaw),s=Math.sin(Q3.yaw),xr=x*c-z*s,zr=x*s+z*c;
+  const cp=Math.cos(Q3.pitch),sp=Math.sin(Q3.pitch);
+  const up=y*cp-zr*sp, depth=Q3.dist-(y*sp+zr*cp);
+  return [xr/depth,-up/depth,depth];
+};
+// 範囲 pts(生の座標)を幅 w・高さ h に収める写し方
+const qFit=(pts,w,h,m)=>{
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(const [x,y,z] of pts){const r=qRaw(x,y,z);x0=Math.min(x0,r[0]);x1=Math.max(x1,r[0]);y0=Math.min(y0,r[1]);y1=Math.max(y1,r[1]);}
+  const k=Math.min((w-2*m)/(x1-x0),(h-2*m)/(y1-y0)),ox=w/2-k*(x0+x1)/2,oy=h/2-k*(y0+y1)/2;
+  return (x,y,z)=>{const r=qRaw(x,y,z);return [ox+k*r[0],oy+k*r[1],r[2]];};
+};
+const qPath=pts=>'M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join('L')+'Z';
+const qCircle=(P,cx,y,cz,r,n=40)=>Array.from({length:n},(_,i)=>{const a=i/n*2*Math.PI;return P(cx+r*Math.cos(a),y,cz+r*Math.sin(a));});
+const qHull=pts=>{
+  const a=pts.slice().sort((p,q)=>p[0]-q[0]||p[1]-q[1]),cr=(o,p,q)=>(p[0]-o[0])*(q[1]-o[1])-(p[1]-o[1])*(q[0]-o[0]);
+  const lo=[],hi=[];
+  for(const p of a){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}
+  for(const p of a.slice().reverse()){while(hi.length>1&&cr(hi[hi.length-2],hi[hi.length-1],p)<=0)hi.pop();hi.push(p);}
+  return lo.slice(0,-1).concat(hi.slice(0,-1));
+};
+const qShade=(hex,k)=>'#'+[1,3,5].map(i=>Math.max(0,Math.min(255,Math.round(parseInt(hex.slice(i,i+2),16)*k))).toString(16).padStart(2,'0')).join('');
+const qWood=id=>id&1?'#8a5434':'#ecc68e';
+const qDim=id=>({tall:!!(id&2),square:!!(id&4),hole:!!(id&8),h:(id&2?1.0:.52),r:.30,half:.235});
+// 駒 1 個。base は底の高さ(穴の底なら -holeD)。cut を渡すと、その高さより下は描かない。
+const qPiece=(id,P,cx,cz,base,uid,cut=null)=>{
+  const d=qDim(id),col=qWood(id),L=Q3.light,top=base+d.h+Q3.holeD,bot=cut==null?base:Math.max(base,cut);
+  let out='';
+  if(d.square){
+    const h=d.half,c=[[-h,-h],[h,-h],[h,h],[-h,h]].map(([x,z])=>[cx+x,cz+z]);
+    const normals=[[0,0,-1],[1,0,0],[0,0,1],[-1,0,0]];
+    for(let i=0;i<4;i++){
+      const [ax,az]=c[i],[bx,bz]=c[(i+1)%4];
+      const f=[P(ax,bot,az),P(bx,bot,bz),P(bx,top,bz),P(ax,top,az)];
+      const area=(f[1][0]-f[0][0])*(f[2][1]-f[0][1])-(f[1][1]-f[0][1])*(f[2][0]-f[0][0]);
+      if(area<=0) continue; // 裏を向いた面
+      const n=normals[i],lam=Math.max(0,n[0]*L[0]+n[2]*L[2]);
+      out+=`<path d="${qPath(f)}" fill="${qShade(col,.52+.62*lam)}"/><path d="${qPath(f)}" fill="url(#q3-grain)" opacity=".35"/>`;
+    }
+    const t=c.map(([x,z])=>P(x,top,z));
+    out+=`<path d="${qPath(t)}" fill="${qShade(col,.62+.5*L[1])}" stroke="${qShade(col,.55)}" stroke-width=".7"/>`;
   }else{
-    const R=22,r=R*QK;
-    body=`<path d="M${-R} 0A${R} ${r} 0 0 0 ${R} 0V${-H}H${-R}Z" fill="url(#q-${g})"/>`+
-      `<path d="M${-R} 0A${R} ${r} 0 0 0 ${R} 0V${-H}H${-R}Z" fill="url(#q-grain)" opacity=".25"/>`+
-      `<ellipse cy="${-H}" rx="${R}" ry="${r}" fill="${top}" stroke="${rim}" stroke-width=".8"/>`+
-      `<path d="M${-R+3} ${-H+2}A${R-3} ${r-2} 0 0 0 ${R-3} ${-H+2}" fill="none" stroke="#fff6dc" stroke-opacity="${dark?.2:.45}"/>`;
+    const B=qCircle(P,cx,bot,cz,d.r,36),T=qCircle(P,cx,top,cz,d.r,36);
+    const side=qHull(B.concat(T));
+    out+=`<path d="${qPath(side)}" fill="url(#q3-cyl${id&1})"/><path d="${qPath(side)}" fill="url(#q3-grain)" opacity=".3"/>`;
+    out+=`<path d="${qPath(T)}" fill="${qShade(col,.62+.5*L[1])}" stroke="${qShade(col,.55)}" stroke-width=".7"/>`;
   }
-  // 穴: 上面の中央を、内壁が見えるように掘る。
-  const hr=square?9.5:8.5;
-  const pit=hole?`<g transform="translate(0 ${-H})"><ellipse rx="${hr}" ry="${hr*QK}" fill="${dark?'#2a170e':'#6b4524'}"/><ellipse cy="${hr*QK*.55}" rx="${hr*.8}" ry="${hr*QK*.55}" fill="${dark?'#4b2c1c':'#9a6a3c'}"/></g>`:'';
-  return shadow+body+pit;
+  if(d.hole){
+    const rim=qCircle(P,cx,top,cz,.12,28),floor=qCircle(P,cx,top-.13,cz,.12,28),cid=`q3h-${uid}`;
+    out+=`<clipPath id="${cid}"><path d="${qPath(rim)}"/></clipPath><path d="${qPath(rim)}" fill="${qShade(col,.32)}"/>`+
+      `<path d="${qPath(floor)}" fill="${qShade(col,.5)}" clip-path="url(#${cid})"/>`;
+  }
+  return out;
+};
+// 駒の影(光と逆向きに盤の上へ落とす)
+const qShadow=(id,P,cx,cz)=>{
+  const d=qDim(id),L=Q3.light,H=d.h,pts=[];
+  const k=[-L[0]/L[1],-L[2]/L[1]];
+  const ring=d.square?[[-d.half,-d.half],[d.half,-d.half],[d.half,d.half],[-d.half,d.half]]:Array.from({length:24},(_,i)=>{const a=i/24*2*Math.PI;return [d.r*Math.cos(a),d.r*Math.sin(a)];});
+  for(const [x,z] of ring){pts.push(P(cx+x,0,cz+z));pts.push(P(cx+x+k[0]*H,0,cz+z+k[1]*H));}
+  return `<path d="${qPath(qHull(pts))}" fill="#2a170c" opacity=".30" filter="url(#q3-blur)"/>`;
 };
 const qDefs=`<defs>
-    <linearGradient id="q-0"><stop stop-color="#f3d398"/><stop offset=".32" stop-color="#fae4b4"/><stop offset=".7" stop-color="#d8a462"/><stop offset="1" stop-color="#a26c3a"/></linearGradient>
-    <linearGradient id="q-1"><stop stop-color="#8d5a3b"/><stop offset=".32" stop-color="#a7704c"/><stop offset=".7" stop-color="#6b3f28"/><stop offset="1" stop-color="#3e2418"/></linearGradient>
-    <linearGradient id="q-top" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f6dcab"/><stop offset=".55" stop-color="#e2b680"/><stop offset="1" stop-color="#c79058"/></linearGradient>
-    <linearGradient id="q-sideL" x2="0" y2="1"><stop stop-color="#a8764b"/><stop offset="1" stop-color="#83573a"/></linearGradient>
-    <linearGradient id="q-sideR" x2="0" y2="1"><stop stop-color="#7a4f33"/><stop offset="1" stop-color="#5a3a27"/></linearGradient>
-    <linearGradient id="q-hole" x2="0" y2="1"><stop stop-color="#5a3a24"/><stop offset=".55" stop-color="#8a6040"/><stop offset="1" stop-color="#b98a5d"/></linearGradient>
-    <radialGradient id="q-shadow"><stop stop-color="#2e1b14" stop-opacity=".42"/><stop offset="1" stop-color="#2e1b14" stop-opacity="0"/></radialGradient>
-    <pattern id="q-grain" width="136" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(29)">
-      <path d="M-2 7q35-4 69 0t70 0M-2 19q58-4 89 0t50 0" fill="none" stroke="#62412a" stroke-opacity=".2" stroke-width="1.3"/>
-      <path d="M-2 12q52-4 82 0t57 0" fill="none" stroke="#fff3d2" stroke-opacity=".3"/>
-    </pattern>
-  </defs>`;
-// 置く駒・残りの駒の欄は、どの駒でも同じ大きさの箱に収める。
-const qBox=(p,scale)=>svg(80,96,`<g transform="translate(37 78) scale(${scale})">${p>=0?qStone(p):''}</g>`);
+  <linearGradient id="q3-cyl0" x2="1"><stop stop-color="#d9ad70"/><stop offset=".22" stop-color="#fbe2b4"/><stop offset=".55" stop-color="#e2b273"/><stop offset="1" stop-color="#93622f"/></linearGradient>
+  <linearGradient id="q3-cyl1" x2="1"><stop stop-color="#7a4a2d"/><stop offset=".22" stop-color="#aa7149"/><stop offset=".55" stop-color="#7a472b"/><stop offset="1" stop-color="#3a2014"/></linearGradient>
+  <linearGradient id="q3-top" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f3d39f"/><stop offset=".6" stop-color="#ddb07a"/><stop offset="1" stop-color="#c8945c"/></linearGradient>
+  <linearGradient id="q3-side" x2="1"><stop stop-color="#a8754a"/><stop offset=".5" stop-color="#8a5b38"/><stop offset="1" stop-color="#5e3b25"/></linearGradient>
+  <linearGradient id="q3-wall" x2="0" y2="1"><stop stop-color="#4a2c18"/><stop offset=".5" stop-color="#7a5232"/><stop offset="1" stop-color="#a57a52"/></linearGradient>
+  <pattern id="q3-grain" width="80" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)">
+    <path d="M0 4q20-2 40 0t40 0M0 10q26-2 52 0t28 0" fill="none" stroke="#5a3a22" stroke-opacity=".22" stroke-width="1"/>
+  </pattern>
+  <filter id="q3-blur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2"/></filter>
+</defs>`;
+// 置く駒・残りの駒の欄: どの駒でも同じ枠(高い駒が収まる大きさ)に描く
+const qBoxP=(()=>{const pts=[];for(const [x,z] of [[-.32,-.32],[.32,-.32],[.32,.32],[-.32,.32]])for(const y of [0,1.0+Q3.holeD])pts.push([x,y,z]);return pts;})();
+const qBox=(p,w,h,uid)=>{
+  if(p<0) return svg(w,h,'');
+  const P=qFit(qBoxP,w,h,3);
+  const sh=qCircle(P,.06,0,-.04,.36,24);
+  return svg(w,h,`<path d="${qPath(sh)}" fill="#160c06" opacity=".35"/>`+qPiece(p,P,0,0,0,uid));
+};
 boards.quarto = (b,A) =>{
-  const CX=310, CY=226, L=2.42, T=26;
-  const pt=(u,v)=>[CX+(u-v)*QA, CY+(u+v)*QA*QK];
-  const pos=(r,c)=>pt(c-1.5,r-1.5);
-  const P=a=>a.map(n=>n.toFixed(1)).join(' ');
-  const N=pt(-L,-L),E=pt(L,-L),S=pt(L,L),W=pt(-L,L);
-  const N2=pt(-L+.16,-L+.16),E2=pt(L-.16,-L+.16),S2=pt(L-.16,L-.16),W2=pt(-L+.16,L-.16);
-  const down=([x,y])=>[x,y+T];
-  let art=qDefs+`
-  <ellipse cx="${CX+18}" cy="${CY+40}" rx="${(E[0]-W[0])/2+14}" ry="${(S[1]-N[1])/2+6}" fill="url(#q-shadow)"/>
-  <path d="M${P(W)} ${P(S)} ${P(down(S))} ${P(down(W))}Z" fill="url(#q-sideL)"/>
-  <path d="M${P(S)} ${P(E)} ${P(down(E))} ${P(down(S))}Z" fill="url(#q-sideR)"/>
-  <path d="M${P(W)} ${P(S)} ${P(down(S))} ${P(down(W))}Z M${P(S)} ${P(E)} ${P(down(E))} ${P(down(S))}Z" fill="url(#q-grain)" opacity=".5"/>
-  <path d="M${P(W)} ${P(S)} ${P(E)}" fill="none" stroke="#fbe2b8" stroke-opacity=".7" stroke-width="1.5"/>
-  <path d="M${P(N)} ${P(E)} ${P(S)} ${P(W)}Z" fill="url(#q-top)" stroke="#8a5a36" stroke-width="1.5"/>
-  <path d="M${P(N)} ${P(E)} ${P(S)} ${P(W)}Z" fill="url(#q-grain)"/>
-  <path d="M${P(N2)} ${P(E2)} ${P(S2)} ${P(W2)}Z" fill="none" stroke="#9a6a42" stroke-opacity=".55" stroke-width="1.2"/>
-  <path d="M${P(W2)} ${P(N2)} ${P(E2)}" fill="none" stroke="#fff0d0" stroke-opacity=".6" stroke-width="1"/>`;
-  // 穴(半径は盤の升の 0.36)。奥の内壁が暗く、底が少し見える。
-  const RX=QA*Math.SQRT2*.36, RY=RX*QK;
+  const W=620,H=470,E=2.3,T=.3,RC=.28;
+  // 盤の外形(角を丸めた正方形)
+  const outline=y=>{const pts=[];for(const [cx,cz,a0] of [[E-RC,E-RC,0],[-(E-RC),E-RC,90],[-(E-RC),-(E-RC),180],[E-RC,-(E-RC),270]])for(let i=0;i<=6;i++){const a=(a0+i*15)*Math.PI/180;pts.push([cx+RC*Math.cos(a),y,cz+RC*Math.sin(a)]);}return pts;};
+  const fitPts=outline(0).concat(outline(-T));
+  for(const x of [-1.5,1.5])for(const z of [-1.5,1.5])fitPts.push([x,1.0+Q3.holeD,z]);
+  const P=qFit(fitPts,W,H,16);
+  const proj=a=>a.map(([x,y,z])=>P(x,y,z));
+  const top=proj(outline(0)),body=qHull(top.concat(proj(outline(-T))));
+  const inner=proj(outline(0).map(([x,y,z])=>[x*.93,y,z*.93]));
+  let art=qDefs+`<path d="${qPath(qHull(proj(outline(-T-.05)).map(([x,y])=>[x+4,y+5])))}" fill="#2a170c" opacity=".28" filter="url(#q3-blur)"/>
+  <path d="${qPath(body)}" fill="url(#q3-side)" stroke="#4a2c1a" stroke-width="1.2"/>
+  <path d="${qPath(body)}" fill="url(#q3-grain)" opacity=".5"/>
+  <path d="${qPath(top)}" fill="url(#q3-top)" stroke="#6e4628" stroke-width="1.2"/>`;
+  // 木目(盤の上の線を遠近で写す)
+  for(let i=0;i<26;i++){
+    const z=-E+.1+i*(2*E-.2)/25,ph=i*1.7,pts=[];
+    for(let j=0;j<=24;j++){const x=-E+.08+j*(2*E-.16)/24;pts.push(P(x,0,z+.035*Math.sin(x*1.3+ph)+.02*Math.sin(x*3.1+ph*2)));}
+    art+=`<path d="M${pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join('L')}" fill="none" stroke="${i%3?'#7a4e2c':'#fff2d4'}" stroke-opacity="${i%3?.13:.22}" stroke-width="${i%4?.8:1.3}"/>`;
+  }
+  art+=`<path d="${qPath(inner)}" fill="none" stroke="#7a4f2e" stroke-opacity=".45" stroke-width="1.4"/>
+  <path d="${qPath(inner.map(([x,y])=>[x,y+1.2]))}" fill="none" stroke="#fff0cf" stroke-opacity=".4" stroke-width="1"/>`;
+  const cell=i=>[(i%4)-1.5,(i>>2)-1.5];
+  const R=Q3.holeR,D=Q3.holeD;
+  // 穴: 開口部(縁)の内側に、奥の壁と底が見える
+  const holes=[];
   b.board.forEach((_,i)=>{
-    const [x,y]=pos(i>>2,i%4);
-    art+=`<g data-quarto-cell="${i}"><ellipse cx="${x}" cy="${y}" rx="${RX+2}" ry="${RY+2}" fill="#f5d7a6" opacity=".7"/>
-    <ellipse cx="${x}" cy="${y}" rx="${RX}" ry="${RY}" fill="url(#q-hole)"/>
-    <ellipse cx="${x}" cy="${y+RY*.42}" rx="${RX*.8}" ry="${RY*.62}" fill="#a77a50" opacity=".55"/>
-    <path d="M${x-RX} ${y}A${RX} ${RY} 0 0 0 ${x+RX} ${y}" fill="none" stroke="#fde6bf" stroke-opacity=".75" stroke-width="1.4"/></g>`;
+    const [x,z]=cell(i),rim=qCircle(P,x,0,z,R),floor=qCircle(P,x,-D,z,R);
+    holes[i]=rim;
+    art+=`<g data-quarto-cell="${i}"><clipPath id="q3c-${i}"><path d="${qPath(rim)}"/></clipPath>
+      <path d="${qPath(qCircle(P,x,0,z,R+.035))}" fill="#c39060" opacity=".55"/>
+      <path d="${qPath(rim)}" fill="url(#q3-wall)"/>
+      <path d="${qPath(floor)}" fill="#946640" clip-path="url(#q3c-${i})"/>
+      <path d="${qPath(rim)}" fill="none" stroke="#3e2414" stroke-opacity=".55" stroke-width="1"/></g>`;
   });
-  // 駒は奥から手前の順に重ねる。穴に少し沈めて置く。
-  b.board.map((p,i)=>({p,i})).sort((a,z)=>(a.i>>2)+a.i%4-(z.i>>2)-z.i%4).forEach(({p,i})=>{if(p<0)return;const [x,y]=pos(i>>2,i%4);art+=`<g transform="translate(${x.toFixed(1)},${(y+3).toFixed(1)})"><g data-piece="quarto-${p}">${qStone(p)}</g></g>`;});
-  const OX=330-310, OY=290-230; // svg(620,460) を (330,290) に置いた時の左上
-  const preview=b.chosenPiece>=0?svg(80,96,`<g transform="translate(40 81)">${qStone(b.chosenPiece)}</g>`):'';
+  const items=[];
+  b.board.forEach((p,i)=>{if(p>=0)items.push({p,i});});
+  const ghosts=b.phase==='place'&&b.chosenPiece>=0?b.board.map((p,i)=>p<0&&A.legal.has(i)?i:-1).filter(i=>i>=0):[];
+  for(const i of ghosts) items.push({p:b.chosenPiece,i,ghost:true});
+  for(const it of items){const [x,z]=cell(it.i);it.depth=P(x,.5,z)[2];}
+  items.sort((a,z)=>z.depth-a.depth);
+  for(const it of items) if(!it.ghost){const [x,z]=cell(it.i);art+=qShadow(it.p,P,x,z);}
+  for(const it of items){
+    const [x,z]=cell(it.i),uid=(it.ghost?'g':'b')+it.i;
+    // 穴の中に沈んだ部分は開口部の中だけに見え、盤より上はそのまま見える
+    const body=`<g clip-path="url(#q3c-${it.i})">${qPiece(it.p,P,x,z,-D,uid+'a')}</g>${qPiece(it.p,P,x,z,-D,uid,0)}`;
+    art+=it.ghost?`<g class="q-ghost" data-ghost="${it.i}">${body}</g>`:`<g data-piece="quarto-${it.p}">${body}</g>`;
+  }
+  const OX=330-W/2,OY=290-H/2;
   const targets=b.board.map((p,i)=>{
-    const [x,y]=pos(i>>2,i%4);
-    return p<0&&b.phase==='place'&&A.legal.has(i) ? at(OX+x,OY+y,move(A,i,`<i class="q-target" style="width:${2*RX+4}px;height:${2*RY+4}px"></i><span class="q-ghost">${preview}</span>`,'マス '+(i+1))) : '';
+    if(!(p<0&&b.phase==='place'&&A.legal.has(i))) return '';
+    const rim=holes[i],xs=rim.map(q=>q[0]),ys=rim.map(q=>q[1]);
+    const cx=(Math.min(...xs)+Math.max(...xs))/2,cy=(Math.min(...ys)+Math.max(...ys))/2;
+    return at(OX+cx,OY+cy,move(A,i,`<i class="q-target" style="width:${(Math.max(...xs)-Math.min(...xs)+6).toFixed(0)}px;height:${(Math.max(...ys)-Math.min(...ys)+6).toFixed(0)}px"></i>`,'マス '+(i+1)));
   }).join('');
+  const ghostCss=ghosts.length?`<style>${ghosts.map(i=>`.twelve-scene:has(.twelve-control[data-m="${i}"]:is(:hover,:focus-visible)) .q-ghost[data-ghost="${i}"]`).join(',')}{opacity:.5}</style>`:'';
   const pool=Array.from({length:16},(_,p)=>{
     if(b.usedMask&(1<<p)) return '<span class="q-empty"></span>';
-    return b.phase==='pick'?move(A,p,qBox(p,.74),qName(p)+'を渡す','q-cell'):`<span class="q-cell">${qBox(p,.74)}</span>`;
+    return b.phase==='pick'?move(A,p,qBox(p,50,62,'p'+p),qName(p)+'を渡す','q-cell'):`<span class="q-cell">${qBox(p,50,62,'p'+p)}</span>`;
   }).join('');
-  const chosen=`<div class="chosen" ${b.chosenPiece>=0?`data-piece="quarto-${b.chosenPiece}"`:''}>${qBox(b.chosenPiece,1.12)}</div>`;
-  return at(330,290,svg(620,460,art))+targets+at(752,272,`<div class="qtray"><div class="tray-title">置く駒</div>${chosen}<div class="tray-title">残りの駒</div><div class="qpool">${pool}</div></div>`);
+  const chosen=`<div class="chosen" ${b.chosenPiece>=0?`data-piece="quarto-${b.chosenPiece}"`:''}>${qBox(b.chosenPiece,84,100,'c')}</div>`;
+  return ghostCss+at(330,290,svg(W,H,art))+targets+at(752,272,`<div class="qtray"><div class="tray-title">置く駒</div>${chosen}<div class="tray-title">残りの駒</div><div class="qpool">${pool}</div></div>`);
 };
 const ghost=(value)=>{
  const color=['','#368ab6','#c55c48','#cec2a5'][value],edge=['','#1e4962','#6c352c','#7e735f'][value];
