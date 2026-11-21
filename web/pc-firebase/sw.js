@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261121-resume-roulette-2";
+const CACHE = "asobipcfb-20261121-tex-images-1";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",
@@ -203,6 +203,11 @@ const FILES = [
 "./assets/game-icons/yacht.webp",
 "./js/icon-images.js",
 "./assets/game-icons/munage.webp",
+"./assets/tex/noise.webp",
+"./assets/tex/noise@2x.webp",
+"./assets/tex/noise@3x.webp",
+"./assets/tex/mancala-shadow.webp",
+"./assets/tex/mancala-grain.webp",
 "./manifest.webmanifest",
 "./pwa.js",
 "./worker.js"

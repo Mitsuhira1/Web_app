@@ -47,7 +47,7 @@
 | 見た目 | `css/app.css`(3000 行。後ろほど新しい)・追加ゲームは `css/twelve.css` |
 | みんなで遊ぶ(部屋・同期・チャット・スタンプ・カーソル) | `js/online.js`(2240 行)・`js/net.js`(Firebase) |
 | ルール説明 | `js/rules.js`(動画は `assets/rules/<id>.mp4`) |
-| 絵(アイコン・スタンプ・駒・札) | `js/art.js`(メニューのアイコンは画像 `assets/game-icons/`。絵を変えたら `node tools/build_game_icons.cjs`) |
+| 絵(アイコン・スタンプ・駒・札) | `js/art.js`(メニューのアイコンは画像 `assets/game-icons/`。絵を変えたら `node tools/build_game_icons.cjs`)。フェルトの地模様・マンカラの木枠は画像 `assets/tex/`(`node tools/build_textures.cjs`) |
 | 効果音 / BGM / ゲームパッド | `js/sfx.js` / `js/bgm.js` / `js/gamepad.js` |
 | オフラインの保存(ファイルを足した時) | `sw.js` の `FILES` とキャッシュ名 |
 
