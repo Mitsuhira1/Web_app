@@ -150,6 +150,10 @@
   }
 
   let solPrevWasteN = 0;
+  // 札を選ぶと少し持ち上がるので、ダブルタップの2回目は1枚上の札(同じ列)に当たることがある。
+  // 選んでから 0.45 秒以内に同じ列を押したら、別の札を選び直さず、選んだ札のダブルタップとして扱う
+  let solSelAt = 0;
+  const solQuickAgain = () => performance.now() - solSelAt < 450;
   function solitaire(b, A) {
     if (b.variant === 'spider') return spider(b, A);
     const SEAT = 1000000, seat = b.me;
@@ -178,13 +182,13 @@
       if (d.draw != null) { if (legal.has(seat * SEAT)) { A.sel = null; A.play(seat * SEAT); } return; }
       if (d.src != null) {
         const src = +d.src, n = +d.n;
-        if (sel && sel.src === src && sel.n === n) {
-          // もう一度: 組札へ。置けなければ置ける列へ
-          if (autoMove(src, n)) return;
+        // もう一度(同じ札、またはダブルタップで同じ列の別の札に当たった時): 組札へ。置けなければ置ける列へ
+        if (sel && sel.src === src && (sel.n === n || solQuickAgain())) {
+          if (autoMove(sel.src, sel.n)) return;
           A.sel = null; return A.redraw();
         }
         if (sel) { const dest = +(el.closest('[data-dest]') || {}).dataset?.dest; if (dest && legal.has(enc(sel.src, sel.n, dest))) { A.sel = null; return A.play(enc(sel.src, sel.n, dest)); } }
-        if (destsFor(src, n).length) { A.sel = { sol: 1, src, n }; return A.redraw(); }
+        if (destsFor(src, n).length) { A.sel = { sol: 1, src, n }; solSelAt = performance.now(); return A.redraw(); }
         A.sel = null; return A.redraw();
       }
       // 選んだ札は少し持ち上がるので、2回目のクリックが同じ列の地に当たった時も「もう一度押した」とみなす
@@ -274,9 +278,9 @@
       if (d.draw != null) { if (canDeal) { A.sel = null; A.play(seat * SEAT); } return; }
       if (d.src != null) {
         const src = +d.src, n = +d.n;
-        if (sel && sel.src === src && sel.n === n) { if (autoMove(src, n)) return; A.sel = null; return A.redraw(); }
+        if (sel && sel.src === src && (sel.n === n || solQuickAgain())) { if (autoMove(sel.src, sel.n)) return; A.sel = null; return A.redraw(); }
         if (sel) { const dest = +(el.closest('[data-dest]') || {}).dataset?.dest; if (dest && legal.has(enc(sel.src, sel.n, dest))) { A.sel = null; return A.play(enc(sel.src, sel.n, dest)); } }
-        if (destsFor(src, n).length) { A.sel = { spi: 1, src, n }; return A.redraw(); }
+        if (destsFor(src, n).length) { A.sel = { spi: 1, src, n }; solSelAt = performance.now(); return A.redraw(); }
         A.sel = null; return A.redraw();
       }
       // 選んだ札は少し持ち上がるので、2回目のクリックが同じ列の地に当たった時も「もう一度押した」とみなす
