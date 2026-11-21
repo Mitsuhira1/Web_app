@@ -29,14 +29,16 @@
     A.acts([{ label: '台札を替える', move: reset ?? -1, enabled: reset != null }]);
   }
 
-  // ---------------------------------------------------------------- ソリティア(クロンダイク)
+  // ---------------------------------------------------------------- ソリティア(クロンダイク・スパイダー)
   let solRO = null;
   function fitSolitaire() {
     const sol = document.querySelector('#boardwrap .felt-table.sol');
     if (!sol) return;
     const topEl = sol.querySelector('.soltop'), tabEl = sol.querySelector('.soltab');
-    const solW = sol.clientWidth || 640, solH = sol.clientHeight || 420;
-    const cardW = Math.floor(Math.max(36, Math.min(72, (solW - 60) / 7.5, solH * 0.165)));
+    const cols = sol.classList.contains('spider') ? 10 : 7;
+    // 札が大きすぎると盤が外枠より広がるので、外枠の幅も上限にする
+    const solW = Math.min(sol.clientWidth || 640, (sol.parentElement && sol.parentElement.clientWidth) || 9999), solH = sol.clientHeight || 420;
+    const cardW = Math.floor(Math.max(cols > 7 ? 24 : 36, Math.min(72, (solW - 60) / (cols + 0.5), solH * 0.165)));
     sol.style.setProperty('--sol-w', cardW + 'px');
     const cardH = cardW * 1.4;
     const topH = topEl ? topEl.offsetHeight : cardH + 6;
@@ -67,8 +69,83 @@
       }
     });
   }
+  function watchSolitaire() {
+    fitSolitaire();
+    const solEl = document.querySelector('#boardwrap .felt-table.sol');
+    if (solEl && typeof ResizeObserver !== 'undefined') {
+      if (solRO) solRO.disconnect();
+      solRO = new ResizeObserver(() => fitSolitaire());
+      solRO.observe(solEl);
+    }
+  }
+  // 描き直す前の札の位置(と見た目)を覚えておく
+  function solSnap() {
+    solLand();
+    const all = [...document.querySelectorAll('#boardwrap [data-cid]')];
+    const stock = document.querySelector('#boardwrap .slot[data-draw]');
+    return {
+      cid: new Map(all.filter((e) => !e.hasAttribute('data-wid')).map((e) => [+e.dataset.cid, { r: e.getBoundingClientRect(), html: e.outerHTML }])),
+      wid: new Map([...document.querySelectorAll('#boardwrap .waste [data-wid]')].map((e) => [+e.dataset.wid, { r: e.getBoundingClientRect(), html: e.outerHTML }])),
+      stock: stock ? stock.getBoundingClientRect() : null,
+    };
+  }
+  // 盤の外に浮かせた札(消える札・組札へ飛ぶ札)
+  function solFloat(html, r) {
+    const g = document.createElement('div'); g.innerHTML = html;
+    const el = g.firstElementChild;
+    el.removeAttribute('data-cid'); el.removeAttribute('data-src'); el.removeAttribute('data-wid'); el.classList.remove('tap', 'on', 'dragsrc');
+    Object.assign(el.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', margin: 0, zIndex: 30, pointerEvents: 'none', '--w': r.width + 'px' });
+    document.body.appendChild(el);
+    return el;
+  }
+  // 動いた札をすべらせる。ドラッグで置いた札は、指を離した所から行き先へ。
+  // 列の欄は札がはみ出さないよう切り取っているので、動く間は盤の外に浮かせた複製を飛ばし、本物は着くまで隠す。
+  // o.deal: 山札から配った札(スパイダー)、o.reveal: 新しく表になった列の札をめくる
+  let solFlying = [];
+  function solLand() { const f = solFlying; solFlying = []; f.forEach((x) => x()); }
+  function solFly(A, e, from, ms, delay, rot, flip) {
+    const r = e.getBoundingClientRect();
+    const el = solFloat(e.outerHTML, r);
+    el.style.zIndex = 40 + solFlying.length;
+    e.style.visibility = 'hidden';
+    let done = false;
+    const land = () => { if (done) return; done = true; e.style.visibility = ''; el.remove(); };
+    solFlying.push(land);
+    el.animate([{ transform: `translate(${from.left - r.left}px,${from.top - r.top}px)${rot ? ` rotate(${rot}deg)` : ''}` }, { transform: 'none' }], { duration: ms, delay, easing: 'cubic-bezier(.22,.9,.3,1)', fill: 'backwards' }).onfinish = land;
+    // 配る札は、山札を離れる時に表へ返す(それまでは山札の裏に隠れている)
+    if (flip) { if (delay) { el.style.visibility = 'hidden'; setTimeout(() => { if (!done) { el.style.visibility = ''; A.flipCard(el, 260, 'pcard'); } }, delay); } else A.flipCard(el, 260, 'pcard'); }
+  }
+  function solSlide(A, snap, o = {}) {
+    const drop = A.takeDrop ? A.takeDrop() : null;
+    if (A.reduce) return;
+    const dropMap = new Map(((drop && drop.items) || []).filter((i) => i.cid != null).map((i) => [+i.cid, i.rect]));
+    let longest = 0, k = 0;
+    document.querySelectorAll('#boardwrap [data-cid]').forEach((e) => {
+      if (e.hasAttribute('data-wid')) return;
+      const id = +e.dataset.cid, d = dropMap.get(id), old = snap.cid.get(id), from = d || (old && old.r);
+      if (!from) {
+        if (o.deal && snap.stock && e.closest('.spile')) {
+          const delay = (k++) * 45 * A.speed, ms = 280 * A.speed;
+          solFly(A, e, snap.stock, ms, delay, 0, true);
+          longest = Math.max(longest, delay + ms);
+        } else if (o.reveal && snap.cid.size && e.closest('.spile')) {
+          A.flipCard(e, 240, 'pcard');
+          longest = Math.max(longest, 240 * A.speed);
+        }
+        return;
+      }
+      const r = e.getBoundingClientRect();
+      if (!d && Math.hypot(from.left - r.left, from.top - r.top) <= 4) return;
+      const ms = (d ? 170 : 250) * A.speed;
+      solFly(A, e, from, ms, 0, d ? drop.rot || 0 : 0, false);
+      longest = Math.max(longest, ms);
+    });
+    if (longest) A.anim(longest / A.speed + 20);
+    return drop;
+  }
 
   function solitaire(b, A) {
+    if (b.variant === 'spider') return spider(b, A);
     const SEAT = 1000000, seat = b.me;
     const legal = new Set(A.view.legal);
     const enc = (src, n, dest) => seat * SEAT + src * 10000 + n * 100 + dest;
@@ -79,9 +156,7 @@
     const found = b.found.map((f, i) => `<div class="slot ${hl.has(2 + i) ? 'can' : ''}" data-dest="${2 + i}">${f.length ? cardHtml(f[0], `data-cid="${f[0].c}" data-src="${2 + i}" data-n="1"`) : `<span class="pcard empty"><b>${SU[i]}</b></span>`}</div>`).join('');
     const stock = `<div class="slot" data-draw="1">${b.stock ? backHtml('data-draw="1"', 'tap') : `<span class="pcard empty redo" data-draw="1">${legal.has(seat * SEAT) ? '↻' : ''}</span>`}</div>`;
     // 捨て札は上の 3 枚を左から右へ少しずつずらして重ね、下の 2 枚の数字・マークも見えるようにする
-    const oldRects = new Map([...document.querySelectorAll('#boardwrap .waste [data-wid]')].map((e) => [+e.dataset.wid, e.getBoundingClientRect()]));
-    const oldCidRects = new Map([...document.querySelectorAll('#boardwrap [data-cid]')].map((e) => [+e.dataset.cid, e.getBoundingClientRect()]));
-    const stockR = (document.querySelector('#boardwrap .slot[data-draw]') || { getBoundingClientRect: () => null }).getBoundingClientRect();
+    const snap = solSnap();
     const vis = b.waste.slice(-3), topI = vis.length - 1;
     const waste = `<div class="slot waste">${vis.map((c, i) => cardHtml(c, `data-cid="${c.c}" data-wid="${c.c}" ${i === topI ? 'data-src="1" data-n="1"' : ''}`, `${i === topI ? 'tap' : ''} ${sel && sel.src === 1 && i === topI ? 'on' : ''}`)).join('') || '<span class="pcard empty"></span>'}</div>`;
     const piles = b.piles.map((p, k) => {
@@ -117,49 +192,34 @@
         autoMove(+el.dataset.src, +el.dataset.n);
       };
     }
-    fitSolitaire();
-    const solEl = document.querySelector('#boardwrap .felt-table.sol');
-    if (solEl && typeof ResizeObserver !== 'undefined') {
-      if (solRO) solRO.disconnect();
-      solRO = new ResizeObserver(() => fitSolitaire());
-      solRO.observe(solEl);
-    }
+    watchSolitaire();
     // 捨て札が流れ、山札から引いた札は表を返しながら手前に重なる。
-    if (!A.reduce && (oldRects.size || vis.length)) {
+    if (!A.reduce && (snap.wid.size || vis.length)) {
       const now = new Set(vis.map((c) => c.c));
-      document.querySelectorAll('#boardwrap .waste [data-wid]').forEach((e) => { const id = +e.dataset.wid, r = e.getBoundingClientRect(), o = oldRects.get(id);
-        if (o && (o.left !== r.left)) e.animate([{ transform: `translate(${o.left - r.left}px,${o.top - r.top}px)` }, { transform: 'none' }], { duration: 220 * A.speed, easing: 'ease-out' });
-        else if (!o && stockR) {
+      document.querySelectorAll('#boardwrap .waste [data-wid]').forEach((e) => { const id = +e.dataset.wid, r = e.getBoundingClientRect(), o = snap.wid.get(id);
+        if (o && (o.r.left !== r.left)) e.animate([{ transform: `translate(${o.r.left - r.left}px,${o.r.top - r.top}px)` }, { transform: 'none' }], { duration: 220 * A.speed, easing: 'ease-out' });
+        else if (!o && snap.stock && !snap.cid.has(id)) {
           A.flipCard(e,260,'pcard');
-          e.animate([{transform:`translate(${stockR.left-r.left}px,${stockR.top-r.top}px)`}, {transform:'none'}],
+          e.animate([{transform:`translate(${snap.stock.left-r.left}px,${snap.stock.top-r.top}px)`}, {transform:'none'}],
             {duration:260*A.speed,easing:'cubic-bezier(.3,.8,.4,1)'});
         }
       });
-      for (const [id, o] of oldRects) if (!now.has(id) && stockR) {
-        const g = document.createElement('div'); g.className = 'wghost'; g.innerHTML = cardHtml(b.waste.find((c) => c.c === id) || { c: id, r: id % 13 + 1, s: Math.floor(id / 13) }); const el = g.firstChild; Object.assign(el.style, { position: 'fixed', left: o.left + 'px', top: o.top + 'px', width: o.width + 'px', height: o.height + 'px', margin: 0, zIndex: 30, pointerEvents: 'none', '--w': o.width + 'px' }); document.body.appendChild(el);
-        el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${-o.width * .4}px)` }], { duration: 280 * A.speed, easing: 'ease-out', fill: 'forwards' }).onfinish = () => el.remove();
+      // 見えている 3 枚から押し出された札だけを薄く消す(出した札は行き先へすべるので消さない)
+      for (const [id, o] of snap.wid) if (!now.has(id) && !document.querySelector(`#boardwrap [data-cid="${id}"]`)) {
+        const el = solFloat(o.html, o.r);
+        el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${-o.r.width * .4}px)` }], { duration: 280 * A.speed, easing: 'ease-out', fill: 'forwards' }).onfinish = () => el.remove();
       }
-      if (vis.length && [...oldRects.keys()].join() !== vis.map((c) => c.c).join()) A.anim(300);
+      if (vis.length && [...snap.wid.keys()].join() !== vis.map((c) => c.c).join()) A.anim(300);
     }
-    // 列・組札へ移動したカードのスライドアニメーション(ダブルクリック・タップ・ドラッグ共通)
-    if (oldCidRects.size) {
-      let moved = false;
-      document.querySelectorAll('#boardwrap [data-cid]').forEach((e) => {
-        if (e.hasAttribute('data-wid')) return;
-        const id = +e.dataset.cid, o = oldCidRects.get(id);
-        if (!o) return;
-        const r = e.getBoundingClientRect();
-        const dx = o.left - r.left, dy = o.top - r.top;
-        if (Math.hypot(dx, dy) > 4) {
-          moved = true;
-          e.animate(
-            [{ transform: `translate(${dx}px,${dy}px)`, zIndex: 25 }, { transform: 'none', zIndex: 25 }],
-            { duration: 250 * A.speed, easing: 'cubic-bezier(.22,.9,.3,1)' }
-          );
-        }
-      });
-      if (moved) A.anim(270);
-    }
+    // 捨て札から出した札も、列・組札へすべらせる
+    for (const [id, o] of snap.wid) if (!snap.cid.has(id)) snap.cid.set(id, o);
+    // 列・組札へ移動したカードのスライドアニメーション(ダブルクリック・タップ・ドラッグ共通)。開いた札はめくる
+    solSlide(A, snap, { reveal: true });
+    solDrag(A, legal, enc);
+    const auto = [...legal].find((m) => { const c = m % SEAT; const dest = c % 100; return c > 1 && dest >= 2 && dest <= 5; });
+    A.acts([{ label: 'やめる', move: seat * SEAT + 1, enabled: legal.has(seat * SEAT + 1) }, { label: '組札へ', move: auto ?? -1, enabled: auto != null }]);
+  }
+  function solDrag(A, legal, enc) {
     A.drag({
       src: '[data-src]',
       dst: '[data-dest]',
@@ -176,8 +236,69 @@
         if (legal.has(m)) { A.sel = null; A.play(m); }
       },
     });
-    const auto = [...legal].find((m) => { const c = m % SEAT; const dest = c % 100; return c > 1 && dest >= 2 && dest <= 5; });
-    A.acts([{ label: 'やめる', move: seat * SEAT + 1, enabled: legal.has(seat * SEAT + 1) }, { label: '組札へ', move: auto ?? -1, enabled: auto != null }]);
+  }
+
+  // スパイダー: 10 列。同じマークで K〜A がそろうと自動で組札(左上の 8 か所)へ。山札は全部の列に 1 枚ずつ配る。
+  function spider(b, A) {
+    const SEAT = 1000000, seat = b.me;
+    const legal = new Set(A.view.legal);
+    const enc = (src, n, dest) => seat * SEAT + src * 10000 + n * 100 + dest;
+    const rk = (c) => (c.r === 14 ? 1 : c.r);
+    const sel = A.sel && A.sel.spi;
+    A.strip(b.others.map(([i, f, g]) => `<div class="pl ${i === seat ? 'turn' : ''}"><span class="dot" style="background:${['#C8463C', '#3F78C4', '#3E9B63', '#E0AE36', '#7A5AC0', '#5A3A22'][i]}"></span><span class="who"><span class="nm">${E(A.name(i))}</span><span class="nt">${g ? 'やめた' : `組 ${f}/8`}</span></span></div>`).join(''));
+    const destsFor = (src, n) => { const out = []; for (let d = 6; d <= 15; d++) if (legal.has(enc(src, n, d))) out.push(d); return out; };
+    const hl = new Set(sel ? destsFor(sel.src, sel.n) : []);
+    const snap = solSnap();
+    const canDeal = legal.has(seat * SEAT);
+    const stock = `<div class="slot" data-draw="1">${b.stock ? `<span class="pcard back tap ${canDeal ? '' : 'dim'}" data-draw="1"><em class="deals">${b.deals}</em></span>` : '<span class="pcard empty" data-draw="1"></span>'}</div>`;
+    const done = Array.from({ length: 8 }, (_, i) => `<div class="slot" data-done="${i}">${b.done[i] != null ? cardHtml({ r: 13, s: b.done[i] }) : '<span class="pcard empty"></span>'}</div>`).join('');
+    const runOf = (p, open) => { let n = p.length ? 1 : 0; for (let i = p.length - 1; i > p.length - open; i--) { const a = p[i - 1], c = p[i]; if (a.s === c.s && rk(a) === rk(c) + 1) n++; else break; } return n; };
+    const piles = b.piles.map((p, k) => {
+      const closed = p.length - b.open[k], run = runOf(p, b.open[k]);
+      return `<div class="spile ${hl.has(6 + k) ? 'can' : ''}" data-dest="${6 + k}">${p.length ? p.map((c, i) => i < closed ? backHtml('', 'pil')
+        : p.length - i <= run ? cardHtml(c, `data-cid="${c.c}" data-src="${6 + k}" data-n="${p.length - i}"`, `pil open tap ${sel && sel.src === 6 + k && p.length - i <= sel.n ? 'on' : ''}`)
+        : cardHtml(c, `data-cid="${c.c}"`, 'pil open')).join('') : '<span class="pcard empty"></span>'}</div>`;
+    }).join('');
+    // 置き先の候補: 同じマークの上 > ほかの札の上 > 空いた列
+    const bestDest = (src, n) => {
+      const ds = destsFor(src, n); if (!ds.length) return null;
+      const p = b.piles[src - 6], first = p[p.length - n];
+      const score = (d) => { const q = b.piles[d - 6]; if (!q.length) return 0; return q[q.length - 1].s === first.s ? 2 : 1; };
+      return ds.slice().sort((x, y) => score(y) - score(x))[0];
+    };
+    const autoMove = (src, n) => { const d = bestDest(src, n); if (d != null) { A.sel = null; A.play(enc(src, n, d)); return true; } return false; };
+    A.board(`<div class="felt-table sol spider"><div class="soltop">${stock}<span class="grow"></span>${done}</div><div class="soltab">${piles}</div></div>`, (d, el) => {
+      if (d.draw != null) { if (canDeal) { A.sel = null; A.play(seat * SEAT); } return; }
+      if (d.src != null) {
+        const src = +d.src, n = +d.n;
+        if (sel && sel.src === src && sel.n === n) { if (autoMove(src, n)) return; A.sel = null; return A.redraw(); }
+        if (sel) { const dest = +(el.closest('[data-dest]') || {}).dataset?.dest; if (dest && legal.has(enc(sel.src, sel.n, dest))) { A.sel = null; return A.play(enc(sel.src, sel.n, dest)); } }
+        if (destsFor(src, n).length) { A.sel = { spi: 1, src, n }; return A.redraw(); }
+        A.sel = null; return A.redraw();
+      }
+      if (d.dest != null && sel) { const m = enc(sel.src, sel.n, +d.dest); A.sel = null; if (legal.has(m)) return A.play(m); return A.redraw(); }
+    });
+    const wrapEl = document.getElementById('boardwrap');
+    if (wrapEl) wrapEl.ondblclick = (e) => { const el = e.target.closest('#boardwrap [data-src]'); if (!el) return; e.preventDefault(); autoMove(+el.dataset.src, +el.dataset.n); };
+    watchSolitaire();
+    solSlide(A, snap, { deal: b.last === 0, reveal: b.last !== 0 });
+    // そろった 13 枚は、列から組札の置き場へ飛ばす
+    if (!A.reduce && snap.cid.size) {
+      const gone = [...snap.cid].filter(([id]) => !document.querySelector(`#boardwrap [data-cid="${id}"]`));
+      const slot = document.querySelector(`#boardwrap [data-done="${b.done.length - 1}"]`);
+      if (gone.length >= 13 && slot) {
+        const to = slot.getBoundingClientRect();
+        gone.sort((x, y) => y[1].r.top - x[1].r.top).forEach(([, o], i) => {
+          const el = solFloat(o.html, o.r), delay = i * 30 * A.speed, ms = 320 * A.speed;
+          el.animate([{ transform: 'none' }, { transform: `translate(${to.left - o.r.left}px,${to.top - o.r.top}px)` }], { duration: ms, delay, easing: 'cubic-bezier(.4,.1,.3,1)', fill: 'both' }).onfinish = () => el.remove();
+        });
+        const last = slot.firstElementChild;
+        if (last) last.animate([{ opacity: 0 }, { opacity: 0, offset: .99 }, { opacity: 1 }], { duration: (gone.length * 30 + 320) * A.speed });
+        A.anim(gone.length * 30 + 340);
+      }
+    }
+    solDrag(A, legal, enc);
+    A.acts([{ label: 'やめる', move: seat * SEAT + 1, enabled: legal.has(seat * SEAT + 1) }, { label: b.stock ? `配る(残り${b.deals}回)` : '配る', move: canDeal ? seat * SEAT : -1, enabled: canDeal }]);
   }
 
   // ---------------------------------------------------------------- 麻雀

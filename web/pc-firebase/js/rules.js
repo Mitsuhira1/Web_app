@@ -46,7 +46,8 @@ const EXTRA_SETUP_HINTS = {
   quarto: {square2x2:'縦・横・斜めに加え、2×2の四角でも同じ特徴をそろえると勝ちです。'},
   geister: {setup:'自陣に青と赤を配置する時間を設けるか選びます。'},
   rummikub: {initialMeld:'最初に手牌を場へ出すときの合計点数を選びます。'},
-  pegsolitaire: {board:'十字形の33穴、ヨーロッパ式の37穴、三角形の15穴から選びます。'}
+  pegsolitaire: {board:'十字形の33穴、ヨーロッパ式の37穴、三角形の15穴から選びます。'},
+  solitaire: {variant:'クロンダイクは7列、スパイダーは2組104枚・10列で、同じマークのKからAを8組そろえます。',suits:'スパイダーで使うマークの数です。少ないほどやさしくなります。'}
 };
 (() => {
   const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
