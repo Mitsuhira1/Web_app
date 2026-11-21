@@ -6,6 +6,8 @@
 
 ---
 
+## 2026-11-21 麻雀の牌を影ごと画像に(`assets/mj/`・`tools/build_mahjong_tiles.cjs`。CSS の drop-shadow をやめた)
+- ほかの版の麻雀も牌ごとに影の filter を使っていれば、同じ画像に置き換えると軽くなる。
 ## 2026-11-21 フェルトの地模様・マンカラの木枠を前もって作った画像に(見た目は同じ・描き直しが軽い)
 - `css/app.css`・`css/twelve.css` の `--noise`(敷き詰める SVG の雑音)を `assets/tex/noise*.webp` に。`js/boards/fix.js` のマンカラの木枠の影・木目を `assets/tex/mancala-*.webp` に。作り方は `tools/build_textures.cjs`。
 - ほかの版も同じ SVG の雑音を使っていれば、同じ画像に置き換えると軽くなる(木目 `--grain` は SVG のままでよい)。
