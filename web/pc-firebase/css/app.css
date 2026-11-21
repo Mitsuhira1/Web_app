@@ -3034,3 +3034,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .cutin.sakura .veil { background:rgba(70,20,40,.28); }
 .cutin.sumi { --c1:#5E5751; --c2:#2D2824; --ct:#F7EEDD; --edge:#B23A30; --petal:#ffffff14; --ts:#0008; }
 .cutin.murasaki { --c1:#8C6B98; --c2:#563A61; --ct:#FFF6FF; --edge:#D3AE62; --petal:#f4d8ff2e; --ts:#0006; }
+
+/* 坊主めくり: 坊主で場へ・姫で手元へ流れる札 */
+.poet-stream { position:absolute; z-index:4; pointer-events:none; transform-origin:50% 50%; box-shadow:0 3px 6px #0006; }
+.poet-busy .poet-pick { pointer-events:none; }
