@@ -22,6 +22,10 @@
 <div class="bgstrip" id="bgs" role="group" aria-label="BGM" hidden></div>
 <button class="toast" id="toast" hidden></button>
 <script>
+// 調査用: ?nofx の時は、画面のフィルター(SVG の光・ぼかし、CSS の filter)を全部止める
+if (/[?&]nofx/.test(location.search)) { document.documentElement.classList.add('nofx'); document.head.insertAdjacentHTML('beforeend', '<style>.nofx [filter]{filter:none!important}.nofx *,.nofx *::before,.nofx *::after{filter:none!important;backdrop-filter:none!important}</style>'); }
+</script>
+<script>
 // 固まる原因を調べるための記録(diag.html で見る)。起動の段階・エラー・長い処理・0.5 秒ごとの「動いている印」を残す。
 (function () {
   var KEY = 'asobi-diag', t0 = performance.now(), log = [];
