@@ -3041,14 +3041,6 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   border-radius: 10px 10px 0 0;
 }
 
-/* 坊主めくり: めくれる札の坊主・姫の数 */
-.poet-omen { position:absolute; left:50%; bottom:calc(100% + var(--row-depth) + clamp(24px,3.6cqh,34px)); transform:translateX(-50%);
-  display:flex; align-items:baseline; gap:.25em; white-space:nowrap; padding:3px 14px; border-radius:999px;
-  background:#10291ed9; border:1px solid #f7df9e40; color:var(--on-felt-sub);
-  font:600 clamp(11px,1.4cqw,14px)/1.4 "Zen Antique","Yu Mincho",serif; }
-.poet-omen b { font:700 1.25em/1 Georgia,serif; color:var(--on-felt); }
-.poet-omen .bozu b { color:#ffb1a6; } .poet-omen .hime b { color:#ffc9da; }
-.poet-omen.danger { border-color:#e2372b99; }
 /* 坊主めくりのカットイン: 筆文字と和の色 */
 .cutin.f-fude .txt { font-family:"Yuji Boku Fude","Kaisei Tokumin","Yu Mincho",serif; font-weight:400; letter-spacing:.16em; }
 .cutin.f-fude .txt small { font-family:"Yuji Boku Fude","Zen Antique","Yu Mincho",serif; font-weight:400; letter-spacing:.3em; }

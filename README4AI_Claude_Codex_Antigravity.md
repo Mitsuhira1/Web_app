@@ -56,6 +56,10 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-21 / Claude / 坊主めくりのカットイン・山札の数の廃止、公開の仕組み
+- 坊主めくり: 「姫ボーナス」のカットインをやめ、「姫」の後に「もう一枚引く」(場札が無い時)/「+〇枚」(場札があった時の枚数)を同じ筆文字で出す。山札の一番上の坊主・姫の数を見せる設定(peek・state.tops)は全部消した。カットインの字体はユーザーと選び直し中(Yuji Boku は「だめ」)。
+- `.github/workflows/pages.yml`: アップロード(build)と公開(deploy)を別の作業に分け、公開が失敗したら 30 秒後にもう一度。`cancel-in-progress: false`。「No artifacts named github-pages」の失敗が続いたため。
+
 ### 2026-11-21 / Antigravity / スマホ版のソリティア組札・ほかドラッグ対応カードゲームのタッチドラッグを修正
 - ユーザーの報告「ソリティアで中央のカードをスマホ版でドラッグできない」に対し、場札(`.soltab [data-src]`)は `e4bb24f` で `touch-action:none` 対応済みだったが、組札(`.soltop [data-src]`)と他のドラッグ対応カードゲーム(スピード・大富豪・7ならべ・Oh, No!・花札)は `touch-action:auto` のままでタッチドラッグが効かなかった(iOS 向けの `-webkit-user-select:none` / `-webkit-touch-callout:none` も未指定)。
 - `web/pc-firebase/css/app.css`: `.drag-enabled .sol [data-src]`、`.drag-enabled .speed [data-card]`、`.drag-enabled .hand2 [data-card]`、`.drag-enabled .hand2 [data-k]` に `touch-action:none;cursor:grab;-webkit-user-select:none;-webkit-touch-callout:none` を適用。
