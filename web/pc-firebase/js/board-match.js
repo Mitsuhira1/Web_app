@@ -82,7 +82,15 @@ const boardMatch = (() => {
     clearTimeout(retry);
   }
   function exit() {
-    if (!state?.online) { reset(); return go(roomActive()?'room':'menu'); }
+    if (!state?.online) {
+      const leave=()=>{ closeSheet(); reset(); go(roomActive()?'room':'menu'); };
+      // 対局の途中(1 手以上進めて、まだ勝負がついていない)なら、ほかのゲームと同じく確認する
+      if (!state || state.finish || !(state.version>0)) return leave();
+      setTimeout(focusPrimary, 0);
+      openSheet('<h2>対局を終了しますか</h2><p>途中の対局は保存されません。</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="extraLeave">終了する</button></div>');
+      $('#extraLeave').onclick = leave;
+      return;
+    }
     if (netApi?.role!=='host') return go('room');
     const end=()=>{closeSheet(); reset(); publish(null); go('room');};
     if (state.game==='mineVersus' && (!minesGame.personal.confirm || state.finish)) return end();

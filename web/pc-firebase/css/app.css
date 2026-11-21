@@ -2559,6 +2559,8 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-tally b { font:700 clamp(19px,min(3.4cqw,4.2cqh),34px)/1.12 Georgia,serif; font-variant-numeric:tabular-nums; }
 .poet-tally small,.poet-role { font:600 clamp(10px,1.3cqw,13px)/1.3 sans-serif; }
 .poet-tally small { margin-left:2px; } .poet-role { color:var(--on-felt-sub); }
+/* 名札の 2 行目(殿・姫・坊主)は、空の時も一番長い「坊主」の分の幅と高さを取る(引くたびに名札の大きさが変わらないように) */
+.poet-role { display:block; min-width:2.2em; white-space:nowrap; }
 .poet-delta { position:absolute; left:50%; bottom:100%; padding:2px 6px; border-radius:6px;
   white-space:nowrap; font-size:12px; font-weight:700; background:#fff1cc; color:#372b1f;
   pointer-events:none; animation:poetGain 1.25s ease-out both; }

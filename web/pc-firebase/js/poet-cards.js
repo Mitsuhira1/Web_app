@@ -186,13 +186,12 @@ const poetCards = (() => {
     const last = player.lastCard ?? (index === drawer ? state.last : -1);
     const top = player.pile?.length ? player.pile[player.pile.length-1] : last;
     const role = last >= 0 ? roleName[cardRole(last)] : '';
-    const who = mine === index ? '自分' : '';
     return `<div class="poet-place ${offset ? '' : 'front'} ${index===state.turn && !state.finish ? 'turn' : ''}"
       data-poet-seat="${index}" style="left:${x}%;top:${y}%;--seat:${SEAT_COLORS[index%SEAT_COLORS.length]}">
       <div class="poet-reveal poet-own" data-count="${player.score}" data-score="${player.score}" style="--k:${Math.min(1,Math.sqrt(player.score)/10).toFixed(3)}"
         aria-label="持ち札${player.score}枚">${top>=0 && player.score>0 ? face(top) : ''}</div>
       <div class="poet-tally"><span class="poet-identity">${seatIcon(state,player,index)}<span class="poet-name">${esc(player.name)}</span></span>
-      <span class="poet-role">${[who, role].filter(Boolean).join(' · ')}</span></div>
+      <span class="poet-role">${role || '&nbsp;'}</span></div>
     </div>`;
   }
   function pileRow(state, canDraw) {
