@@ -35,7 +35,9 @@
 </script>
 <script>
 // 固まる原因を調べるための記録(diag.html で見る)。起動の段階・エラー・長い処理・0.5 秒ごとの「動いている印」を残す。
+// URL に ?diag(関数の出入りまで見る時は ?diag=deep)を付けた時だけ動く。使い方は CLAUDE.md。
 (function () {
+  if (!/[?&]diag/.test(location.search)) return;
   var KEY = 'asobi-diag', t0 = performance.now(), log = [];
   var save = function () { try { localStorage.setItem(KEY, JSON.stringify({ ua: navigator.userAgent, at: Date.now(), log: log.slice(-150) })); } catch (e) {} };
   var add = window.__diag = function (m) { log.push(Math.round(performance.now() - t0) + 'ms ' + m); save(); };
