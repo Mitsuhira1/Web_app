@@ -235,12 +235,16 @@
       if (d.bet != null) { const n = +d.bet; bet = bet.includes(n) ? bet.filter((x) => x !== n) : bet.concat([n]).slice(-2); return A.redraw(); }
       if (d.betgo != null && bet.length === 2) { const m = 300 + (Math.min(...bet) - 1) * 10 + (Math.max(...bet) - 1); if (A.view.legal.includes(m)) A.play(m); }
     });
+    // 説明の「OK」「閉じる」は、演出の待ち時間(盤のクリックを止めている間)でも効くよう、札で直接受ける
+    { const sEl = document.getElementById('lstop'), qEl = document.getElementById('lsq');
+      if (sEl) sEl.onclick = (e) => { if (!e.target.closest('[data-stopok]')) return; e.stopPropagation(); sEl.classList.add('out'); clearTimeout(showStop.t); showStop.t = setTimeout(() => { if (sEl.isConnected && sEl.classList.contains('out')) sEl.hidden = true; }, 350); stopState = null; A.animClear(); };
+      if (qEl) qEl.onclick = (e) => { if (!e.target.closest('[data-sqclose]')) return; e.stopPropagation(); if (!qEl.hidden) { qEl.hidden = true; A.sfx('BACK'); } }; }
     const el = document.getElementById('lview'), inner = el.firstElementChild;
     // 止まったマスの説明(ルールを開くなどで描き直しても、残りの時間だけ出す)
     const showStop = () => { const st = stopState, sEl = document.getElementById('lstop'); if (!st || !sEl || st.h !== A.handle) return; const now = performance.now(), left = st.start + st.ms - now; if (left <= 0) { stopState = null; return; }
       if (now < st.start) { setTimeout(showStop, st.start - now); return; }
       sEl.innerHTML = st.html; sEl.hidden = false; sEl.classList.remove('out'); const bar = sEl.querySelector('.lbar i'); if (bar) bar.animate([{ transform: `scaleX(${left / st.ms})` }, { transform: 'scaleX(0)' }], { duration: left, easing: 'linear', fill: 'forwards' });
-      clearTimeout(showStop.t); showStop.t = setTimeout(() => { if (sEl.isConnected) sEl.classList.add('out'); if (stopState === st) stopState = null; }, left); };
+      clearTimeout(showStop.t); showStop.t = setTimeout(() => { if (sEl.isConnected) sEl.classList.add('out'); if (stopState === st) stopState = null; showStop.t = setTimeout(() => { if (sEl.isConnected && sEl.classList.contains('out')) sEl.hidden = true; }, 350); }, left); };
     setTimeout(showStop, 0);
     const W = sc.W, H = sc.H;
     // 初めて: 幅に合わせて、番の人の所へ
