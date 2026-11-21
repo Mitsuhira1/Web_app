@@ -166,12 +166,32 @@ window.rouletteReady = Promise.all([
       <table><thead><tr><th scope="col">プレイヤー</th><th scope="col">賭け</th><th scope="col">受取</th><th scope="col" title="受取に含まれるラ・パルタージュの返還">うち返還</th><th scope="col">収支</th></tr></thead><tbody>${rows}</tbody></table><div class="rq-history" aria-label="出目履歴">${history}</div></section>`;
   }
 
+  // 浮かせた回転盤を、フェードで閉じる(閉じている間に描き直しても、続きから消えるように leaveUntil で覚える)
+  const LEAVE_MS = 340;
+  function closeWheel() {
+    if (!wheel) return;
+    wheel.settleUntil = 0;
+    clearTimeout(wheel.settleTimer);
+    const layout = $('#boardwrap .rq-layout');
+    if (!layout || !layout.classList.contains('is-settling')) return;
+    const current = wheel;
+    current.leaveUntil = performance.now() + LEAVE_MS;
+    layout.classList.replace('is-settling', 'is-leaving');
+    current.leaveTimer = setTimeout(() => {
+      if (wheel !== current) return;
+      current.leaveUntil = 0;
+      $('#boardwrap .rq-layout')?.classList.remove('is-leaving');
+    }, LEAVE_MS);
+  }
+
   function stopSpin() {
     if (!wheel) return;
     cancelAnimationFrame(wheel.frame);
     clearTimeout(wheel.timer);
     clearTimeout(wheel.settleTimer);
+    clearTimeout(wheel.leaveTimer);
     wheel.settleUntil = 0;
+    wheel.leaveUntil = 0;
     wheel.cancelSound?.();
     wheel.duration = 0;
   }
@@ -198,12 +218,11 @@ window.rouletteReady = Promise.all([
         current.timer = setTimeout(() => {
           if (wheel !== current || token !== match || S.screen !== 'play') return;
           current.duration = 0;
-          // スマホでは止まった後も少しだけ浮かせたまま出目を見せる(押すと閉じる)。
+          // 止まった後も少しだけ浮かせたまま出目を見せる(押すと閉じる)。閉じる時はゆっくり消す。
           current.settleUntil = performance.now() + 1600;
           current.settleTimer = setTimeout(() => {
             if (wheel !== current || token !== match || S.screen !== 'play') return;
-            current.settleUntil = 0;
-            $('#boardwrap .rq-layout')?.classList.remove('is-settling');
+            closeWheel();
           }, 1600);
           A.redraw();
         }, duration);
@@ -330,7 +349,8 @@ window.rouletteReady = Promise.all([
       return;
     }
     const settling = !spinning && wheel.settleUntil > performance.now();
-    A.board(`<div class="rq-layout${spinning ? ' is-spinning' : settling ? ' is-settling' : ''}" data-ready="${ready}">
+    const leaving = !spinning && !settling && wheel.leaveUntil > performance.now();
+    A.board(`<div class="rq-layout${spinning ? ' is-spinning' : settling ? ' is-settling' : leaving ? ' is-leaving' : ''}" data-ready="${ready}"${leaving ? ` style="--rq-leave-delay:${Math.round(performance.now() - wheel.leaveUntil + LEAVE_MS) * -1}ms"` : ''}>
       <section class="rq-wheel-panel" aria-label="${b.wheelType === 'amer' ? 'アメリカン' : 'ヨーロピアン'}ルーレット">
         ${wheelGraphic(b)}
       </section>
@@ -345,11 +365,7 @@ window.rouletteReady = Promise.all([
       if (can(move)) A.play(move);
     };
     const panel = root.querySelector('.rq-wheel-panel');
-    if (panel) panel.onclick = () => {
-      if (!root.querySelector('.rq-layout.is-settling')) return;
-      wheel.settleUntil = 0;
-      root.querySelector('.rq-layout').classList.remove('is-settling');
-    };
+    if (panel) panel.onclick = () => closeWheel();
     controls(b, A, can, chipIndex, spinning);
     wheel.scene = spinning ? root.firstElementChild : null;
     animateWheel(root, spinning);
