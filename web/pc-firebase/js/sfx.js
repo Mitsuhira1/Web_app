@@ -38,19 +38,22 @@ function rouletteAudioBuffer(ctx, {duration, impacts, panAt}) {
     return seed / 2147483648 - 1;
   }
 
-  // 縁を転がる音: 木の鉢(ボウル)が鳴る音にする。
-  // 本物の録音(縁を転がる間)では、決まった高さの響きの線が 340・720・1080・1450・1750・2100・2550Hz ほどに並び、
-  // 3kHz より上はほとんど無い。大きさは 1 周ごとにゆっくりうねる。
-  // 前の音は 12kHz まで平らな雑音で「布をこする」ように聞こえたので、高い雑音を削り、木の響き(共鳴)で鳴らす。
+  // 縁を転がる音: 木の上を球が転がる低い「ゴロゴロ」。
+  // 本物の録音(人の声を除いた、転がっている間ずっと続く音)は 250〜350Hz がいちばん強く、
+  // 1〜3kHz は 16〜20dB 弱く、4kHz より上はほとんど無い。長く鳴り続ける響き(金属のような音)は無い。
+  // 前の音は 12kHz まで平らな雑音で「布をこする」ように聞こえたので、
+  // 高い雑音を出さず、すぐ消える木の響き(数ミリ秒)と、球が 1 回転するごとの「ゴロ」のうねりで作る。
   const drop = impacts.find(hit => hit.kind === 'deflector');
   const raceEnd = drop ? drop.at / duration : .55;
   const finish = Math.floor(seconds * .92 * rate);
-  const modes = [[340, .085, .55], [720, .07, 1], [1080, .06, .95], [1450, .05, .85], [1750, .045, .8], [2120, .04, .6], [2560, .032, .42]]
-    .map(([f, decay, weight]) => {
-      const w = 2 * Math.PI * f * (1 + noise() * .012) / rate, r = Math.exp(-1 / (decay * rate));
-      return {a1: 2 * r * Math.cos(w), a2: -r * r, g: weight * (1 - r) * 2.2, f, y1: 0, y2: 0};
-    });
-  let body = 0, body2 = 0, body3 = 0, bodyLow = 0, swell = 0, swellTarget = 1, untilSwell = 0, pulse = 0, untilGrain = 0;
+  // 2 次の帯域フィルター(木の胴の、幅の広い響き。q が大きいほど幅が広く、すぐ消える)
+  function band(f, q) {
+    let low = 0, mid = 0;
+    const k = 2 * Math.sin(Math.PI * f / rate);
+    return x => { low += k * mid; const high = x - low - q * mid; mid += k * high; return mid; };
+  }
+  const bodyLow = band(300, .55), bodyMid = band(620, 1.3), bodyHigh = band(1500, 1.6), bodyTop = band(2500, 1.5);
+  let lp1 = 0, lp2 = 0, hp = 0, o1 = 0, o2 = 0, o3 = 0, o4 = 0, o5 = 0, h1 = 0, h2 = 0, spin = 0, swell = 1, swellTarget = 1, untilSwell = 0, knock = 0, untilKnock = 0;
   let pan = 0, panStep = 0;
   for (let i = 0; i < finish; i++) {
     const t = i / (seconds * rate);
@@ -61,34 +64,37 @@ function rouletteAudioBuffer(ctx, {duration, impacts, panAt}) {
     }
     pan += panStep;
     const grit = noise();
-    // 球が木目の細かいでこぼこを越える小さな当たり(速いほど細かく強い)
-    if (--untilGrain <= 0) {
-      pulse += (.4 + .6 * Math.abs(grit)) * speed;
-      untilGrain = (rate / (160 * speed + 25)) * (.6 + .8 * Math.abs(noise()));
+    // 球の 1 回転ごとの「ゴロ」(速い時は細かく、遅くなると「ゴロ…ゴロ…」と粗く)
+    spin += (14 + 38 * speed) * (1 + .18 * noise()) / rate;
+    const roll = .55 + .45 * Math.sin(2 * Math.PI * spin) ** 2;
+    // 木目の小さなでこぼこに当たる「コッ」(すぐ消える)
+    if (--untilKnock <= 0) {
+      knock += (.5 + .9 * Math.abs(noise())) * (.6 + .4 * speed);
+      untilKnock = rate / (45 + 70 * speed) * (.5 + Math.abs(noise()));
     }
-    pulse *= .8;
-    const excite = grit * (.55 + .45 * speed) + pulse * .9;
-    // 木の響き: 速いほど高い響きまでよく鳴る
-    let ring = 0;
-    for (const m of modes) {
-      const y = m.a1 * m.y1 + m.a2 * m.y2 + m.g * excite;
-      m.y2 = m.y1; m.y1 = y;
-      // 遅くなると高い響きが弱まり、低い 340Hz の「ゴー」が残る
-      ring += y * (m.f < 500 ? .5 + .8 * (1 - speed) : m.f < 1200 ? 1 : .3 + .7 * speed);
-    }
-    // 接する所のこもった雑音(3kHz より上はほとんど出さない)
-    const cut = .2 + .2 * speed;
-    body += cut * (grit - body);
-    body2 += cut * (body - body2);
-    body3 += cut * (body2 - body3);
-    bodyLow += .06 * (body3 - bodyLow);
+    knock *= .93;
+    const excite = grit * roll + knock * grit * .7;
+    // 低域を中心に: 高い雑音を 2 段で削る(速い時ほど少し明るい)
+    const cut = .055 + .06 * speed;
+    lp1 += cut * (excite - lp1);
+    lp2 += cut * (lp1 - lp2);
+    hp += .012 * (lp2 - hp);
+    const dark = lp2 - hp;
+    const wood = bodyLow(excite) * .75 + bodyMid(excite) * .1 + (bodyHigh(excite) * .1 + bodyTop(excite) * .24) * (.5 + .5 * speed);
     // ゆっくりしたうねり(1 周ごとに近づく・遠ざかる+不ぞろいな揺れ)
-    if (--untilSwell <= 0) { swellTarget = .6 + .8 * Math.abs(noise()) ** 1.5; untilSwell = rate * (.06 + .16 * Math.abs(noise())); }
+    if (--untilSwell <= 0) { swellTarget = .7 + .55 * Math.abs(noise()); untilSwell = rate * (.08 + .16 * Math.abs(noise())); }
     swell += (swellTarget - swell) * .0016;
-    const around = 1 + .4 * pan / .38;
+    const around = 1 + .35 * pan / .38;
     const release = Math.min(1, i / (rate * .055));
     const trail = Math.exp(-11 * Math.max(0, t - raceEnd)) * Math.min(1, (finish - i) / (rate * .05));
-    const sample = release * trail * (.4 + .6 * speed) * swell * around * (.5 * ring + .3 * (body3 - .7 * bodyLow));
+    // 仕上げ: 低すぎる所(170Hz 未満)と、高い所(2kHz ほどより上)をさらに削り、本物の録音と同じ釣り合いにする
+    let y = .3 * dark + .9 * wood;
+    h1 += .06 * (y - h1); y -= h1;
+    h2 += .06 * (y - h2); y -= h2;
+    const top = .42 + .14 * speed;
+    o1 += top * (y - o1); o2 += top * (o1 - o2); o3 += top * (o2 - o3);
+    o4 += .62 * (o3 - o4); o5 += .62 * (o4 - o5);
+    const sample = release * trail * (.45 + .55 * speed) * swell * around * o5 * 1.7;
     left[i] = sample * (.8 - .32 * pan);
     right[i] = sample * (.8 + .32 * pan);
   }
