@@ -56,6 +56,9 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-22 / Claude / 起動直後に「あそび箱49」と出る
+- 原因: `index.html` の `<title>` と `manifest.webmanifest` の名前が 49 のまま(50 種目を足した時の直し忘れ)。`app.js` が一覧を読んだ後に `あそび箱${ORDER.length}` へ書き換えるまで 49 が見えた。50 に直し、START_HERE.md の「ゲームを足したら直す所」に 2 か所を足した。`sw.js` のキャッシュ名を更新。
+
 ### 2026-11-21 / Claude / 軽量化: 麻雀の牌を影ごと画像に
 - ユーザーの了承(「影ごとの画像でよい」): 牌ごとの CSS の drop-shadow 2 重(金色の厚み+影)をやめ、牌の絵・厚み・影をまとめた画像 `assets/mj/<種類>.webp`(0〜33・赤の五 r4/r13/r22・裏 back の 38 枚・218KB)に。`tools/build_mahjong_tiles.cjs` が、牌の幅 32px の時のもとの見た目を 5 倍の細かさで撮る。影は牌の大きさに比例する(大きい手牌で影がわずかに広く・やわらかい。これが了承した変化)。
 - `js/boards/extra.js`: `tileSvg`・`backTile` は `<img>` を入れる(元の SVG は `window.__mjTileArt` に残し、画像を作る時に使う)。最初に 38 枚を先に読む。`css/app.css`: `.mjt>img` は牌より左右と上に 12.5% 広い。選んだ牌(`.pick`)は光(drop-shadow 1 つ)だけ残した。

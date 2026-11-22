@@ -65,7 +65,7 @@
 | `falling-match.js`(対戦・先取・並び)・`falling-fx.js`(光・音・ぷよの描き方)・`css/falling.css` | ぶにょぶにょ・パクリス共通(規則の試験: `tools/tests/test_falling_rules.mjs`) |
 | `munage.js`(＋ `css/munage.css`。見本は `docs/mockups/munage/`) | 胸毛絶体絶命(盤・アニメ・効果音・CPU すべてこの 1 ファイル) |
 
-(`ORDER` は `js/app.js` 34 行目。ゲームを足したらここと上の表を直す)
+(`ORDER` は `js/app.js` 34 行目。ゲームを足したらここと上の表、`index.html` の `<title>`・`manifest.webmanifest` の名前(あそび箱〇〇)も直す)
 
 ## 6. 守ること
 - **規則を勝手に変えない**。ほかの版と一緒に遊ぶ時に、同じ手から同じ局面になる必要がある。
