@@ -21,6 +21,7 @@ const minesGame=(()=>{
   openSheet('<h2>試合を抜けますか</h2><div class="btns"><button class="btn" data-sheetback>戻る</button><button class="btn danger" id="mineExitConfirm">抜ける</button></div>');
   $('#mineExitConfirm').onclick=()=>{closeSheet();go(roomActive()?'room':'menu');};
  }
+ let res=null,resAt=0,shownStatus='playing',newBest=false;
  let level=Object.hasOwn(LEVELS,store.get('mineCoopLevel'))?store.get('mineCoopLevel'):'easy',board=null,flagMode=false,started=0,elapsed=0,onlineMode=false,matchId=null,ignoreId=null,history=[],lastVersion=-1,generating=0,lastTap={cell:-1,at:0};
  const around=(i,w,h)=>{const x=i%w,y=Math.floor(i/w),out=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if((dx||dy)&&x+dx>=0&&x+dx<w&&y+dy>=0&&y+dy<h)out.push((y+dy)*w+x+dx);return out;};
  // flags[i]: 0=なし、1〜6=旗を立てた人(席の番号+1。旗の色になる)
@@ -203,12 +204,12 @@ const minesGame=(()=>{
   if (canStartExtraMatch()) onlineMode=true;
   if (onlineMode && !canStartExtraMatch()) return;
   const seed=crypto.getRandomValues(new Uint32Array(1))[0];
-  board=new Board(level,seed);started=0;elapsed=0;flagMode=personal.firstFlag;history=[];lastVersion=0;matchId=`${Date.now()}-${seed}`;generating=0;
+  board=new Board(level,seed);started=0;elapsed=0;flagMode=personal.firstFlag;history=[];lastVersion=0;matchId=`${Date.now()}-${seed}`;generating=0;res=null;shownStatus='playing';newBest=false;setExtraResult(null);
   Z.s=1;Z.x=0;Z.y=0;
   go('minePlay');if(onlineMode)publish();
  }
  function publish(){if(!onlineMode||!board||netApi?.role!=='host')return;netApi.writeState({mine:{id:matchId,phase:'playing',level,seed:board.seed,version:lastVersion,board:board.snapshot()}}).catch(e=>console.warn('[Mine]',e));}
- function remote(state){const s=state?.mine;if(!s||s.phase!=='playing'){if(onlineMode&&S.screen==='minePlay'&&netApi?.role==='guest')go('menu');return;}if(netApi?.role==='host'||s.id===ignoreId)return;if(!LEVELS[s.level]||!Number.isInteger(s.seed)||!Number.isInteger(s.version))return;if(s.id!==matchId){onlineMode=true;matchId=s.id;level=s.level;board=new Board(level,s.seed);lastVersion=-1;started=performance.now();elapsed=0;flagMode=personal.firstFlag;Z.s=1;Z.x=0;Z.y=0;S.screen='minePlay';render();}if(s.version<=lastVersion)return;try{board.restore(s.board);lastVersion=s.version;redraw();}catch(e){console.warn('[Mine] invalid shared board',e);}}
+ function remote(state){const s=state?.mine;if(!s||s.phase!=='playing'){if(onlineMode&&S.screen==='minePlay'&&netApi?.role==='guest')go('menu');return;}if(netApi?.role==='host'||s.id===ignoreId)return;if(!LEVELS[s.level]||!Number.isInteger(s.seed)||!Number.isInteger(s.version))return;if(s.id!==matchId){onlineMode=true;matchId=s.id;level=s.level;board=new Board(level,s.seed);lastVersion=-1;started=performance.now();elapsed=0;res=null;shownStatus='playing';newBest=false;setExtraResult(null);flagMode=personal.firstFlag;Z.s=1;Z.x=0;Z.y=0;S.screen='minePlay';render();}if(s.version<=lastVersion)return;try{board.restore(s.board);lastVersion=s.version;redraw();}catch(e){console.warn('[Mine] invalid shared board',e);}}
  const slotOf=uid=>{const p=uid&&fbState?.players?.[uid];return Number.isInteger(p?.slot)?p.slot:0;};
  function actionFromGuest(act){if(netApi?.role!=='host'||!onlineMode||!board||act.id!==matchId)return;if(!['open','flag','undo'].includes(act.move)||!Number.isInteger(act.cell))return;if(act.move==='undo')undo();else move(act.cell,act.move==='flag',slotOf(act.uid));}
  function undo(){if((onlineMode&&netApi?.role!=='host')||!history.length||board?.status!=='lost')return;const snap=history.pop();board=new Board(level,board.seed);board.restore(snap);lastVersion++;publish();redraw();}
@@ -225,11 +226,12 @@ const minesGame=(()=>{
   const content = setupPanel('操作',setupRow('マスの操作',tap)+setupRow('地雷',`<b>${board.mines}個</b>`)+setupRow('進捗',`<b id="mineSidePercent">${board.percent}%</b>`));
   const actions = ruleButton('mine')+`<button class="btn" data-mine-undo ${board.status==='lost'?'':'hidden'}>${ic('undo')}待った</button>`;
   const side = playSide({seats,status:`<div class="status" id="mineStatus">${boardStatus()}</div>`,actions,on:onlineMode,content});
-  return `<div class="screen"><div class="stage mine-stage">
+  return `<div class="screen fit"><div class="stage mine-stage">
     ${playHeader('マインスイーパー',onlineMode?'みんなで遊ぶ・協力':'ひとりで遊ぶ','data-mine-exit')}
     <div class="mine-boardwrap" style="--mine-cols:${board.w};--mine-rows:${board.h}"><div id="boardwrap" class="mine-board">${codes().map((c,i)=>cellHtml(c,i,paintOpts())).join('')}</div><button class="mine-zoom" data-mine-zoomreset hidden aria-label="拡大を戻す"></button><div class="mine-gen" id="mineGen" hidden>運任せのない盤面を作っています…</div></div>
     <div class="mine-foot"><span>${FLAG_SVG(SEAT_COLORS[0]).replace('<svg','<svg class="mine-foot-flag"')} <b id="mineFlags">${board.mines-board.flags.filter(Boolean).length}</b></span><span id="mineTime">${fmtTime(board.status==='playing'&&started?performance.now()-started:elapsed)}</span><span id="minePercent">${board.percent}%</span></div>
-    ${playGear()}<div class="cutlayer" id="cutlayer"></div></div>${side}</div>`;
+    <div class="mine-tapseg">${tap}</div>
+    ${playGear()}<div class="cutlayer" id="cutlayer"></div>${extraResultLayer(res&&performance.now()>=resAt?res:null)}</div>${side}</div>`;
  }
  function mounted(){if(S.screen!=='minePlay'||!board)return;const el=$('#boardwrap.mine-board');if(el){el._codes=codes();el._fog=false;el._dis=false;}mountZoom(cell=>move(+cell.dataset.mineCell,true));}
  function redraw(){
@@ -241,6 +243,23 @@ const minesGame=(()=>{
   const p=document.getElementById('minePercent');if(p)p.textContent=board.percent+'%';
   const sp=document.getElementById('mineSidePercent');if(sp)sp.textContent=board.percent+'%';
   tick();
+  if(board.status!==shownStatus){
+   shownStatus=board.status;
+   if(board.status==='playing'){res=null;setExtraResult(null);}
+   else{
+    if(!elapsed&&started)elapsed=performance.now()-started;
+    cut({text:board.status==='won'?'完成！':'残念！',tone:'felt',ms:1400});
+    res=resultBox();resAt=performance.now()+1500;setExtraResult(res,1500);
+   }
+  }
+ }
+ // 終わった後の画面(MineLink の結果の画面と同じ中身: 勝ち負け・広さ・タイム・自己ベスト、もう一度・メニュー)
+ function resultBox(){
+  const won=board.status==='won',host=!onlineMode||netApi?.role==='host';
+  return {title:won?(onlineMode?'成功！':'クリア！'):(onlineMode?'失敗…':'ゲームオーバー'),
+   sub:`${LEVELS[level].label}　${fmtBest(elapsed)}`+(newBest?'　自己ベスト更新':''),
+   exit:'data-mine-exit',again:host?'data-mine-again':'',undo:won?'':'data-mine-undo',
+   wait:host?'':'ホストが次を始めるのを待っています',online:onlineMode};
  }
  function tick(){const t=document.getElementById('mineTime');if(t&&board)t.textContent=fmtTime(board.status==='playing'&&started?performance.now()-started:elapsed);}
  // 最初に開いたマスから、論理だけで解ける配置を作る(ホストだけ。作っている間は操作を受け付けない)
@@ -267,10 +286,9 @@ const minesGame=(()=>{
   if(onlineMode){lastVersion++;publish();}
   if(before!==board.status){
    elapsed=performance.now()-started;
-   cut({text:board.status==='won'?'完成！':'残念！',tone:'felt',ms:1400});
    if(board.status==='won'&&!onlineMode){
     const stats=store.get('stats',{}),v=stats.solo_mine||[0];v[0]++;stats.solo_mine=v;store.set('stats',stats);
-    const best=bests();if(!best[level]||elapsed<best[level]){best[level]=Math.round(elapsed);store.set('mineBest',best);}
+    const best=bests();if(!best[level]||elapsed<best[level]){best[level]=Math.round(elapsed);store.set('mineBest',best);newBest=true;}
    }
   }
   redraw();

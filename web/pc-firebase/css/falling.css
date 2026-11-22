@@ -121,3 +121,19 @@ html.reduce .fchain,html.reduce .ftag,html.reduce .fshake,html.reduce .fbump{ani
   .farena{padding-bottom:12px}
   .fkeyhelp{display:none}
 }
+
+/* 盤の層(積もった分と動いている分を分けて、動いている分だけ描き直す) */
+.flayer{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}.flayer.fpc{will-change:transform}
+/* スマホ: 盤の上ではページを動かさない(指の操作だけ。引っぱって読み込み直す・スクロールもしない) */
+@media (max-width:680px), (max-width:960px) and (max-height:540px){
+  .fstage{touch-action:none;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+  .fstage .farena{padding-bottom:4px}
+  .farena.stack{justify-content:flex-start;gap:8px}
+  .farena.stack .fopps{flex-direction:row;align-items:center;gap:8px}
+  .farena.stack .foppsrow{gap:8px;flex-wrap:nowrap}
+  .farena.stack .fopps .fside{display:none}
+  .farena.stack .fwinboard{min-width:0;width:150px;padding:4px 8px 6px;font-size:12px;border-radius:12px}
+  .farena.stack .fwinboard .word{font-size:13px}.farena.stack .fwinboard svg{width:12px;height:12px}
+}
+.fhold{padding:0;border:0;background:none;font:inherit;color:inherit;margin-bottom:10px;cursor:pointer}
+.fhold .nx.hold{display:grid;place-items:center}.fhold .nx.used .mini{opacity:.35;filter:grayscale(1)}

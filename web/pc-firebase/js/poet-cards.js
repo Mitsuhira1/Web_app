@@ -143,13 +143,21 @@ const poetCards = (() => {
       }, cpuDelay[cpuPaceSetting(state.pace)] || 2700);
     }
   }
+  // 終わった後の画面(順位と枚数、もう一度・メニュー)
+  let resultFor=null;
+  function resultBox(state,winners) {
+    const me=boardMatch.myId(), host=!state.online||netApi?.role==='host';
+    const order=state.seats.map((p,i)=>i).sort((a,b)=>state.seats[b].score-state.seats[a].score);
+    const rank=`<ol class="rrank">${order.map((i,k)=>{const p=state.seats[i];return `<li class="${p.id===me?'me':''}"><b>${state.seats.filter(q=>q.score>p.score).length+1}位</b><span>${esc(p.name)}</span><em class="num">${p.score}枚</em></li>`;}).join('')}</ol>`;
+    return {title:winners.join('・')+'の勝ち',rank,exit:'data-extra-exit',again:host?'data-poet-start':'',wait:host?'':'ホストが次を始めるのを待っています',online:state.online};
+  }
   function html(state) {
     const side = playSide({seats:'<div class="seats" id="poetScores"></div>',
       status:'<div class="status" id="poetStatus"></div>', actions:ruleButton('bozu'), on:state.online});
-    return `<div class="screen"><main class="stage poet-stage">
+    return `<div class="screen fit"><main class="stage poet-stage">
       ${playHeader('坊主めくり', playMode(state.online), 'data-extra-exit')}
       <div class="poet-table"><div class="poet-layout" id="poetTable"></div>${playGear()}</div><div class="cutlayer" id="cutlayer"></div>
-      </main>${side}</div>`;
+      ${extraResultLayer(state.finish&&resultFor===state.id?resultBox(state,state.seats.filter(p=>p.score===Math.max(...state.seats.map(q=>q.score))).map(p=>p.name)):null)}</main>${side}</div>`;
   }
   const roleName = {hime:'姫',bozu:'坊主',tono:'殿'};
   const cpuIcons = ['ねこ','きつね','うさぎ','ふくろう','だるま'];
@@ -322,6 +330,7 @@ const poetCards = (() => {
     table.innerHTML=state.seats.map((_,i)=>place(state,i,front,mine)).join('')
       +pileRow(state,!state.finish && state.turn===mine);
     $('#poetStatus').textContent=state.finish?winners.join('・')+'の勝ち':active.name+(state.extra?'がもう1枚':'の番');
+    if (state.finish&&resultFor!==state.id) { resultFor=state.id; setExtraResult(resultBox(state,winners),1600); }
     $('#poetScores').innerHTML=state.seats.map((p,i)=>`<div class="seat ${!state.finish && i===state.turn?'turn':''}">${seatIcon(state,p,i)}<span class="nm">${esc(p.name)}</span><b>${p.score}枚</b></div>`).join('');
     if(pile<0 || state.last<0 || document.hidden || !consecutive || !prev)return;
     const reduced=S.set.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches;

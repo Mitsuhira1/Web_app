@@ -2,7 +2,7 @@
 /* パクリス: 規則(盤 10×20・7種のブロック・回転・Tスピン・BACK to BACK・REN・お邪魔)と、1枚の盤の動き、CPU。
    画面の並び・対戦・先取は falling-match.js。描き方と音は falling-fx.js。 */
 const pakurisGame = (() => {
-  const W = 10, H = 20, TYPES = ['I','O','T','S','Z','J','L'];
+  const W = 10, H = 20, TYPES = ['I','O','T','S','Z','J','L'], LOCK_MS = 500;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   /* 向き0の形(左上を原点、x 右・y 下)。I は 4×4、O は真ん中2列、ほかは 3×3 の中で回す */
   const BASE = {I:[[0,1],[1,1],[2,1],[3,1]], O:[[1,0],[2,0],[1,1],[2,1]], T:[[1,0],[0,1],[1,1],[2,1]], S:[[1,0],[2,0],[0,1],[1,1]],
@@ -66,14 +66,24 @@ const pakurisGame = (() => {
     get next() { return this.queue.slice(); }
     spawn() {
       const k=this.queue.shift(); this.queue.push(this.bag.take());
-      this.piece={k,r:0,x:3,y:-1}; this.pieceId=(this.pieceId||0)+1; this.lastRotate=null; this.grounded=0; this.resets=0;
+      this.piece={k,r:0,x:3,y:-1}; this.pieceId=(this.pieceId||0)+1; this.lastRotate=null; this.landAt=0; this.resets=0; this.held=false;
       if (!fitsIn(this.grid,this.piece)) { this.piece=null; this.finish(); return; }
       this.draw(); this.hooks.next?.(this);
       if (this.cpu) this.cpu.plan(this);
     }
     canAct() { return !this.stopped&&!this.over&&!this.busy&&this.piece; }
     snd(name,...a) { if (this.me) FSND[name](...a); }
-    touched() { if (this.grounded&&this.resets<15) { this.grounded=0; this.resets++; } }
+    /* 着地している間に動かす・回すと、着地までの待ち(LOCK_MS)を数え直す(15 回まで。本家と同じ) */
+    touched() { if (this.landAt&&this.resets<15) { this.landAt=performance.now(); this.resets++; } }
+    /* ホールド: 今のブロックを取っておき、取っておいた物(無ければ次)を出す。1 つのブロックにつき 1 回まで */
+    hold() {
+      if (!this.canAct()||this.held) return false;
+      const k=this.piece.k, prev=this.holdK; this.holdK=k;
+      if (prev) { this.piece={k:prev,r:0,x:3,y:-1}; this.pieceId++; this.lastRotate=null; this.landAt=0; this.resets=0; this.spinGlow=false;
+        if (!fitsIn(this.grid,this.piece)) { this.piece=null; this.finish(); return true; } this.draw(); }
+      else this.spawn();
+      this.held=true; this.snd('pRotate'); this.hooks.hold?.(this); return true;
+    }
     move(dx) {
       if (!this.canAct()) return false; const p={...this.piece,x:this.piece.x+dx};
       if (!fitsIn(this.grid,p)) return false; this.piece=p; this.lastRotate=null; this.touched(); this.snd('pMove'); this.draw(); return true;
@@ -103,11 +113,12 @@ const pakurisGame = (() => {
         this.bump(); }
       this.piece={...p,y:p.y+d}; if (d>0) this.lastRotate=null; this.snd('pHard'); this.lock();
     }
-    /* 落ちる時計。着地してから1回分は動かせる(回してねじ込めるように) */
+    /* 落ちる時計。底に着いてもすぐには固めず、LOCK_MS(1 拍)待つ。その間は動かして・回してねじ込める(早送りの時も) */
     tick() {
       if (!this.canAct()) return;
-      if (this.soft()) { this.grounded=0; return; }
-      if (this.grounded>=1) this.lock(); else this.grounded++;
+      if (this.soft()) { this.landAt=0; return; }
+      const now=performance.now();
+      if (!this.landAt) this.landAt=now; else if (now-this.landAt>=LOCK_MS) this.lock();
     }
     finish() { if (this.over) return; this.over=true; this.piece=null; this.draw(); this.hooks.over?.(this); }
     receive(n) { this.garbage+=n; this.hooks.notice?.(this); }
@@ -168,15 +179,21 @@ const pakurisGame = (() => {
     bump() { const b=this.frame; if (!b) return; b.classList.remove('fbump'); void b.offsetWidth; b.classList.add('fbump'); }
     shakeBoard() { const b=this.frame; if (!b) return; b.classList.remove('fshake'); void b.offsetWidth; b.classList.add('fshake'); }
     mount(view, frame, c) { this.view=view; this.frame=frame; this.c=c; this.draw(); }
+    /* 積もったブロック(変わった時だけ描く)と、落ちているブロック・影(動かすたびに描く)を別の層にする(スマホで重かった) */
     draw(shift) {
-      if (!this.view||!this.view.isConnected) return; const c=this.c; let h='';
-      this.grid.forEach((row,y)=>{ if (this.hide&&this.hide.has(y)) return;
-        row.forEach((k,x)=>{ if (k) h+=pakurisBlock(x,y,k,c,'',shift&&shift[y]?`transform:translateY(${-shift[y]*c}px)`:''); }); });
+      if (!this.view||!this.view.isConnected) return; const c=this.c;
+      if (!this.gl||this.gl.parentNode!==this.view) { this.view.innerHTML='<div class="flayer"></div><div class="flayer fpc"></div>'; [this.gl,this.pl]=this.view.children; this.gridKey=null; }
+      const key=this.grid.map(r=>r.map(v=>v||'.').join('')).join('')+(this.hide?[...this.hide].join(','):'');
+      if (shift||key!==this.gridKey) { this.gridKey=key; let h='';
+        this.grid.forEach((row,y)=>{ if (this.hide&&this.hide.has(y)) return;
+          row.forEach((k,x)=>{ if (k) h+=pakurisBlock(x,y,k,c,'',shift&&shift[y]?`transform:translateY(${-shift[y]*c}px)`:''); }); });
+        this.gl.innerHTML=h;
+        if (shift) { const gl=this.gl; requestAnimationFrame(()=>requestAnimationFrame(()=>gl.querySelectorAll('.fblk').forEach(b=>b.style.transform=''))); } }
+      let h='';
       if (this.piece) { const p=this.piece, d=this.ghostDrop(), cells=cellsOf(p);
         if (this.me&&d>0) h+=cells.map(([x,y])=>y+d>=0?pakurisBlock(x,y+d,p.k,c,'ghost'):'').join('');
         h+=cells.map(([x,y])=>y>=0?pakurisBlock(x,y,p.k,c,this.spinGlow?'spin':''):'').join(''); }
-      this.view.innerHTML=h;
-      if (shift) requestAnimationFrame(()=>requestAnimationFrame(()=>this.view.querySelectorAll('.fblk').forEach(b=>b.style.transform='')));
+      this.pl.innerHTML=h;
     }
   }
 
@@ -232,6 +249,12 @@ const pakurisGame = (() => {
       mx=Math.max(...s.map(p=>p[0]))+1, mn=Math.min(...s.map(p=>p[1])), my=Math.max(...s.map(p=>p[1]))+1, mnx=Math.min(...s.map(p=>p[0]));
       return `<div class="nx ${i?'':'first'}" style="height:${(my-mn)*cc+(i?14:22)}px"><div class="mini" style="--c:${cc}px;width:${(mx-mnx)*cc}px;height:${(my-mn)*cc}px">${s.map(([x,y])=>pakurisBlock(x-mnx,y-mn,k,cc)).join('')}</div></div>`; }).join('');
   }
+  function holdHtml(k, c, used) {
+    const box=Math.round(c*2.6);
+    if (!k) return `<span class="lbl">HOLD</span><div class="nx hold" style="height:${box}px"></div>`;
+    const cc=Math.max(4,Math.round(c*.62)), s=SHAPES[k][0], mnx=Math.min(...s.map(p=>p[0])), mn=Math.min(...s.map(p=>p[1])), mx=Math.max(...s.map(p=>p[0]))+1, my=Math.max(...s.map(p=>p[1]))+1;
+    return `<span class="lbl">HOLD</span><div class="nx hold ${used?'used':''}" style="height:${box}px"><div class="mini" style="--c:${cc}px;width:${(mx-mnx)*cc}px;height:${(my-mn)*cc}px">${s.map(([x,y])=>pakurisBlock(x-mnx,y-mn,k,cc)).join('')}</div></div>`;
+  }
   const decodeNext = s => [...(s||'')].filter(k=>TYPES.includes(k)).slice(0,3);
 
   const boards=new Set();
@@ -239,10 +262,10 @@ const pakurisGame = (() => {
     id:'pakuris', name:'パクリス', W, H, interval:650,
     createBoard(o) { const b=new Board({...o, cpu:o.cpuLevel?cpuDriver(o.cpuLevel):null}); boards.add(b); return b; },
     releaseBoards() { for (const b of boards) b.stop(); boards.clear(); },
-    boardSvg, nextHtml, decodeNext,
-    keys: {ArrowLeft:'left',ArrowRight:'right',ArrowDown:'down',ArrowUp:'rotate',x:'rotate',X:'rotate',z:'rotateL',Z:'rotateL',Control:'rotateL',' ':'drop'},
-    act(board, a) { if (a==='left') board.move(-1); else if (a==='right') board.move(1); else if (a==='rotate') board.rotate(1); else if (a==='rotateL') board.rotate(-1); else if (a==='down') board.soft(); else if (a==='drop') board.hard(); },
-    keyHelp: [['← →','動かす'],['↑ / X','右に回す'],['Z / Ctrl','左に回す'],['↓','1段下げる'],['スペース','一気に落とす']],
+    boardSvg, nextHtml, decodeNext, holdHtml, fastDrop:true,
+    keys: {ArrowLeft:'left',ArrowRight:'right',ArrowDown:'down',ArrowUp:'rotate',x:'rotate',X:'rotate',z:'rotateL',Z:'rotateL',Control:'rotateL',' ':'drop',c:'hold',C:'hold',Shift:'hold'},
+    act(board, a) { if (a==='left') board.move(-1); else if (a==='right') board.move(1); else if (a==='rotate') board.rotate(1); else if (a==='rotateL') board.rotate(-1); else if (a==='down') board.soft(); else if (a==='drop') board.hard(); else if (a==='hold') board.hold(); },
+    keyHelp: [['← →','動かす'],['↑ / X','右に回す'],['Z / Ctrl','左に回す'],['↓','押している間は早送り'],['スペース','一気に落とす'],['C / Shift','ホールド']],
     /* 試験用 */
     rules: {W,H,SHAPES,KICK,KICK_I,fitsIn,cellsOf,spinKind,scoreFor,attackFor,makeBag,drops}
   };

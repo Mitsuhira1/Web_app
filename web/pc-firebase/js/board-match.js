@@ -91,7 +91,14 @@ const boardMatch = (() => {
       $('#extraLeave').onclick = leave;
       return;
     }
-    if (netApi?.role!=='host') return go('room');
+    if (netApi?.role!=='host') {
+      // ゲスト: 勝負の途中なら確かめてから部屋に戻る(ほかのゲームと同じ)
+      if (state.finish) return go('room');
+      setTimeout(focusPrimary, 0);
+      openSheet('<h2>対局を抜けますか</h2><p>部屋に戻ります(部屋からは抜けません)。</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="extraGuestLeave">部屋に戻る</button></div>');
+      $('#extraGuestLeave').onclick = () => { closeSheet(); go('room'); };
+      return;
+    }
     const end=()=>{closeSheet(); reset(); publish(null); go('room');};
     if (state.game==='mineVersus' && (!minesGame.personal.confirm || state.finish)) return end();
     openSheet('<h2>対局を終了しますか</h2><div class="btns"><button class="btn" data-sheetback>戻る</button><button class="btn danger" id="extraEnd">終了する</button></div>');

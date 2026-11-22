@@ -443,6 +443,21 @@ const playSide = ({seats = '', status, actions, on = false, content = '', extraC
     onlineActions = '', showChat = on}) => `<aside class="side ${extraClass}">
   ${seats}${status}<div class="ops">${actions}</div>
   ${on ? `<div class="online-ops">${onlineActions}${playMembers()}</div>` : ''}${content}${showChat ? chatBox() : ''}</aside>`;
+// 独自に描くゲーム(マインスイーパー・スライド・ぶにょぶにょ・パクリス・坊主めくりなど)の結果の画面。ほかのゲームと同じ形(#result の .rbox)。
+// o: {title, sub, rank(HTML), exit(戻るボタンの属性), again(もう一度の属性。無ければ出さない), undo(待ったの属性), wait(待つ人への文), online}
+const extraResultBox = (o) => `<div class="rbox"><h3>${esc(o.title)}</h3>${o.sub ? `<p>${esc(o.sub)}</p>` : ''}${o.rank || ''}${o.wait ? `<p class="dimtxt">${esc(o.wait)}</p>` : ''}<div class="rbtns">${o.undo ? `<button class="btn" ${o.undo}>${ic('undo')}待った</button>` : ''}<button class="btn" ${o.exit}>${o.online ? '部屋に戻る' : 'メニュー'}</button>${o.again ? `<button class="btn primary" ${o.again}>もう一度</button>` : ''}</div></div>`;
+// 描いた画面に入れる(o が無い時は隠したまま)
+const extraResultLayer = (o) => `<div class="resultlayer" id="result" ${o ? '' : 'hidden'}>${o ? extraResultBox(o) : ''}</div>`;
+// 今の画面の結果の欄を出す/隠す。delay ミリ秒の後に出す(カットインの後など)
+function setExtraResult(o, delay = 0) {
+  clearTimeout(setExtraResult.t);
+  const p = $('#result');
+  if (!o) { if (p) { p.hidden = true; p.innerHTML = ''; } return; }
+  const scr = S.screen;
+  // 待つ間に描き直されても出せるよう、出す時に探し直す
+  const show = () => { const q = $('#result'); if (!q || S.screen !== scr) return; q.innerHTML = extraResultBox(o); q.hidden = false; };
+  if (delay > 0) setExtraResult.t = setTimeout(show, delay); else show();
+}
 function play() {
   const g = cur;
   const soloMatch = online && isSoloIdleMatch();
@@ -1603,20 +1618,21 @@ app.addEventListener('click', async (e) => {
   if (d.wolfHelp && S.screen==='wolfPlay') return wolfGame.help();
   if (d.wolfStamp != null && S.screen==='wolfPlay') return wolfGame.stamp(+d.wolfStamp);
   if (d.slideTile != null) return slideGame.move(d.slideTile);
-  if (d.slideExit != null) return go(roomActive()?'room':'menu');
+  if (d.slideExit != null) return slideGame.exit();
   if (d.slideGuide != null) return slideGame.showGuide();
   if (d.slideStart != null) return slideGame.start();
   if (d.slidePicture != null) {slideGame.picture=d.slidePicture;return render();}
   if (d.fallingAgain != null) return fallingMatch.again();
   if (d.bunyoStart != null) return bunyoGame.start();
-  if (d.bunyoExit != null) return go('menu');
+  if (d.bunyoExit != null) return fallingMatch.exit('bunyo');
   if (d.bunyo != null) return bunyoGame.action(d.bunyo);
   if(d.pakurisStart!=null)return pakurisGame.start();
-  if(d.pakurisExit!=null)return go('menu');
+  if(d.pakurisExit!=null)return fallingMatch.exit('pakuris');
   if(d.pakuris!=null)return pakurisGame.action(d.pakuris);
   if(d.mineStart!=null)return minesGame.start();
   if(d.mineExit!=null)return minesGame.exit();
   if(d.mineUndo!=null)return minesGame.requestUndo();
+  if(d.mineAgain!=null)return minesGame.start();
   if(d.mineZoomreset!=null)return minesGame.resetZoom();
   if(d.mineCell!=null)return minesGame.move(+d.mineCell, mineSwapped || minesGame.flagMode);
   if (d.playsettings != null) return openPlaySettings();
@@ -1858,7 +1874,10 @@ function goBack() {
   if (S.screen==='minePlay') return minesGame.exit();
 
   if (S.screen==='wolfPlay') return wolfGame.exit();
-  if (['slidePlay','slideSetup','bunyoPlay','bunyoSetup','pakurisPlay','pakurisSetup','mineSetup','poetSetup','munageSetup','wolfSetup'].includes(S.screen)) return go(roomActive()?'room':'menu');
+  if (S.screen==='slidePlay') return slideGame.exit();
+  if (S.screen==='bunyoPlay') return fallingMatch.exit('bunyo');
+  if (S.screen==='pakurisPlay') return fallingMatch.exit('pakuris');
+  if (['slideSetup','bunyoSetup','pakurisSetup','mineSetup','poetSetup','munageSetup','wolfSetup'].includes(S.screen)) return go(roomActive()?'room':'menu');
   if (S.screen === 'play') {
     if (online && view && view.mine < 0) return go('room');
     // 対局中は確かめてから終わる(まだ 1 手も指していない時は、そのまま戻る。通信対戦はいつも確かめる)

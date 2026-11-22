@@ -199,7 +199,22 @@ const bunyoGame = (() => {
         const ty=this.pair.y; d.y=Math.abs(ty-d.y)>2?ty:d.y+(ty-d.y)*Math.min(1,dt*14);
         st.pair={x:d.x,y:d.y,ang:d.ang,a:this.pair.a,b:this.pair.b};
       } else st.pair=null;
-      if (st.dirty || st.pair || st.fallers.length || st.land.size || st.pop) { st.dirty=false; this.view.innerHTML=bunyoSvg(st,this.c,this.fid); }
+      /* 3 枚の層に分けて、変わった層だけ描く(前は組が出ている間、盤全体を毎フレーム描き直していて、スマホで重かった)
+         base: 積もった粒・落ちる粒(フィルターで重い。変わった時だけ) / pair: 操作中の組(回る時だけ描き、動きは位置をずらすだけ) / fx: 光る印 */
+      let L=this.lay;
+      if (!L||L.base.parentNode!==this.view) {
+        this.view.innerHTML='<div class="flayer"></div><div class="flayer fpc"></div><div class="flayer fpc"></div>';
+        const [a,b,e]=this.view.children; L=this.lay={base:a,pair:b,fx:e,pairKey:null,fxOn:false}; st.dirty=true;
+      }
+      const c=this.c;
+      if (st.dirty || st.fallers.length || st.land.size || st.pop) { st.dirty=false;
+        L.base.innerHTML=bunyoSvg({cells:st.cells,fallers:st.fallers,land:st.land,pop:st.pop,noRim:true},c,this.fid); }
+      if (st.pair) { const p=st.pair, key=p.a+p.b+p.ang.toFixed(3);
+        if (key!==L.pairKey) { L.pairKey=key; L.pair.innerHTML=bunyoSvg({cells:[],pair:{x:0,y:0,ang:p.ang,a:p.a,b:p.b},noRim:true},c,this.fid+'p'); }
+        L.pair.style.transform=`translate(${(p.x*c).toFixed(2)}px,${(p.y*c).toFixed(2)}px)`; }
+      else if (L.pairKey!==null) { L.pairKey=null; L.pair.innerHTML=''; }
+      const fx=st.pair||st.preview||st.markers.length;
+      if (fx) { L.fx.innerHTML=bunyoOverlay(st,c); L.fxOn=true; } else if (L.fxOn) { L.fx.innerHTML=''; L.fxOn=false; }
     }
   }
 

@@ -43,7 +43,7 @@ const fallingMatch = (() => {
     return extraSetupLayout(id,false,left,setupPanel('表示',display)+keyPanel(g),'data-'+id+'-start',{modeLabel:p.cpus?'CPU と対戦':undefined});
   }
   const keyPanel = g => setupPanel('操作',`<div class="fkeys">${g.keyHelp.map(([k,t])=>`<span><kbd>${esc(k)}</kbd>${esc(t)}</span>`).join('')}</div>
-    <p class="dimtxt">スマホは盤を指でなぞります(左右で移動・下へはらって一気に落とす・軽くたたいて回す)。</p>`);
+    <p class="dimtxt">スマホは盤を指でなぞります(左右で移動・下へはらって一気に落とす・軽くたたいて回す・長押しで早送り${g.holdHtml?'・上へはらってホールド':''})。</p>`);
   function setup(id, online) { setupOnline=online; go(id+'Setup'); }
   function start(id) {
     const p=preferences(id);
@@ -75,7 +75,12 @@ const fallingMatch = (() => {
     if (ses) { games[ses.id]?.releaseBoards(); ses=null; }
   }
   function again() {
-    if (!ses || ses.mode==='online') return;
+    if (!ses) return;
+    if (ses.mode==='online') { // 部屋の対戦: ホストが同じ設定で始め直す
+      const p=preferences(ses.id);
+      if (netApi?.role==='host'&&boardMatch.state?.matchOver&&canStartExtraMatch()) boardMatch.start(ses.id,true,{turnIndex:0,sabotage:p.sabotage,target:p.target});
+      return;
+    }
     if (ses.mode==='cpu' && ses.matchOver) { ses.wins={}; ses.round=0; ses.matchOver=false; }
     newRound();
   }
@@ -83,7 +88,7 @@ const fallingMatch = (() => {
     if (!ses || ses.result || ses.mode==='online') return;
     if (ses.mode==='solo') {
       const b=ses.players[0].board;
-      ses.result={title:'ゲーム終了',sub:`スコア ${b.score.toLocaleString()}`+(ses.id==='bunyo'?` ・ 最大 ${b.maxChain} れんさ`:` ・ ${b.lines} ライン`),again:true};
+      ses.result={title:'ゲーム終了',sub:ses.id==='bunyo'?`最大 ${b.maxChain} れんさ`:`${b.lines} ライン`,again:true,box:true};
       FSND.lose(); refresh(); return;
     }
     const alive=ses.players.filter(p=>!p.board.over);
@@ -93,7 +98,7 @@ const fallingMatch = (() => {
     ses.matchOver=ses.wins[winner.pid]>=ses.target;
     winner.me?FSND.win():FSND.lose();
     ses.result={title:`${winner.me?'あなた':winner.name}の${ses.matchOver?'優勝!':'勝ち'}`,
-      sub:ses.matchOver?'Enter キーか「もう一度」で、はじめから':'次の対戦へ…', again:ses.matchOver};
+      sub:ses.matchOver?'':'次の対戦へ…', again:ses.matchOver, box:ses.matchOver};
     refresh();
     if (!ses.matchOver) { const gen=ses.gen; nextRoundTimer=setTimeout(()=>{ if (ses&&ses.gen===gen) newRound(); },2800); }
   }
@@ -105,7 +110,8 @@ const fallingMatch = (() => {
       over:board=>{ if (!ses) return; ses.lastOver=pl; if (ses.mode==='online') progress(ses.id); else roundEnd(); refresh(); },
       locked:()=>{ if (ses?.mode==='online'&&pl.me) progress(ses.id); },
       score:board=>{ const e=$('#fbs'+i); if (e) countScore(e,board.score); },
-      next:board=>paintNext(pl,i),
+      next:board=>{ paintNext(pl,i); paintHold(pl,i); },
+      hold:board=>paintHold(pl,i),
       notice:board=>paintNotice(pl,i),
       chainText:(board,n,x,y)=>chainText(n,x,y,board.c),
       allClear:board=>{ const r=FFX.rel(board.view); chainText(0,r.x+r.w/2,r.y+r.h*.4,board.c,'全消し!'); },
@@ -142,6 +148,10 @@ const fallingMatch = (() => {
     const list=pl.board?pl.board.next:g.decodeNext(pl.remote?.next);
     el.innerHTML=g.nextHtml(list,sz.nc,pl.me?'right':'left','fnx'+i);
   }
+  function paintHold(pl, i) {
+    const el=$('#fbh'+i); if (!el||!ses||!pl.board) return; const g=games[ses.id], sz=ses.layout?.sizes[i]; if (!sz||!g.holdHtml) return;
+    el.innerHTML=g.holdHtml(pl.board.holdK,sz.nc,pl.board.held);
+  }
   function paintNotice(pl, i) {
     const el=$('#fbg'+i); if (!el||!ses) return;
     const n=pl.board?pl.board.garbage:0, sz=ses.layout?.sizes[i];
@@ -166,14 +176,19 @@ const fallingMatch = (() => {
   const playerWidth = (id,c) => games[id].W*c+4+(id==='pakuris'?11:0)+nextWidth(id,c)+10;
   function sizesFor(id, n) {
     const g=games[id], mob=isMob(), H=g.H, k=n-1;
-    const aw=Math.max(260,(mob?window.innerWidth-24:window.innerWidth-340-44)), ah=Math.max(300,(mob?Math.min(window.innerHeight*.72,620):window.innerHeight-96));
+    /* スマホ: 画面の高さから、上の見出し・下の側板(共通)を引いた分に収める(スクロールしない)。はみ出したら mountViews で 1 段ずつ小さくする */
+    const aw=Math.max(260,(mob?window.innerWidth-24:window.innerWidth-340-44)), ah=Math.max(200,(mob?window.innerHeight-150-(ses?.shrink||0)*16:window.innerHeight-96));
     const cap=id==='bunyo'?46:30, fit=test=>{ for (let c=cap;c>6;c--) if (test(c)) return c; return 6; };
     const same=c=>({c,nc:c});
     if (n===1) return {mode:'solo',sizes:[same(fit(c=>playerWidth(id,c)<=aw&&H*c+90<=ah))]};
     if (!mob && n===2) { const c=fit(c=>2*playerWidth(id,c)+150+28<=aw&&H*c+90<=ah); return {mode:'duel',sizes:[same(c),same(c)]}; }
     const winH=44+28*n;
     if (mob) { // スマホ: 相手を上に小さく、自分を下に大きく
-      const c2=fit(c=>k*playerWidth(id,c)+14*(k-1)<=aw&&H*c<=ah*.3), c1=fit(c=>playerWidth(id,c)<=aw&&H*c+90<=ah);
+      /* 相手の盤・勝ち星の表・自分の盤を縦に積んで、全部が画面に収まる大きさにする */
+      /* 上の段: 相手の盤(つぎは出さない)と勝ち星の表を横に並べる。下: 自分の盤。全部が画面に収まる大きさにする */
+      const oppW=c=>g.W*c+4+(id==='pakuris'?11:0), winW=150, winHm=26+20*n;
+      const c2=fit(c=>k*oppW(c)+8*k+winW<=aw&&H*c<=ah*.26), oppH=Math.max(H*c2+4+40,winHm);
+      const c1=fit(c=>playerWidth(id,c)<=aw&&H*c+4+62+oppH+14<=ah);
       return {mode:'stack',sizes:[same(c1),...Array.from({length:k},()=>same(c2))]};
     }
     const c1=fit(c=>{ const c2=Math.floor(c*.5); return playerWidth(id,c)+k*playerWidth(id,c2)+14*(k-1)+22<=aw&&H*c+90<=ah&&H*c2+70+16+winH<=ah; });
@@ -198,7 +213,9 @@ const fallingMatch = (() => {
     const nextW=nextWidth(ses.id,c);
     const next=`<div class="fnext" id="fbn${i}" style="width:${nextW}px;${ses.id==='bunyo'?`margin-top:${Math.max(9,Math.round(c*.5))+4}px`:''}"></div>`;
     const tags=opts.tags?`<div class="ftags" id="fbt${i}"></div>`:'';
-    const side=`<div class="fside">${next}${tags}</div>`;
+    /* ホールド(パクリス・自分の盤だけ)。押してもホールドできる(スマホ) */
+    const hold=pl.me&&pl.board&&games[ses.id].holdHtml?`<button class="fnext fhold" id="fbh${i}" data-${ses.id}="hold" style="width:${nextW}px" aria-label="ホールド"></button>`:'';
+    const side=`<div class="fside">${hold}${next}${tags}</div>`;
     const col=`<div class="fcol">${notice}<div class="frow">${gauge}${board}</div>${under}</div>`;
     return `<div class="fplayer ${pl.me?'fme':''}">${opts.nextLeft?side+col:col+side}</div>`;
   }
@@ -212,8 +229,14 @@ const fallingMatch = (() => {
   }
   const currentWins = () => ses.mode==='online'?(boardMatch.state?.wins||{}):ses.wins;
   const currentTarget = () => ses.mode==='online'?(boardMatch.state?.target||2):ses.target;
+  /* 結果: 途中の回は盤の上に短く出す。終わった時はほかのゲームと同じ結果の画面(メニュー・もう一度) */
   function resultHtml() {
     const r=ses.result; if (!r) return '';
+    if (r.box) {
+      const on=ses.mode==='online', host=!on||netApi?.role==='host';
+      return extraResultLayer({title:r.title,sub:r.sub,exit:on?'data-extra-exit':`data-${ses.id}-exit`,again:r.again&&host?'data-falling-again':'',
+        wait:on&&!host?'ホストが次を始めるのを待っています':'',online:on});
+    }
     return `<div class="fresult" role="status"><b>${esc(r.title)}</b>${r.sub?`<span>${esc(r.sub)}</span>`:''}</div>`;
   }
   function sideHtml(id, on) {
@@ -223,7 +246,7 @@ const fallingMatch = (() => {
     if (ses.mode==='solo') status=ses.result?'ゲーム終了':'プレイ中';
     else if (ses.mode==='cpu') status=ses.result?(ses.matchOver?'対戦終了':'次の対戦へ'):`第${ses.round}戦`;
     else { const st=boardMatch.state; status=st?.finish?(st.matchOver?'対戦終了':'次の対戦へ'):(ses.players[0]?.board?`第${st?.round||1}戦`:'観戦中'); }
-    const again=ses.result?.again?`<button class="btn primary" data-falling-again>もう一度</button>`:'';
+    const again='';
     const keys=`<div class="panel fkeyhelp"><h3>操作</h3><div class="fkeys">${g.keyHelp.map(([k,t])=>`<span><kbd>${esc(k)}</kbd>${esc(t)}</span>`).join('')}</div></div>`;
     return playSide({seats,status:`<div class="status" id="fallStatus">${esc(status)}</div>`,actions:ruleButton(id)+again,on,content:keys});
   }
@@ -233,7 +256,7 @@ const fallingMatch = (() => {
     if (!ses) return '<div class="screen"></div>';
     const label=ses.mode==='online'?playMode(true):ses.mode==='cpu'?'CPU と対戦':playMode(false);
     queueMicrotask(()=>mountViews());
-    return `<div class="screen"><div class="stage fstage f-${id}" id="fallStage">
+    return `<div class="screen fit"><div class="stage fstage f-${id}" id="fallStage">
       ${playHeader(games[id].name,label,on?'data-extra-exit':`data-${id}-exit`)}
       ${arenaHtml()}${resultHtml()}
       ${playGear()}<canvas class="ffx" id="fallFx"></canvas><div class="cutlayer" id="cutlayer"></div></div>${sideHtml(id,on)}</div>`;
@@ -253,9 +276,11 @@ const fallingMatch = (() => {
       const view=$('#fbv'+i), frame=$('#fbf'+i), sz=ses.layout.sizes[i]; if (!view) return;
       if (pl.board) pl.board.mount(view,frame,sz.c,'fg'+i);
       else view.innerHTML=g.boardSvg(pl.remote?.board,sz.c,'fm'+i);
-      paintNext(pl,i); paintNotice(pl,i);
+      paintNext(pl,i); paintNotice(pl,i); paintHold(pl,i);
     });
     bindTouch($('#fbf0'));
+    /* スマホで盤がはみ出したら(機種で見出し・側板の高さが違う)、小さくして描き直す */
+    if (isMob() && (ses.shrink||0)<14 && stage.scrollHeight>stage.clientHeight+1) { ses.shrink=(ses.shrink||0)+1; refresh(); }
   }
   function refresh() {
     if (!ses) return; const scr=ses.mode==='online'?'extraPlay':ses.id+'Play';
@@ -268,34 +293,46 @@ const fallingMatch = (() => {
     const scr=ses.mode==='online'?'extraPlay':ses.id+'Play'; if (S.screen!==scr) return;
     const now=performance.now(), g=games[ses.id];
     for (const pl of ses.players) { const b=pl.board; if (!b||b.over||b.stopped) continue;
-      const ms=g.interval*(ses.mode==='online'?1:ses.speed);
+      /* 早送り(↓を押したまま・スマホは長押し): 速く落とす。底に着いた後の 1 拍はそのまま(パクリスの tick) */
+      const base=g.interval*(ses.mode==='online'?1:ses.speed), ms=b.fast?Math.min(base,FAST_MS):base;
       if (!b.nextAt) { b.nextAt=now+ms; continue; }
+      if (b.nextAt>now+ms) b.nextAt=now+ms;
       if (now>=b.nextAt) { b.nextAt=now+ms; b.tick(); } }
   }, 40);
+  const FAST_MS = 40;
   const myBoard = id => ses && ses.id===id && ses.players[0]?.me ? ses.players[0].board : null;
   const activeFor = id => ses && ses.id===id && (S.screen===id+'Play' || (S.screen==='extraPlay' && boardMatch.state?.game===id));
   function key(id, k) {
     if (!activeFor(id)) return false;
     if (k==='Enter') { if (ses.result?.again) { again(); return true; } return false; }
     const a=games[id].keys[k]; if (!a) return false;
-    const b=myBoard(id); if (b && !b.over) { games[id].act(b,a); if (a==='down') b.nextAt=performance.now()+games[id].interval*(ses.mode==='online'?1:ses.speed); }
+    const b=myBoard(id); if (b && !b.over) {
+      if (a==='down'&&games[id].fastDrop) { if (!b.fast) { b.fast=true; b.tick(); b.nextAt=performance.now()+FAST_MS; } return true; }
+      games[id].act(b,a); if (a==='down') b.nextAt=performance.now()+games[id].interval*(ses.mode==='online'?1:ses.speed); }
     return true;
   }
+  /* ↓を離したら早送りをやめる */
+  window.addEventListener('keyup',e=>{ if (e.key!=='ArrowDown'||!ses) return; const b=myBoard(ses.id); if (b) b.fast=false; });
+  window.addEventListener('blur',()=>{ const b=ses&&myBoard(ses.id); if (b) b.fast=false; });
   function action(id, a) { if (!activeFor(id)) return; const b=myBoard(id); if (a==='again') return again(); if (b&&!b.over) games[id].act(b,a); }
   function bindTouch(el) {
     if (!el || el._touch) return; el._touch=true; let s=null;
-    el.addEventListener('pointerdown',e=>{ if (e.pointerType==='mouse') return; s={x:e.clientX,y:e.clientY,t:performance.now(),mx:0,moved:false}; el.setPointerCapture?.(e.pointerId); });
+    /* 長押し(動かさずに 0.25 秒): 押している間は早送りで落とす。上へはらう: ホールド(パクリス) */
+    const endFast=()=>{ clearTimeout(s?.timer); const b=ses&&myBoard(ses.id); if (b) b.fast=false; };
+    el.addEventListener('pointerdown',e=>{ if (e.pointerType==='mouse') return; s={x:e.clientX,y:e.clientY,t:performance.now(),mx:0,moved:false,long:false}; el.setPointerCapture?.(e.pointerId);
+      const st=s; st.timer=setTimeout(()=>{ if (s!==st||st.moved||!ses) return; const b=myBoard(ses.id); if (!b||b.over) return; st.long=true; b.fast=true; b.nextAt=performance.now(); },250); });
     el.addEventListener('pointermove',e=>{ if (!s||!ses) return; const b=myBoard(ses.id), c=ses.layout?.sizes[0]?.c||20; if (!b) return;
       const dx=e.clientX-s.x, steps=Math.trunc(dx/c)-s.mx;
       for (let i=0;i<Math.abs(steps);i++) games[ses.id].act(b,steps>0?'right':'left');
       if (steps) { s.mx+=steps; s.moved=true; } });
-    el.addEventListener('pointerup',e=>{ if (!s||!ses) return; const b=myBoard(ses.id), dy=e.clientY-s.y, dt=performance.now()-s.t, c=ses.layout?.sizes[0]?.c||20;
-      if (b) { if (dy>c*2.5&&dt<450) games[ses.id].act(b,'drop'); else if (!s.moved&&Math.abs(dy)<c*.6&&dt<300) { const r=el.getBoundingClientRect(); games[ses.id].act(b,e.clientX<r.left+r.width*.35?'rotateL':'rotate'); } }
+    el.addEventListener('pointerup',e=>{ if (!s||!ses) return; endFast(); const b=myBoard(ses.id), dy=e.clientY-s.y, dt=performance.now()-s.t, c=ses.layout?.sizes[0]?.c||20;
+      if (b&&!s.long) { if (dy>c*2.5&&dt<450) games[ses.id].act(b,'drop'); else if (dy<-c*2.5&&dt<450&&games[ses.id].holdHtml) games[ses.id].act(b,'hold');
+        else if (!s.moved&&Math.abs(dy)<c*.6&&dt<300) { const r=el.getBoundingClientRect(); games[ses.id].act(b,e.clientX<r.left+r.width*.35?'rotateL':'rotate'); } }
       s=null; });
-    el.addEventListener('pointercancel',()=>{ s=null; });
+    el.addEventListener('pointercancel',()=>{ endFast(); s=null; });
   }
   let resizeTimer;
-  window.addEventListener('resize',()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ if (ses) refresh(); },180); },{passive:true});
+  window.addEventListener('resize',()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ if (ses) { ses.shrink=0; refresh(); } },180); },{passive:true});
 
   /* ------------------------------------------------ みんなで遊ぶ(部屋の対戦) */
   function seatPlayer(seat) {
@@ -353,7 +390,7 @@ const fallingMatch = (() => {
           for (const pl of ses.players) pl.board?.stop();
           const w=state.seats.find(p=>p.id===state.winner), meWin=state.winner===boardMatch.myId();
           meWin?FSND.win():FSND.lose();
-          ses.result={title:`${meWin?'あなた':w?.name||''}の${state.matchOver?'優勝!':'勝ち'}`,sub:state.matchOver?'':'次の対戦へ…'};
+          ses.result={title:`${meWin?'あなた':w?.name||''}の${state.matchOver?'優勝!':'勝ち'}`,sub:state.matchOver?'':'次の対戦へ…',box:!!state.matchOver,again:!!state.matchOver};
           if (state.matchOver===false && netApi?.role==='host') { clearTimeout(nextRoundTimer); const r=state.round; nextRoundTimer=setTimeout(()=>{ if (boardMatch.state?.round===r&&boardMatch.state.finish) boardMatch.send('nextRound',{round:r}); },3000); }
         }
       },
@@ -397,8 +434,18 @@ const fallingMatch = (() => {
     clearTimeout(timer); timer=setTimeout(()=>report(id),150);
   }
 
+  /* 戻る: 遊んでいる途中なら確かめる(終わった後・まだ何も置いていない時はそのまま) */
+  function exit(id) {
+    const leave=()=>{ closeSheet(); stopSession(); go('menu'); };
+    if (!ses||ses.id!==id||ses.mode==='online'||(ses.result&&ses.result.box)) return leave();
+    const me=ses.players[0]?.board, started=me&&(me.score>0||me.pieceId>1||me.pairId>1);
+    if (!started&&ses.round<=1) return leave();
+    setTimeout(focusPrimary,0);
+    openSheet('<h2>対局を終了しますか</h2><p>途中の対局は保存されません。</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="fallLeave">終了する</button></div>');
+    $('#fallLeave').onclick=leave;
+  }
   function register(game) { games[game.id]=game; bind(game.id); }
   function leave() { stopSession(); }
-  return {register, setup, setupHtml, setOption, start, playHtml, key, action, again, leave, progress,
+  return {register, setup, setupHtml, setOption, start, playHtml, key, action, again, leave, progress, exit,
     linked:id=>boardMatch.state?.game===id, get session(){ return ses; }};
 })();

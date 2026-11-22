@@ -225,10 +225,17 @@ const mineVersus = (() => {
     const side = playSide({seats:'<div class="seats" id="duelSeats"></div>',
       status:'<div class="status" id="duelStatus">安全なマスを開いてください</div>',
       actions:ruleButton('mine'),on:true,content:'<div id="duelTools"></div>'});
-    return `<div class="screen"><div class="stage mine-duel">
+    return `<div class="screen fit"><div class="stage mine-duel">
       ${playHeader('マインスイーパー','みんなで遊ぶ・対戦','data-extra-exit')}
       <div class="mine-boardwrap" style="--mine-cols:${level(state.level).w};--mine-rows:${level(state.level).h}"><div class="mine-board" id="duelBoard"></div><button class="mine-zoom" data-mine-zoomreset hidden aria-label="拡大を戻す"></button></div>
-      <div class="mine-foot" id="duelInfo"></div>${playGear()}<div class="cutlayer" id="cutlayer"></div></div>${side}</div>`;
+      <div class="mine-foot" id="duelInfo"></div>${playGear()}<div class="cutlayer" id="cutlayer"></div>${extraResultLayer(resultFor===state.id&&state.finish?resultBox(state):null)}</div>${side}</div>`;
+  }
+  // 終わった後の画面(順位・タイム、もう一度・部屋に戻る)
+  let resultFor=null;
+  function resultBox(state){
+    const me=boardMatch.myId(),host=netApi?.role==='host',t0=state.roundStart||0;
+    const rank=`<ol class="rrank">${state.ranking.map((id,i)=>{const q=state.seats.find(v=>v.id===id);return `<li class="${id===me?'me':''}"><b>${i+1}位</b><span>${esc(q?.name||'')}</span><em class="num">${q?.done?Math.max(0,(q.done-t0)/1000).toFixed(1)+'秒':q?.percent+'%'}</em></li>`;}).join('')}</ol>`;
+    return {title:'対戦終了',rank,exit:'data-extra-exit',again:host?'data-mine-vs-start':'',wait:host?'':'ホストが次を始めるのを待っています',online:true};
   }
   function draw(state){
     const element=$('#duelBoard');if(!element)return;
@@ -243,6 +250,7 @@ const mineVersus = (() => {
       origin:performance.now()-lastTap.at<800?lastTap.cell:-1});
     minesGame.mountZoom(cell=>boardMatch.send('flag',{cell:+cell.dataset.extraMine}));
     $('#duelInfo').textContent=`⚑ ${watched.left}　 ${p?.points||0} pt　 ${frozen?'凍結 '+frozen+'秒':fogged?'霧 '+fogged+'秒':state.notice||''}`;
+    if(state.finish&&resultFor!==state.id){resultFor=state.id;setExtraResult(resultBox(state),1200);}
     if(state.finish)$('#duelInfo').textContent=state.ranking.map((id,i)=>`${i+1}位 ${state.seats.find(q=>q.id===id)?.name}`).join(' ／ ');
     $('#duelStatus').textContent=state.finish?'対戦終了':!p?'観戦中':p.done?'クリア！':frozen?'凍結中':state.notice||'安全なマスを開いてください';
     const side=$('#duelSeats');if(side.dataset.version!==String(state.version)){

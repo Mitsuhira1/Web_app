@@ -2438,8 +2438,8 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 
 /* スライドパズル */
 .slide-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.slide-choices button{display:grid;justify-items:center;gap:8px;padding:12px;background:var(--surface2);border:3px solid transparent;border-radius:16px;font-weight:900}.slide-choices button[aria-pressed=true]{border-color:var(--gold)}.slide-choice-art{display:block;aspect-ratio:1;width:min(100%,260px);border:6px solid #7a4b26;border-radius:10px;overflow:hidden;background:#24160b}.slide-choice-art img{width:100%;height:100%;object-fit:cover}.slide-nums{display:grid;grid-template-columns:repeat(var(--slide-n),1fr);gap:3px;padding:3px}.slide-nums span{display:grid;place-items:center;border-radius:4px;background:linear-gradient(155deg,#f7e4bd,#e6c48c 55%,#cfa262);box-shadow:inset 1px 1px 0 #fff7,inset -1.5px -1.5px 0 #6b411a55;color:#5a3816;font-weight:900;font-size:clamp(10px,1.5vw,22px)}.slide-nums span:last-child{background:none;box-shadow:none}
-.slide-stage .boardwrap{padding:18px}.slide-board{position:relative;width:min(100cqw,calc(100cqh - 36px));aspect-ratio:1;container-type:size;--g:3.5px;border:13px solid transparent;border-radius:16px;background:radial-gradient(ellipse at 50% 40%,#3a2515,#21140a) padding-box,linear-gradient(135deg,#a8703c,#6e4220 45%,#8e5c2f 70%,#5a3418) border-box;box-shadow:0 12px 24px #0007,inset 0 4px 12px #000c,inset 0 0 0 1.5px #1a0d05}.slide-board::before{content:"";position:absolute;inset:-13px;border-radius:16px;background:var(--grain);background-size:100% 300px;opacity:.55;mix-blend-mode:multiply;pointer-events:none}.slide-board::after{content:"";position:absolute;inset:-13px;border-radius:16px;box-shadow:inset 1.5px 1.5px 0 #ffe2b04d,inset -1.5px -1.5px 0 #0006;pointer-events:none}.slide-tile{position:absolute;display:grid;place-items:center;padding:0;border:0;background:none;transition:left .18s ease-out,top .18s ease-out}.slide-face{position:absolute;inset:var(--g);border-radius:6px;background-size:100cqw 100cqh;box-shadow:inset 2px 2px 0 #ffffff66,inset -2px -2px 0 #0005,0 4px 6px #000b,0 1px 1px #000a;pointer-events:none}.slide-tile.number .slide-face{border-radius:8px;background:var(--grain) 0 0/160% 900px,linear-gradient(155deg,#f7e4bd,#e6c48c 55%,#cfa262);background-blend-mode:soft-light,normal;box-shadow:inset 2px 2px 0 #fff7,inset -3px -3px 0 #6b411a55,0 4px 6px #000b,0 1px 1px #000a}.slide-tile span{position:absolute;z-index:1;right:calc(var(--g) + 5px);bottom:calc(var(--g) + 4px);min-width:2em;padding:1px 4px;text-align:center;font-size:max(11px,calc(11cqw / var(--slide-n)));font-weight:900;background:#f3dfb6;color:#5a3816;border-radius:99px;box-shadow:0 1px 2px #0007}.slide-tile.number span{position:relative;right:auto;bottom:auto;min-width:0;padding:0;background:none;box-shadow:none;border-radius:0;font-size:calc(46cqw / var(--slide-n));color:#5a3816;text-shadow:0 1.5px 0 #fff9,0 -1px 0 #6a3f1a66}.slide-under{text-align:center;padding:8px;color:var(--sub);font-weight:800}
-@media(max-width:920px){.slide-stage{flex:none;min-height:auto;padding-bottom:64px}.slide-stage .boardwrap{flex:none;height:min(calc(100vw - 36px),65vh);aspect-ratio:auto;padding:10px}.slide-board{width:min(100cqw,100cqh)}.slide-choices{gap:8px}.slide-choices button{padding:6px}}
+.slide-stage .boardwrap{padding:18px}.slide-board{position:relative;width:min(100cqw,calc(100cqh - 36px));aspect-ratio:1;container-type:size;--g:3.5px;border:13px solid transparent;border-radius:16px;background:radial-gradient(ellipse at 50% 40%,#3a2515,#21140a) padding-box,linear-gradient(135deg,#a8703c,#6e4220 45%,#8e5c2f 70%,#5a3418) border-box;box-shadow:0 12px 24px #0007,inset 0 4px 12px #000c,inset 0 0 0 1.5px #1a0d05}.slide-board::before{content:"";position:absolute;inset:-13px;border-radius:16px;background:var(--grain);background-size:100% 300px;opacity:.55;mix-blend-mode:multiply;pointer-events:none}.slide-board::after{content:"";position:absolute;inset:-13px;border-radius:16px;box-shadow:inset 1.5px 1.5px 0 #ffe2b04d,inset -1.5px -1.5px 0 #0006;pointer-events:none}.slide-tile{position:absolute;left:0;top:0;display:grid;place-items:center;padding:0;border:0;background:none;transition:transform .18s ease-out;will-change:transform;contain:layout paint}.slide-face{position:absolute;inset:var(--g);border-radius:6px;background-size:100cqw 100cqh;box-shadow:inset 2px 2px 0 #ffffff66,inset -2px -2px 0 #0005,0 4px 6px #000b,0 1px 1px #000a;pointer-events:none}.slide-tile.number .slide-face{border-radius:8px;background:var(--grain) 0 0/160% 900px,linear-gradient(155deg,#f7e4bd,#e6c48c 55%,#cfa262);background-blend-mode:soft-light,normal;box-shadow:inset 2px 2px 0 #fff7,inset -3px -3px 0 #6b411a55,0 4px 6px #000b,0 1px 1px #000a}.slide-tile span{position:absolute;z-index:1;right:calc(var(--g) + 5px);bottom:calc(var(--g) + 4px);min-width:2em;padding:1px 4px;text-align:center;font-size:max(11px,calc(11cqw / var(--slide-n)));font-weight:900;background:#f3dfb6;color:#5a3816;border-radius:99px;box-shadow:0 1px 2px #0007}.slide-tile.number span{position:relative;right:auto;bottom:auto;min-width:0;padding:0;background:none;box-shadow:none;border-radius:0;font-size:calc(46cqw / var(--slide-n));color:#5a3816;text-shadow:0 1.5px 0 #fff9,0 -1px 0 #6a3f1a66}.slide-under{text-align:center;padding:8px;color:var(--sub);font-weight:800}
+@media(max-width:920px){.slide-stage .boardwrap{flex:1 1 0;min-height:0;height:auto;aspect-ratio:auto;padding:10px}.slide-board{width:min(100cqw,100cqh)}.slide-choices{gap:8px}.slide-choices button{padding:6px}}
 /* ぶにょぶにょ */
 .bunyo-art{display:grid;place-items:center;width:100%;height:100%;background:linear-gradient(145deg,#574da8,#302269);color:#72d4b7;font-size:clamp(32px,6vw,70px);letter-spacing:-.35em;padding-right:.35em;text-shadow:0 4px #24805f}.bunyo-stage{position:relative;background:linear-gradient(#27285c,#553191);align-items:center}.bunyo-stage .stagehead{width:100%;color:white}.bunyo-board{display:grid;grid-template-columns:repeat(6,1fr);width:min(52vh,72%);aspect-ratio:1/2;background:#242352;border:5px solid #8e82c7;border-radius:9px;box-shadow:0 7px 18px #0007;overflow:hidden}.bunyo-slot{display:grid;place-items:center;min-width:0;min-height:0;border:1px solid #ffffff16}.bunyo-piece{width:96%;height:96%;position:relative;border-radius:45% 45% 42% 42%;box-shadow:inset -5px -8px 9px #0004,inset 4px 6px 7px #fff7,0 2px 4px #0006;animation:bunyoLand .15s ease-out}.bunyo-piece.red{background:#f44c65}.bunyo-piece.blue{background:#4d98f6}.bunyo-piece.green{background:#5cdd76}.bunyo-piece.yellow{background:#fbd250}.bunyo-piece.purple{background:#bd76e4}.bunyo-piece.garbage{background:#aeb3c2}.bunyo-piece .eyes{position:absolute;display:flex;justify-content:center;gap:3px;left:25%;right:25%;top:31%;height:30%}.bunyo-piece .eyes>i{width:45%;height:100%;background:white;border-radius:50%;box-shadow:inset -1px -2px 2px #ddd}.bunyo-piece .eyes>i:after{content:'';display:block;width:36%;height:44%;background:#273255;border-radius:50%;margin:42% auto 0}.bunyo-next{display:flex;gap:5px;justify-content:center;height:72px}.bunyo-next .bunyo-piece{width:56px;height:56px}.bunyo-controls{display:flex;gap:12px;margin:12px auto 65px}.bunyo-controls button{width:50px;height:44px;border-radius:10px;background:#f7f3ff;color:#34276f;font-size:23px;font-weight:900}.bunyo-over{position:absolute;inset:30% 10% auto;background:#312b68ee;color:white;padding:30px;text-align:center;border-radius:14px;font-size:24px;font-weight:900}@keyframes bunyoLand{from{transform:scaleY(.65)}to{transform:scaleY(1)}}
 @media(max-width:920px){.bunyo-stage{flex:none;min-height:auto}.bunyo-board{width:min(70vw,360px)}.bunyo-controls{margin-bottom:65px}.bunyo-stage .play-settings{bottom:12px}}
@@ -2518,7 +2518,8 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .mine-levels button:disabled{opacity:.45}
 .mine-shape{display:grid;place-items:center;width:100%;height:46px}.mine-shape i{display:block;background:var(--ml-hidden);border-radius:3px}
 .mine-levels b{font-size:15px}.mine-levels small{font-size:11px;color:var(--sub)}.mine-levels small.best{color:#8a4b00;font-weight:800}
-@media(max-width:920px){.mine-stage{flex:none;min-height:auto}.mine-boardwrap{flex:none;height:min(66vh,calc(100vw * var(--mine-rows,8) / var(--mine-cols,10) + 40px));min-height:240px}.mine-foot{padding:8px 18px 60px}.mine-levels{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:920px){.mine-levels{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mine-tapseg{display:none}
 
 /* 人狼は共通パネルと同じ幅を左右に使う。会話欄は中央に確保する。 */
 .wolf-screen { --wolf-side:340px; }
@@ -3187,3 +3188,39 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
    拡大して見せる盤(.twelve-scene)は、細かい画像(@2x・@3x)を縮めて使う(css/twelve.css。にじませないと格子の模様が出る)。 */
 :is(.cell,.feltin,.cardtable,.felt-table,.mjtable,.ytray,.ytray-in,.poet-table,.poet-card.back):not(.twelve-scene *){image-rendering:pixelated}
 :is(.cell,.feltin,.cardtable,.felt-table,.mjtable,.ytray,.ytray-in,.poet-table,.poet-card.back):not(.twelve-scene *)>*{image-rendering:auto}
+
+/* ---- スマホ: スクロールしない対局画面(.screen.fit。マインスイーパー・スライドパズル・ぶにょぶにょ・パクリス)
+   画面の高さに収め、盤が残りいっぱいに広がる。右の側板(共通)は下に小さくまとめる(札・案内・ボタン)。 */
+@media (max-width:680px), (max-width:960px) and (max-height:540px){
+  html:has(.screen.fit),body:has(.screen.fit){height:100dvh;min-height:100dvh;overflow:hidden;overscroll-behavior:none}
+  body:has(.screen.fit) .app{flex:1 1 0;min-height:0;overflow:hidden}
+  .screen.fit{flex:1 1 0;min-height:0;height:100%;overflow:hidden;flex-direction:column}
+  .screen.fit>.stage{flex:1 1 0;min-height:0;overflow:hidden;padding-bottom:4px}
+  .screen.fit>.side{flex:none;max-height:32dvh;overflow-y:auto;overscroll-behavior:contain;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px;padding:6px max(10px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+  .screen.fit>.side>.seats{width:100%;display:flex;flex-direction:row;flex-wrap:wrap;gap:4px}
+  .screen.fit>.side>.seats .seat{flex:1 1 30%;min-width:0;min-height:0;padding:3px 10px;gap:6px;font-size:13px}
+  .screen.fit>.side>.status{flex:1 1 150px;min-width:0;min-height:34px;padding:4px 10px;font-size:12.5px;display:flex;align-items:center}
+  .screen.fit>.side>.ops{display:flex;flex-wrap:nowrap;gap:6px;flex:0 1 auto}
+  .screen.fit>.side>.ops .btn{width:auto;height:34px;padding:0 10px;font-size:12.5px}
+  .screen.fit>.side>.panel,.screen.fit>.side>.fkeyhelp{display:none}
+  .screen.fit>.side>.online-ops{width:100%;display:flex;flex-wrap:wrap;gap:6px}
+  .screen.fit>.side>.online-ops .btn{width:auto;height:34px;font-size:12.5px}
+  .screen.fit>.side .chat{width:100%}
+  /* マインスイーパー: MineLink と同じ並び(上に旗の数・時間、盤が残りいっぱい、下に 開く/旗) */
+  .mine-stage .stagehead{order:0}
+  .mine-stage .mine-foot{order:1;padding:0 0 4px;font-size:18px;justify-content:center;gap:28px}
+  .mine-stage .mine-foot #minePercent{display:none}
+  .mine-stage .mine-boardwrap{order:2;flex:1 1 0;min-height:0;height:auto}
+  .mine-stage .mine-tapseg{order:3;display:block;padding:6px 0 2px}
+  .mine-tapseg .seg{display:flex;width:100%}
+  .mine-tapseg .seg button{flex:1;height:44px;font-size:15px}
+  .mine-duel .mine-boardwrap{flex:1 1 0;min-height:0;height:auto}
+  .mine-board{--cell:calc(min(calc((100cqw - 6px) / var(--mine-cols)),calc((100cqh - 6px) / var(--mine-rows))) * var(--zs,1))}
+  .mine-duel .mine-foot{padding:4px 0}
+  .mine-stage .mine-zoom{bottom:6px}
+  .screen.fit .poet-table{flex:1 1 0;height:auto;min-height:0}
+  .screen.fit>.side>.seats .seat .avatar{width:24px;height:24px;font-size:12px}
+}
+
+/* 引っぱって読み込み直す(プルトゥリフレッシュ)を全画面で止める(ユーザーの指示 2026-11-22)。スクロールはそのまま */
+html,body{overscroll-behavior-y:none}

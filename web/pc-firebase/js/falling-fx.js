@@ -86,7 +86,7 @@ const FSND = (() => {
 
 /* ---------------------------------------------------------------- 光と粒(舞台に重ねたキャンバス) */
 const FFX = (() => {
-  let cv, cx, dpr=1, items=[], host=null;
+  let cv, cx, dpr=1, items=[], host=null, drew=false;
   function attach(canvas) { cv=canvas; cx=cv.getContext('2d'); host=cv.parentElement; items=[]; resize(); }
   function resize() { if(!cv) return; const r=host.getBoundingClientRect(); dpr=Math.min(2,window.devicePixelRatio||1);
     cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr)); }
@@ -94,7 +94,9 @@ const FFX = (() => {
   function clear() { items=[]; }
   function loop(now) {
     if (cv && cv.isConnected) {
-      cx.setTransform(dpr,0,0,dpr,0,0); cx.clearRect(0,0,cv.width,cv.height);
+      /* 何も描いていない時は消し直さない(毎フレーム画面いっぱいの絵を送り直さない。スマホで重かった) */
+      if (items.length||drew) { cx.setTransform(dpr,0,0,dpr,0,0); cx.clearRect(0,0,cv.width,cv.height); }
+      drew=items.length>0;
       items=items.filter(o=>{ const t=(now-o.t0)/o.dur; if(t<0) return true; if(t>=1){ o.end&&o.end(); return false; } o.draw(cx,t,(now-o.t0)/1000); return true; });
     } else if (items.length) { items.forEach(o=>o.end&&o.end()); items=[]; }
     requestAnimationFrame(loop);
@@ -206,7 +208,7 @@ const toWhite = (hex,k) => { const n=parseInt(hex.slice(1),16), m=v=>Math.round(
 function bunyoSvg(st,c,fid,W=6,H=12) {
   const layers=new Map(), now=performance.now(); let faces='', top='';
   const L=(key,fill)=>{ if(!layers.has(key)) layers.set(key,{fill,items:[]}); return layers.get(key).items; };
-  const at=(x,y)=>(y>=0&&y<H&&x>=0&&x<W)?st.cells[y][x]:null;
+  const at=(x,y)=>(y>=0&&y<H&&x>=0&&x<W)?(st.cells[y]?.[x]??null):null;
   const popMode=(x,y)=>st.pop&&st.pop.set.has(y*W+x)?st.pop.mode:null;
   for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
     const k=at(x,y); if(!k) continue; const pm=popMode(x,y); if(pm==='off') continue;
@@ -218,7 +220,7 @@ function bunyoSvg(st,c,fid,W=6,H=12) {
     if (k!=='n') { const same=(xx,yy)=>at(xx,yy)===k&&popMode(xx,yy)!=='off'&&(popMode(xx,yy)==='white')===white;
       if (same(x+1,y)) items.push(`<rect x="${px}" y="${py-c*.26}" width="${c}" height="${c*.52}"/>`);
       if (same(x,y+1)) items.push(`<rect x="${px-c*.26}" y="${py}" width="${c*.52}" height="${c}"/>`); }
-    if (st.preview&&st.preview.has(i)&&!pm) faces+=bunyoRim(px,py,c,.5+.5*Math.sin(now/110));
+    if (!st.noRim&&st.preview&&st.preview.has(i)&&!pm) faces+=bunyoRim(px,py,c,.5+.5*Math.sin(now/110));
     faces+=bunyoFace(px,py,c,sx,sy,k,white);
   }
   for (const f of st.fallers||[]) {
@@ -230,10 +232,10 @@ function bunyoSvg(st,c,fid,W=6,H=12) {
   }
   if (st.pair) {
     const p=st.pair, ax=(p.x+.5)*c, ay=(p.y+.5)*c, sx2=ax+Math.sin(p.ang)*c, sy2=ay-Math.cos(p.ang)*c;
-    for (const m of st.markers||[]) top+=`<circle cx="${(m.x+.5)*c}" cy="${(m.y+.72)*c}" r="${c*.13}" fill="${BUNYO_COLORS[m.k][0]}" stroke="#fff" stroke-width="${c*.04}" opacity="${(.65+.3*Math.sin(now/120)).toFixed(2)}"/>`;
+    if (!st.noRim) for (const m of st.markers||[]) top+=`<circle cx="${(m.x+.5)*c}" cy="${(m.y+.72)*c}" r="${c*.13}" fill="${BUNYO_COLORS[m.k][0]}" stroke="#fff" stroke-width="${c*.04}" opacity="${(.65+.3*Math.sin(now/120)).toFixed(2)}"/>`;
     /* 軸の粒は、中の色はそのままで、ふちだけが白く光る(動画と同じ)。明るさがゆっくり波打つ */
     const glow=.5+.5*Math.sin(now/110), same=p.a===p.b, ka='PA', kb=same?ka:'PB';
-    const rim=bunyoRim(ax,ay,c,glow);
+    const rim=st.noRim?'':bunyoRim(ax,ay,c,glow);
     L(ka,BUNYO_COLORS[p.a][0]).push(`<path d="${BUNYO_SHAPE}" transform="${bunyoTf(ax,ay,c)}"/>`);
     L(kb,BUNYO_COLORS[p.b][0]).push(`<path d="${BUNYO_SHAPE}" transform="${bunyoTf(sx2,sy2,c)}"/>`);
     if (same) L(ka).push(`<path d="M${ax} ${ay} L${sx2} ${sy2}" stroke="${BUNYO_COLORS[p.a][0]}" stroke-width="${c*.52}"/>`);
@@ -241,6 +243,14 @@ function bunyoSvg(st,c,fid,W=6,H=12) {
   }
   let body=''; for (const {fill,items} of layers.values()) body+=`<g filter="url(#${fid})" fill="${fill}">${items.join('')}</g>`;
   return `<svg data-bunyo width="${W*c}" height="${H*c}" viewBox="0 0 ${W*c} ${H*c}" overflow="visible"><defs>${bunyoFilter(fid,c)}</defs>${body}${faces}${top}</svg>`;
+}
+/* 光る印だけ(落ちる所の印・消える粒のふち・軸の粒のふち)。フィルターを使わないので、毎フレーム描いても軽い */
+function bunyoOverlay(st,c,W=6,H=12) {
+  const now=performance.now(), glow=.5+.5*Math.sin(now/110); let s='';
+  if (st.preview) for (const i of st.preview) s+=bunyoRim((i%W+.5)*c,(Math.floor(i/W)+.5)*c,c,glow);
+  for (const m of st.markers||[]) s+=`<circle cx="${(m.x+.5)*c}" cy="${(m.y+.72)*c}" r="${c*.13}" fill="${BUNYO_COLORS[m.k][0]}" stroke="#fff" stroke-width="${c*.04}" opacity="${(.65+.3*Math.sin(now/120)).toFixed(2)}"/>`;
+  if (st.pair) s+=bunyoRim((st.pair.x+.5)*c,(st.pair.y+.5)*c,c,glow);
+  return s?`<svg width="${W*c}" height="${H*c}" viewBox="0 0 ${W*c} ${H*c}" overflow="visible">${s}</svg>`:'';
 }
 const bunyoPairSvg = (a,b,c,fid) => bunyoSvg({cells:[[b],[a]]},c,fid,1,2);
 
