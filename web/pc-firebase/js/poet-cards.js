@@ -34,8 +34,9 @@ const poetCards = (() => {
   const all = hundredPoems.map((_,i)=>i);
   function setup(id,on=false) { online=on; go('poetSetup'); }
   // ローカルルール: himeBonus … 姫ボーナス(姫を引いた時に場札が無ければもう1枚引く。既定で有効)
-  // semi … 蝉丸を坊主と同じにするか、全員の札を場へ出すか / peek … めくれる札(各山の一番上)の坊主・姫の数を見せる
-  let preferences = {cpu:1, first:'player', himeBonus:'on', semi:'bozu', peek:'on', ...store.get('bozuSetup', {})};
+  // semi … 蝉丸を坊主と同じにするか、全員の札を場へ出すか
+  let preferences = {cpu:1, first:'player', himeBonus:'on', semi:'bozu', ...store.get('bozuSetup', {})};
+  delete preferences.peek; // 山札の一番上の坊主・姫の数を見せる設定は廃止した
   delete preferences.hime; // 以前の項目(既定が「そのまま」だった)は引き継がない
   const SEMIMARU = 9; // 10番 蝉丸
   const cpuDelay = {短い:1800, ふつう:2700, 長い:3700};
@@ -46,8 +47,7 @@ const poetCards = (() => {
       setupRow('CPUの手番の長さ', seg('bozu:pace', CPU_PACE_CHOICES, preferences.pace || 'inherit')));
     const deck = setupPanel('ルール', setupRow('山札', '<b>4つ・各25枚</b>') +
       setupRow('姫ボーナス', seg('bozu:himeBonus', [['on','あり'],['off','なし']], preferences.himeBonus)) +
-      setupRow('蝉丸', seg('bozu:semi', [['bozu','坊主と同じ'],['all','全員の札を場へ']], preferences.semi)) +
-      setupRow('めくれる札の坊主・姫', seg('bozu:peek', [['on','数を見せる'],['off','見せない']], preferences.peek)));
+      setupRow('蝉丸', seg('bozu:semi', [['bozu','坊主と同じ'],['all','全員の札を場へ']], preferences.semi)));
     return extraSetupLayout('bozu', online, people, deck, 'data-poet-start');
   }
   function setOption(key,value) {
@@ -55,7 +55,6 @@ const poetCards = (() => {
     if (key === 'first' && ['player','cpu','random'].includes(value)) preferences.first = value;
     if (key === 'pace' && CPU_PACE_CHOICES.some(([id])=>id===value)) preferences.pace=value;
     if (key === 'himeBonus' && ['on','off'].includes(value)) preferences.himeBonus = value;
-    if (key === 'peek' && ['on','off'].includes(value)) preferences.peek = value;
     if (key === 'semi' && ['bozu','all'].includes(value)) preferences.semi = value;
     store.set('bozuSetup', preferences);
     render();
@@ -74,13 +73,7 @@ const poetCards = (() => {
     const deck = shuffle(all);
     stacks = [0,1,2,3].map(i=>deck.slice(i*25,i*25+25));
     return {piles:[25,25,25,25],discard:0,field:[],turn,last:-1,finish:false,extra:false,
-      hime:round.hime==='off'?'off':'on', semi:round.semi==='all'?'all':'bozu', peek:round.peek==='off'?'off':'on', tops:topRoles()};
-  }
-  // 各山の一番上(次にめくれる札)にある坊主・姫の数。どの山かは知らせない。
-  function topRoles() {
-    const tops={bozu:0,hime:0};
-    for (const pile of stacks || []) if (pile.length) { const r=cardRole(pile[pile.length-1]); if (r in tops) tops[r]++; }
-    return tops;
+      hime:round.hime==='off'?'off':'on', semi:round.semi==='all'?'all':'bozu'};
   }
   function apply(state,action) {
     if (state.finish || !state.seats.some(p=>p.id===action.uid)) return false;
@@ -113,7 +106,6 @@ const poetCards = (() => {
       own(p).push(state.last);
     }
     state.finish=stacks.every(a=>!a.length);
-    state.tops=topRoles();
     // 姫を引いて場札が1枚も無かった時は、同じ人がもう1枚引く(続けて姫でも同じ)
     state.extra=role==='hime' && fieldBefore===0 && state.hime==='on' && !state.finish;
     if (!state.extra) state.turn=(state.turn+1)%state.seats.length;
@@ -199,15 +191,10 @@ const poetCards = (() => {
       ${canDraw && n ? '' : 'disabled'} aria-label="山札${i+1} 残り${n}枚">
       ${stack(n)}<b>${n}枚</b></button>`).join('');
     return `<div class="poet-piles${state.version === 0 ? ' dealing' : ''}" style="--row-depth:${stackDepth(Math.max(...state.piles,state.discard))}px">
-      <div class="poet-bank" role="group" aria-label="山札"><span class="poet-caption" aria-hidden="true">山札</span>${omen(state)}${piles}</div>
+      <div class="poet-bank" role="group" aria-label="山札"><span class="poet-caption" aria-hidden="true">山札</span>${piles}</div>
       <div class="poet-pot"><span class="poet-caption">場札</span>${stack(state.discard)}<b>${state.discard}枚</b></div></div>`;
   }
-  function omen(state) {
-    if (state.peek!=='on' || state.finish || !state.tops) return '';
-    const {bozu,hime}=state.tops;
-    return `<div class="poet-omen${bozu?' danger':''}" aria-live="polite" aria-label="めくれる札に 坊主${bozu}枚 姫${hime}枚">
-      <span class="bozu">坊主 <b>${bozu}</b>枚</span>・<span class="hime">姫 <b>${hime}</b>枚</span></div>`;
-  }
+
   // 卓の中での位置(画面の拡大率を戻した CSS ピクセル)
   function boxIn(table, el) {
     const t = table.getBoundingClientRect(), r = el.getBoundingClientRect(), zoom = t.width / table.offsetWidth || 1;
@@ -356,7 +343,7 @@ const poetCards = (() => {
       showOwn(reveal(drawer),state.last,before[drawer].score+1);
     });
     let end=duration;
-    const cutMs=role==='tono'||!S.set.cutin ? 0 : (semiAll?1400:1000)*SPEED()+(state.extra?1100:0)+300;
+    const cutMs=role==='tono'||!S.set.cutin ? 0 : (semiAll?1400:1000)*SPEED()+(state.extra||(role==='hime'&&prev.discard>0)?900*SPEED()+250:0)+300;
     const startAt=duration+cutMs+120;
     let streamMs=0;
     if(role==='bozu'){
@@ -422,7 +409,9 @@ const poetCards = (() => {
       // 筆文字・和の色(姫は桜色、坊主は墨色、蝉丸は古代紫)
       cut({text:semiAll?'蝉丸':roleName[role],sub:semiAll?'全員の札を場へ':'',font:'fude',
         tone:'wa-cut '+(semiAll?'murasaki':role==='bozu'?'sumi':'sakura'),ms:semiAll?1400:1000});
-      if(state.extra)setTimeout(()=>{ if(live())cut({text:'姫ボーナス',sub:'もう1枚',font:'fude',tone:'wa-cut sakura',ms:1000}); },1050);
+      // 姫の後: 場札があれば「+〇枚」、場札が無くてもう1枚引けるなら「もう一枚引く」(どちらも姫と同じ筆文字)
+      if(role==='hime' && prev.discard>0) cut({text:'+'+prev.discard+'枚',font:'fude',tone:'wa-cut sakura',ms:900});
+      if(state.extra) cut({text:'もう一枚引く',font:'fude',tone:'wa-cut sakura',ms:900});
     },duration);
   }
   function button(d) {
@@ -431,6 +420,6 @@ const poetCards = (() => {
   }
   const stop=()=>{clearTimeout(timer);stacks=null;shown=null;};
   boardMatch.register('bozu',{initial,apply,changed,html,draw,button,stop});
-  return {setup,setupHtml,setOption,start:()=>{const rules={hime:preferences.himeBonus,semi:preferences.semi,peek:preferences.peek};
+  return {setup,setupHtml,setOption,start:()=>{const rules={hime:preferences.himeBonus,semi:preferences.semi};
     return boardMatch.start('bozu',online,online?rules:{...preferences,...rules});},face};
 })();

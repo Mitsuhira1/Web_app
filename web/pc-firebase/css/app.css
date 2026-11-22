@@ -11,8 +11,6 @@
 @font-face{font-family:"Zen Antique";src:url(../fonts/ZenAntique.woff2) format("woff2")}
 /* Zen Antique に無い字(百人一首の札で使う 6 字)だけを足す */
 @font-face{font-family:"Zen Antique";src:url(../fonts/ZenAntique-Extra.woff2) format("woff2");unicode-range:U+7BC1,U+8EAC,U+5C91,U+66B9,U+6BB7,U+6763}
-/* 坊主めくりのカットイン用の筆文字(Yuji Boku から必要な字だけ) */
-@font-face{font-family:"Yuji Boku Fude";src:url(../fonts/YujiBoku-Bozu.woff2) format("woff2");font-display:block}
 /* 並べ方: 左に細い柱(タブと人数)、中央に広い棚か盤、右に側板。机の上の実物(生成り・くるみ・フェルト・金) */
 :root{
   --bg:#F3EFE6; --bg2:#EFEADF; --surface:#FFFDF8; --surface2:#F1EBDF; --line:#E2D9C8;
@@ -245,8 +243,10 @@ svg.stamp{width:30px;height:30px;display:block}
 
 /* ---- 質感(PC): 木目・フェルトの粒・ぼかした影・光沢 ---- */
 :root{
+ /* フェルトのざらつき(noise)は、前もって作った画像 assets/tex/noise*.webp を各所に直接書く(tools/build_textures.cjs。もとの SVG の数字もそこにある)。
+    敷き詰める(タイル)背景の SVG は、描き直すたびに雑音(feTurbulence)を計算し直していて重かった。CSS 変数に url() を入れると相対パスの基準がブラウザで変わるので変数にしない。
+    木目(grain)は SVG のまま: 盤いっぱいに引き伸ばして 1 枚だけ描くので、ブラウザがその大きさの画像として覚えて使い回す(画像にしても軽くならず、引き伸ばしの分むしろ重かった) */
  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .28' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .1 0 0 0 0 .03 1.700 0 0 0 -.55'/%3E%3C/filter%3E%3Crect width='600' height='400' filter='url(%23n)'/%3E%3C/svg%3E");
- --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0 0 0 -.16'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
  --stB:radial-gradient(circle at 34% 26%,#7d7d7d,#262626 36%,#060606 78%);
  --stW:radial-gradient(circle at 34% 26%,#ffffff,#f3efe3 48%,#bdb5a0);
 }
@@ -256,7 +256,7 @@ svg.stamp{width:30px;height:30px;display:block}
 .board,.table{position:relative;box-shadow:inset 0 2px 0 rgba(255,255,255,.2),inset 0 -3px 0 rgba(0,0,0,.28),var(--sh-board)}
 .board::before,.table::before,.sboard::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--grain);background-size:100% 380px;opacity:var(--grain-o);pointer-events:none;mix-blend-mode:multiply}
 .cells{position:relative;box-shadow:inset 0 4px 10px rgba(0,0,0,.55)}
-.cell{background:var(--noise),linear-gradient(135deg,#2F7252,#235b40);perspective:320px}
+.cell{background:-webkit-image-set(url("../assets/tex/noise.webp") 1x,url("../assets/tex/noise@2x.webp") 2x),linear-gradient(135deg,#2F7252,#235b40);perspective:320px}
 .stone{position:relative;box-shadow:var(--sh-piece),inset 0 -2px 3px rgba(0,0,0,.35)}
 .stone::after{content:"";position:absolute;left:16%;top:9%;width:44%;height:26%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.95),transparent);opacity:var(--gloss);transform:rotate(-28deg)}
 .stone.b{background:var(--stB);--from:var(--stW);--to:var(--stB)}
@@ -266,7 +266,7 @@ svg.stamp{width:30px;height:30px;display:block}
 @keyframes flipBg{0%,49.900%{background:var(--from)}50%,100%{background:var(--to)}}
 .stone.drop{animation:drop .34s cubic-bezier(.3,1.5,.5,1) both}
 @keyframes drop{from{transform:translateY(-38%) scale(1.3);opacity:0;box-shadow:var(--sh-lift)}}
-.feltin{background:var(--noise),radial-gradient(ellipse at 50% 38%,#34805b,#184530)!important;box-shadow:inset 0 6px 18px rgba(0,0,0,.5)}
+.feltin{background:-webkit-image-set(url("../assets/tex/noise.webp") 1x,url("../assets/tex/noise@2x.webp") 2x),radial-gradient(ellipse at 50% 38%,#34805b,#184530)!important;box-shadow:inset 0 6px 18px rgba(0,0,0,.5)}
 .card{box-shadow:var(--sh-piece)}
 .hand .card{transition:transform .16s cubic-bezier(.3,1.4,.5,1),box-shadow .16s}
 .hand .card[aria-pressed="true"]{box-shadow:var(--sh-lift)}
@@ -724,7 +724,7 @@ input,textarea{user-select:text}
 .yacht td{text-align:right;padding:5px 6px;border-top:1px solid var(--line);min-width:3em}
 .yacht td.yp{color:var(--gold);font-weight:700;background:color-mix(in srgb,var(--gold) 14%,transparent);cursor:pointer}
 .yacht td.ys{font-weight:700}
-.cardtable{width:100%;max-width:1100px;max-height:100%;overflow:auto;background:var(--noise),radial-gradient(ellipse at 50% 38%,#34805b,#184530);border:1.6cqmin solid #6a4429;border-radius:28px;padding:18px 22px;color:#FFFDF5;display:grid;gap:14px;box-shadow:inset 0 6px 18px rgba(0,0,0,.5),var(--sh-board)}
+.cardtable{width:100%;max-width:1100px;max-height:100%;overflow:auto;background:-webkit-image-set(url("../assets/tex/noise.webp") 1x,url("../assets/tex/noise@2x.webp") 2x),radial-gradient(ellipse at 50% 38%,#34805b,#184530);border:1.6cqmin solid #6a4429;border-radius:28px;padding:18px 22px;color:#FFFDF5;display:grid;gap:14px;box-shadow:inset 0 6px 18px rgba(0,0,0,.5),var(--sh-board)}
 .cinfo{font-size:14px;text-align:center;opacity:.95;font-weight:700}
 .zl{font-size:13px;opacity:.85;margin-bottom:6px;font-weight:700}
 .cds{display:flex;flex-wrap:wrap;gap:6px}
@@ -748,7 +748,7 @@ html.lite .cardtable,html.lite .feltin{background:radial-gradient(ellipse at 50%
 html.reduce *,html.reduce *::before,html.reduce *::after{animation-duration:.001s!important;transition-duration:.001s!important}
 
 /* トランプ(スピード・ソリティア) */
-.felt-table{width:min(100cqw,calc(100cqh*1.55));max-height:100cqh;background:var(--noise),radial-gradient(ellipse at 50% 40%,#34805b,#184530);border:1.6cqmin solid #6a4429;border-radius:24px;box-shadow:inset 0 6px 18px rgba(0,0,0,.5),var(--sh-board);padding:2.4cqmin;display:flex;flex-direction:column;gap:2.4cqmin;color:#F6EEDC}
+.felt-table{width:min(100cqw,calc(100cqh*1.55));max-height:100cqh;background:-webkit-image-set(url("../assets/tex/noise.webp") 1x,url("../assets/tex/noise@2x.webp") 2x),radial-gradient(ellipse at 50% 40%,#34805b,#184530);border:1.6cqmin solid #6a4429;border-radius:24px;box-shadow:inset 0 6px 18px rgba(0,0,0,.5),var(--sh-board);padding:2.4cqmin;display:flex;flex-direction:column;gap:2.4cqmin;color:#F6EEDC}
 .pcard{--w:clamp(44px,7.2cqh,92px);width:var(--w);aspect-ratio:5/7;border-radius:calc(var(--w)*.1);background:linear-gradient(var(--ivory-a),var(--ivory-b));border:1px solid var(--ivory-e);box-shadow:var(--sh-piece);color:#15151A;position:relative;flex:none;display:block;font-weight:900;transition:transform .16s cubic-bezier(.3,1.4,.5,1)}
 .pcard.r{color:#C8362E}
 .pcard i{position:absolute;left:8%;font-style:normal;line-height:1;font-size:calc(var(--w)*.26)}
@@ -793,14 +793,15 @@ html.reduce *,html.reduce *::before,html.reduce *::after{animation-duration:.001
 
 /* 麻雀 */
 .mjwrap{display:flex;flex-direction:column;align-items:center;gap:1cqh;height:100cqh;width:100%}
-.mjtable{position:relative;flex:1;min-height:0;aspect-ratio:1;max-width:100%;background:var(--noise),radial-gradient(ellipse at 50% 45%,#34805b,#184530);border:1.4cqmin solid #6a4429;border-radius:20px;box-shadow:inset 0 6px 18px rgba(0,0,0,.5),var(--sh-board);container-type:size}
-.mjt{--w:3.6cqmin;width:var(--w);aspect-ratio:3/4;display:inline-block;position:relative;filter:drop-shadow(0 calc(var(--w)*.1) 0 #E2A23A) drop-shadow(0 1px 1.5px rgba(0,0,0,.4));flex:none}
-.mjt svg{width:100%;height:100%;display:block}
-.mjt.back{background:linear-gradient(#E9AE48,#D69530);border-radius:calc(var(--w)*.14);border:1px solid #A8721C}
+.mjtable{position:relative;flex:1;min-height:0;aspect-ratio:1;max-width:100%;background:-webkit-image-set(url("../assets/tex/noise.webp") 1x,url("../assets/tex/noise@2x.webp") 2x),radial-gradient(ellipse at 50% 45%,#34805b,#184530);border:1.4cqmin solid #6a4429;border-radius:20px;box-shadow:inset 0 6px 18px rgba(0,0,0,.5),var(--sh-board);container-type:size}
+.mjt{--w:3.6cqmin;width:var(--w);aspect-ratio:3/4;display:inline-block;position:relative;flex:none}
+/* 牌は、前もって作った画像(牌の絵・下の金色の厚み・影をまとめた物。tools/build_mahjong_tiles.cjs)。
+   画像は牌より広い(影の分): 左右と上に牌の幅の 12.5%、下は厚みと影まで。前は牌ごとに CSS の drop-shadow を 2 重にかけていて、卓の描き直しが重かった */
+.mjt>img{position:absolute;left:calc(var(--w)*-.125);top:calc(var(--w)*-.125);width:calc(var(--w)*1.25);height:auto;max-width:none;display:block;pointer-events:none;-webkit-user-drag:none;user-select:none}
 .mjt.sm{--w:2.8cqmin}.mjt.xs{--w:3cqmin}.mjt.mid{--w:30px}
 .mjt.big{--w:clamp(36px,5.4cqw,64px);cursor:pointer;transition:transform .14s}
 .mjt.big:hover{transform:translateY(-5px)}
-.mjt.pick{transform:translateY(-12px)!important;filter:drop-shadow(0 4px 0 #E2A23A) drop-shadow(0 0 0 #fff) drop-shadow(0 0 4px var(--mark))}
+.mjt.pick{transform:translateY(-12px)!important;filter:drop-shadow(0 0 4px var(--mark))}
 .mjt.drawn{margin-left:14px}
 .mjt.dim{opacity:.5}
 .mjt.gone{opacity:.35}
@@ -1094,8 +1095,8 @@ html.reduce *,html.reduce *::before,html.reduce *::after{animation-duration:.001
 .hbhelp b{font-size:1.8cqh}
 /* ヨット(Android 版 YachtBoard 準拠) */
 .yacht2{width:min(100cqw,165cqh);height:100cqh;min-height:0;display:grid;grid-template-columns:1fr 1.05fr;gap:2.6cqh;padding:1cqh 0}
-.ytray{border-radius:2.6cqh;padding:1.2cqh;background:var(--noise),linear-gradient(180deg,#6A4022,#4A2A14);box-shadow:var(--sh-board);display:flex;align-self:stretch;min-height:0}
-.ytray-in{flex:1;width:100%;border-radius:1.6cqh;background:var(--noise),radial-gradient(ellipse at 50% 38%,#2E8A5A,#1A5E3B);box-shadow:inset 0 4px 16px rgba(0,0,0,.42);padding:2.2cqh 2cqh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.8cqh;color:#fff}
+.ytray{border-radius:2.6cqh;padding:1.2cqh;background:-webkit-image-set(url("../assets/tex/noise.webp") 1x,url("../assets/tex/noise@2x.webp") 2x),linear-gradient(180deg,#6A4022,#4A2A14);box-shadow:var(--sh-board);display:flex;align-self:stretch;min-height:0}
+.ytray-in{flex:1;width:100%;border-radius:1.6cqh;background:-webkit-image-set(url("../assets/tex/noise.webp") 1x,url("../assets/tex/noise@2x.webp") 2x),radial-gradient(ellipse at 50% 38%,#2E8A5A,#1A5E3B);box-shadow:inset 0 4px 16px rgba(0,0,0,.42);padding:2.2cqh 2cqh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.8cqh;color:#fff}
 .ydice{display:flex;width:100%;justify-content:space-evenly;align-items:center;gap:1cqh}
 .yd{flex:0 0 auto;width:clamp(34px,min(11.5cqh,16%),76px);aspect-ratio:1;height:auto;position:relative;--ds:clamp(34px,min(11.5cqh,16%),76px);padding:0;border-radius:20%}
 .yd .d2{box-shadow:0 .55cqh 0 #B9AC8C,0 1.2cqh 1.2cqh rgba(0,0,0,.38)}
@@ -1472,6 +1473,7 @@ html.reduce .screen.col{animation:none}
 @keyframes bgpulse{0%,100%{opacity:.45}50%{opacity:1}}
 .sol .waste{display:flex;flex:none;justify-content:flex-start;align-items:flex-start;isolation:isolate}
 .sol .waste > .pcard{flex:none}
+/* ドラッグできる札(捨て札・組札・列)は、指で動かした時にブラウザのスクロールにしない(付けないとスマホでドラッグが取り消される) */
 .drag-enabled .sol [data-src],.drag-enabled .speed [data-card],.drag-enabled .hand2 [data-card],.drag-enabled .hand2 [data-k]{touch-action:none;cursor:grab;-webkit-user-select:none;-webkit-touch-callout:none}
 .sol .waste > .pcard+.pcard{margin-inline-start:calc(var(--w)*-.60)}
 .lview:active{cursor:grabbing}
@@ -2504,7 +2506,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-table {
   position:relative; isolation:isolate; flex:1; min-height:340px; container-type:size;
   border:7px solid var(--walnut-a); border-radius:18px; overflow:hidden;
-  background:var(--noise),radial-gradient(ellipse at 50% 36%,var(--felt-a),var(--felt-b) 82%);
+  background:-webkit-image-set(url("../assets/tex/noise.webp") 1x,url("../assets/tex/noise@2x.webp") 2x),radial-gradient(ellipse at 50% 36%,var(--felt-a),var(--felt-b) 82%);
   color:var(--on-felt); box-shadow:inset 0 2px 10px #10241966;
 }
 .poet-table::before { content:""; position:absolute; inset:9% 4%; border-radius:50%;
@@ -2601,7 +2603,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-card.back { border-color:#1b2747;
   background:
     radial-gradient(circle at 50% 50%,transparent 0 21%,#d9b56a66 22% 23.5%,transparent 24.5%),
-    linear-gradient(115deg,#ffffff1a,#0000 45%,#0000002e),var(--noise),#24345e;
+    linear-gradient(115deg,#ffffff1a,#0000 45%,#0000002e),-webkit-image-set(url("../assets/tex/noise.webp") 1x,url("../assets/tex/noise@2x.webp") 2x),#24345e;
   box-shadow:inset 0 0 0 2px #24345e,inset 0 0 0 3px #d9b56a,0 2px 0 #c9b48a,0 3px 0 #1b2747,0 5px 0 #c9b48a,0 6px 0 #1b2747,0 9px 11px #0006; }
 .poet-lines { position:absolute; inset:7% 8%; display:flex; flex-direction:row-reverse; justify-content:space-between;
   line-height:1.08; letter-spacing:.025em; }
@@ -3081,17 +3083,10 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   border-radius: 10px 10px 0 0;
 }
 
-/* 坊主めくり: めくれる札の坊主・姫の数 */
-.poet-omen { position:absolute; left:50%; bottom:calc(100% + var(--row-depth) + clamp(24px,3.6cqh,34px)); transform:translateX(-50%);
-  display:flex; align-items:baseline; gap:.25em; white-space:nowrap; padding:3px 14px; border-radius:999px;
-  background:#10291ed9; border:1px solid #f7df9e40; color:var(--on-felt-sub);
-  font:600 clamp(11px,1.4cqw,14px)/1.4 "Zen Antique","Yu Mincho",serif; }
-.poet-omen b { font:700 1.25em/1 Georgia,serif; color:var(--on-felt); }
-.poet-omen .bozu b { color:#ffb1a6; } .poet-omen .hime b { color:#ffc9da; }
-.poet-omen.danger { border-color:#e2372b99; }
 /* 坊主めくりのカットイン: 筆文字と和の色 */
-.cutin.f-fude .txt { font-family:"Yuji Boku Fude","Kaisei Tokumin","Yu Mincho",serif; font-weight:400; letter-spacing:.16em; }
-.cutin.f-fude .txt small { font-family:"Yuji Boku Fude","Zen Antique","Yu Mincho",serif; font-weight:400; letter-spacing:.3em; }
+/* 坊主めくりのカットイン: 太い明朝(Kaisei Tokumin)。ユーザーが字体の見本から選んだ(C 案) */
+.cutin.f-fude .txt { font-family:"Kaisei Tokumin","Yu Mincho",serif; font-weight:800; letter-spacing:.14em; }
+.cutin.f-fude .txt small { font-family:"Kaisei Tokumin","Yu Mincho",serif; font-weight:800; letter-spacing:.28em; }
 .cutin.wa-cut .band { background:
     radial-gradient(ellipse 1.6cqh 1cqh at 8% 22%,var(--petal) 60%,transparent 64%),
     radial-gradient(ellipse 1.2cqh .8cqh at 19% 78%,var(--petal) 60%,transparent 64%),
@@ -3122,3 +3117,9 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 /* ソリティア: 札の大きさ(と数字・マークの大きさ)は、どの場所(山札・捨て札・組札・列)でも同じにする。
    場所ごとの古い --w の指定(スマホの上の段は 7 列前提の式など)が効くと、置いた時に数字の大きさが変わって見えるため */
 .felt-table.sol .pcard { --w: var(--sol-w, 72px) !important; }
+/* フェルトのざらつき(noise.webp)を使う所: 画像をなめらかに拡大・縮小すると、マスが半端な位置・大きさの時に
+   ざらつきがぼやけて薄く見える(もとの SVG は画面の画素ごとに計算していたので、ぼやけなかった)。
+   にじませずに描いて、もとの見た目に合わせる。中の札・駒・絵は普通の描き方に戻す。
+   拡大して見せる盤(.twelve-scene)は、細かい画像(@2x・@3x)を縮めて使う(css/twelve.css。にじませないと格子の模様が出る)。 */
+:is(.cell,.feltin,.cardtable,.felt-table,.mjtable,.ytray,.ytray-in,.poet-table,.poet-card.back):not(.twelve-scene *){image-rendering:pixelated}
+:is(.cell,.feltin,.cardtable,.felt-table,.mjtable,.ytray,.ytray-in,.poet-table,.poet-card.back):not(.twelve-scene *)>*{image-rendering:auto}

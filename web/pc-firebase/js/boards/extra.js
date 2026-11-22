@@ -150,6 +150,10 @@
   }
 
   let solPrevWasteN = 0;
+  // 札を選ぶと少し持ち上がるので、ダブルタップの2回目は1枚上の札(同じ列)に当たることがある。
+  // 選んでから 0.45 秒以内に同じ列を押したら、別の札を選び直さず、選んだ札のダブルタップとして扱う
+  let solSelAt = 0;
+  const solQuickAgain = () => performance.now() - solSelAt < 450;
   function solitaire(b, A) {
     if (b.variant === 'spider') return spider(b, A);
     const SEAT = 1000000, seat = b.me;
@@ -178,13 +182,13 @@
       if (d.draw != null) { if (legal.has(seat * SEAT)) { A.sel = null; A.play(seat * SEAT); } return; }
       if (d.src != null) {
         const src = +d.src, n = +d.n;
-        if (sel && sel.src === src && sel.n === n) {
-          // もう一度: 組札へ。置けなければ置ける列へ
-          if (autoMove(src, n)) return;
+        // もう一度(同じ札、またはダブルタップで同じ列の別の札に当たった時): 組札へ。置けなければ置ける列へ
+        if (sel && sel.src === src && (sel.n === n || solQuickAgain())) {
+          if (autoMove(sel.src, sel.n)) return;
           A.sel = null; return A.redraw();
         }
         if (sel) { const dest = +(el.closest('[data-dest]') || {}).dataset?.dest; if (dest && legal.has(enc(sel.src, sel.n, dest))) { A.sel = null; return A.play(enc(sel.src, sel.n, dest)); } }
-        if (destsFor(src, n).length) { A.sel = { sol: 1, src, n }; return A.redraw(); }
+        if (destsFor(src, n).length) { A.sel = { sol: 1, src, n }; solSelAt = performance.now(); return A.redraw(); }
         A.sel = null; return A.redraw();
       }
       // 選んだ札は少し持ち上がるので、2回目のクリックが同じ列の地に当たった時も「もう一度押した」とみなす
@@ -274,9 +278,9 @@
       if (d.draw != null) { if (canDeal) { A.sel = null; A.play(seat * SEAT); } return; }
       if (d.src != null) {
         const src = +d.src, n = +d.n;
-        if (sel && sel.src === src && sel.n === n) { if (autoMove(src, n)) return; A.sel = null; return A.redraw(); }
+        if (sel && sel.src === src && (sel.n === n || solQuickAgain())) { if (autoMove(sel.src, sel.n)) return; A.sel = null; return A.redraw(); }
         if (sel) { const dest = +(el.closest('[data-dest]') || {}).dataset?.dest; if (dest && legal.has(enc(sel.src, sel.n, dest))) { A.sel = null; return A.play(enc(sel.src, sel.n, dest)); } }
-        if (destsFor(src, n).length) { A.sel = { spi: 1, src, n }; return A.redraw(); }
+        if (destsFor(src, n).length) { A.sel = { spi: 1, src, n }; solSelAt = performance.now(); return A.redraw(); }
         A.sel = null; return A.redraw();
       }
       // 選んだ札は少し持ち上がるので、2回目のクリックが同じ列の地に当たった時も「もう一度押した」とみなす
@@ -323,8 +327,20 @@
     if (n === 1) return `<path d="M15 8c5 0 8 4 8 9 0 6-4 9-8 15-4-6-8-9-8-15 0-5 3-9 8-9z" fill="#1F7A45"/><circle cx="12.5" cy="15" r="1.6" fill="#fff"/><path d="M15 16v14M11 30h8" stroke="#C8362E" stroke-width="1.8"/>`;
     return SOU[n].map(([x, y], i) => `<rect x="${x - 1.6}" y="${y - 6.5}" width="3.2" height="13" rx="1.6" fill="${r || (n === 9 && i % 3 === 1) || (n === 7 && i === 0) || (n === 5 && i === 2) ? '#C8362E' : '#1F7A45'}"/><path d="M${x - 1.6} ${y}h3.2" stroke="#fff" stroke-width=".7"/>`).join('');
   }
-  const tileSvg = (id, red, cls = '', attrs = '') => `<span class="mjt ${cls}" ${attrs}><svg viewBox="0 0 30 40" aria-hidden="true"><rect x="0" y="0" width="30" height="40" rx="4" fill="url(#xIv)" stroke="#B9AC8C" stroke-width=".8"/>${tileFace(id, red)}</svg></span>`;
-  const backTile = (cls = '') => `<span class="mjt back ${cls}"></span>`;
+  // 牌の絵(SVG)。画面には出さず、tools/build_mahjong_tiles.cjs が影ごと画像(assets/mj/<種類>.webp)にする時に使う
+  const tileArt = (id, red) => `<svg viewBox="0 0 30 40" aria-hidden="true"><rect x="0" y="0" width="30" height="40" rx="4" fill="url(#xIv)" stroke="#B9AC8C" stroke-width=".8"/>${tileFace(id, red)}</svg>`;
+  // 画像の名前: 種類(0〜33)。赤の五は r4・r13・r22。裏は back
+  const tileKey = (id, red) => (isRedTile(id, red) ? 'r' : '') + (id >> 2);
+  window.__mjTileArt = { art: tileArt, keys: [...Array.from({ length: 34 }, (_, t) => [String(t), t * 4, false]), ['r4', 16, true], ['r13', 52, true], ['r22', 88, true]] };
+  // 画面の牌は、前もって作った画像(牌の絵+金色の厚み+影)。その場で CSS の影(drop-shadow)を計算しないので、卓の描き直しが軽い
+  let mjPreloaded = false;
+  const tileImg = (key) => {
+    // 最初の 1 回で全部の牌を読んでおく(配る時に牌が遅れて出ないように)
+    if (!mjPreloaded) { mjPreloaded = true; window.__mjTileArt.keys.map(([k]) => k).concat('back').forEach((k) => { const im = new Image(); im.src = `assets/mj/${k}.webp`; (window.__texKeep ||= []).push(im); }); }
+    return `<img src="assets/mj/${key}.webp" alt="" draggable="false">`;
+  };
+  const tileSvg = (id, red, cls = '', attrs = '') => `<span class="mjt ${cls}" ${attrs}>${tileImg(tileKey(id, red))}</span>`;
+  const backTile = (cls = '') => `<span class="mjt back ${cls}">${tileImg('back')}</span>`;
   const WIND = ['東', '南', '西', '北'];
   const CHI = 20000, PON = 40000, OPEN_KAN = 60000, ANKAN = 61000, ADDED_KAN = 62000, RIICHI = 1000, TSUMO = 500, RON = 501, PASS = 502, NEXT = 503, KYUSHU = 504;
   function mahjong(b, A) {

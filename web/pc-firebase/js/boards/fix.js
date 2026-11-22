@@ -39,6 +39,15 @@
 
   // ---------------------------------------------------------------- マンカラ(見本: 木の盤・くぼみ・色つきの玉・数の札)
   const rng = (seed) => { let s = seed % 2147483647 || 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; };
+  // 盤の木枠。art.js の wood(6, 6, 788, 368, 60, 'xWal') と同じ見た目だが、影(ぼかし)と木目(雑音)は前もって作った画像
+  // (tools/build_textures.cjs が作る assets/tex/mancala-*.webp)。盤は玉が動くたびに描き直すので、毎回計算すると重かった。
+  // 木の色とふちの線は SVG のまま(くっきりさせるため)。重ねる順と木目の濃さ(.4)は wood() と同じ。
+  const mancalaFrame = '<image href="assets/tex/mancala-shadow.webp" x="-4" y="-4" width="808" height="388" preserveAspectRatio="none"/>'
+    + '<rect x="6" y="6" width="788" height="368" rx="60" fill="url(#xWal)"/>'
+    + '<image href="assets/tex/mancala-grain.webp" x="26" y="26" width="748" height="328" preserveAspectRatio="none" opacity=".4"/>'
+    + '<rect x="7" y="7" width="786" height="366" rx="60" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1.500"/>';
+  // 盤を描き直した時に画像が一瞬抜けないよう、先に読んでおく
+  for (const f of ['shadow', 'grain']) { const im = new Image(); im.src = `assets/tex/mancala-${f}.webp`; (window.__texKeep ||= []).push(im); }
   function mancala(b, A) {
     pair(A, '下の列(先手)', '#7B5233', '上の列(後手)', '#B98F4C', [b.pits[6], b.pits[13]]);
     const legal = new Set(A.view.human ? A.view.legal : []);
@@ -79,7 +88,7 @@
         rOpp();
       }
     }
-    let s = `<svg viewBox="0 0 ${Wd} ${Ht}" role="img" aria-label="マンカラの盤"><defs>${GRAD}</defs>${wood(6, 6, Wd - 12, Ht - 12, 60, 'xWal')}`;
+    let s = `<svg viewBox="0 0 ${Wd} ${Ht}" role="img" aria-label="マンカラの盤"><defs>${GRAD}</defs>${mancalaFrame}`;
     let maxDelay = 0, capOverlay = '';
     const drops = [];
     for (let i = 0; i < 14; i++) {
