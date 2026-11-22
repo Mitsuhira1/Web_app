@@ -56,6 +56,12 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-22 / Antigravity / スカル(`skull`, No.45)コア処理実装＆引き継ぎ資料作成
+- ユーザーの指示により、盤面デザインには触れずゲーム処理の中身のみを実装。
+- **エンジン**(`web/pc-firebase/core/games/skull.mjs` 新規): 3〜6人対応、花3枚・ドクロ1枚、初期配置→追加/チャレンジ→セリ→めくり（自分の山優先必須）→成功(+1pt)/失敗(自分のドクロは選択喪失 `discard_own`、他人のドクロは決定論的PRNGでランダム喪失・脱落判定)、オプション（人数3〜6・勝利ポイント2pt/1pt時短）、隠匿情報マスキング、CPU AI(Lv0〜2)を実装。
+- **登録・試験・資料**: `web/pc-firebase/core/extra-games.mjs` に登録、`web/pc-firebase/sw.js` の `FILES` 更新、`tools/tests/test_skull_core.mjs` 新規作成（全項目通過）。UI引き継ぎ仕様書 `docs/SKULL_SPEC_FOR_AI.md` を作成。
+- 確かめたこと: `node tools/tests/test_skull_core.mjs`、`node tools/tests/test_coyote_core.mjs`、`node tools/tests/test_extra_12_games.mjs` 全通過。未実装: 盤面UI・デザイン・メニュー(`ORDER`)登録（別AIへ引き継ぎ）。
+
 ### 2026-11-22 / Antigravity / コヨーテ(`coyote`, No.44)コア処理実装＆引き継ぎ資料作成
 - ユーザーの指示により、盤面デザインには触れずゲーム処理の中身のみを実装。
 - **エンジン**(`web/pc-firebase/core/games/coyote.mjs` 新規): 2〜6人対応、全36枚（通常32枚＋特殊4枚 `×2`, `MAX→0`, `?`, `0(夜)`）、オプション（人数・特殊カード抜き・ライフ数1〜3）、隠匿情報マスキング（自分だけ非公開・他全員公開）、決定論的PRNGによるリシャッフル再現性、未公開プール確率計算ベースのCPU AI(Lv0〜2)を実装。
