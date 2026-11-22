@@ -20,7 +20,7 @@ const DEFAULT_SET = {
   // 表示
   win: 'ウィンドウ', res: '1366×768', scale: '100%', look: '標準', reduce: false, notify: true,
   // サウンド
-  master: 100, sound: true, sfxVol: 80, hover: true, chatSnd: true, bgm: false, bgSound: false,
+  master: 100, sound: true, sfxVol: 80, hover: true, chatSnd: true, bgm: false, bgSound: true,
   // 操作
   drag: '両方',
   // プロフィール
@@ -33,4 +33,6 @@ const S = {
   set: Object.assign({}, DEFAULT_SET, store.get('set', {})),
   chat: [], keys: Object.assign({ back: 'Escape', full: 'F11', undo: 'Ctrl+Z', chat: 'Enter', bgm: 'Ctrl+M', mute: 'Ctrl+Shift+M' }, store.get('keys', {})),
 };
+// 2026-11-22: 「バックグラウンドでも音を鳴らす」を初期設定でオンにした。前の初期設定(オフ)のまま保存されている人も、1 回だけオンにする(その後は本人の選んだ通り)
+if (!store.get('bgSoundOn1', false)) { S.set.bgSound = true; store.set('bgSoundOn1', true); try { const saved = store.get('set', null); if (saved) store.set('set', Object.assign(saved, { bgSound: true })); } catch (e) {} }
 const saveSet = () => { store.set('set', S.set); store.set('theme', S.theme); store.set('vol', S.vol); store.set('bgmOff', S.off); store.set('keys', S.keys); };

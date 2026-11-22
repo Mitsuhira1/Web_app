@@ -1635,6 +1635,8 @@ html.reduce .wfx .wpop{display:none!important}
 #playsettings .mhd{flex:none}
 #playsettings .setwrap{flex:1;min-height:0;grid-template-rows:minmax(0,1fr)}
 #playsettings .setcats{flex-wrap:nowrap;overflow:auto}
+/* 項目の一覧はスクロールする箱なので、選んだ項目の枠(外側 1px)が端で切れないように内側に余白 */
+.setcats{padding:2px}
 #playsettings .setpanel{min-height:0;scrollbar-gutter:stable}
 @media(max-width:650px){
   #playsettings .setwrap{grid-template-rows:auto minmax(0,1fr)}
@@ -2865,6 +2867,19 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 @keyframes rqFall { to { opacity:0; } }
 @keyframes rqFall2 { to { opacity:0; transform:scale(.9) translateY(18px); } }
 .reduce .rq-wheel-panel, .reduce .rq-wheel-panel .rq-wheel { animation:none !important; }
+/* 回し終わった後の自分の増減(+は緑、−は赤)。回転盤の下寄りに大きく */
+.rq-net {
+  position:absolute; left:50%; bottom:7%; z-index:2; display:flex; align-items:baseline; gap:.15em; padding:.12em .55em .16em;
+  border-radius:999px; background:#140b07d9; border:2px solid currentColor; box-shadow:0 6px 18px #000a;
+  font:400 clamp(30px, 9cqh, 64px)/1 "Cinzel","Zen Maru Gothic",serif; transform:translateX(-50%); pointer-events:none;
+  animation:rqNetIn .42s cubic-bezier(.2,1.4,.4,1) both;
+}
+.rq-net b { font-weight:700; font-variant-numeric:tabular-nums; }
+.rq-net small { font:900 .42em/1 var(--font); }
+.rq-net.up { color:#7ee08b; } .rq-net.down { color:#ff8a7a; } .rq-net.even { color:#f2d68e; }
+.rq-layout.is-leaving .rq-net { animation:rqFall .34s ease-in var(--rq-leave-delay,0ms) both; }
+@keyframes rqNetIn { from { opacity:0; transform:translateX(-50%) translateY(14px) scale(.7); } }
+.reduce .rq-net { animation:none; }
 .reduce .rq-layout.is-leaving .rq-wheel-panel { display:none; }
 /* ベッティングテーブルの字: 数字は Cinzel(ローマン体)、言葉はしっぽり明朝。金色がかった白で彫ったように */
 .rq-felt { --rq-num:"Cinzel","Shippori Mincho B1",serif; --rq-jp:"Shippori Mincho B1","Cinzel",serif; }

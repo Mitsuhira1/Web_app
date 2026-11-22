@@ -148,6 +148,14 @@ window.rouletteReady = Promise.all([
     return `<span style="--chip:${color};--k:${k}">${text}</span>`;
   }
 
+  // 回し終わった後の、自分のチップの増減(賭けていない回は出さない)
+  function netBadge(b, A) {
+    const seat = Number.isInteger(A.view?.mine) ? A.view.mine : A.mySeat, r = b.lastRound; // 観戦中(mine<0)は出さない
+    if (!r || seat == null || seat < 0 || !r.wagered?.[seat]) return '';
+    const net = r.nets[seat];
+    return `<div class="rq-net ${net > 0 ? 'up' : net < 0 ? 'down' : 'even'}" role="status"><b>${net > 0 ? '+' : net < 0 ? '−' : '±'}${fmt(Math.abs(net))}</b><small>枚</small></div>`;
+  }
+
   function renderTable(b, seats, can, chipIndex, spinning) {
     const positions = layouts[Number(b.wheelType === 'amer')];
     const bets = spinning ? b.lastRound.bets : b.bets;
@@ -186,7 +194,7 @@ window.rouletteReady = Promise.all([
   }
 
   // 浮かせた回転盤を、フェードで閉じる(閉じている間に描き直しても、続きから消えるように leaveUntil で覚える)
-  const LEAVE_MS = 340, SETTLE_MS = 2400;
+  const LEAVE_MS = 340, SETTLE_MS = 2400, PRE_MS = 500; // PRE_MS: 回転盤が浮き出てから回し始めるまで
   function closeWheel() {
     if (!wheel) return;
     wheel.settleUntil = 0;
@@ -209,6 +217,7 @@ window.rouletteReady = Promise.all([
     if (!wheel) return;
     cancelAnimationFrame(wheel.frame);
     clearTimeout(wheel.timer);
+    clearTimeout(wheel.soundTimer);
     clearTimeout(wheel.settleTimer);
     clearTimeout(wheel.leaveTimer);
     wheel.settleUntil = 0;
@@ -229,15 +238,17 @@ window.rouletteReady = Promise.all([
       const plan = makeRouletteSpin(wheel.angle, b.lastRound, b.wheelOrder.length);
       stopSpin();
       const duration = A.reduce || (document.hidden && !S.set.bgSound) ? 0 : plan.duration * A.speed;
-      wheel = { match, round, angle: rest.rotor, orbit: rest.orbit, plan, started: now, duration };
+      const pre = duration ? PRE_MS : 0;
+      wheel = { match, round, angle: rest.rotor, orbit: rest.orbit, plan, started: now + pre, duration, pre };
       $('#boardwrap').scrollTop = 0;
       if (duration) {
         // CPU は回転盤の表示が消えるまで(回る間+止まってから見せる間+消える間)次の手を打たない
         wheel.A = A;
-        A.anim(plan.duration + (SETTLE_MS + LEAVE_MS) / A.speed);
+        A.anim(plan.duration + (pre + SETTLE_MS + LEAVE_MS) / A.speed);
         const impacts = plan.impacts.map(hit => ({...hit, at: hit.at * A.speed}));
-        wheel.cancelSound = sfx.rouletteSpin?.({duration, impacts, panAt: plan.panAt});
         const current = wheel;
+        // 回る音も、回し始めに合わせる
+        current.soundTimer = setTimeout(() => { if (wheel === current) current.cancelSound = sfx.rouletteSpin?.({duration, impacts, panAt: plan.panAt}); }, pre);
         current.timer = setTimeout(() => {
           if (wheel !== current || token !== match || S.screen !== 'play') return;
           current.duration = 0;
@@ -249,7 +260,7 @@ window.rouletteReady = Promise.all([
             closeWheel();
           }, SETTLE_MS);
           A.redraw();
-        }, duration);
+        }, pre + duration);
       } else if (A.reduce) {
         wheel.cancelSound = sfx.rouletteSpin?.({duration: 0, impacts: [{at: 0, strength: .23, kind: 'settle', pan: 0}]});
       }
@@ -257,7 +268,7 @@ window.rouletteReady = Promise.all([
       stopSpin();
       A.animClear();
     }
-    return wheel.duration > 0 && now - wheel.started < wheel.duration;
+    return wheel.duration > 0 && now - wheel.started < wheel.duration; // 回し始める前(started が先)も回っている扱い
   }
 
   function animateWheel(root, spinning) {
@@ -376,7 +387,7 @@ window.rouletteReady = Promise.all([
     const leaving = !spinning && !settling && wheel.leaveUntil > performance.now();
     A.board(`<div class="rq-layout${spinning ? ' is-spinning' : settling ? ' is-settling' : leaving ? ' is-leaving' : ''}" data-ready="${ready}"${leaving ? ` style="--rq-leave-delay:${Math.round(performance.now() - wheel.leaveUntil + LEAVE_MS) * -1}ms"` : ''}>
       <section class="rq-wheel-panel" aria-label="${b.wheelType === 'amer' ? 'アメリカン' : 'ヨーロピアン'}ルーレット">
-        ${wheelGraphic(b)}
+        ${wheelGraphic(b)}${(settling || leaving) ? netBadge(b, A) : ''}
       </section>
       <div class="rq-bets">${renderTable(b, seats, can, chipIndex, spinning)}
         ${!spinning ? resultPanel(last, seats, history) : ''}</div>
