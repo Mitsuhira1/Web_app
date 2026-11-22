@@ -343,16 +343,16 @@ function makeRouletteRules(opts) {
         const leaders = nextChips.map((c, idx) => (c === maxC ? idx : -1)).filter((idx) => idx >= 0);
         if (allBroke) {
           winner = -1;
-          reason = `全${s.roundNo}ラウンド終了 (全員チップ0枚で引き分け)`;
+          reason = `全${s.roundNo}ラウンド終了`;
         } else if (lastStanding && s.roundNo < maxRounds) {
           winner = leaders[0];
-          reason = `第${s.roundNo}ラウンドで決着 (${winner + 1}番以外のチップが0枚)`;
+          reason = `第${s.roundNo}ラウンドで決着`;
         } else if (leaders.length === 1) {
           winner = leaders[0];
-          reason = `全${s.roundNo}ラウンド終了 (${winner + 1}番が${maxC}枚で優勝！)`;
+          reason = `全${s.roundNo}ラウンド終了`;
         } else {
           winner = -1;
-          reason = `全${s.roundNo}ラウンド終了 (${maxC}枚で引き分け)`;
+          reason = `全${s.roundNo}ラウンド終了`;
         }
       }
 
