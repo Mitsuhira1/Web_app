@@ -44,7 +44,9 @@
       root.querySelectorAll(sel).forEach((e, i) => {
         const r = e.getBoundingClientRect(); let dx = 0, dy = -r.height * 1.6;
         if (src) { const q = src.getBoundingClientRect(); dx = q.left + q.width / 2 - (r.left + r.width / 2); dy = q.top + q.height / 2 - (r.top + r.height / 2); }
-        e.animate([{ transform: `translate(${dx}px,${dy}px) rotate(${dx > 0 ? 40 : -40}deg) scale(.8)`, opacity: .2 }, { transform: 'none', opacity: 1 }], { duration: ms * A.speed, delay: i * 70 * A.speed, easing: 'cubic-bezier(.2,.9,.3,1)', fill: 'backwards' });
+        // 札の大きさは変えない(縮めて飛ばすと、着く時に札がふくらんで見える)。自分の手札から出す札は最初から見えている
+        const mine = fromSeat === A.mySeat || fromSeat < 0;
+        e.animate([{ transform: `translate(${dx}px,${dy}px) rotate(${dx > 0 ? 14 : -14}deg)`, opacity: mine ? 1 : .2 }, { transform: 'none', opacity: 1 }], { duration: ms * A.speed, delay: i * 70 * A.speed, easing: 'cubic-bezier(.2,.9,.3,1)', fill: 'backwards' });
       });
     });
     A.anim(ms + 150);

@@ -699,6 +699,8 @@ function api() {
       wrap.className = 'boardwrap k-' + (view.board ? view.board.kind : '');
       wrap.onpointerdown = wrap.oncontextmenu = wrap.ondblclick = null;
       wrap.innerHTML = html.startsWith('<svg') ? `<div class="plate">${html}</div>` : html;
+      // 表になった札(.flipin)は、裏から表へ本当にめくる(前は表の札を裏返しのまま回していたので、字・マークが左右反対に見えた)
+      wrap.querySelectorAll('.pc.flipin').forEach((e) => { e.classList.remove('flipin'); if (!S.set.reduce) flipCard(e, 420 * SPEED(), 'pc'); });
       wrap.onclick = (e) => { if (busy || cutOn() || dragJust || (online && isMySeatAutoCpu())) return; const t = e.target.closest('[data-sq],[data-roll],[data-spin],[data-off],[data-tok],[data-i],[data-col],[data-hand],[data-m],[data-z],[data-k],[data-e],[data-p],[data-pt],[data-d],[data-c],[data-a],[data-s],[data-t],[data-tgt],[data-card],[data-src],[data-dest],[data-draw],[data-lm],[data-guess],[data-bet],[data-pass],[data-pit],[data-die],[data-cat],[data-seat]') || e.target; onTap(t.dataset || {}, t); };
     },
     acts: (list) => {

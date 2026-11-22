@@ -62,6 +62,39 @@
 - パクリス: スマホ(`isMob()||isTouchDevice()`)では NEXT の下に左回し・右回しのボタン(`.frot`)。盤を軽くたたいて回すのは残した。4 段消しは札(タグ)をやめ、ぶにょぶにょの「れんさ!」と同じ字の演出で「パクリス」(`hooks.word`・`.fchain.fword`)。
 - 確かめたこと: 各画面の見た目(スクリーンショット)・ピンチ後の倍率と並べ直し・4 段消しの字・`test_falling_rules`。未確認: 実機。
 
+### 2026-11-22 / Antigravity / インカの黄金(`incangold`, No.47)コア処理実装＆引き継ぎ資料作成
+- ユーザーの指示により、盤面デザインには触れずゲーム処理の中身のみを実装。
+- **エンジン**(`web/pc-firebase/core/games/incangold.mjs` 新規): 3〜6人・全5ラウンド対応、宝石15枚・障害5種×3枚・遺物5枚（オプション有無・単独帰還時のみ獲得5点/10点）、道への余り宝石配置＆帰還時均等割り、同種障害2枚バースト＆原因障害1枚の永久除外、同時選択マスキング、バースト確率計算＋席別リスク個性付きCPU AI(Lv0〜2)を実装。
+- **登録・試験・資料**: `web/pc-firebase/core/extra-games.mjs` に登録、`web/pc-firebase/sw.js` の `FILES` 更新、`tools/tests/test_incangold_core.mjs` 新規作成（全項目通過）。UI引き継ぎ仕様書 `docs/INCANGOLD_SPEC_FOR_AI.md` を作成。
+- 確かめたこと: `node tools/tests/test_incangold_core.mjs`、`node tools/tests/test_extra_12_games.mjs` 全通過。未実装: 盤面UI・デザイン・メニュー(`ORDER`)登録（別AIへ引き継ぎ）。
+
+### 2026-11-22 / Antigravity / ライアーズダイス(`liarsdice`, No.46)コア処理実装＆引き継ぎ資料作成
+- ユーザーの指示により、盤面デザインには触れずゲーム処理の中身のみを実装。
+- **エンジン**(`web/pc-firebase/core/games/liarsdice.mjs` 新規): 2〜6人対応、各自5ダイス、宣言上書き・ダウト判定・脱落・最終生存者勝利、ローカルルール（1のワイルド扱い＋半分上書き / ジャスト宣言：他全員−1個・自分＋1個回復）、隠匿情報マスキング、決定論的PRNGダイスロール、二項分布確率ベースのCPU AI(Lv0〜2)を実装。
+- **登録・試験・資料**: `web/pc-firebase/core/extra-games.mjs` に登録、`web/pc-firebase/sw.js` の `FILES` 更新、`tools/tests/test_liarsdice_core.mjs` 新規作成（全項目通過）。UI引き継ぎ仕様書 `docs/LIARSDICE_SPEC_FOR_AI.md` を作成。
+- 確かめたこと: `node tools/tests/test_liarsdice_core.mjs`、`node tools/tests/test_extra_12_games.mjs` 全通過。未実装: 盤面UI・デザイン・メニュー(`ORDER`)登録（別AIへ引き継ぎ）。
+
+### 2026-11-22 / Antigravity / スカル(`skull`, No.45)コア処理実装＆引き継ぎ資料作成
+- ユーザーの指示により、盤面デザインには触れずゲーム処理の中身のみを実装。
+- **エンジン**(`web/pc-firebase/core/games/skull.mjs` 新規): 3〜6人対応、花3枚・ドクロ1枚、初期配置→追加/チャレンジ→セリ→めくり（自分の山優先必須）→成功(+1pt)/失敗(自分のドクロは選択喪失 `discard_own`、他人のドクロは決定論的PRNGでランダム喪失・脱落判定)、オプション（人数3〜6・勝利ポイント2pt/1pt時短）、隠匿情報マスキング、CPU AI(Lv0〜2)を実装。
+- **登録・試験・資料**: `web/pc-firebase/core/extra-games.mjs` に登録、`web/pc-firebase/sw.js` の `FILES` 更新、`tools/tests/test_skull_core.mjs` 新規作成（全項目通過）。UI引き継ぎ仕様書 `docs/SKULL_SPEC_FOR_AI.md` を作成。
+- 確かめたこと: `node tools/tests/test_skull_core.mjs`、`node tools/tests/test_coyote_core.mjs`、`node tools/tests/test_extra_12_games.mjs` 全通過。未実装: 盤面UI・デザイン・メニュー(`ORDER`)登録（別AIへ引き継ぎ）。
+
+### 2026-11-22 / Antigravity / コヨーテ(`coyote`, No.44)コア処理実装＆引き継ぎ資料作成
+- ユーザーの指示により、盤面デザインには触れずゲーム処理の中身のみを実装。
+- **エンジン**(`web/pc-firebase/core/games/coyote.mjs` 新規): 2〜6人対応、全36枚（通常32枚＋特殊4枚 `×2`, `MAX→0`, `?`, `0(夜)`）、オプション（人数・特殊カード抜き・ライフ数1〜3）、隠匿情報マスキング（自分だけ非公開・他全員公開）、決定論的PRNGによるリシャッフル再現性、未公開プール確率計算ベースのCPU AI(Lv0〜2)を実装。
+- **登録・試験・資料**: `web/pc-firebase/core/extra-games.mjs` に登録、`web/pc-firebase/sw.js` の `FILES` 更新、`tools/tests/test_coyote_core.mjs` 新規作成（全項目通過）、`tools/tests/test_extra_12_games.mjs` のカタログ件数チェックを `>= 43` に調整。UI実装用の引き継ぎ仕様書 `docs/COYOTE_SPEC_FOR_AI.md` を作成。
+- 確かめたこと: `node tools/tests/test_coyote_core.mjs`、`node tools/tests/test_extra_12_games.mjs`、`node tools/tests/test_roulette_core.mjs` 全通過。未実装: 盤面UI・デザイン・メニュー(`ORDER`)登録（別AIへ引き継ぎ）。
+
+### 2026-11-22 / Claude / カードの動きで字・マークの大きさが変わる・坊主めくりの札の裏を和柄に
+- ユーザー「ソリティアなどで、めくった時などに文字の大きさや記号が変わる。カードとして変わらないので自然に」「坊主めくりの裏が洋風なので和風に、背景とかぶらないように」。
+- **ソリティア**(`js/boards/extra.js` の `solFloat`): 浮かせて飛ばす札の `--w` を `Object.assign(el.style, {'--w': …})` で入れていたが、CSS の変数はこれでは入らず、飛ぶ間だけ既定の小さい札の大きさの字・マーク(PC で 24.7px→14.4px)になり、着くと元に戻っていた → `style.setProperty('--w', …)`。測って、飛ぶ間・めくる間の字の大きさ・字体・位置が着いた後と一致することを確かめた(PC・スマホ)。
+- **表になる札**(`.pc.flipin`。神経衰弱・ポーカー/ホールデムの見せ合い): CSS の `flipc` は表の札を裏返し(rotateY 180°)から回していたので、前半は表の字・マークが左右反対に見え、途中で 1.08 倍にふくらんでいた → `js/app.js` の `A.board` で、描いた後に `.pc.flipin` を共通の `flipCard`(裏と表を重ねて回す)でめくる。
+- **場に出す札**(`js/boards/table.js` の `fly`): 0.8 倍に縮めて 40° 傾けて飛ばしていた → 大きさは変えず、傾きは 14°。自分の手札から出す札は最初から見える(薄くしない)。
+- **坊主めくりの札の裏**(`css/app.css` の `.poet-card.back` と山の側面): 紺に金の丸 → 臙脂(#7a1d29)の地に金の青海波(SVG の模様を背景に)、金の縁は残した。山の側面の色も合わせた。
+- `sw.js` のキャッシュ名。
+- 確かめたこと(Chromium・PC 1366×768・iPhone 13 の大きさ): 上の測定、神経衰弱で裏から表へめくれる、坊主めくりの山札・引く途中・場札の見た目。`test_extra_12_games`。未確認: スパイダーの配る動き(同じ処理を通る)、実機。
+
 ### 2026-11-22 / Claude / スマホの 1 画面表示・終わった後の画面・戻る確認・軽くする・パクリスの HOLD と早送り
 - **スマホで 1 画面に収める**(`.screen.fit`。`css/app.css` の末尾): マインスイーパー(MineLink と同じ並び: 上に旗の数・時間、盤が残りいっぱい、下に 開く/旗 `.mine-tapseg`)・スライド・ぶにょぶにょ・パクリス・坊主めくり。共通の側板は下に小さく(札を横に並べ、操作の説明の欄は隠す)。落ち物は `sizesFor` を画面の高さから計算し、はみ出したら `mountViews` で小さくして描き直す。CPU 対戦は相手の盤(つぎは隠す)と勝ち星の表を横に並べた。盤の上は `touch-action:none`。全画面で `overscroll-behavior-y:none`(引っぱって読み込み直すを止める)。
 - **終わった後の画面**: 共通の部品 `extraResultBox`・`extraResultLayer`・`setExtraResult`(`js/app.js`)を作り、マインスイーパー(ひとり・協力: 勝ち負け・広さ・タイム・自己ベスト、待った・メニュー・もう一度)・対戦(順位とタイム)・スライド・ぶにょぶにょ/パクリス(ひとりの終わりと優勝時。途中の回は今まで通り盤の上の短い表示)・坊主めくり(順位と枚数)に入れた。ゲストは「ホストが次を始めるのを待っています」。
@@ -133,6 +166,7 @@
 - ファイル: `js/slide.js`(駒の作り)・`css/app.css`(スライドパズルの盤・見本)・`sw.js`(キャッシュ名)
 - 確かめたこと(Chromium): PC・スマホ幅、3×3・4×4・6×6、数字・風景、矢印キーで動く、エラー無し。未確認: Edge・実機。
 - 続き: マインスイーパーをマインリンク(ユーザーの別アプリ)の盤面・設定に合わせる(資料待ち)。両ゲームのアイコンの作り直し(「準備中」の帯も外す)。
+
 ### 2026-11-22 / Claude / ルーレット: 止まったポケットに金色の光るハイライトを点滅
 - ユーザー「回り終わって位置が確定したら、外側が少しぼやけて内側は輪郭がはっきりした光るハイライトを点滅(黄色〜金色)」。
 - `js/boards/roulette.js` の `wheelGraphic`: 止まったポケットの形に、太さの違う半透明の金色の線を 6 本重ねて外側のぼやけを作り、内側は明るい線(2.6)+細い濃い線で輪郭をはっきりさせた(`rq-hit-glow`)。**Edge 対策でフィルター(blur・drop-shadow)は使わない**。点滅は CSS の透明度だけ(0.9 秒ごと、`rqHitBlink`)。回っている間は出さない。描き直しで点滅が最初に戻らないよう、止まった時(`wheel.stoppedAt`)からの経過を animation-delay に入れる。
@@ -170,6 +204,7 @@
 - 効果が無かった物(そのまま): 胸毛絶体絶命の舞台のぼかし、チェス・将棋・ペグ・Oh,No! などの駒・札の影。麻雀の牌の影は、ユーザーの了承を得て次の記録で画像にした。
 - ファイル: `css/app.css`・`css/twelve.css`・`js/boards/fix.js`・`assets/tex/`(新規)・`tools/build_textures.cjs`(新規)・`sw.js`(FILES・キャッシュ名)・`START_HERE.md`・`docs/CHECKLIST_PENDING.md`・`docs/PORTING_TODO.md`
 - 確かめたこと(Chromium): 元の版と画面を撮って画素を比べた(等倍・2 倍・1.25 倍、PC・スマホ幅)、sw.js の FILES が全部ある、読み込みエラー 0。未確認: Edge・実機での軽さ。
+
 ### 2026-11-21 / Claude / 坊主めくりのカットイン・山札の数の廃止、公開の仕組み
 - 坊主めくり: 「姫ボーナス」のカットインをやめ、「姫」の後に「もう一枚引く」(場札が無い時)/「+〇枚」(場札があった時の枚数)を同じ筆文字で出す。山札の一番上の坊主・姫の数を見せる設定(peek・state.tops)は全部消した。カットインの字体はユーザーが見本から選んだ Kaisei Tokumin(太い明朝)に。Yuji Boku の筆文字の字体ファイル(YujiBoku-Bozu.woff2)は削除。
 - `.github/workflows/pages.yml`: アップロード(build)と公開(deploy)を別の作業に分け、公開が失敗したら 30 秒後にもう一度。`cancel-in-progress: false`。「No artifacts named github-pages」の失敗が続いたため。
@@ -289,6 +324,7 @@
 - 胸毛絶体絶命(黒ひげ危機一髪がモチーフ): ユーザーの指示で、まず盤面の見本(動く HTML)を作って提案。リポジトリには入れていない。了承後に実装する。
 - ファイル: `web/pc-firebase/js/boards/roulette.js`・`css/app.css`・`sw.js`(キャッシュ名)・`docs/CHECKLIST_PENDING.md`
 - 確かめたこと(Chromium・iPhone 13 相当): ベット中は回転盤が非表示、スピン中は中央に表示、止まった後に消える、`test_roulette_core`。PC(1280px)は回転盤が横に出たままで変化なし。未確認: スマホ実機、通信対戦。ベッティングテーブル自体は iPhone 13 で盤の高さの約 1.9 倍あり、まだスクロールは残る。
+
 ### 2026-11-21 / Claude / Edge で画面が固まる不具合(原因と再発防止は CLAUDE.md)
 - 原因: ぶにょぶにょの絵(`js/falling-fx.js` の `bunyoSvg`)の外側の `<svg>` に付けた CSS `filter: drop-shadow`。メニューのアイコンでは別の `<svg>` の中に入れて表示していて、Edge で描き直すと描画が終わらなくなる。CSS の影をやめ、SVG フィルターの最後の `feDropShadow` に置き換えた(光の計算は元のまま)。
 - 調べる道具を残した: `?diag`・`?diag=deep`(記録、見るのは `diag.html`)、`?nofx=bunyo|svg|css`(フィルターを止める)、起動で止まった時の安全装置(`index.html`)。記録は `?diag` の時だけ動く。
@@ -685,6 +721,7 @@
   - `web/pc-firebase/css/app.css`, `web/pc-firebase/sw.js`: バッジ・システムメッセージ・対局中追加ボタン用スタイルを追加し、キャッシュ名を `asobipcfb-20261117-online-room-features-7` に更新。
   - `tools/tests/firebase-memory-net.js`, `docs/FIREBASE_NET_MANUAL_FOR_AI.md`: テスト用メモリモックを新APIに対応させ、通信仕様書に第11章を追記。
 - 確認: `node --check`、`check_transient_audio.cjs`、`check_cursor_send.cjs`、Playwright 3クライアント E2E 9シナリオ検証、および既存回帰検証（左ナビ固定位置・フィルタアニメーション・途中入室観戦・カーソル色/補間・二重効果音抑止・対局中設定・非表示タブ音声破棄）すべてエラー0で合格。`web/pc/` と `Windows-Projects` は無変更。未コミット・未プッシュ。
+
 ### 2026-11-18 / Codex / Firebase版に人狼を実装
 - 採用されたPCサンプルに合わせ、左右のパネルを同じ幅にし、左に進行情報と下端の投票操作、中央に村の話し合い、右に対局共通パネルを配置。参加者名は対象を選ぶ場面で表示する。
 - ゲーム一覧からひとりで遊ぶ場合と、ルームのホストが対戦を開始する場合に対応。3〜6席で空席はCPUが担当する。人数、話し合いの時間、特殊役職、死亡者のチャット参加を開始前に選べる。

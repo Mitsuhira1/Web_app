@@ -98,7 +98,9 @@
     const g = document.createElement('div'); g.innerHTML = html;
     const el = g.firstElementChild;
     el.removeAttribute('data-cid'); el.removeAttribute('data-src'); el.removeAttribute('data-wid'); el.classList.remove('tap', 'on', 'dragsrc');
-    Object.assign(el.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', margin: 0, zIndex: 30, pointerEvents: 'none', '--w': r.width + 'px' });
+    Object.assign(el.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', margin: 0, zIndex: 30, pointerEvents: 'none' });
+    // CSS の変数は Object.assign では入らない(入らないと字・マークが既定の小さい札の大きさになり、着いた時に大きさが飛ぶ)
+    el.style.setProperty('--w', r.width + 'px');
     document.body.appendChild(el);
     return el;
   }
