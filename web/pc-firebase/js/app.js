@@ -1459,6 +1459,7 @@ function render() {
   lastModal = S.modal;
   if (S.screen === 'play') { if (view) drawPlay(true); if (view && view.outcome) showResult(); }
   if (S.screen === 'slidePlay') slideGame.side();
+  if (S.screen === 'minePlay') minesGame.mounted();
   if (S.screen === 'wolfPlay') wolfGame.update();
   if (S.screen === 'extraPlay') boardMatch.draw();
   if (S.screen === 'room') afterRoom();
@@ -1530,6 +1531,7 @@ app.addEventListener('click', async (e) => {
   if(d.mineStart!=null)return minesGame.start();
   if(d.mineExit!=null)return minesGame.exit();
   if(d.mineUndo!=null)return minesGame.requestUndo();
+  if(d.mineZoomreset!=null)return minesGame.resetZoom();
   if(d.mineCell!=null)return minesGame.move(+d.mineCell, mineSwapped || minesGame.flagMode);
   if (d.playsettings != null) return openPlaySettings();
   if (d.playsettingsclose != null) { closeSheet(); return; }

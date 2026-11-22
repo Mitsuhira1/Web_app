@@ -475,11 +475,65 @@ const iNavalMine=(cx,cy,r)=>`<g filter="url(#xSh)">`+[0,1,2,3,4,5,6,7].map(i=>{c
 const iMineFlag=(x,y,col,rim)=>`<g filter="url(#xSh)"><path d="M${x} ${y}v14M${x-4} ${y+14}h8" stroke="#15283d" stroke-width="2" stroke-linecap="round"/><path d="M${x} ${y}l11 4.4-11 4.4z" fill="${col}" stroke="${rim}" stroke-width=".8" stroke-linejoin="round"/></g>`;
 const iWip=()=>`<g pointer-events="none" clip-path="url(#xSqC)"><g transform="translate(22 22) rotate(-45)" filter="url(#xSh)"><rect x="-42" y="-7.5" width="84" height="15" fill="#FFC65C" stroke="#24170B" stroke-width="1"/><text x="0" y="3.8" font-size="10.8" font-weight="900" letter-spacing=".8" text-anchor="middle" fill="#24170B">準備中</text></g></g>`;
 const Iwip=(bg,body)=>`<svg viewBox="0 0 100 100" aria-hidden="true">${bg}${body}<rect width="100" height="100" fill="url(#xVig)"/>${iWip()}</svg>`;
+// スライドパズル(木のパズル箱)・マインスイーパー(MineLink の盤)のアイコン。2026-11-22 に作り直し(「準備中」の帯を外した)
+const iconSlideWood=(()=>{
+ const tile=(x,y,n,dx=0)=>`<g transform="translate(${x+dx} ${y})" filter="url(#sxS)"><rect width="22" height="22" rx="3.2" fill="url(#sxT)"/><rect width="22" height="22" rx="3.2" fill="url(#sxG)" opacity=".35"/><path d="M1.4 20.4V3.2Q1.4 1.4 3.2 1.4H20.4" fill="none" stroke="#fff6dc" stroke-width="1.3" opacity=".85"/><path d="M20.6 1.8V18.8Q20.6 20.6 18.8 20.6H1.8" fill="none" stroke="#8a5a26" stroke-width="1.3" opacity=".55"/><text x="11" y="16.3" font-family="'Zen Maru Gothic',sans-serif" font-size="14" font-weight="900" text-anchor="middle" fill="#5a3816">${n}</text></g>`;
+ return `<svg viewBox="0 0 100 100" aria-hidden="true"><defs>
+ <linearGradient id="sxBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#efe6d4"/><stop offset="1" stop-color="#ddcfb3"/></linearGradient>
+ <linearGradient id="sxF" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b07840"/><stop offset=".45" stop-color="#7a4a24"/><stop offset=".7" stop-color="#946132"/><stop offset="1" stop-color="#5e371a"/></linearGradient>
+ <radialGradient id="sxIn" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#3d2716"/><stop offset="1" stop-color="#1e1209"/></radialGradient>
+ <linearGradient id="sxT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8e6c0"/><stop offset=".55" stop-color="#e7c58e"/><stop offset="1" stop-color="#cc9e5e"/></linearGradient>
+ <pattern id="sxG" width="22" height="6" patternUnits="userSpaceOnUse"><path d="M0 1.5Q6 .6 11 1.8T22 1.2M0 4.2Q7 3.4 12 4.6T22 4" fill="none" stroke="#a87436" stroke-width=".5"/></pattern>
+ <filter id="sxS" x="-20%" y="-20%" width="150%" height="150%"><feDropShadow dx=".6" dy="1.6" stdDeviation="1.1" flood-color="#000" flood-opacity=".55"/></filter>
+ <filter id="sxB" x="-10%" y="-10%" width="125%" height="125%"><feDropShadow dx="0" dy="3" stdDeviation="2.6" flood-color="#3b2410" flood-opacity=".45"/></filter>
+ </defs><rect width="100" height="100" fill="url(#sxBg)"/>
+ <rect x="8" y="8" width="84" height="84" rx="9" fill="url(#sxF)" filter="url(#sxB)"/>
+ <rect x="8.8" y="8.8" width="82.4" height="82.4" rx="8.4" fill="none" stroke="#ffe0b0" stroke-opacity=".35" stroke-width="1"/>
+ <path d="M12 20Q30 17 50 21T88 19M12 82Q32 79 52 83T88 80" fill="none" stroke="#4a2a12" stroke-opacity=".35" stroke-width=".7"/>
+ <rect x="15" y="15" width="70" height="70" rx="4" fill="url(#sxIn)"/>
+ <rect x="15" y="15" width="70" height="70" rx="4" fill="none" stroke="#000" stroke-opacity=".55" stroke-width="1.4"/>
+ ${tile(16.5,16.5,1)}${tile(39,16.5,2)}${tile(61.5,16.5,3)}${tile(16.5,39,4)}${tile(39,39,5)}${tile(61.5,39,6)}${tile(16.5,61.5,7)}${tile(39,61.5,8,9)}
+ <path d="M46.5 66.5h-4M46.5 72.5h-5.5M46.5 78.5h-4" stroke="#ffd98a" stroke-width="1.5" stroke-linecap="round" opacity=".9"/>
+ </svg>`;
+})();
+const iconMineLink=(()=>{
+ const S=19,G=1.2,X0=11,Y0=11,at=(c,r)=>[X0+c*(S+G),Y0+r*(S+G)];
+ const hid=(c,r)=>{const [x,y]=at(c,r);return `<rect x="${x}" y="${y}" width="${S}" height="${S}" rx="3" fill="url(#mxH)"/><path d="M${x+1.2} ${y+S-2}V${y+3}Q${x+1.2} ${y+1.2} ${x+3} ${y+1.2}H${x+S-2}" fill="none" stroke="#e6eef4" stroke-width="1" opacity=".8"/>`;};
+ const num=(c,r,n,col)=>{const [x,y]=at(c,r);return `<rect x="${x}" y="${y}" width="${S}" height="${S}" rx="3" fill="#f9fbfc"/>${n?`<text x="${x+S/2}" y="${y+14.4}" font-family="'Zen Maru Gothic',sans-serif" font-size="13.5" font-weight="900" text-anchor="middle" fill="${col}">${n}</text>`:''}`;};
+ const flag=(c,r,col)=>{const [x,y]=at(c,r);return hid(c,r)+`<g transform="translate(${x} ${y}) scale(${S/100})" filter="url(#mxS)"><path d="M32 18L76 36L32 54Z" fill="${col}"/><rect x="30" y="18" width="6" height="58" fill="#14212b"/><rect x="22" y="74" width="42" height="7" fill="#14212b"/></g>`;};
+ const mine=(c,r)=>{const [x,y]=at(c,r),cx=x+S/2,cy=y+S/2,k=S/100;return `<rect x="${x}" y="${y}" width="${S}" height="${S}" rx="3" fill="#c0392b"/><rect x="${x}" y="${y}" width="${S}" height="${S/2}" rx="3" fill="#fff" opacity=".12"/>`+
+  `<g stroke="#fff" stroke-width="${6*k}" stroke-linecap="round">${[0,1,2,3,4,5,6,7].map(i=>{const a=i*Math.PI/4;return `<line x1="${(cx+Math.cos(a)*22*k).toFixed(2)}" y1="${(cy+Math.sin(a)*22*k).toFixed(2)}" x2="${(cx+Math.cos(a)*34*k).toFixed(2)}" y2="${(cy+Math.sin(a)*34*k).toFixed(2)}"/>`;}).join('')}</g><circle cx="${cx}" cy="${cy}" r="${20*k}" fill="#fff"/>`;};
+ const C=['#1f5fbf','#1b7f3b','#b3261e'];
+ return `<svg viewBox="0 0 100 100" aria-hidden="true"><defs>
+ <linearGradient id="mxBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f7f9"/><stop offset="1" stop-color="#dbe3e9"/></linearGradient>
+ <linearGradient id="mxH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3d1dc"/><stop offset="1" stop-color="#a9bac8"/></linearGradient>
+ <filter id="mxS" x="-20%" y="-20%" width="150%" height="150%"><feDropShadow dx=".4" dy="1" stdDeviation=".8" flood-color="#0b1a26" flood-opacity=".35"/></filter>
+ <filter id="mxB" x="-10%" y="-10%" width="125%" height="125%"><feDropShadow dx="0" dy="2.4" stdDeviation="2.4" flood-color="#2a4152" flood-opacity=".3"/></filter>
+ </defs><rect width="100" height="100" fill="url(#mxBg)"/>
+ <rect x="7" y="7" width="86" height="86" rx="9" fill="#e9eff3" filter="url(#mxB)"/>
+ ${hid(0,0)}${hid(1,0)}${num(2,0,1,C[0])}${num(3,0,0)}
+ ${flag(0,1,'#C8463C')}${num(1,1,2,C[1])}${num(2,1,1,C[0])}${num(3,1,0)}
+ ${hid(0,2)}${num(1,2,3,C[2])}${hid(2,2)}${num(3,2,1,C[0])}
+ ${hid(0,3)}${mine(1,3)}${flag(2,3,'#3F78C4')}${num(3,3,1,C[0])}
+ <circle cx="${at(1,3)[0]+S/2}" cy="${at(1,3)[1]+S/2}" r="12.6" fill="none" stroke="#ffb300" stroke-width="1.6" opacity=".7"/>
+ </svg>`;
+})();
+const iconMineVersus=(()=>{
+ const S=16,G=1.1,tile=(x,y,kind,col)=>kind==='h'?`<rect x="${x}" y="${y}" width="${S}" height="${S}" rx="2.6" fill="#b7c6d2"/>`:kind==='f'?`<rect x="${x}" y="${y}" width="${S}" height="${S}" rx="2.6" fill="#b7c6d2"/><g transform="translate(${x} ${y}) scale(${S/100})"><path d="M32 18L76 36L32 54Z" fill="${col}"/><rect x="30" y="18" width="6" height="58" fill="#14212b"/><rect x="22" y="74" width="42" height="7" fill="#14212b"/></g>`:`<rect x="${x}" y="${y}" width="${S}" height="${S}" rx="2.6" fill="#f9fbfc"/><text x="${x+S/2}" y="${y+12.2}" font-family="'Zen Maru Gothic',sans-serif" font-size="11.5" font-weight="900" text-anchor="middle" fill="${col}">${kind}</text>`;
+ const grid=(ox,oy,cells)=>cells.map((row,r)=>row.map((c,k)=>tile(ox+k*(S+G),oy+r*(S+G),c[0],c[1])).join('')).join('');
+ return `<svg viewBox="0 0 100 100" aria-hidden="true"><defs>
+ <linearGradient id="mvB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#dfe9f6"/><stop offset="1" stop-color="#c3d5ea"/></linearGradient>
+ <linearGradient id="mvR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6e3df"/><stop offset="1" stop-color="#e8c6bf"/></linearGradient>
+ <filter id="mvS" x="-15%" y="-15%" width="135%" height="135%"><feDropShadow dx="0" dy="1.6" stdDeviation="1.6" flood-color="#1b2a38" flood-opacity=".35"/></filter>
+ </defs><polygon points="0,0 100,0 0,100" fill="url(#mvB)"/><polygon points="100,0 100,100 0,100" fill="url(#mvR)"/>
+ <path d="M0 100L100 0" stroke="#fff" stroke-width="3"/>
+ <g filter="url(#mvS)"><rect x="5" y="5" width="56" height="39" rx="6" fill="#e9eff3"/>${grid(8,8,[[['h'],['1','#1f5fbf'],['2','#1b7f3b']],[['f','#3F78C4'],['h'],['1','#1f5fbf']]])}</g>
+ <g filter="url(#mvS)"><rect x="39" y="56" width="56" height="39" rx="6" fill="#e9eff3"/>${grid(42,59,[[['3','#b3261e'],['h'],['f','#C8463C']],[['1','#1f5fbf'],['1','#1f5fbf'],['h']]])}</g>
+ <g filter="url(#mvS)"><circle cx="50" cy="50" r="13" fill="#14212b"/><text x="50" y="55.2" font-family="'Zen Maru Gothic',sans-serif" font-size="14" font-weight="900" text-anchor="middle" fill="#fff">VS</text></g>
+ </svg>`;
+})();
 Object.assign(AR,{
- slide:Iwip(bFlat('#E7DCC4'),`<rect x="6" y="6" width="88" height="88" rx="8" fill="url(#xWal)" filter="url(#xSh)"/><rect x="8" y="8" width="84" height="84" rx="6" filter="url(#xGr)" opacity=".32"/><rect x="7" y="7" width="86" height="86" rx="7" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1"/><rect x="13" y="13" width="74" height="74" rx="4" fill="url(#xSlWel)" stroke="#0d1817" stroke-width="1.2"/><path d="M14.5 14.5H85.5M14.5 14.5V85.5" stroke="#08100f" stroke-width="1.8" opacity=".45"/><path d="M74 68v8m-3.2-3.2L74 76.2l3.2-3.4" fill="none" stroke="#ffd46b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".82"/>`
-   +iSlideTile(15,15,0,0,1)+iSlideTile(39,15,1,0,2)+iSlideTile(63,15,2,0,3)
-   +iSlideTile(15,39,0,1,4)+iSlideTile(39,39,1,2,8)+iSlideTile(63,46,2,1,6)
-   +iSlideTile(15,63,0,2,7)+iSlideTile(39,63,1,1,5)),
+ slide:iconSlideWood,
  bunyo:Iwip(`<rect width="100" height="100" fill="url(#xBunBg)"/><rect width="100" height="100" filter="url(#xNo)" opacity=".35"/>`,
    `<rect x="8" y="6" width="84" height="88" rx="9" fill="#1b1645" fill-opacity=".6" stroke="#8e82c7" stroke-width="2.2"/>`
    +[1,2,3].map(i=>`<path d="M${8+i*21} 8V92" stroke="#fff" stroke-opacity=".06"/><path d="M10 ${6+i*22}H90" stroke="#fff" stroke-opacity=".06"/>`).join('')
@@ -499,24 +553,8 @@ Object.assign(AR,{
    +[[2,4],[3,4],[3,3],[4,3]].map(([c,r])=>iTet(c,r,'#67df75','#bcffc4','#228232')).join('')
    +[[0,2],[0,3],[1,3],[2,3]].map(([c,r])=>iTet(c,r,'#4b8fec','#a8ceff','#1d4c99')).join('')
    +[[1,0],[0,1],[1,1],[2,1]].map(([c,r])=>iTet(c,r,'#b873e3','#ecc2ff','#6c2a9b')).join('')),
- mine:Iwip(`<rect width="100" height="100" fill="url(#xMinBg)"/><rect width="100" height="100" filter="url(#xNo)" opacity=".4"/>`,
-   `<rect x="9" y="9" width="82" height="82" rx="7" fill="#1e4963" stroke="#7fc2da" stroke-opacity=".55" stroke-width="1.5" filter="url(#xSh)"/>`
-   +iMinOpn(14,14,'1','#2268bb')+iMinOpn(39,14,'2','#188c50')+iMinCov(64,14)
-   +iMinOpn(14,39,'1','#2268bb')+iMinCov(39,39)+iMinOpn(64,39,'3','#d9513d')
-   +iMinCov(14,64)+iMinCov(39,64)
-   +`<rect x="64" y="64" width="22" height="22" rx="2.5" fill="#ea6371" stroke="#a62a38" stroke-width="1"/>`
-   +iMineFlag(47,43,'#e62340','#941226')
-   +iNavalMine(75,75,5.3)
-   +`<g filter="url(#xSh)"><path d="M74 17l1.8 11 3-3.3 3.2 4.3 2-1.4-3.1-4.3 4.3-.9z" fill="#52d66d" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/><path d="M21 68l1.8 11 3-3.3 3.2 4.3 2-1.4-3.1-4.3 4.3-.9z" fill="#4d98f6" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></g>`),
- mineVersus:Iwip(`<polygon points="0,0 100,0 0,100" fill="url(#xVsB)"/><polygon points="100,0 100,100 0,100" fill="url(#xVsR)"/><rect width="100" height="100" filter="url(#xNo)" opacity=".38"/>`,
-   `<path d="M0 98L42 53L34 45L66 47L58 55L100 2" fill="none" stroke="#331d04" stroke-width="6" stroke-linejoin="round"/><path d="M0 98L42 53L34 45L66 47L58 55L100 2" fill="none" stroke="#ffd45c" stroke-width="2.8" stroke-linejoin="round"/>`
-   +`<g filter="url(#xSh)"><rect x="8" y="9" width="22" height="22" rx="3" fill="#dcecf0" stroke="#1b467a" stroke-width="1.2"/><text x="19" y="25.5" font-size="15" font-weight="900" text-anchor="middle" fill="#2268bb">1</text><rect x="33" y="9" width="22" height="22" rx="3" fill="#498fe0" stroke="#183f6e" stroke-width="1.2"/><path d="M34.5 29V10.5H53" fill="none" stroke="#b6dbff" stroke-width="1.6"/></g>`
-   +iMineFlag(41,13,'#ffd45c','#996b10')
-   +`<g filter="url(#xSh)"><rect x="45" y="69" width="22" height="22" rx="3" fill="#d9525e" stroke="#691820" stroke-width="1.2"/><path d="M46.5 89V70.5H65" fill="none" stroke="#ffa8b0" stroke-width="1.6"/><rect x="70" y="69" width="22" height="22" rx="3" fill="#f9dce0" stroke="#7d1f28" stroke-width="1.2"/><text x="81" y="85.5" font-size="15" font-weight="900" text-anchor="middle" fill="#c22332">3</text></g>`
-   +iMineFlag(53,73,'#fff','#8a1d28')
-   +`<g filter="url(#xSh)"><path d="M79 11l9 3v7c0 6-4 10-9 12-5-2-9-6-9-12v-7z" fill="#f5c342" stroke="#7a4e08" stroke-width="1.4" stroke-linejoin="round"/><path d="M79 14.5v14.5M74 20h10" stroke="#fff4bd" stroke-width="1.6" stroke-linecap="round"/></g>`
-   +`<g filter="url(#xSh)" stroke="#9ef2ff" stroke-width="2.1" stroke-linecap="round"><path d="M21 71v16M14 75l14 8M28 75l-14 8"/><circle cx="21" cy="79" r="2.2" fill="#fff" stroke="none"/></g>`
-   +iNavalMine(50,50,12.5)),
+ mine:iconMineLink,
+ mineVersus:iconMineVersus,
  bozu:photoIcon('bozu'),
  wolf:photoIcon('wolf'),
  munage:I(`<rect width="100" height="100" fill="#f1e3c4"/>`+[0,2,4,6,8].map(i=>`<rect x="${i*12.5}" width="12.5" height="100" fill="#b9302a"/>`).join('')+`<rect y="70" width="100" height="30" fill="#c0894f"/><rect y="68" width="100" height="3" fill="#e2b75a"/><path d="M0 0H100V9Q93 15 87.5 9Q81 15 75 9Q68 15 62.5 9Q56 15 50 9Q43 15 37.5 9Q31 15 25 9Q18 15 12.5 9Q6 15 0 9Z" fill="#8e1b1f" stroke="#e2b75a" stroke-width="1.2"/>`,

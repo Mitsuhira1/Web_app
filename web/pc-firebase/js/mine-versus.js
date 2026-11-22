@@ -5,13 +5,15 @@ const mineVersus = (() => {
     ['fog','霧',10], ['freeze','凍結',15], ['unflag','旗消し',15],
     ['shield','盾',20], ['reseal','再封印',25], ['mines','地雷追加',40]
   ];
-  const levels = ['easy','normal','hard'];
+  const levels = ['easy','normal','hard','huge','widest'];
+  const costScale = [.5,1,1.8,2.5,3.5]; // 広さに合わせた必要ポイントの倍率(MineLink の簡単×0.5・普通×1・難しい×1.8・超広域×2.5。最広域は×3.5)
   const defaults = () => ({ sabotage:true, endRank:3, penalty:10, freeze:3, stock:true, lock:0,
     enabled:attacks.map(()=>true), costs:{} });
+  let lastTap={cell:-1,at:0};
   let preferences = store.get('mineVersusSettings',defaults()), target, fields = new Map(), selectedLevel=levels.includes(store.get('mineVersusLevel'))?store.get('mineVersusLevel'):'normal', drawnVersion=-1, openedRound='', needsFlag=minesGame.personal.firstFlag;
   const seconds = until => Math.max(0,Math.ceil(((until||0)-Date.now())/1000));
   const random = () => crypto.getRandomValues(new Uint32Array(1))[0];
-  const costs = () => preferences.costs[selectedLevel] || attacks.map(a=>Math.round(a[2]*[.5,1,1.8][levels.indexOf(selectedLevel)]));
+  const costs = () => preferences.costs[selectedLevel] || attacks.map(a=>Math.max(1,Math.round(a[2]*costScale[levels.indexOf(selectedLevel)])));
   const level = key => minesGame.LEVELS[key];
   function neighbors(board, cell) {
     const x=cell%board.w,y=Math.floor(cell/board.w), result=[];
@@ -59,7 +61,10 @@ const mineVersus = (() => {
     fields=new Map();drawnVersion=-1;target='';needsFlag=minesGame.personal.firstFlag;
     let grid=new minesGame.Board(round.level,random());
     const center=Math.floor(grid.h/2)*grid.w+Math.floor(grid.w/2);
-    for(let i=0;i<100;i++){
+    const layout=round.layout&&MineNoGuess.decode(round.layout,grid.mine.length,grid.mines);
+    delete round.layout; // 配置そのものは参加者へ送らない
+    if(layout)grid.setLayout(layout,center);
+    else for(let i=0;i<100;i++){
       grid=new minesGame.Board(round.level,random());grid.place(center);
       if(solvable(grid,center))break;
     }
@@ -75,7 +80,7 @@ const mineVersus = (() => {
     return state;
   }
   function refresh(p,board) {
-    p.codes=board.mine.map((mine,i)=>board.opened[i]?(mine?12:board.adj[i]):board.flags[i]?20:9);
+    p.codes=board.mine.map((mine,i)=>board.opened[i]?(mine?12:board.adj[i]):board.flags[i]?19+board.flags[i]:9);
     p.percent=board.percent;
     p.left=board.mines-board.flags.filter(Boolean).length-p.hits;
   }
@@ -119,7 +124,7 @@ const mineVersus = (() => {
       case 'freeze':q.freezeTo=Math.max(q.freezeTo||0,now)+cfg.freeze*1000;break;
       case 'unflag':{
         const flags=board.flags.map((set,i)=>set?i:-1).filter(i=>i>=0);
-        for(let k=Math.ceil(flags.length/2);k>0;k--)board.flags[flags.splice(random()%flags.length,1)[0]]=false;
+        for(let k=Math.ceil(flags.length/2);k>0;k--)board.flags[flags.splice(random()%flags.length,1)[0]]=0;
         break;
       }
       case 'reseal':{
@@ -153,7 +158,7 @@ const mineVersus = (() => {
     if(action.move==='attack')return sabotage(state,p,state.seats.find(q=>q.id===action.target),action.index,now);
     const i=action.cell;
     if(!Number.isInteger(i)||i<0||i>=board.mine.length||(p.freezeTo||0)>now)return false;
-    if(action.move==='flag'){if(board.opened[i])return false;board.flag(i);}
+    if(action.move==='flag'){if(board.opened[i])return false;board.flag(i,state.seats.indexOf(p)+1);}
     else if(action.move==='open'){if(!open(p,board,i,now,state))return false;}
     else return false;
     if(board.openedSafe>=board.mine.length-board.mines){
@@ -202,14 +207,27 @@ const mineVersus = (() => {
     else preferences[key]=value;
     store.set('mineVersusSettings',preferences);
   }
-  const start=()=>canStartExtraMatch() && boardMatch.start('mineVersus',true,{level:selectedLevel,config:{...structuredClone(preferences),cost:costs().slice()}});
+  let generating=false;
+  async function start(){
+    if(!canStartExtraMatch()||generating)return;
+    const lv=level(selectedLevel),options={level:selectedLevel,config:{...structuredClone(preferences),cost:costs().slice()}};
+    if(minesGame.personal.noGuess){ // 運任せのない盤面: 真ん中から論理だけで解ける配置を、始める前に作る
+      generating=true;const button=$('[data-mine-vs-start]');if(button)button.disabled=true;
+      const r=await MineNoGuess.generateAsync(lv.w,lv.h,lv.mines,Math.floor(lv.h/2)*lv.w+Math.floor(lv.w/2),random());
+      generating=false;if(button)button.disabled=false;
+      if(r?.layout)options.layout=MineNoGuess.encode(r.layout);
+      if(!canStartExtraMatch())return;
+    }
+    minesGame.resetZoomState();
+    boardMatch.start('mineVersus',true,options);
+  }
   function html(state) {
     const side = playSide({seats:'<div class="seats" id="duelSeats"></div>',
       status:'<div class="status" id="duelStatus">安全なマスを開いてください</div>',
       actions:ruleButton('mine'),on:true,content:'<div id="duelTools"></div>'});
     return `<div class="screen"><div class="stage mine-duel">
       ${playHeader('マインスイーパー','みんなで遊ぶ・対戦','data-extra-exit')}
-      <div class="mine-boardwrap"><div class="mine-board" id="duelBoard" style="--mine-cols:${level(state.level).w}"></div></div>
+      <div class="mine-boardwrap" style="--mine-cols:${level(state.level).w};--mine-rows:${level(state.level).h}"><div class="mine-board" id="duelBoard"></div><button class="mine-zoom" data-mine-zoomreset hidden aria-label="拡大を戻す"></button></div>
       <div class="mine-foot" id="duelInfo"></div>${playGear()}<div class="cutlayer" id="cutlayer"></div></div>${side}</div>`;
   }
   function draw(state){
@@ -220,11 +238,10 @@ const mineVersus = (() => {
     const other=state.seats.filter(q=>q!==p&&!q.done);
     if(!other.some(q=>q.id===target))target=other[0]?.id;
     const frozen=seconds(p?.freezeTo),fogged=seconds(watched.fogTo);
-    if(element.dataset.signature!==[state.id,state.version,frozen>0,fogged>0].join(':')){
-      element.dataset.signature=[state.id,state.version,frozen>0,fogged>0].join(':');
-      element.innerHTML=watched.codes.map((code,i)=>`<button class="mine-cell ${code===20?'flag':code===12?'mine':code===9?'hidden':'open'}" data-code="${code}"
-        data-extra-mine="${i}" aria-label="${i+1}番のマス" ${!p||state.finish||p.done||frozen?'disabled':''}>${code===20?'⚑':code===12?'✹':code===9||!code||fogged?'':code}</button>`).join('');
-    }
+    if(element.dataset.round!==state.id){element.dataset.round=state.id;element._codes=null;}
+    minesGame.paint(element,watched.codes,{attr:'data-extra-mine',cols:level(state.level).w,fog:fogged>0,disabled:!p||state.finish||p.done||frozen>0,
+      origin:performance.now()-lastTap.at<800?lastTap.cell:-1});
+    minesGame.mountZoom(cell=>boardMatch.send('flag',{cell:+cell.dataset.extraMine}));
     $('#duelInfo').textContent=`⚑ ${watched.left}　 ${p?.points||0} pt　 ${frozen?'凍結 '+frozen+'秒':fogged?'霧 '+fogged+'秒':state.notice||''}`;
     if(state.finish)$('#duelInfo').textContent=state.ranking.map((id,i)=>`${i+1}位 ${state.seats.find(q=>q.id===id)?.name}`).join(' ／ ');
     $('#duelStatus').textContent=state.finish?'対戦終了':!p?'観戦中':p.done?'クリア！':frozen?'凍結中':state.notice||'安全なマスを開いてください';
@@ -239,10 +256,10 @@ const mineVersus = (() => {
       <div class="ops">${attacks.map(([key,label],i)=>`<button class="btn" data-extra-mine-attack="${i}" ${!state.config.enabled[i]||p.points<state.config.cost[i]||
         (key==='shield'? (!state.config.stock&&p.shields)||seconds(p.shieldTo):!target||seconds(p.cooldowns?.[target]))?'disabled':''}>${label} ${state.config.cost[i]}pt</button>`).join('')}</div>`:''}</div>`;
     if(tools.dataset.markup!==options){tools.dataset.markup=options;tools.innerHTML=options;}
-    if(drawnVersion!==state.version){if(state.version>0)sfx.play('TAP',{volume:.28});drawnVersion=state.version;}
+    drawnVersion=state.version;
   }
   function button(d){
-    if(d.extraMine!==undefined)return boardMatch.send(needsFlag?'flag':'open',{cell:+d.extraMine});
+    if(d.extraMine!==undefined){lastTap={cell:+d.extraMine,at:performance.now()};return boardMatch.send(needsFlag?'flag':'open',{cell:+d.extraMine});}
     if(d.extraMineMode!==undefined){needsFlag=!needsFlag;return draw(boardMatch.state);}
     if(d.extraMineAttack!==undefined)return boardMatch.send('attack',{index:+d.extraMineAttack,target});
   }

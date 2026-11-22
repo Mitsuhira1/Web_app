@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261122-slide-wood-1";
+const CACHE = "asobipcfb-20261122-mine-minelink-1";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",
@@ -141,6 +141,7 @@ const FILES = [
 "./js/bunyo.js",
 "./js/pakuris.js",
 "./js/mines.js",
+"./js/mine-noguess.js",
 "./js/sfx.js",
 "./js/state.js",
 "./js/version.js",
