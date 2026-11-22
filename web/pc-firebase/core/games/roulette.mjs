@@ -315,7 +315,9 @@ function makeRouletteRules(opts) {
     }
 
     const allBroke = nextChips.every((c) => c <= 0);
-    const finished = maxRounds > 0 && (s.roundNo >= maxRounds || allBroke);
+    // 2 人以上で、チップが残っているのが 1 人だけになったら、その場で決着(2 人なら、0 枚になった方の負け)
+    const lastStanding = n >= 2 && nextChips.filter((c) => c > 0).length === 1;
+    const finished = maxRounds > 0 && (s.roundNo >= maxRounds || allBroke || lastStanding);
 
     if (finished) {
       let winner = -1;
@@ -342,6 +344,9 @@ function makeRouletteRules(opts) {
         if (allBroke) {
           winner = -1;
           reason = `全${s.roundNo}ラウンド終了 (全員チップ0枚で引き分け)`;
+        } else if (lastStanding && s.roundNo < maxRounds) {
+          winner = leaders[0];
+          reason = `第${s.roundNo}ラウンドで決着 (${winner + 1}番以外のチップが0枚)`;
         } else if (leaders.length === 1) {
           winner = leaders[0];
           reason = `全${s.roundNo}ラウンド終了 (${winner + 1}番が${maxC}枚で優勝！)`;

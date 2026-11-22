@@ -256,6 +256,36 @@ console.log('4. Checking rebet, endless rebuy, broke-seat skipping & restoreMatc
 }
 console.log('   OK: Rebet, endless rebuy, all-bust early termination, and restoreMatch verified.');
 
+console.log('4b. Checking: only one seat left with chips ends the match (2 players), 3+ players continue...');
+{
+  // 0 番の席が全額(100 枚)を数字 1 つに、1 番の席は 1 枚だけ赤に賭ける。0 番が外れたら 0 枚
+  const bust = (players, seed) => {
+    const h = core.newMatch('roulette', `players=${players};rounds=10;startChips=100`, String(seed), '', 'normal');
+    core.playMove(h, 3 * 200 + 1); core.playMove(h, MOVE_CONFIRM);              // 席0: 100 枚を数字に
+    for (let k = 1; k < players; k++) { core.playMove(h, 0 * 200 + spotById.get('out:red').idx); core.playMove(h, MOVE_CONFIRM); }
+    return h;
+  };
+  let checked2 = false, checked3 = false;
+  for (let seed = 1; seed < 60 && !(checked2 && checked3); seed++) {
+    const h2 = bust(2, seed), v2 = getView(h2, 0);
+    if (!checked2 && v2.board.chips?.[0] === 0 || (!checked2 && v2.outcome && v2.board.lastRound.bankrollsAfter[0] === 0)) {
+      assert.ok(v2.outcome, '2 players: the match ends at once when one seat has no chips');
+      assert.equal(v2.outcome.winner, 1);
+      assert.match(v2.outcome.reason, /第1ラウンドで決着/);
+      checked2 = true;
+    }
+    const h3 = bust(3, seed), v3 = getView(h3, 0);
+    if (!checked3 && v3.board.lastRound?.bankrollsAfter[0] === 0 && v3.board.lastRound.bankrollsAfter.filter(c => c > 0).length >= 2) {
+      assert.equal(v3.outcome, null, '3 players: continues while two or more seats have chips');
+      assert.equal(v3.board.roundNo, 2);
+      assert.notEqual(v3.board.turn, 0, 'the broke seat is skipped');
+      checked3 = true;
+    }
+  }
+  assert.ok(checked2 && checked3, 'found seeds for both cases');
+}
+console.log('   OK: 2 players end immediately when one is broke; 3 players continue.');
+
 console.log('5. Running CPU playouts across all levels & player counts (1..6)...');
 for (const players of [1, 2, 3, 6]) {
   for (let li = 0; li < 3; li++) {

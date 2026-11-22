@@ -186,7 +186,7 @@ window.rouletteReady = Promise.all([
   }
 
   // 浮かせた回転盤を、フェードで閉じる(閉じている間に描き直しても、続きから消えるように leaveUntil で覚える)
-  const LEAVE_MS = 340;
+  const LEAVE_MS = 340, SETTLE_MS = 2400;
   function closeWheel() {
     if (!wheel) return;
     wheel.settleUntil = 0;
@@ -194,6 +194,8 @@ window.rouletteReady = Promise.all([
     const layout = $('#boardwrap .rq-layout');
     if (!layout || !layout.classList.contains('is-settling')) return;
     const current = wheel;
+    // 押して早く閉じた時は、CPU も消え終わったらすぐ打てるようにする
+    if (current.A) { current.A.animClear(); current.A.anim(LEAVE_MS / current.A.speed); }
     current.leaveUntil = performance.now() + LEAVE_MS;
     layout.classList.replace('is-settling', 'is-leaving');
     current.leaveTimer = setTimeout(() => {
@@ -230,7 +232,9 @@ window.rouletteReady = Promise.all([
       wheel = { match, round, angle: rest.rotor, orbit: rest.orbit, plan, started: now, duration };
       $('#boardwrap').scrollTop = 0;
       if (duration) {
-        A.anim(plan.duration);
+        // CPU は回転盤の表示が消えるまで(回る間+止まってから見せる間+消える間)次の手を打たない
+        wheel.A = A;
+        A.anim(plan.duration + (SETTLE_MS + LEAVE_MS) / A.speed);
         const impacts = plan.impacts.map(hit => ({...hit, at: hit.at * A.speed}));
         wheel.cancelSound = sfx.rouletteSpin?.({duration, impacts, panAt: plan.panAt});
         const current = wheel;
@@ -239,11 +243,11 @@ window.rouletteReady = Promise.all([
           current.duration = 0;
           // 止まった後も少しだけ浮かせたまま出目を見せる(押すと閉じる)。閉じる時はゆっくり消す。
           current.stoppedAt = performance.now();
-          current.settleUntil = current.stoppedAt + 2400;
+          current.settleUntil = current.stoppedAt + SETTLE_MS;
           current.settleTimer = setTimeout(() => {
             if (wheel !== current || token !== match || S.screen !== 'play') return;
             closeWheel();
-          }, 2400);
+          }, SETTLE_MS);
           A.redraw();
         }, duration);
       } else if (A.reduce) {

@@ -2819,7 +2819,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .rq-wallet { min-width:76px; white-space:nowrap; font-size:11px; color:var(--sub); }
 .rq-wallet span { margin-right:3px; }
 .rq-wallet b { color:var(--ink); font-size:15px; }
-.rq-denoms { display:flex; gap:5px; }
+.rq-denoms { display:flex; gap:5px; padding-top:10px; } /* 選んだチップは浮いて輪が付くので、その分の余白 */
 .rq-denom {
   display:grid; place-items:center; width:38px; height:38px; padding:0; font-weight:850; font-size:12px; font-variant-numeric:tabular-nums;
   border:3px dashed #fff4db; border-radius:50%; background:var(--chip); color:#fffaf0;
@@ -2837,10 +2837,12 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 
 @container (max-width:610px) or ((max-width:875px) and (max-height:440px)) {
   .rq-layout { max-width:480px; }
-  .rq-table { height:clamp(672px,179cqw,790px); --cx:calc(100% / 5.6); --cy:calc(100% / 14); }
+  /* 盤の高さに収める(スクロールさせない)。とても低い画面だけ、押せる大きさ(1 段 22px)を下回らないようにスクロールを残す */
+  .rq-table { height:max(308px, calc(100cqh - 72px)); --cx:calc(100% / 5.6); --cy:calc(100% / 14); }
+  .rq-result { display:none; }
   .rq-spot { left:calc(var(--y) * var(--cx)); top:calc(var(--x) * var(--cy)); }
   .rq-cell { width:calc(var(--h) * var(--cx)); height:calc(var(--w) * var(--cy)); font-size:clamp(13px,4.3cqw,20px); }
-  .rq-pin { width:26px; height:24px; }
+  .rq-pin { width:26px; height:min(24px, calc(var(--cy) * .9)); }
   .rq-spot.dozen .rq-spotlabel, .rq-spot.outside .rq-spotlabel { font-size:12px; }
   .rq-legend { gap:2px 8px; }
 }
@@ -2875,7 +2877,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .rq-layout { --tw:min(100cqw - 8px, (100cqh - 255px) * 2.5 + 40px); gap:8px; margin:0 auto; }
   .rq-result { padding:6px 12px; }
   .rq-result th, .rq-result td { padding:2px 4px; }
-  .rq-bets { width:var(--tw); margin-inline:auto; }
+  .rq-bets { width:min(var(--tw), 100%); margin-inline:auto; }
   .rq-felt { padding:14px 18px 12px; border-radius:20px; border:2px solid #c79a5e; box-shadow:inset 0 0 0 4px #0d2a2140, 0 6px 16px #21100540; }
   .rq-table { height:auto; aspect-ratio:14 / 5.6; }
   .rq-legend { font-size:clamp(11px, calc(var(--tw) * .013), 14px); }
