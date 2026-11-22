@@ -479,6 +479,7 @@ const munageGame = (() => {
       <div class="boardwrap k-munage mn-wrap" id="mnTable"></div>
       ${playGear()}
       <div class="cutlayer" id="cutlayer"></div>
+      <div class="resultlayer" id="result" hidden></div>
     </div>${side}</div>`;
   }
   const narrow = () => isMob();
@@ -518,7 +519,8 @@ const munageGame = (() => {
       <div class="kv mn-more"><span>飛ばした人</span><b>${state.rule === 'win' ? '勝ち' : '負け'}</b></div>`;
     $('#mnRound').innerHTML = `<span class="hchip">ボタン ${state.n} 個</span>`;
     const again = $('[data-extra-mn-again]'); if (again) again.disabled = !(state.finish && (!state.online || netApi?.role === 'host'));
-    if (!animating || document.hidden) { if (state.finish) board.classList.add('fired'); return; }
+    if (!state.finish) { const r = $('#result'); if (r) r.hidden = true; }
+    if (!animating || document.hidden) { if (state.finish) { board.classList.add('fired'); if (!anime) showResult(state); } return; }
     // 押した時の動き・音
     const btn = table.querySelector(`[data-extra-mn="${state.last}"]`);
     snd.press();
@@ -537,6 +539,20 @@ const munageGame = (() => {
       return;
     }
     fire(state, board, btn);
+  }
+  // ---- 結果の画面(ほかのゲームと同じ形: 勝敗・メニュー・もう一度) ----
+  function showResult(state) {
+    const p = $('#result');
+    if (!p || boardMatch.state?.id !== state.id || !state.finish) return;
+    const win = state.rule === 'win', mine = state.seats.findIndex(x => x.id === boardMatch.myId());
+    const loser = state.seats[state.loser];
+    const title = mine < 0 ? `${loser.name}の${win ? '勝ち' : '負け'}` : (state.loser === mine) === win ? 'あなたの勝ち' : 'あなたの負け';
+    const host = !state.online || netApi?.role === 'host';
+    const list = state.seats.map((x, i) => `<li class="${i === mine ? 'me' : ''}"><b>${i === state.loser ? (win ? '勝ち' : '負け') : (win ? '負け' : 'セーフ')}</b><span>${esc(x.name)}</span></li>`).join('');
+    p.innerHTML = `<div class="rbox"><h3>${esc(title)}</h3><p>${esc(loser.name)}がおっさんを飛ばした(点火スイッチは ${state.bad + 1} 番)</p>
+      <ol class="rrank">${list}</ol>${host ? '' : '<p class="dimtxt">ホストが次を始めるのを待っています</p>'}
+      <div class="rbtns"><button class="btn" data-extra-exit>${state.online ? '部屋に戻る' : 'メニュー'}</button>${host ? '<button class="btn primary" data-extra-mn-again>もう一度</button>' : ''}</div></div>`;
+    p.hidden = false;
   }
   function pop(board, text) {
     const el = board.querySelector('.mn-pop'); if (!el) return;
@@ -557,15 +573,18 @@ const munageGame = (() => {
       snd.boom();
       cut({text: 'ゲームオーバー', sub: `${loser}の${win ? '勝ち' : '負け'}`, tone: 'red', ms: 1800});
       setTimeout(() => snd.ending(win), 300);
+      setTimeout(() => showResult(state), 2200);
       return;
     }
     setTimeout(() => { if (board.isConnected && boardMatch.state?.id === state.id) playAnime(state, board, loser, win); }, 450);
   }
   function stopAnime() {
     if (!anime) return;
+    const done = anime.onEnd;
     anime.timers.forEach(clearTimeout);
     anime.el.remove();
     anime = null;
+    done?.();
   }
   function playAnime(state, board, loser, win) {
     stopAnime();
@@ -573,7 +592,7 @@ const munageGame = (() => {
     L.innerHTML = animeHtml() + '<div class="mn-skip">タップでとばす</div>';
     document.body.append(L);
     const timers = [];
-    anime = {el: L, timers};
+    anime = {el: L, timers, onEnd: () => showResult(state)};
     const at = (ms, fn) => timers.push(setTimeout(() => { if (L.isConnected) fn(); }, ms));
     const q = s => L.querySelector(s);
     const cut = sel => L.querySelectorAll('.cut').forEach(c => c.classList.toggle('on', c.matches(sel)));
@@ -638,7 +657,7 @@ const munageGame = (() => {
     if (d.extraMnAgain !== undefined) return start(true);
     if (d.extraMn !== undefined) return boardMatch.send('press', {cell: +d.extraMn, turn: state.version});
   }
-  const stop = () => { clearTimeout(timer); secret = null; stopAnime(); };
+  const stop = () => { clearTimeout(timer); secret = null; if (anime) anime.onEnd = null; stopAnime(); };
   window.addEventListener('resize', () => { if (S.screen === 'extraPlay' && boardMatch.state?.game === 'munage') { const t = $('#mnTable'); if (t && t.querySelector('.mn-board') && (t.dataset.build.split('|')[2] !== String(boardMatch.state.n === 24 && narrow() ? 6 : boardMatch.state.n / 2))) boardMatch.draw(); } });
   boardMatch.register('munage', {initial, apply, changed, html, draw, button, stop});
   // sound は試験(音を書き出して確かめる)用
