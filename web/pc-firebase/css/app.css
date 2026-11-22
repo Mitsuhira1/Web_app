@@ -2737,9 +2737,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   padding:12px clamp(8px, 1.45cqw, 18px) 10px;
   background:repeating-linear-gradient(120deg,#ffffff04 0 1px,transparent 1px 4px),radial-gradient(ellipse at 40% 0%,#235c47,#12362d 95%);
 }
-.rq-tablehead { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:2px 10px; margin:0 0 10px; }
-.rq-tablehead b { font-size:clamp(14px,1.75cqw,19px); }
-.rq-tablehead span, .rq-legend { color:#f4e4c6; font-size:11px; }
+.rq-legend { color:#f4e4c6; font-size:11px; }
 .rq-table { position:relative; width:100%; height:clamp(254px,29cqw,364px); --cx:calc(100% / 14); --cy:calc(100% / 5.6); }
 .rq-spot {
   position:absolute; margin:0; display:grid; place-items:center; padding:0;
@@ -2786,19 +2784,19 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .rq-pin .rq-stakes { bottom:auto; }
 .rq-pin.has-stakes .rq-pinmark{opacity:0}
 .rq-stakes span {
-  min-width:15px; padding:0 2px; height:13px; display:grid; place-items:center;
+  width:15px; height:15px; padding:0; display:grid; place-items:center; white-space:nowrap; letter-spacing:-.03em;
   border:1px dashed #fff8dd; border-radius:50%; color:#fff; background:color-mix(in srgb,var(--chip) 66%,#1b130e);
-  box-shadow:0 1px 2px #000d; font-size:9px; line-height:1; text-shadow:0 1px 1px #000;
+  box-shadow:0 1px 2px #000d; font-size:calc(9px * var(--k, 1)); line-height:1; text-shadow:0 1px 1px #000;
 }
 @media(min-width:1000px){
   .rq-cell .rq-spotlabel{padding-top:4px}
   .rq-stakes span{
-    height:18px; min-width:21px; padding:0 3px; font-size:11px;
+    width:21px; height:21px; font-size:calc(11px * var(--k, 1));
     box-shadow:0 2px 0 #422d1b, 0 3px 3px #000b, inset 0 0 0 1px #fff4d67d;
   }
-  .rq-stakes:has(span:only-child) span{height:23px; min-width:24px; font-size:12px}
+  .rq-stakes:has(span:only-child) span{width:24px; height:24px; font-size:calc(12px * var(--k, 1))}
   .rq-stakes:has(span:nth-child(3)) { grid-template-columns:repeat(3,max-content); }
-  .rq-stakes:has(span:nth-child(3)) span { height:15px; font-size:9px; min-width:15px; }
+  .rq-stakes:has(span:nth-child(3)) span { width:16px; height:16px; font-size:calc(9px * var(--k, 1)); }
   #acts .rq-actions .btn{height:46px; padding-inline:15px; font-size:15px}
   #acts .rq-tools .btn{height:42px; padding-inline:13px; font-size:14px}
   .rq-denom{width:44px;height:44px;font-size:14px}
@@ -2868,8 +2866,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .reduce .rq-layout.is-leaving .rq-wheel-panel { display:none; }
 /* ベッティングテーブルの字: 数字は Cinzel(ローマン体)、言葉はしっぽり明朝。金色がかった白で彫ったように */
 .rq-felt { --rq-num:"Cinzel","Shippori Mincho B1",serif; --rq-jp:"Shippori Mincho B1","Cinzel",serif; }
-.rq-tablehead b { font-family:var(--rq-jp); font-weight:800; letter-spacing:.14em; color:#f2d68e; text-shadow:0 1px 0 #00000080; }
-.rq-tablehead span, .rq-legend { font-family:var(--rq-jp); font-weight:800; letter-spacing:.04em; color:#ecdcb6; }
+.rq-legend { font-family:var(--rq-jp); font-weight:800; letter-spacing:.04em; color:#ecdcb6; }
 .rq-cell { font-family:var(--rq-num); font-weight:700; color:#fbf1d6; text-shadow:0 1px 0 #000a, 0 0 6px #0005; border-color:#dcc58dbb; }
 .rq-cell.dozen, .rq-cell.outside, .rq-cell.column { font-family:var(--rq-jp); font-weight:800; letter-spacing:.04em; }
 .rq-cell.column .rq-spotlabel, .rq-cell.dozen .rq-spotlabel { font-family:var(--rq-num); }
@@ -2881,8 +2878,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   .rq-bets { width:var(--tw); margin-inline:auto; }
   .rq-felt { padding:14px 18px 12px; border-radius:20px; border:2px solid #c79a5e; box-shadow:inset 0 0 0 4px #0d2a2140, 0 6px 16px #21100540; }
   .rq-table { height:auto; aspect-ratio:14 / 5.6; }
-  .rq-tablehead b { font-size:clamp(16px, calc(var(--tw) * .021), 24px); }
-  .rq-tablehead span, .rq-legend { font-size:clamp(11px, calc(var(--tw) * .013), 14px); }
+  .rq-legend { font-size:clamp(11px, calc(var(--tw) * .013), 14px); }
   .rq-cell { font-size:clamp(14px, calc(var(--tw) * .031), 36px); }
   .rq-cell.dozen, .rq-cell.outside { font-size:clamp(13px, calc(var(--tw) * .026), 30px); }
   .rq-cell.column { font-size:clamp(12px, calc(var(--tw) * .022), 26px); }

@@ -141,11 +141,17 @@ window.rouletteReady = Promise.all([
     </svg>`;
   }
 
+  // 賭けたチップの印: 大きさは桁によらず同じ丸。桁が多い時は字だけを小さくする
+  function chipMark(color, amount) {
+    // 1,000 以上は「1k」「1.5k」(正確な枚数は枠の説明に出ている)
+    const text = amount >= 1000 ? `${Math.floor(amount / 100) / 10}k` : fmt(amount), k = [1, 1, 1, .8, .66, .56, .5][Math.min(6, text.length)];
+    return `<span style="--chip:${color};--k:${k}">${text}</span>`;
+  }
+
   function renderTable(b, seats, can, chipIndex, spinning) {
     const positions = layouts[Number(b.wheelType === 'amer')];
     const bets = spinning ? b.lastRound.bets : b.bets;
     return `<section class="rq-felt" aria-label="ベッティングテーブル">
-      <div class="rq-tablehead"><b>ベッティングテーブル</b><span>${ui.remove ? '撤去する賭け枠を選択' : '数字・境界・交点にベット'}</span></div>
       <div class="rq-table${ui.remove ? ' removing' : ''}">
         ${positions.map(s => {
           const stakes = seats.filter(p => bets[p.seat]?.[s.id]).map(p => [p, bets[p.seat][s.id]]);
@@ -161,7 +167,7 @@ window.rouletteReady = Promise.all([
             aria-disabled="${!available}" ${available ? '' : 'tabindex="-1"'} aria-label="${esc(label)}" title="${esc(label)}"
             style="--x:${s.x};--y:${s.y};--w:${s.w || 0};--h:${s.h || 0}">
             ${s.pin ? '<span class="rq-pinmark" aria-hidden="true"></span>' : `<span class="rq-spotlabel">${visible}</span>`}
-            ${stakes.length ? `<span class="rq-stakes" aria-hidden="true">${stakes.map(([p, amt]) => `<span style="--chip:${p.color}">${fmt(amt)}</span>`).join('')}</span>` : ''}
+            ${stakes.length ? `<span class="rq-stakes" aria-hidden="true">${stakes.map(([p, amt]) => chipMark(p.color, amt)).join('')}</span>` : ''}
           </button>`;
         }).join('')}
       </div>
