@@ -58,6 +58,19 @@ window.rouletteReady = Promise.all([
         <path d="M${point(106, edge+.15)}L${point(130, edge+.15)}" stroke="#fff2cd" stroke-width=".65" stroke-linecap="round"/>
         <text y="-141.5" dominant-baseline="central">${n}</text></g>`;
     }).join('');
+    // 止まったポケットの光るハイライト(外側は少しぼやけ、内側は輪郭がはっきり。点滅は CSS)。
+    // Edge で固まらないように、ぼかしはフィルターを使わず、太さの違う半透明の線を重ねて作る。
+    const hitIdx = b.lastRound?.pocketIdx;
+    const glow = hitIdx == null ? '' : (() => {
+      const d = sector(151, 104, -edge, edge);
+      const halo = [[26, .06], [20, .09], [15, .13], [10.5, .2], [7, .3], [4.5, .42]].map(([w, o]) =>
+        `<path d="${d}" fill="none" stroke="#ffcf3a" stroke-opacity="${o}" stroke-width="${w}" stroke-linejoin="round"/>`).join('');
+      // 描き直しても点滅が最初からにならないよう、止まった時からの経過で始める
+      const blink = wheel?.stoppedAt ? ` style="animation-delay:${-Math.round(performance.now() - wheel.stoppedAt)}ms"` : '';
+      return `<g class="rq-hit-glow" transform="rotate(${hitIdx * pitch})"${blink}>${halo}
+        <path d="${d}" fill="#ffe27a" fill-opacity=".28" stroke="#fff6c8" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="${d}" fill="none" stroke="#b07a12" stroke-width=".7" stroke-linejoin="round"/></g>`;
+    })();
     const diamonds = Array.from({length: 8}, (_, i) => `<use href="#rqDiamond" transform="rotate(${45*i}) translate(0 -165) rotate(${i % 2 ? 90 : 0})"/>`).join('');
     const veneer = Array.from({length: 12}, (_, i) => `<use href="#rqFlame" transform="rotate(${i*30}) scale(${i % 2 ? -1 : 1} 1)"/>`).join('');
     const spokes = [28,118,208,298].map(a => `<use href="#rqHandle" transform="rotate(${a})"/>`).join('');
@@ -104,7 +117,7 @@ window.rouletteReady = Promise.all([
       ${diamonds}
       <circle r="155" fill="#251a18" stroke="url(#rqBrass)" stroke-width="2.1"/>
       <g class="rq-rotor" style="transform:rotate(${wheel.angle}deg)">
-        <circle r="152" fill="#aa8b68"/>${pockets}
+        <circle r="152" fill="#aa8b68"/>${pockets}${glow}
         <circle r="130.8" fill="none" stroke="#ebd6ac" stroke-width="1.15"/>
         <circle r="104.5" fill="url(#rqCone)" stroke="url(#rqBrass)" stroke-width="2.8"/>
         ${veneer}
@@ -219,11 +232,12 @@ window.rouletteReady = Promise.all([
           if (wheel !== current || token !== match || S.screen !== 'play') return;
           current.duration = 0;
           // 止まった後も少しだけ浮かせたまま出目を見せる(押すと閉じる)。閉じる時はゆっくり消す。
-          current.settleUntil = performance.now() + 1600;
+          current.stoppedAt = performance.now();
+          current.settleUntil = current.stoppedAt + 2400;
           current.settleTimer = setTimeout(() => {
             if (wheel !== current || token !== match || S.screen !== 'play') return;
             closeWheel();
-          }, 1600);
+          }, 2400);
           A.redraw();
         }, duration);
       } else if (A.reduce) {

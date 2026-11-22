@@ -2714,6 +2714,11 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .rq-pocket { stroke:#c6a270; stroke-width:1; }
 .rq-hit-pocket .rq-pocket { stroke:#ffe29d; stroke-width:2; }
 .rq-layout.is-spinning .rq-hit-pocket .rq-pocket { stroke:#c6a270; stroke-width:1; }
+/* 止まったポケットの金色の光(回っている間は出さない)。点滅は透明度だけ(フィルターは使わない) */
+.rq-hit-glow { pointer-events:none; animation:rqHitBlink .9s ease-in-out infinite; }
+.rq-layout.is-spinning .rq-hit-glow { display:none; }
+@keyframes rqHitBlink { 0%, 100% { opacity:1; } 50% { opacity:.2; } }
+.reduce .rq-hit-glow { animation:none; }
 .rq-history {
   display:flex; flex-wrap:wrap; align-items:center; gap:4px;
   padding-top:6px; margin-top:5px; border-top:1px solid var(--line);
