@@ -109,7 +109,7 @@ export const CHINCHIRO_SPEC = {
   id: 'chinchiro',
   no: 52,
   name: 'チンチロリン',
-  category: 'CARD',
+  category: 'BOARD',
   players: '2〜6人',
   intro: 'サイコロ3個の役で親と勝負！ピンゾロは5倍、ヒフミは2倍払い。チップを増やそう！',
   seatNames: ['1番', '2番', '3番', '4番', '5番', '6番'],

@@ -77,7 +77,7 @@ export const INCANGOLD_SPEC = {
   id: 'incangold',
   no: 47,
   name: 'インカの黄金',
-  category: 'BOARD',
+  category: 'CARD',
   players: '3〜6人',
   intro: '遺跡の奥へ進むか、安全に宝石を持ち帰るか！同じ障害が2枚出たら全没収のチキンレース。',
   seatNames: ['1番', '2番', '3番', '4番', '5番', '6番'],

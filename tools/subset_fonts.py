@@ -22,4 +22,4 @@ def run(font, out, text):
     print(out, os.path.getsize(os.path.join("web/fonts", out)), "bytes", len(text), "chars")
 run("zen_maru_gothic_medium.ttf", "ZenMaruGothic-Medium.woff2", chars)
 run("zen_maru_gothic_bold.ttf", "ZenMaruGothic-Bold.woff2", chars)
-run("koma_yuji_boku.ttf", "YujiBoku-Koma.woff2", set("王玉将飛車角行金銀桂馬香歩兵竜龍成と全杏圭一二三四五六七八九萬東南西北發中"))
+run("koma_yuji_boku.ttf", "YujiBoku-Koma.woff2", set("王玉将飛車角行金銀桂馬香歩兵竜龍成と全杏圭一二三四五六七八九萬東南西北發中し"))  # し はごいたの駒
