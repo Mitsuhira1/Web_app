@@ -2819,7 +2819,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .rq-wallet { min-width:76px; white-space:nowrap; font-size:11px; color:var(--sub); }
 .rq-wallet span { margin-right:3px; }
 .rq-wallet b { color:var(--ink); font-size:15px; }
-.rq-denoms { display:flex; gap:5px; padding-top:10px; } /* 選んだチップは浮いて輪が付くので、その分の余白 */
+.rq-denoms { display:flex; gap:5px; padding-top:16px; } /* 選んだチップは浮いて輪が付くので、その分の余白 */
 .rq-denom {
   display:grid; place-items:center; width:38px; height:38px; padding:0; font-weight:850; font-size:12px; font-variant-numeric:tabular-nums;
   border:3px dashed #fff4db; border-radius:50%; background:var(--chip); color:#fffaf0;
@@ -2900,7 +2900,7 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 }
 .rq-denom:not(:disabled):not([aria-pressed="true"]):hover { transform:translateY(-2px); }
 @media(min-width:1000px){
-  .rq-denoms { gap:14px; padding:8px 8px 4px; }
+  .rq-denoms { gap:14px; padding:12px 8px 4px; }
   .rq-denom { width:60px; height:60px; font-size:17px; border-width:4px; }
   .rq-wallet { font-size:13px; min-width:96px; }
   .rq-wallet b { font-family:"Cinzel",serif; font-size:21px; }

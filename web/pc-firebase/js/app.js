@@ -1007,7 +1007,9 @@ function showResult() {
   const key = `${online ? 'o' : 'l'}${h}:${view.moves}:${o.winner}`; // 対局ごとに 1 回だけ(次の対局が始まった後に、前の勝利を出し直さない)
   if (resultShown !== key) {
     resultShown = key;
-    sfx.play(pass ? (o.winner < 0 ? 'DRAW' : 'WIN') : win ? 'WIN' : o.winner < 0 ? 'DRAW' : 'LOSE');
+    // 勝ち負けの音は、カットインが実際に出た時に鳴らす(ルーレットの回転など、盤の動きが終わるのを待ってから出るため)。カットインを出さない設定の時はすぐ鳴らす
+    const endSound = () => sfx.play(pass ? (o.winner < 0 ? 'DRAW' : 'WIN') : win ? 'WIN' : o.winner < 0 ? 'DRAW' : 'LOSE');
+    if (!S.set.cutin || S.set.reduce) endSound();
     recordStat(win, !win && o.winner >= 0);
     const winnerName = o.winner >= 0 ? (solo ? meName() : seatName(o.winner)) : '';
     const mate = /詰み|チェックメイト|checkmate/i.test(o.reason || '');
@@ -1016,8 +1018,9 @@ function showResult() {
     yachtCutJust = false;
     setTimeout(() => {
       if (key !== resultShown || !view || !view.outcome) return;
-      if (o.winner < 0) cut({ text: '引き分け', tone: 'dark', ms: 1800, _tok: token, afterAnim: true });
-      else cut({ who: null, text: `${winnerName} の勝利`, tone: o.winner === mySeat || pass ? 'gold' : 'dark', ms: 2000, _tok: token, afterAnim: true });
+      const onShow = S.set.cutin && !S.set.reduce ? endSound : undefined;
+      if (o.winner < 0) cut({ text: '引き分け', tone: 'dark', ms: 1800, _tok: token, afterAnim: true, onShow });
+      else cut({ who: null, text: `${winnerName} の勝利`, tone: o.winner === mySeat || pass ? 'gold' : 'dark', ms: 2000, _tok: token, afterAnim: true, onShow });
     }, delayWinCut ? 1700 : 0);
   }
   const title = o.winner < 0 ? '引き分け' : solo ? (o.winner === 0 ? '成功' : '終了') : `${seatName(o.winner)} の勝利`;
