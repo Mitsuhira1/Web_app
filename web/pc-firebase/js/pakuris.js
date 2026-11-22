@@ -144,7 +144,9 @@ const pakurisGame = (() => {
         const ren=this.combo-1;
         if (b2b) this.hooks.tag?.(this,'BACK to BACK','b2b');
         if (spin) this.hooks.tag?.(this,spin==='mini'?'Tスピン ミニ':'Tスピン','spin');
-        this.hooks.tag?.(this,NAMES[n]+(n===4?'!':''),n===4?'big':'lines');
+        /* 4 段消し: 札(タグ)にはせず、ぶにょぶにょの「れんさ!」と同じく、消えた所に字で小さく出す */
+        if (n===4) { if (this.view?.isConnected) { const r=FFX.rel(this.view), c=this.c; this.hooks.word?.(this,'パクリス',r.x+W*c/2,r.y+(rows[0]+2)*c); } }
+        else this.hooks.tag?.(this,NAMES[n],'lines');
         if (ren>=1) this.hooks.tag?.(this,`<b>${ren}</b>REN`,'ren');
         if (allClear) this.hooks.tag?.(this,'全消し!','big');
         this.snd('pClear',n,{ren,spin:!!spin,b2b});

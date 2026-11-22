@@ -91,20 +91,26 @@ const minesGame=(()=>{
  }
 
  // ---------------------------------------------------------------- 盤だけの拡大・移動(2 本指・Ctrl+ホイール・トラックパッド)
- const Z={s:1,x:0,y:0};let lastLong=0,suppressUntil=0;
+ // Z.s: 今の倍率 / Z.c: マスの大きさ(--zs)に反映済みの倍率
+ const Z={s:1,x:0,y:0,c:null};let lastLong=0,suppressUntil=0,commitTimer=0;
  const MAX_SCALE=6;
- function applyZoom(){
+ // live: 指で広げている途中。マスを並べ直さず、盤ごと transform で拡大する(軽い。前は動かすたびに全部のマスを並べ直していて重かった)
+ // 指を離した時(live でない時)に、マスの大きさ(--zs)を変えて並べ直す(すき間・字がにじまない)
+ function applyZoom(live=false){
   const wrap=$('.mine-boardwrap'),bd=wrap&&wrap.querySelector('.mine-board');if(!bd)return;
-  // 拡大は絵を引き伸ばさず、マスの大きさ(--zs)を変える(すき間・字がにじまない)。移動は translate
-  bd.style.setProperty('--zs',Z.s);
-  const mx=Math.max(0,(bd.offsetWidth-wrap.clientWidth)/2+8),my=Math.max(0,(bd.offsetHeight-wrap.clientHeight)/2+8);
+  if(!live||Z.c==null||bd.style.getPropertyValue('--zs')===''){bd.style.setProperty('--zs',Z.s);Z.c=Z.s;bd.style.willChange='';}
+  else bd.style.willChange='transform';
+  const k=Z.s/Z.c;
+  const mx=Math.max(0,(bd.offsetWidth*k-wrap.clientWidth)/2+8),my=Math.max(0,(bd.offsetHeight*k-wrap.clientHeight)/2+8);
   Z.x=Math.max(-mx,Math.min(mx,Z.x));Z.y=Math.max(-my,Math.min(my,Z.y));
-  bd.style.transform=Z.s===1?'':`translate(calc(-50% + ${Z.x}px),calc(-50% + ${Z.y}px))`;
+  bd.style.transform=Z.s===1&&k===1?'':`translate(calc(-50% + ${Z.x}px),calc(-50% + ${Z.y}px))${Math.abs(k-1)>.001?` scale(${k.toFixed(4)})`:''}`;
   const lab=wrap.querySelector('.mine-zoom');if(lab){lab.hidden=Z.s<=1.01;lab.textContent='×'+Z.s.toFixed(1);}
  }
+ // ホイール(トラックパッド)は止まってから並べ直す
+ function commitSoon(){clearTimeout(commitTimer);commitTimer=setTimeout(()=>applyZoom(false),160);}
  function resetZoom(){Z.s=1;Z.x=0;Z.y=0;applyZoom();}
  function zoomAt(s1,px,py){ // px,py: 盤の枠の中心からの位置
-  s1=Math.max(1,Math.min(MAX_SCALE,s1));const k=s1/Z.s;Z.x=px-(px-Z.x)*k;Z.y=py-(py-Z.y)*k;Z.s=s1;if(s1===1){Z.x=0;Z.y=0;}applyZoom();
+  s1=Math.max(1,Math.min(MAX_SCALE,s1));const k=s1/Z.s;Z.x=px-(px-Z.x)*k;Z.y=py-(py-Z.y)*k;Z.s=s1;if(s1===1){Z.x=0;Z.y=0;}applyZoom(true);commitSoon();
  }
  // 盤の枠に操作を付ける。onLong(マスの要素) は長押し(旗)。
  function mountZoom(onLong){
@@ -122,7 +128,7 @@ const minesGame=(()=>{
   };
   wrap.addEventListener('wheel',e=>{
    if(e.ctrlKey){e.preventDefault();const [px,py]=rel(e.clientX,e.clientY);zoomAt(Z.s*Math.exp(-Math.max(-50,Math.min(50,e.deltaY))*.01),px,py);}
-   else if(Z.s>1){e.preventDefault();Z.x-=e.deltaX;Z.y-=e.deltaY;applyZoom();}
+   else if(Z.s>1){e.preventDefault();Z.x-=e.deltaX;Z.y-=e.deltaY;applyZoom(true);}
   },{passive:false});
   wrap.addEventListener('gesturestart',e=>e.preventDefault());
   const pts=new Map();let pinch=null,drag=null,timer=0;
@@ -132,17 +138,17 @@ const minesGame=(()=>{
    if(pinch&&pts.size>=2){
     const [a,b]=[...pts.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]),[mx,my]=rel((a[0]+b[0])/2,(a[1]+b[1])/2);
     const s1=Math.max(1,Math.min(MAX_SCALE,pinch.s*d/pinch.d)),k=s1/pinch.s;
-    Z.s=s1;Z.x=mx-(pinch.mx-pinch.x)*k;Z.y=my-(pinch.my-pinch.y)*k;if(s1===1){Z.x=0;Z.y=0;}applyZoom();
+    Z.s=s1;Z.x=mx-(pinch.mx-pinch.x)*k;Z.y=my-(pinch.my-pinch.y)*k;if(s1===1){Z.x=0;Z.y=0;}applyZoom(true);
    }else if(drag){
     const dx=e.clientX-drag.cx,dy=e.clientY-drag.cy;
     if(!drag.moved&&Math.hypot(dx,dy)>8){drag.moved=true;clearLong();}
-    if(drag.moved&&Z.s>1){Z.x=drag.x+dx;Z.y=drag.y+dy;applyZoom();}
+    if(drag.moved&&Z.s>1){Z.x=drag.x+dx;Z.y=drag.y+dy;applyZoom(true);}
    }
   };
   const up=e=>{
    if(!pts.delete(e.pointerId))return;clearLong();
    if(pinch||drag?.moved)suppressUntil=performance.now()+200;
-   if(pts.size<2)pinch=null;if(!pts.size){drag=null;removeEventListener('pointermove',move);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);}
+   if(pts.size<2&&pinch){pinch=null;applyZoom(false);}else if(!pts.size&&drag?.moved)applyZoom(false);if(!pts.size){drag=null;removeEventListener('pointermove',move);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);}
   };
   wrap.addEventListener('pointerdown',e=>{
    if(e.button>0)return;

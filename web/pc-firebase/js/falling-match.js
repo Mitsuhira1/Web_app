@@ -114,6 +114,7 @@ const fallingMatch = (() => {
       hold:board=>paintHold(pl,i),
       notice:board=>paintNotice(pl,i),
       chainText:(board,n,x,y)=>chainText(n,x,y,board.c),
+      word:(board,text,x,y)=>chainText(0,x,y,board.c,text),
       allClear:board=>{ const r=FFX.rel(board.view); chainText(0,r.x+r.w/2,r.y+r.h*.4,board.c,'全消し!'); },
       tag:(board,html,kind)=>{ if (pl.me||ses?.players.length===2) showTag(i,html,kind); }
     };
@@ -160,7 +161,7 @@ const fallingMatch = (() => {
     el.innerHTML=icons.map(c=>`<i class="${c}"></i>`).join('');
   }
   function chainText(n, x, y, c, text) {
-    const st=$('#fallStage'); if (!st) return; const d=document.createElement('div'); d.className='fchain';
+    const st=$('#fallStage'); if (!st) return; const d=document.createElement('div'); d.className='fchain'+(text?' fword':'');
     d.style.left=x+'px'; d.style.top=y+'px'; d.style.setProperty('--cs',Math.max(14,Math.round(c*.85+n*1.5))+'px');
     d.innerHTML=text?`<span>${text}</span>`:`<b>${n}</b><span>れんさ!</span>`; st.appendChild(d); setTimeout(()=>d.remove(),1100);
   }
@@ -215,7 +216,9 @@ const fallingMatch = (() => {
     const tags=opts.tags?`<div class="ftags" id="fbt${i}"></div>`:'';
     /* ホールド(パクリス・自分の盤だけ)。押してもホールドできる(スマホ) */
     const hold=pl.me&&pl.board&&games[ses.id].holdHtml?`<button class="fnext fhold" id="fbh${i}" data-${ses.id}="hold" style="width:${nextW}px" aria-label="ホールド"></button>`:'';
-    const side=`<div class="fside">${hold}${next}${tags}</div>`;
+    /* スマホ(指で操作する端末)のパクリス: つぎの下に、左回し・右回しのボタン(盤を軽くたたいて回すのも残す) */
+    const rot=pl.me&&pl.board&&ses.id==='pakuris'&&(isMob()||isTouchDevice())?`<div class="frot" style="width:${nextW}px"><button class="btn" data-pakuris="rotateL" aria-label="左に回す"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5"/><path d="M4.5 8.5A8 8 0 1 1 6 17"/></svg></button><button class="btn" data-pakuris="rotate" aria-label="右に回す"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h5v5"/><path d="M19.5 8.5A8 8 0 1 0 18 17"/></svg></button></div>`:'';
+    const side=`<div class="fside">${hold}${next}${rot}${tags}</div>`;
     const col=`<div class="fcol">${notice}<div class="frow">${gauge}${board}</div>${under}</div>`;
     return `<div class="fplayer ${pl.me?'fme':''}">${opts.nextLeft?side+col:col+side}</div>`;
   }

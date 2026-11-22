@@ -245,10 +245,11 @@ function bunyoSvg(st,c,fid,W=6,H=12) {
   return `<svg data-bunyo width="${W*c}" height="${H*c}" viewBox="0 0 ${W*c} ${H*c}" overflow="visible"><defs>${bunyoFilter(fid,c)}</defs>${body}${faces}${top}</svg>`;
 }
 /* 光る印だけ(落ちる所の印・消える粒のふち・軸の粒のふち)。フィルターを使わないので、毎フレーム描いても軽い */
-function bunyoOverlay(st,c,W=6,H=12) {
-  const now=performance.now(), glow=.5+.5*Math.sin(now/110); let s='';
+function bunyoOverlay(st,c,W=6,H=12,still=false) {
+  /* still: 明滅させずに描く(層ごと CSS で明滅させる時) */
+  const now=performance.now(), glow=still?1:.5+.5*Math.sin(now/110); let s='';
   if (st.preview) for (const i of st.preview) s+=bunyoRim((i%W+.5)*c,(Math.floor(i/W)+.5)*c,c,glow);
-  for (const m of st.markers||[]) s+=`<circle cx="${(m.x+.5)*c}" cy="${(m.y+.72)*c}" r="${c*.13}" fill="${BUNYO_COLORS[m.k][0]}" stroke="#fff" stroke-width="${c*.04}" opacity="${(.65+.3*Math.sin(now/120)).toFixed(2)}"/>`;
+  for (const m of st.markers||[]) s+=`<circle cx="${(m.x+.5)*c}" cy="${(m.y+.72)*c}" r="${c*.13}" fill="${BUNYO_COLORS[m.k][0]}" stroke="#fff" stroke-width="${c*.04}" opacity="${still?'.95':(.65+.3*Math.sin(now/120)).toFixed(2)}"/>`;
   if (st.pair) s+=bunyoRim((st.pair.x+.5)*c,(st.pair.y+.5)*c,c,glow);
   return s?`<svg width="${W*c}" height="${H*c}" viewBox="0 0 ${W*c} ${H*c}" overflow="visible">${s}</svg>`:'';
 }

@@ -137,3 +137,10 @@ html.reduce .fchain,html.reduce .ftag,html.reduce .fshake,html.reduce .fbump{ani
 }
 .fhold{padding:0;border:0;background:none;font:inherit;color:inherit;margin-bottom:10px;cursor:pointer}
 .fhold .nx.hold{display:grid;place-items:center}.fhold .nx.used .mini{opacity:.35;filter:grayscale(1)}
+.flayer.fglow{animation:fglow .69s ease-in-out infinite alternate}
+@keyframes fglow{from{opacity:.5}to{opacity:1}}
+html.reduce .flayer.fglow{animation:none}
+.frot{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.frot .btn{width:100%;height:46px;padding:0;display:grid;place-items:center;touch-action:manipulation}
+.frot svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.fchain.fword span{font-size:calc(var(--cs,30px)*.8);margin-left:0}

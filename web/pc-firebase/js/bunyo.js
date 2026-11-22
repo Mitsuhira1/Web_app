@@ -199,22 +199,37 @@ const bunyoGame = (() => {
         const ty=this.pair.y; d.y=Math.abs(ty-d.y)>2?ty:d.y+(ty-d.y)*Math.min(1,dt*14);
         st.pair={x:d.x,y:d.y,ang:d.ang,a:this.pair.a,b:this.pair.b};
       } else st.pair=null;
-      /* 3 枚の層に分けて、変わった層だけ描く(前は組が出ている間、盤全体を毎フレーム描き直していて、スマホで重かった)
-         base: 積もった粒・落ちる粒(フィルターで重い。変わった時だけ) / pair: 操作中の組(回る時だけ描き、動きは位置をずらすだけ) / fx: 光る印 */
+      /* 層に分けて、変わった層だけ描く(フィルターの計算が重いので、毎フレーム盤全体を描き直さない。スマホで重かった)
+         base: 積もって止まっている粒(変わった時だけ) / anim: 落ちている粒・着地でつぶれている粒(動いている間だけ。数が少ない)
+         pair: 操作中の組(向きが変わった時だけ描き、移動と回る途中は位置と角度をずらすだけ) / rim: 組のふち / fx: 落ちる所の印・消える粒のふち
+         rim と fx の明滅は、層ごと CSS の不透明度で動かす(描き直さない) */
       let L=this.lay;
       if (!L||L.base.parentNode!==this.view) {
-        this.view.innerHTML='<div class="flayer"></div><div class="flayer fpc"></div><div class="flayer fpc"></div>';
-        const [a,b,e]=this.view.children; L=this.lay={base:a,pair:b,fx:e,pairKey:null,fxOn:false}; st.dirty=true;
+        this.view.innerHTML='<div class="flayer"></div><div class="flayer fpc"></div><div class="flayer fpc"></div><div class="flayer fpc fglow"></div><div class="flayer fglow"></div>';
+        const [a,an,b,r,e]=this.view.children; L=this.lay={base:a,anim:an,pair:b,rim:r,fx:e,pairKey:null,baseKey:null,fxKey:null,animOn:false};
+        b.style.transformOrigin=`${this.c*.5}px ${this.c*.5}px`;
       }
-      const c=this.c;
-      if (st.dirty || st.fallers.length || st.land.size || st.pop) { st.dirty=false;
-        L.base.innerHTML=bunyoSvg({cells:st.cells,fallers:st.fallers,land:st.land,pop:st.pop,noRim:true},c,this.fid); }
-      if (st.pair) { const p=st.pair, key=p.a+p.b+p.ang.toFixed(3);
-        if (key!==L.pairKey) { L.pairKey=key; L.pair.innerHTML=bunyoSvg({cells:[],pair:{x:0,y:0,ang:p.ang,a:p.a,b:p.b},noRim:true},c,this.fid+'p'); }
-        L.pair.style.transform=`translate(${(p.x*c).toFixed(2)}px,${(p.y*c).toFixed(2)}px)`; }
-      else if (L.pairKey!==null) { L.pairKey=null; L.pair.innerHTML=''; }
-      const fx=st.pair||st.preview||st.markers.length;
-      if (fx) { L.fx.innerHTML=bunyoOverlay(st,c); L.fxOn=true; } else if (L.fxOn) { L.fx.innerHTML=''; L.fxOn=false; }
+      const c=this.c, now=performance.now(), cells=st.cells;
+      for (const [i,t] of st.land) if (now-t>=240) st.land.delete(i);
+      /* 止まっている粒: 着地でつぶれている粒・消える粒は除く(それらは anim の層)。中身が変わった時だけ描く */
+      const pop=st.pop?st.pop.set:null, moving=i=>st.land.has(i)||(pop&&pop.has(i));
+      let key=''; for (let y=0;y<H;y++) for (let x=0;x<W;x++) key+=moving(y*W+x)?'_':(cells[y][x]||'.');
+      if (key!==L.baseKey) { L.baseKey=key;
+        L.base.innerHTML=bunyoSvg({cells:cells.map((r,y)=>r.map((k,x)=>moving(y*W+x)?null:k)),noRim:true},c,this.fid); }
+      const animKey=st.pop?st.pop.mode+[...pop].join(','):'';
+      if (st.fallers.length||st.land.size||animKey!==L.animKey) { L.animKey=animKey;
+        const ac=cells.map((r,y)=>r.map((k,x)=>moving(y*W+x)?k:null));
+        L.anim.innerHTML=bunyoSvg({cells:ac,land:st.land,fallers:st.fallers,pop:st.pop,noRim:true},c,this.fid+'a'); L.animOn=true;
+      } else if (L.animOn&&!animKey) { L.anim.innerHTML=''; L.animOn=false; }
+      if (st.pair) { const p=st.pair, q=Math.PI/2, dir=((Math.round(d.target/q)%4)+4)%4, pk=p.a+p.b+dir;
+        if (pk!==L.pairKey) { L.pairKey=pk;
+          L.pair.innerHTML=bunyoSvg({cells:[],pair:{x:0,y:0,ang:dir*q,a:p.a,b:p.b},noRim:true},c,this.fid+'p');
+          L.rim.innerHTML=`<svg width="${W*c}" height="${H*c}" overflow="visible">${bunyoRim(c*.5,c*.5,c,1)}</svg>`; }
+        const tf=`translate(${(p.x*c).toFixed(2)}px,${(p.y*c).toFixed(2)}px)`, rot=d.ang-d.target;
+        L.pair.style.transform=tf+(Math.abs(rot)>.002?` rotate(${rot.toFixed(4)}rad)`:''); L.rim.style.transform=tf; }
+      else if (L.pairKey!==null) { L.pairKey=null; L.pair.innerHTML=''; L.rim.innerHTML=''; }
+      const fk=st.markers.map(m=>m.x+','+m.y+m.k).join(';')+'|'+(st.preview?[...st.preview].join(','):'');
+      if (fk!==L.fxKey) { L.fxKey=fk; L.fx.innerHTML=bunyoOverlay({markers:st.markers,preview:st.preview},c,W,H,true); }
     }
   }
 
