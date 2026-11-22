@@ -25,144 +25,76 @@ const SAMPLES = {
 };
 const GAIN = { FLIP: 0.7 }; // 裏返すだけ 0.7 倍(元のアプリと同じ)
 
-// ルーレットの音を 1 本の音にまとめて作る(止める時は 1 つの音源を止めるだけ)。
-// 実際の回転盤の音の流れに合わせる:
-//  1) 縁(ボールトラック)を速く転がる「シャーッ」。1 周ごとに近づく・遠ざかるうねりがあり、遅くなるほど低く・小さくなる
-//  2) 縁を離れて坂を転がり落ちる「ゴロゴロ」(低く、ざらつく)
-//  3) ひし形(ディフレクター)に当たる硬い「カッ」
-//  4) 回る盤の金属の仕切り(フレット)を跳ねる、不ぞろいな「カチッ・カチカチ」(音の高さは毎回少しずつ違い、打つ間は詰まっていく)
-//  5) ポケットの中で小さく「カラカラ…」と鳴って止まり、あとは盤と一緒に回る小さな「ゴー」が消えていく
-// 打つ音は、決まった高さの正弦波ではなく、雑音を短く共鳴させて作る(ピーンという電子音にならないように)。
-function rouletteAudioBuffer(ctx, {duration, impacts, panAt, poseAt}) {
-  const rate = 32000;
+// Render the rolling contact and its short impact responses on one audio clock.
+// A single tracked source can be cancelled even after the browser suspends a tab.
+function rouletteAudioBuffer(ctx, {duration, impacts, panAt}) {
+  const rate = 24000;
   const seconds = duration / 1000;
-  const tail = .75;
-  const buffer = ctx.createBuffer(2, Math.ceil((seconds + tail) * rate), rate);
+  const buffer = ctx.createBuffer(2, Math.ceil((seconds + .16) * rate), rate);
   const left = buffer.getChannelData(0), right = buffer.getChannelData(1);
-  const total = left.length;
-  let seed = 1 + Math.round(duration * 41) + impacts.length * 977;
+  let seed = 1 + Math.round(duration * 41);
   function noise() {
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
     return seed / 2147483648 - 1;
   }
-  const rand = () => (noise() + 1) / 2;
-  const put = (i, v, pan) => {
-    if (i < 0 || i >= total) return;
-    left[i] += v * (.8 - .3 * pan);
-    right[i] += v * (.8 + .3 * pan);
-  };
-  // 共鳴する帯域フィルター(状態変数型)。f: 中心の高さ、q: 小さいほど鋭い
-  function svf(f, q) {
-    let low = 0, band = 0;
-    const k = 2 * Math.sin(Math.PI * Math.min(f, rate / 6) / rate);
-    return x => { low += k * band; const high = x - low - q * band; band += k * high; return band; };
-  }
 
+  // Microscopic contacts excite a low wooden resonance and a brighter race
+  // surface. Their spacing and treble both fall with the speed of the ball.
   const drop = impacts.find(hit => hit.kind === 'deflector');
-  const dropAt = drop ? drop.at / 1000 : 0;
-  const settle = impacts.filter(hit => hit.kind === 'settle').pop();
-  const settleAt = settle ? settle.at / 1000 : seconds;
-
-  // ---- 転がる音(縁 → 坂 → 盤の上)と、盤が回る音
-  if (seconds > 0 && poseAt) {
-    const hop = 64;
-    let prevOrbit = poseAt(0).orbit, speed = 0, maxSpeed = 0, pan = 0;
-    const speeds = [];
-    for (let i = 0; i <= total; i += hop) {
-      const t = Math.min(1, (i + hop) / (seconds * rate));
-      const pose = poseAt(t);
-      speeds.push([pose, Math.abs(pose.orbit - prevOrbit) * rate / hop]);
-      prevOrbit = pose.orbit;
+  const raceEnd = drop ? drop.at / duration : .55;
+  const finish = Math.floor(seconds * .92 * rate);
+  let grain = 0, low = 0, surface = 0, pulse = 0, resonance = 0, previous = 0;
+  let pan = 0, panStep = 0, untilGrain = 0;
+  for (let i = 0; i < finish; i++) {
+    const t = i / (seconds * rate);
+    const speed = 1 - .76 * Math.min(1, t / raceEnd);
+    if (i % 192 === 0) {
+      const target = .38 * panAt(Math.min(1, (i + 192) / (seconds * rate)));
+      panStep = (target - pan) / 192;
     }
-    for (const [, v] of speeds) maxSpeed = Math.max(maxSpeed, v);
-    const rollHi = svf(2600, .9), rollMid = svf(900, 1.1), rumble = svf(170, .7), rotorBand = svf(240, 1.2);
-    let lp = 0, grainEnv = 0, untilGrain = 0, smooth = 0, panTarget = 0;
-    for (let i = 0; i < total; i++) {
-      const time = i / rate;
-      const [pose, raw] = speeds[Math.min(speeds.length - 1, Math.floor(i / hop))];
-      speed += (raw / maxSpeed - speed) * .002;
-      const onRim = time < dropAt;
-      if (i % hop === 0) panTarget = .4 * Math.sin(pose.orbit * Math.PI / 180);
-      pan += (panTarget - pan) * .004;
-      const x = noise();
-      // 縁: 速さに合わせて明るさと大きさが変わる。手前(6 時の方向)を通る時に少し大きく聞こえる
-      const near = 1 + .28 * Math.cos((pose.orbit - 180) * Math.PI / 180);
-      const descent = onRim ? Math.max(0, (179.5 - pose.radius) / 14.5) : 0;
-      lp += (.08 + .32 * speed) * (x - lp);
-      let roll = 0;
-      if (onRim) {
-        const bright = rollHi(x) * (.25 + .9 * speed) + rollMid(x) * .7 + lp * .5;
-        // 坂を落ちる間は、低いゴロゴロが増える(ボールが斜めの面でぶれる)
-        if (--untilGrain <= 0) { grainEnv = .5 + rand(); untilGrain = rate / (35 + 60 * speed) * (.6 + .8 * rand()); }
-        grainEnv *= .992;
-        const rough = rumble(x) * (1.6 + 2.4 * descent) * (.6 + .5 * grainEnv * descent);
-        const fadeIn = Math.min(1, time / .06);
-        const intoDrop = Math.min(1, (dropAt - time) / .03);
-        roll = fadeIn * intoDrop * near * (.10 + .26 * speed) * (bright * (1 - .45 * descent) + rough);
-      } else if (time < settleAt + tail) {
-        // 盤の上を転がる・跳ねる間の小さなざらつき。止まった後は盤と一緒に回る低い音だけ
-        // ひし形に当たった直後は、坂の続きで少し転がる音が残り、だんだん弱くなる
-        const after = Math.max(0, time - settleAt);
-        const cone = .9 * Math.exp(-(time - dropAt) * 3.2);
-        roll = (.045 + cone * .09) * Math.exp(-after * 4) * (rumble(x) * 2.4 + rollMid(x) * cone * .6 + lp * .3) * Math.min(1, (time - dropAt) / .02 + .35);
-      }
-      // 盤(ローター)の回る音: とても小さい低い「ゴー」。最後はゆっくり消える
-      const rotorFade = Math.min(1, time / .25) * Math.min(1, Math.max(0, (total / rate - time) / tail));
-      const rotor = .022 * rotorFade * rotorBand(x) * (1 + .15 * Math.sin(2 * Math.PI * 1.3 * time));
-      smooth += (roll + rotor - smooth) * .55;
-      put(i, smooth, pan);
+    pan += panStep;
+    const grit = noise();
+    low += .076 * (grit - low);
+    surface += (.19 + .39 * speed) * (grit - surface);
+    grain += .009 * (Math.abs(grit) - grain);
+    if (--untilGrain <= 0) {
+      pulse += (.25 + .55 * Math.abs(grit)) * speed;
+      untilGrain = (rate / (215 * speed + 30)) * (.70 + .57 * Math.abs(noise()));
     }
+    pulse *= .74;
+    const ring = 1.945 * resonance - .956 * previous + .014 * pulse;
+    previous = resonance;
+    resonance = ring;
+    const release = Math.min(1, i / (rate * .055));
+    const trail = Math.exp(-11 * Math.max(0, t - raceEnd)) * Math.min(1, (finish - i) / (rate * .05));
+    const sample = release * trail * (.4 + .6 * speed) *
+      (.48 * low + .23 * (surface - low) * (.5 + grain) + .62 * resonance);
+    left[i] = sample * (.8 - .32 * pan);
+    right[i] = sample * (.8 + .32 * pan);
   }
 
-  // ---- 打つ音: 雑音を短く共鳴させる。材質ごとに高さの範囲と響く長さを変え、毎回ずらす
   const materials = {
-    // 樹脂の球がひし形の金具に当たる: 硬く高い「カッ」+ 台の木の「コッ」
-    deflector: {modes: [[3100, 5600, .006, 1], [1500, 2300, .009, .55], [190, 260, .02, .9]], level: 1.05},
-    // 金属の仕切りに当たる: 明るく短い「カチッ」
-    fret:      {modes: [[3600, 6400, .004, 1], [1900, 2900, .006, .5], [320, 460, .012, .55]], level: .9},
-    // ポケットの底に落ちる: こもった「コトッ」
-    settle:    {modes: [[1500, 2600, .004, .55], [520, 820, .008, 1], [230, 330, .014, .7]], level: 1.9},
+    deflector: [[720, .032, .36], [2130, .026, .34], [4670, .017, .20]],
+    fret:      [[880, .019, .38], [2820, .016, .30], [3920, .009, .17]],
+    settle:    [[410, .016, .48], [1180, .010, .25], [2140, .006, .12]],
   };
-  function strike(at, kind, strength, pan) {
-    const m = materials[kind];
-    const start = Math.round(at * rate);
-    const filters = m.modes.map(([lo, hi, decay, weight]) => [svf(lo + (hi - lo) * rand(), .06 + .05 * rand()), decay, weight]);
-    const length = Math.ceil(rate * .06);
-    for (let j = 0; j < length; j++) {
-      const time = j / rate;
-      // 当たった瞬間の鋭い雑音(0.4ms ほど)で共鳴を叩く
-      const hitNoise = noise() * Math.exp(-time / .0004);
-      let v = hitNoise * .35;
-      for (const [f, decay, weight] of filters) v += weight * f(hitNoise) * Math.exp(-time / decay) * 2.4;
-      put(start + j, v * m.level * strength * .3, pan);
-    }
-  }
   for (const hit of impacts) {
-    const at = hit.at / 1000, pan = (hit.pan || 0) * .45, s = hit.strength;
-    strike(at, hit.kind, s, pan);
-    if (hit.kind === 'fret') {
-      // 仕切りに当たったすぐ後に、隣の仕切りやポケットの壁に当たる小さな音が 1〜2 回続く(不ぞろいに)
-      const n = 1 + (rand() < .55 ? 1 : 0);
-      let dt = 0;
-      for (let k = 0; k < n; k++) {
-        dt += .018 + .05 * rand();
-        strike(at + dt, rand() < .5 ? 'fret' : 'settle', s * (.38 - .12 * k) * (.7 + .5 * rand()), pan);
+    const start = Math.round(rate * hit.at / 1000);
+    const stop = Math.min(left.length - start, Math.ceil(rate * .135));
+    const detune = 1 + noise() * .055;
+    const pan = (hit.pan || 0) * .46;
+    const modes = materials[hit.kind];
+    for (let j = 0; j < stop; j++) {
+      const time = j / rate;
+      let sample = noise() * Math.exp(-time / .0016) * .42;
+      for (const [frequency, decay, weight] of modes) {
+        sample += weight * Math.sin(2 * Math.PI * detune * frequency * time) * Math.exp(-time / decay);
       }
+      sample *= Math.min(1, j / 9) * (.68 * hit.strength);
+      left[start + j] += sample * (.82 - .32 * pan);
+      right[start + j] += sample * (.82 + .32 * pan);
     }
   }
-  // ポケットの中で小さく「カラカラ…」と鳴って止まる(間が詰まりながら弱くなる)
-  if (settle && seconds > 0) {
-    let dt = 0, gap = .055, s = .2;
-    for (let k = 0; k < 6; k++) {
-      dt += gap * (.85 + .3 * rand());
-      strike(settleAt + dt, 'settle', s, (settle.pan || 0) * .45);
-      gap *= .74; s *= .66;
-    }
-  }
-  // 全体の大きさをそろえる(割れないように、いちばん大きい所を .6 に)
-  let peak = 0;
-  for (let i = 0; i < total; i++) peak = Math.max(peak, Math.abs(left[i]), Math.abs(right[i]));
-  if (peak > .6) { const g = .6 / peak; for (let i = 0; i < total; i++) { left[i] *= g; right[i] *= g; } }
   return buffer;
 }
 
