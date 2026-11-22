@@ -13,6 +13,7 @@ import { PEGSOLITAIRE_SPEC } from './games/pegsolitaire.mjs';
 import { ROULETTE_SPEC } from './games/roulette.mjs';
 import { COYOTE_SPEC } from './games/coyote.mjs';
 import { SKULL_SPEC } from './games/skull.mjs';
+import { LIARSDICE_SPEC } from './games/liarsdice.mjs';
 
 export const EXTRA_GAME_SPECS = [
   WAR_SPEC,
@@ -30,6 +31,7 @@ export const EXTRA_GAME_SPECS = [
   ROULETTE_SPEC,
   COYOTE_SPEC,
   SKULL_SPEC,
+  LIARSDICE_SPEC,
 ];
 
 function wrapRules(rawRules, OutcomeCtor) {
