@@ -255,7 +255,7 @@ function moveSound(id, m) {
     case "hanafuda": return m === 2 ? ["SHUFFLE"] : m <= 1 ? null : ["HANA"];
     case "holdem": return m === 3 ? ["SHUFFLE"] : m === 0 ? ["DEAL"] : ["CHIP"];
     case "poker": return m >= 100 ? ["DEAL"] : ["CHIP"];
-    case "roulette": return m === 2004 ? null : ["CHIP", { volume: .65 }];
+    case "roulette": return m % 1000000 === 2004 ? null : ["CHIP", { volume: .65 }]; // 手は 席 × 1000000 + 手
     case "blackjack": return m >= 100 ? ["CHIP"] : ["CARD"];
     case "war": case "butanoshippo": return ["CARD_FLIP"];
     case "takoyaki": return [m < 10 ? "CARD_FLIP" : "CARD"];

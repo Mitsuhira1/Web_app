@@ -14,6 +14,7 @@ import {
   MOVE_CONFIRM,
   MOVE_REBUY,
   ROULETTE_SPEC,
+  SEAT_MOVE as SEAT,
 } from '../../web/pc-firebase/core/games/roulette.mjs';
 
 function makeOpts(map = {}) {
@@ -182,8 +183,8 @@ console.log('4. Checking rebet, endless rebuy, broke-seat skipping & restoreMatc
   const blkIdx = spotById.get('out:black').idx;
   core.playMove(h, 2 * 200 + redIdx); // seat 0: 25 red
   core.playMove(h, MOVE_CONFIRM);
-  core.playMove(h, 2 * 200 + blkIdx); // seat 1: 25 black
-  core.playMove(h, MOVE_CONFIRM); // spins round 1 -> moves to round 2
+  core.playMove(h, SEAT + 2 * 200 + blkIdx); // seat 1: 25 black(手は 席 × SEAT + 手)
+  core.playMove(h, SEAT + MOVE_CONFIRM); // spins round 1 -> moves to round 2
 
   let st = getView(h, 0);
   assert.equal(st.board.roundNo, 2);
@@ -267,13 +268,42 @@ console.log('4c. Checking: confirming with no chips on the table (pass) is not a
 }
 console.log('   OK: no pass without a bet.');
 
+console.log('4d. Checking: everyone bets at the same time (moves carry the seat)...');
+{
+  const h = core.newMatch('roulette', 'players=3;rounds=10;startChips=1000', '9', '', 'normal');
+  assert.equal(core.isConcurrent(h), true);
+  // 席 2 → 席 0 → 席 1 → 席 2 の順に混ぜて置ける
+  assert.ok(core.playMove(h, 2 * SEAT + 0 * 200 + 5));
+  assert.ok(core.playMove(h, 0 * SEAT + 1 * 200 + 7));
+  assert.ok(core.playMove(h, 1 * SEAT + 2 * 200 + 9));
+  assert.ok(core.playMove(h, 2 * SEAT + 0 * 200 + 6));
+  let v = getView(h, 0);
+  assert.deepEqual(v.board.tableTotals, [5, 25, 2]);
+  // 戻すは自分の席の分だけ
+  assert.ok(core.playMove(h, 2 * SEAT + MOVE_UNDO));
+  v = getView(h, 0);
+  assert.deepEqual(v.board.tableTotals, [5, 25, 1]);
+  // 自分の席の手だけが合法(ほかの席の手は含まない)
+  assert.ok(getView(h, 1).legal.every((m) => Math.floor(m / SEAT) === 1));
+  // 2 人が確定しても回らない。最後の 1 人が確定したら回る
+  assert.ok(core.playMove(h, 0 * SEAT + MOVE_CONFIRM));
+  assert.ok(core.playMove(h, 2 * SEAT + MOVE_CONFIRM));
+  assert.equal(getView(h, 0).board.roundNo, 1);
+  assert.equal(core.playMove(h, 0 * SEAT + 1 * 200 + 7), false, 'a confirmed seat cannot bet again');
+  assert.ok(core.playMove(h, 1 * SEAT + MOVE_CONFIRM));
+  v = getView(h, 0);
+  assert.equal(v.board.roundNo, 2);
+  assert.ok(v.board.lastRound);
+}
+console.log('   OK: seats bet in any order, undo is per seat, the wheel spins when all have confirmed.');
+
 console.log('4b. Checking: only one seat left with chips ends the match (2 players), 3+ players continue...');
 {
   // 0 番の席が全額(100 枚)を数字 1 つに、1 番の席は 1 枚だけ赤に賭ける。0 番が外れたら 0 枚
   const bust = (players, seed) => {
     const h = core.newMatch('roulette', `players=${players};rounds=10;startChips=100`, String(seed), '', 'normal');
     core.playMove(h, 3 * 200 + 1); core.playMove(h, MOVE_CONFIRM);              // 席0: 100 枚を数字に
-    for (let k = 1; k < players; k++) { core.playMove(h, 0 * 200 + spotById.get('out:red').idx); core.playMove(h, MOVE_CONFIRM); }
+    for (let k = 1; k < players; k++) { core.playMove(h, k * SEAT + 0 * 200 + spotById.get('out:red').idx); core.playMove(h, k * SEAT + MOVE_CONFIRM); }
     return h;
   };
   let checked2 = false, checked3 = false;
@@ -289,7 +319,8 @@ console.log('4b. Checking: only one seat left with chips ends the match (2 playe
     if (!checked3 && v3.board.lastRound?.bankrollsAfter[0] === 0 && v3.board.lastRound.bankrollsAfter.filter(c => c > 0).length >= 2) {
       assert.equal(v3.outcome, null, '3 players: continues while two or more seats have chips');
       assert.equal(v3.board.roundNo, 2);
-      assert.notEqual(v3.board.turn, 0, 'the broke seat is skipped');
+      assert.equal(v3.board.confirmed[0], true, 'the broke seat is skipped');
+      assert.ok(!v3.legal.length || getView(h3, 0).legal.length === 0, 'the broke seat cannot bet');
       checked3 = true;
     }
   }

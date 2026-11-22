@@ -63,6 +63,29 @@ function wrapRules(rawRules, OutcomeCtor) {
   };
 }
 
+// みんなで同時に動くゲーム(ルーレット)。エンジンの ConcurrentRules として登録する(asobi-pc-core.mjs の initMetadataForClass)。
+// 素の規則は legalMovesFor(s, seat) を持ち、手は「席 × 1000000 + 手」。
+export class ExtraConcurrentRules {
+  constructor(raw, OutcomeCtor) { this._raw = raw; this._Outcome = OutcomeCtor; }
+  qs() { return this._raw.playerCount; }
+  ss(rng) { return this._raw.initial(rng); }
+  ts(s) { return this._raw.toMove(s); }
+  os(s, seat) { return new Int32Array(this._raw.legalMovesFor(s, seat)); }
+  ps(s) { return new Int32Array(this._raw.legalMoves(s)); }
+  rs(s, m) { return !!this._raw.isLegal(s, m); }
+  ws(s, m) { return this._raw.play(s, m); }
+  xs(s) {
+    const o = this._raw.outcome(s);
+    if (o == null) return null;
+    return 'ys_1' in o ? o : new this._Outcome(o.winner, o.reason || '');
+  }
+  us(s) {
+    const sc = this._raw.scores ? this._raw.scores(s) : null;
+    if (sc == null) return null;
+    return sc instanceof Int32Array ? sc : new Int32Array(sc);
+  }
+}
+
 function wrapBrain(spec) {
   const fn = spec.brain && typeof spec.brain.choose === 'function'
     ? (raw, s, seat, level, rng, budget) => spec.brain.choose(raw, s, seat, level, rng, budget)
@@ -93,7 +116,7 @@ export function registerExtraGames(baseList, k) {
   const extraInfos = EXTRA_GAME_SPECS.map((spec) => {
     const def = new GameDef(
       spec.id,
-      (opts) => wrapRules(spec.makeRules(opts), Outcome),
+      (opts) => (spec.concurrent ? new ExtraConcurrentRules(spec.makeRules(opts), Outcome) : wrapRules(spec.makeRules(opts), Outcome)),
       wrapBrain(spec),
       !!spec.undoAllowed,
       spec.seatsFor,

@@ -375,7 +375,8 @@ async function resume(s) {
 async function enterPlay(resumed = false) {
   busy = false; yachtCutJust = false; stopConcurrent();
   S.chatOpen = false; S.chatUnread = 0;
-  concurrent = (online && !isSoloIdleMatch()) ? false : await call('isConcurrent', h); S.screen = 'play'; S.modal = null;
+  // 同時進行のゲームは通信対戦では止める。ただしルーレットは、みんなで同時に賭ける
+  concurrent = (online && !isSoloIdleMatch() && cur.id !== 'roulette') ? false : await call('isConcurrent', h); S.screen = 'play'; S.modal = null;
   // リロードした時に、この対局へ戻れるように覚えておく(通信対戦は部屋に入り直して戻る)
   try { if (!online) sessionStorage.setItem('asobi-play', cur.id); else sessionStorage.removeItem('asobi-play'); } catch (e) {}
   bgCtx(); render();
@@ -499,7 +500,10 @@ async function refresh() {
     try { ms = mainCore.onlineMovesFrom(h, previous.moves).split(',').filter((x) => x !== '').map(Number); if (ms.length) { pendSnd = ms[ms.length - 1]; lastPlayed = pendSnd; } } catch (e) {}
     // 相手(通信の人)の手も、CPU と同じカーソルの動きで見せる(前の盤の上で動かしてから、新しい盤を描く)
     // (PC 版どうしで、相手のカーソルがいつも見えている時は、この動きは出さない)
-    const rouletteCpu = cur.id === 'roulette' && previous.toMove >= 0 &&
+    if (cur.id === 'roulette' && concurrent && !isHostRoom()) {
+      for (const m of ms) { const seat = Math.floor(m / 1000000), sv = view.seats[seat]; if (sv && !sv.human && seatToSlot(seat) < 0) { /* 部屋の人がいない席 = ホストが動かす CPU */ rouletteSeatCursor(seat, m, my, false); if (m % 1000000 === 2004) seatCursorHide(seat, 900); } }
+    }
+    const rouletteCpu = cur.id === 'roulette' && !concurrent && previous.toMove >= 0 &&
       ((!previous.human && !previous.remote) || isSeatAutoCpu(previous.toMove));
     const replayCursor = rouletteCpu
       ? !isHostRoom() && S.set.cursor !== '表示しない'
@@ -621,6 +625,8 @@ function statusText() {
   const b = view.board;
   if (b?.kind === 'roulette' && $('.rq-layout.is-spinning')) return 'スピン中…';
   if (view.outcome) return '終了';
+  // ルーレットはみんなで同時に賭けるので「〇〇の番」は出さない
+  if (b?.kind === 'roulette') { const me = b.me; if (me < 0) return '観戦中'; if (b.confirmed[me]) return 'ほかの人の確定を待っています'; return b.canRebuy ? 'チップを補充できます' : 'チップを選んで、賭け枠に置いてください'; }
   if (online && view.toMove >= 0 && isSeatAutoCpu(view.toMove)) return isMySeatAutoCpu() && view.toMove === view.mine ? 'CPUが操作中…（解除ボタンで戻れます）' : 'CPUが操作中…';
   if (online && view.remote) return `${view.seats[view.toMove].name} の番です`;
   if (!view.human) return busy && !(b && b.kind === 'hitblow' && b.setting) ? `${seatName(view.toMove)} が考えています` : '';
@@ -898,9 +904,86 @@ function setupDrag(o) {
 }
 
 // 同時に指せるゲーム(スピード・ソリティア): CPU は人の操作を待たずに、少し間をあけて指す
-function stopConcurrent() { if (concTimer) { clearTimeout(concTimer); concTimer = null; } }
+function stopConcurrent() { if (concTimer) { clearTimeout(concTimer); concTimer = null; } stopRouletteCpus(); }
 let concSeat = 0;
+// ---- ルーレット: CPU は席ごとに自分のペースで賭ける(みんなで同時に)。カーソルも席ごと ----
+const rlCpu = { timers: new Map(), busy: new Set() };
+function stopRouletteCpus() {
+  for (const t of rlCpu.timers.values()) clearTimeout(t);
+  rlCpu.timers.clear(); rlCpu.busy.clear();
+  document.querySelectorAll('.rcur.seatcur').forEach((e) => e.remove());
+}
+async function runRouletteCpus(my) {
+  if (h < 0 || (online && !isHostRoom())) return; // 通信対戦の CPU はホストが動かす
+  const seats = JSON.parse(await call('cpuSeats', h)); if (my !== token) return;
+  for (const seat of seats) if (!rlCpu.busy.has(seat)) rouletteCpuLoop(seat, my);
+}
+function rouletteCpuLoop(seat, my) {
+  rlCpu.busy.add(seat);
+  const beat = ROULETTE_CPU_BEAT[cpuPaceChoice()] || 500;
+  const next = (ms) => rlCpu.timers.set(seat, setTimeout(step, ms));
+  const end = () => { rlCpu.timers.delete(seat); rlCpu.busy.delete(seat); };
+  async function step() {
+    if (my !== token || !view || view.outcome || S.screen !== 'play') return end();
+    // 回転盤の表示・カットインの間は打たない
+    const lag = Math.max(animUntil, cutBusy) - performance.now();
+    if (lag > 0) return next(lag + 80);
+    const m = await call('cpuChooseSeat', h, seat, 80);
+    if (my !== token) return end();
+    if (m < 0) { seatCursorHide(seat, 600); return end(); } // 確定した(この回はもう打たない)
+    await rouletteSeatCursor(seat, m, my, true);
+    if (my !== token || !view || view.outcome) return end();
+    const ok = online ? mainCore.onlineCpuPlay(h, m) : await call('playMove', h, m);
+    if (ok) { pendSnd = m; refresh(); }
+    if (m % 1000000 === 2004) { seatCursorHide(seat, 700); return end(); }
+    next(beat * (0.7 + Math.random() * 0.9));
+  }
+  next(beat * (0.8 + Math.random() * 1.2));
+}
+// 席ごとのカーソル: 目当ての枠へ動かす。hesitate の時は、先にほかの枠へ寄って迷う
+function rouletteSeatTargets(m) {
+  const mv = m % 1000000, W = $('#boardwrap'), q = (sel) => W?.querySelector(sel) || $(sel);
+  if (mv < 1000) return [q(`[data-roulette-spot="${mv % 200}"]`)];
+  if (mv < 2000) return [q(`[data-roulette-spot="${mv - 1000}"]`)];
+  return [q(`[data-roulette-action="${mv}"]`)];
+}
+async function rouletteSeatCursor(seat, m, my, hesitate) {
+  const [target] = rouletteSeatTargets(m);
+  if (!target || S.set.cursor === '表示しない') return new Promise((r) => setTimeout(r, 200));
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const spots = [...document.querySelectorAll('#boardwrap [data-roulette-spot]')];
+  const path = hesitate && Math.random() < 0.55 && spots.length ? [spots[Math.floor(Math.random() * spots.length)], target] : [target];
+  for (let k = 0; k < path.length; k++) {
+    if (my !== token) return;
+    const el = path[k];
+    if (cursorOn()) seatCursorTo(seat, el);
+    if (k === path.length - 1) el.classList.add('rq-cpu-target');
+    await wait(k === path.length - 1 ? 520 : 380 + Math.random() * 260);
+    el.classList.remove('rq-cpu-target');
+  }
+  const c = document.getElementById('seatCur' + seat);
+  if (c) { c.classList.remove('click'); void c.offsetWidth; c.classList.add('click'); }
+}
+function seatCursorTo(seat, el) {
+  const stage = $('.stage'); if (!stage || !el?.isConnected) return;
+  const r0 = stage.getBoundingClientRect(), zoom = r0.width / stage.offsetWidth || 1, r = el.getBoundingClientRect();
+  let c = document.getElementById('seatCur' + seat);
+  if (!c) {
+    stage.insertAdjacentHTML('beforeend', rcurHtml('seatCur' + seat, seatName(seat), SEAT_COLORS[seat % SEAT_COLORS.length], true));
+    c = document.getElementById('seatCur' + seat); c.classList.add('seatcur');
+    c.style.transform = `translate(${r0.width / 2 / zoom}px,${(r0.height + 20) / zoom}px)`; c.getBoundingClientRect();
+  }
+  clearTimeout(c._hide); c.style.opacity = '';
+  c.style.transitionDuration = '380ms';
+  c.style.transform = `translate(${(r.left - r0.left + r.width * 0.5) / zoom}px,${(r.top - r0.top + r.height * 0.5) / zoom}px)`;
+}
+function seatCursorHide(seat, ms) {
+  const c = document.getElementById('seatCur' + seat); if (!c) return;
+  clearTimeout(c._hide); c._hide = setTimeout(() => c.remove(), ms);
+}
+
 async function runConcurrent(my) {
+  if (cur.id === 'roulette') return runRouletteCpus(my);
   if (concTimer || h < 0) return;
   const seats = JSON.parse(await call('cpuSeats', h)); if (!seats.length || my !== token) return;
   const seat = seats[concSeat++ % seats.length];

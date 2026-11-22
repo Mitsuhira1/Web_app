@@ -1,4 +1,4 @@
-import { registerExtraGames, extraGameView } from './extra-games.mjs';
+import { registerExtraGames, extraGameView, ExtraConcurrentRules } from './extra-games.mjs';
 import { SpiderSolitaire, spiderChoose } from './games/spider.mjs';
 import {
   THROW_IAE23kobfj9wdoxr as THROW_IAE,
@@ -468,6 +468,7 @@ initMetadataForClass(sam$jp_yonekou_asobi26_core_Brain$0_25, 'sam$jp_yonekou_aso
 initMetadataForCompanion(Companion_27);
 initMetadataForClass(Solitaire, 'Solitaire', Solitaire, VOID, [ConcurrentRules]);
 initMetadataForClass(SpiderSolitaire, 'SpiderSolitaire', VOID, VOID, [ConcurrentRules]);
+initMetadataForClass(ExtraConcurrentRules, 'ExtraConcurrentRules', VOID, VOID, [ConcurrentRules]); // ルーレット(みんなで同時に賭ける)
 (function () { var raw = SpiderSolitaire.prototype.xs; SpiderSolitaire.prototype.xs = function (st) { var o = raw.call(this, st); return o == null ? null : new Outcome(o.winner, o.reason); }; })();
 initMetadataForClass(SpeedState, 'SpeedState');
 initMetadataForClass(sam$jp_yonekou_asobi26_core_Brain$0_26, 'sam$jp_yonekou_asobi26_core_Brain$0', VOID, VOID, [Brain, FunctionAdapter]);
@@ -42380,9 +42381,12 @@ function setup$lambda_1($r) {
   return function (index, move) {
     var ses = get_matches().l1(get_matchHandle());
     var tmp;
-    if (!(ses == null) && index === ses.yu().n() && ses.xu(move)) {
+    // 同時進行(ルーレットなど): ホストは、ゲストの手の番号が今より古くても受ける(手は席を含むので順番に依らない)
+    var n0 = ses == null ? -1 : ses.yu().n();
+    var concHost = !(ses == null) && $r.w25_1 && isInterface(ses.ku_1, ConcurrentRules) && index < n0;
+    if (!(ses == null) && (index === n0 || concHost) && ses.xu(move)) {
       if ($r.w25_1) {
-        $r.x28(index, move);
+        $r.x28(n0, move);
       }
       changed_2();
       tmp = Unit_instance;
@@ -42403,7 +42407,10 @@ function setup$lambda_3($r) {
     var ses = get_matches().l1(get_matchHandle());
     var b = $r.g26_1;
     var tmp;
-    if (!(ses == null) && !(b == null) && ses.bv() == null && index === ses.yu().n()) {
+    if (!(ses == null) && !(b == null) && ses.bv() == null && isInterface(ses.ku_1, ConcurrentRules) && index <= ses.yu().n() && Companion_getInstance_4().tu(move) == null) {
+      var seatOf = Math.floor(move / 1000000);
+      tmp = getOrNull(b.t25_1, seatOf) === slot && ses.ku_1.rs(ses.nu_1, move);
+    } else if (!(ses == null) && !(b == null) && ses.bv() == null && index === ses.yu().n()) {
       var tmp0_safe_receiver = Companion_getInstance_4().tu(move);
       var tmp_0;
       if (tmp0_safe_receiver == null) {

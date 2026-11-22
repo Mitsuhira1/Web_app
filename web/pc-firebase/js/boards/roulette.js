@@ -312,7 +312,8 @@ window.rouletteReady = Promise.all([
   }
 
   function controls(b, A, can, chipIndex, spinning) {
-    const confirm = b.confirmed.every((checked, seat) => checked || seat === b.turn || (!b.bankrolls[seat] && b.maxRounds > 0));
+    const me = ui.me;
+    const confirm = b.confirmed.every((checked, seat) => checked || seat === me || (!b.bankrolls[seat] && b.maxRounds > 0));
     const list = [
       ['戻す', 2000, b.canUndo],
       ['クリア', 2001, b.canClear],
@@ -321,7 +322,7 @@ window.rouletteReady = Promise.all([
       ...(b.maxRounds === 0 ? [['補充', 2005, b.canRebuy]] : []),
       [confirm ? '確定・スピン' : 'ベット確定', 2004, true],
     ];
-    A.acts(list.map(([label, move, enabled]) => ({label, move, enabled: enabled && can(move)})));
+    A.acts(list.map(([label, move, enabled]) => ({label, move: ui.enc(move), enabled: enabled && can(move)})));
     const dock = $('#acts');
     const actionRow = document.createElement('div');
     actionRow.className = 'rq-actions';
@@ -332,8 +333,8 @@ window.rouletteReady = Promise.all([
       actionRow.append(button);
     }
     dock.append(actionRow);
-    const hasRemovable = b.tableTotals[b.turn] > 0 && can(2001);
-    dock.insertAdjacentHTML('afterbegin', `<div class="rq-tools"><div class="rq-wallet"><span>手元</span><b>${spinning ? '—' : fmt(b.chips[b.turn] ?? 0)}</b> 枚</div>
+    const hasRemovable = me >= 0 && b.tableTotals[me] > 0 && can(2001);
+    dock.insertAdjacentHTML('afterbegin', `<div class="rq-tools"><div class="rq-wallet"><span>手元</span><b>${spinning || me < 0 ? '—' : fmt(b.chips[me] ?? 0)}</b> 枚</div>
       <div class="rq-denoms" role="group" aria-label="チップの額面">
         ${b.spotChips.map((n, i) => `<button type="button" class="rq-denom" data-roulette-chip="${i}" aria-label="${n}枚のチップ"
           aria-pressed="${!ui.remove && chipIndex === i}" ${can(i * 200) ? '' : 'disabled'} style="--chip:${DENOMS[i]}">${n}</button>`).join('')}
@@ -347,15 +348,18 @@ window.rouletteReady = Promise.all([
 
   window.RENDER.roulette = (b, A) => {
     const match = token;
-    if (ui?.match !== match) ui = {match, turn: b.turn, chip: 2, remove: false};
-    if (ui.turn !== b.turn) { ui.turn = b.turn; ui.remove = false; }
-    const ready = A.view.human && !A.view.outcome && !busy && !A.remoteTurn;
-    const legal = new Set(A.view.legal);
+    if (ui?.match !== match) ui = {match, round: b.roundNo, chip: 2, remove: false};
+    if (ui.round !== b.roundNo) { ui.round = b.roundNo; ui.remove = false; }
+    // みんなで同時に賭ける: 自分の席の分だけを扱い、送る手には席を含める(席 × SEAT + 手)
+    const SEAT = 1000000, me = Number.isInteger(b.me) && b.me >= 0 && b.me < b.n ? b.me : -1;
+    ui.me = me; ui.enc = (m) => Math.max(0, me) * SEAT + m;
+    const ready = me >= 0 && !A.view.outcome && !busy && !b.confirmed[me];
+    const legal = new Set(A.view.legal.filter(x => Math.floor(x / SEAT) === me).map(x => x % SEAT));
     const spinning = updateWheel(b, A, match);
     const can = m => ready && !spinning && legal.has(m);
-    if (!b.tableTotals[b.turn]) ui.remove = false;
+    if (me < 0 || !b.tableTotals[me]) ui.remove = false;
     let chipIndex = ui.chip;
-    while (chipIndex > 0 && b.spotChips[chipIndex] > b.chips[b.turn]) chipIndex--;
+    while (chipIndex > 0 && me >= 0 && b.spotChips[chipIndex] > b.chips[me]) chipIndex--;
     const root = $('#boardwrap');
     const focused = document.activeElement;
     const savedFocus = ['data-roulette-chip', 'data-roulette-spot', 'data-roulette-remove', 'data-roulette-action']
@@ -368,7 +372,7 @@ window.rouletteReady = Promise.all([
     const history = b.history.map(r => `<span class="rq-pocket-tag ${r.color}" title="第${r.roundNo}ラウンド" aria-label="第${r.roundNo}ラウンド ${r.pocketStr}">${r.pocketStr}</span>`).join('');
     A.round(`第${roundNo}ラウンド${b.maxRounds ? ` / ${b.maxRounds}` : '・エンドレス'}`);
     A.strip(seats.map(({seat, name, color}) => {
-      const active = !spinning && seat === b.turn;
+      const active = !spinning && !b.confirmed[seat]; // まだ賭けている人(同時に何人でも)
       const chips = spinning ? last.bankrollsAfter[seat] - last.payouts[seat] : b.chips[seat];
       const stake = spinning ? last.wagered[seat] : b.tableTotals[seat];
       const status = spinning || b.confirmed[seat] ? '確定済み' : active ? 'ベット中' : '待機';
@@ -391,13 +395,13 @@ window.rouletteReady = Promise.all([
       </section>
       <div class="rq-bets">${renderTable(b, seats, can, chipIndex, spinning)}
         ${!spinning ? resultPanel(last, seats, history) : ''}</div>
-      </div>`, (data, button) => { if (data.rouletteSpot != null && button.getAttribute('aria-disabled') === 'false') A.play(Number(data.m)); });
+      </div>`, (data, button) => { if (data.rouletteSpot != null && button.getAttribute('aria-disabled') === 'false') A.play(ui.enc(Number(data.m))); });
     root.oncontextmenu = event => {
       const spot = event.target.closest('[data-roulette-spot]');
       if (!spot) return;
       event.preventDefault();
       const move = 1000 + Number(spot.dataset.rouletteSpot);
-      if (can(move)) A.play(move);
+      if (can(move)) A.play(ui.enc(move));
     };
     const panel = root.querySelector('.rq-wheel-panel');
     if (panel) panel.onclick = () => closeWheel();

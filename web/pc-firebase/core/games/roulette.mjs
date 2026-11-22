@@ -176,6 +176,8 @@ export const MOVE_REBET = 2002;
 export const MOVE_DOUBLE = 2003;
 export const MOVE_CONFIRM = 2004;
 export const MOVE_REBUY = 2005;
+// みんなで同時に賭ける(2026-11-22)。手は「席 × SEAT_MOVE + 手」で表す(エンジンのほかの同時進行のゲームと同じ形)
+export const SEAT_MOVE = 1000000;
 
 const MAX_HISTORY = 20;
 
@@ -225,6 +227,13 @@ function makeRouletteRules(opts) {
     }
     return -1;
   }
+
+  // まだ賭けられる席か(決着前・賭けの時間・未確定)
+  function canAct(s, p) {
+    return !s.reason && s.phase === 'bet' && p >= 0 && p < n && !s.confirmed[p] && !(maxRounds > 0 && s.chips[p] <= 0 && sumBets(s.bets[p]) === 0);
+  }
+  const pushHist = (s, p, snap) => s.hist.map((h, i) => (i === p ? h.concat([snap]) : h));
+  const bump = (s, p) => s.steps.map((v, i) => (i === p ? v + 1 : v));
 
   function computeCanRebet(s, seat) {
     if (seat < 0 || seat >= n) return false;
@@ -363,8 +372,8 @@ function makeRouletteRules(opts) {
         bets: Array.from({ length: n }, () => ({})),
         prevBets: nextPrevBets,
         confirmed: new Array(n).fill(true),
-        turnHistory: [],
-        turnSteps: 0,
+        hist: Array.from({ length: n }, () => []),
+        steps: new Array(n).fill(0),
         turn: -1,
         phase: 'done',
         lastRound,
@@ -386,8 +395,8 @@ function makeRouletteRules(opts) {
       bets: emptyBets,
       prevBets: nextPrevBets,
       confirmed: nextConfirmed,
-      turnHistory: [],
-      turnSteps: 0,
+      hist: Array.from({ length: n }, () => []),
+      steps: new Array(n).fill(0),
       turn: nextTurn,
       phase: 'bet',
       lastRound,
@@ -399,7 +408,8 @@ function makeRouletteRules(opts) {
     return withView(state, (_r, me, st) => {
       const tableTotals = st.bets.map(sumBets);
       const bankrolls = st.chips.map((c, i) => c + tableTotals[i]);
-      const activeSeat = st.turn;
+      // 自分の席(観戦中は、まだ賭けている最初の席)の分を出す
+      const activeSeat = me >= 0 && me < n ? me : st.turn;
       const curActiveTotal = activeSeat >= 0 ? tableTotals[activeSeat] : 0;
 
       return JSON.stringify({
@@ -419,7 +429,7 @@ function makeRouletteRules(opts) {
         bankrolls,
         confirmed: st.confirmed,
         bets: st.bets,
-        canUndo: !st.reason && st.turnHistory.length > 0,
+        canUndo: !st.reason && activeSeat >= 0 && st.hist[activeSeat].length > 0,
         canClear: !st.reason && curActiveTotal > 0,
         canRebet: !st.reason && computeCanRebet(st, activeSeat),
         canDouble: !st.reason && computeCanDouble(st, activeSeat),
@@ -452,8 +462,8 @@ function makeRouletteRules(opts) {
         prevBets: Array.from({ length: n }, () => ({})),
         confirmed: new Array(n).fill(false),
         rebuyCounts: new Array(n).fill(0),
-        turnHistory: [],
-        turnSteps: 0,
+        hist: Array.from({ length: n }, () => []),
+        steps: new Array(n).fill(0),
         turn: 0,
         phase: 'bet',
         lastRound: null,
@@ -462,12 +472,9 @@ function makeRouletteRules(opts) {
         reason: '',
       });
     },
-    toMove(s) {
-      return s.reason ? -1 : s.turn;
-    },
-    legalMoves(s) {
-      if (s.reason || s.turn < 0) return [];
-      const p = s.turn;
+    // 席ごとの手(SEAT_MOVE をかけない、席の中の手)
+    legalFor(s, p) {
+      if (!canAct(s, p)) return [];
       const avail = s.chips[p];
       const curBetMap = s.bets[p];
       const curTotal = sumBets(curBetMap);
@@ -493,7 +500,7 @@ function makeRouletteRules(opts) {
         }
       }
 
-      if (s.turnHistory.length > 0) moves.push(MOVE_UNDO);
+      if (s.hist[p].length > 0) moves.push(MOVE_UNDO);
       if (curTotal > 0) moves.push(MOVE_CLEAR);
       if (computeCanRebet(s, p)) moves.push(MOVE_REBET);
       if (computeCanDouble(s, p)) moves.push(MOVE_DOUBLE);
@@ -503,9 +510,8 @@ function makeRouletteRules(opts) {
 
       return moves;
     },
-    isLegal(s, m) {
-      if (s.reason || s.turn < 0) return false;
-      const p = s.turn;
+    isLegalFor(s, p, m) {
+      if (!canAct(s, p)) return false;
       const avail = s.chips[p];
       const curBetMap = s.bets[p];
       const curTotal = sumBets(curBetMap);
@@ -522,7 +528,7 @@ function makeRouletteRules(opts) {
         const spot = ROULETTE_SPOTS[m - 1000];
         return (curBetMap[spot.id] || 0) > 0;
       }
-      if (m === MOVE_UNDO) return s.turnHistory.length > 0;
+      if (m === MOVE_UNDO) return s.hist[p].length > 0;
       if (m === MOVE_CLEAR) return curTotal > 0;
       if (m === MOVE_REBET) return computeCanRebet(s, p);
       if (m === MOVE_DOUBLE) return computeCanDouble(s, p);
@@ -530,9 +536,8 @@ function makeRouletteRules(opts) {
       if (m === MOVE_REBUY) return computeCanRebuy(s, p);
       return false;
     },
-    play(s, m) {
-      if (!this.isLegal(s, m)) return s;
-      const p = s.turn;
+    playFor(s, p, m) {
+      if (!this.isLegalFor(s, p, m)) return s;
       const snap = { bet: cloneBetMap(s.bets[p]), chips: s.chips[p] };
 
       // Place chip
@@ -549,8 +554,8 @@ function makeRouletteRules(opts) {
           ...s,
           chips,
           bets,
-          turnHistory: s.turnHistory.concat([snap]),
-          turnSteps: s.turnSteps + 1,
+          hist: pushHist(s, p, snap),
+          steps: bump(s, p),
         });
       }
 
@@ -565,14 +570,14 @@ function makeRouletteRules(opts) {
           ...s,
           chips,
           bets,
-          turnHistory: s.turnHistory.concat([snap]),
-          turnSteps: s.turnSteps + 1,
+          hist: pushHist(s, p, snap),
+          steps: bump(s, p),
         });
       }
 
       // Undo within current turn
       if (m === MOVE_UNDO) {
-        const prev = s.turnHistory[s.turnHistory.length - 1];
+        const prev = s.hist[p][s.hist[p].length - 1];
         const chips = s.chips.slice();
         chips[p] = prev.chips;
         const bets = s.bets.map((b, i) => (i === p ? cloneBetMap(prev.bet) : b));
@@ -580,8 +585,8 @@ function makeRouletteRules(opts) {
           ...s,
           chips,
           bets,
-          turnHistory: s.turnHistory.slice(0, -1),
-          turnSteps: s.turnSteps + 1,
+          hist: s.hist.map((h, i) => (i === p ? h.slice(0, -1) : h)),
+          steps: bump(s, p),
         });
       }
 
@@ -594,8 +599,8 @@ function makeRouletteRules(opts) {
           ...s,
           chips,
           bets,
-          turnHistory: s.turnHistory.concat([snap]),
-          turnSteps: s.turnSteps + 1,
+          hist: pushHist(s, p, snap),
+          steps: bump(s, p),
         });
       }
 
@@ -610,8 +615,8 @@ function makeRouletteRules(opts) {
           ...s,
           chips,
           bets,
-          turnHistory: s.turnHistory.concat([snap]),
-          turnSteps: s.turnSteps + 1,
+          hist: pushHist(s, p, snap),
+          steps: bump(s, p),
         });
       }
 
@@ -630,8 +635,8 @@ function makeRouletteRules(opts) {
           ...s,
           chips,
           bets,
-          turnHistory: s.turnHistory.concat([snap]),
-          turnSteps: s.turnSteps + 1,
+          hist: pushHist(s, p, snap),
+          steps: bump(s, p),
         });
       }
 
@@ -645,20 +650,19 @@ function makeRouletteRules(opts) {
           ...s,
           chips,
           rebuyCounts,
-          turnSteps: s.turnSteps + 1,
+          steps: bump(s, p),
         });
       }
 
-      // Confirm (2004)
+      // Confirm (2004): 全員が確定したら回す
       const confirmed = s.confirmed.slice();
       confirmed[p] = true;
-      const nextSeat = findNextActiveSeat(s.chips, confirmed, p + 1);
+      const nextSeat = findNextActiveSeat(s.chips, confirmed, 0);
       if (nextSeat >= 0) {
         return attach({
           ...s,
           confirmed,
-          turnHistory: [],
-          turnSteps: 0,
+          hist: s.hist.map((h, i) => (i === p ? [] : h)),
           turn: nextSeat,
         });
       }
@@ -667,6 +671,24 @@ function makeRouletteRules(opts) {
         ...s,
         confirmed,
       });
+    },
+    // エンジン向け: 手に席を含める(席 × SEAT_MOVE + 手)
+    toMove(s) {
+      return s.reason ? -1 : findNextActiveSeat(s.chips, s.confirmed, 0);
+    },
+    legalMovesFor(s, seat) {
+      return this.legalFor(s, seat).map((m) => seat * SEAT_MOVE + m);
+    },
+    legalMoves(s) {
+      const out = [];
+      for (let p = 0; p < n; p++) for (const m of this.legalFor(s, p)) out.push(p * SEAT_MOVE + m);
+      return out;
+    },
+    isLegal(s, mv) {
+      return this.isLegalFor(s, Math.floor(mv / SEAT_MOVE), mv % SEAT_MOVE);
+    },
+    play(s, mv) {
+      return this.playFor(s, Math.floor(mv / SEAT_MOVE), mv % SEAT_MOVE);
     },
     outcome(s) {
       return s.winner === null && !s.reason
@@ -679,19 +701,25 @@ function makeRouletteRules(opts) {
   };
 }
 
+// CPU: 席 seat の手を選び、席を含めた手(席 × SEAT_MOVE + 手)で返す
 function chooseRouletteMove(rules, s, seat, level, rng) {
+  const m = chooseRouletteSeatMove(rules, s, seat, level, rng);
+  return seat * SEAT_MOVE + m;
+}
+function chooseRouletteSeatMove(rules, s, seat, level, rng) {
+  const legal = (m) => rules.isLegalFor(s, seat, m);
   const lv = brainLevel(level);
   const avail = s.chips[seat];
   const curTotal = sumBets(s.bets[seat]);
 
   // Endless mode: rebuy if busted at start of turn
-  if (avail === 0 && curTotal === 0 && rules.isLegal(s, MOVE_REBUY)) {
+  if (avail === 0 && curTotal === 0 && legal(MOVE_REBUY)) {
     return MOVE_REBUY;
   }
 
   // Always confirm if nothing left to bet or CPU reached its bet-count cap
   const maxSteps = lv === 0 ? 2 : lv === 1 ? 3 : 4;
-  if (curTotal > 0 && (avail <= 0 || s.turnSteps >= maxSteps)) {
+  if (curTotal > 0 && (avail <= 0 || s.steps[seat] >= maxSteps)) {
     return MOVE_CONFIRM;
   }
 
@@ -712,7 +740,7 @@ function chooseRouletteMove(rules, s, seat, level, rng) {
   }
 
   // Occasionally rebet on normal/hard if affordable and within budget
-  if (curTotal === 0 && rules.isLegal(s, MOVE_REBET)) {
+  if (curTotal === 0 && legal(MOVE_REBET)) {
     const prevSum = sumBets(s.prevBets[seat]);
     if (prevSum <= targetBudget * 1.4 && rngInt(rng, 10) < (lv === 2 ? 4 : 3)) {
       return MOVE_REBET;
@@ -757,10 +785,10 @@ function chooseRouletteMove(rules, s, seat, level, rng) {
   }
 
   const move = chosenChipIdx * 200 + spot.idx;
-  if (rules.isLegal(s, move)) return move;
+  if (legal(move)) return move;
   if (curTotal > 0) return MOVE_CONFIRM;
   // まだ 1 枚も置いていない時は、確定できないので一番小さいチップを置ける枠に置く
-  const fallback = ROULETTE_SPOTS.find((sp) => rules.isLegal(s, sp.idx));
+  const fallback = ROULETTE_SPOTS.find((sp) => legal(sp.idx));
   return fallback ? fallback.idx : MOVE_CONFIRM;
 }
 
@@ -774,6 +802,7 @@ export const ROULETTE_SPEC = {
   seatNames: ['1番', '2番', '3番', '4番', '5番', '6番'],
   undoAllowed: false,
   seatsFor: (opts) => opts.it('players', 2),
+  concurrent: true, // みんなで同時に賭ける(手は 席 × SEAT_MOVE + 手)
   makeRules: makeRouletteRules,
   chooseMove: chooseRouletteMove,
   options: [
