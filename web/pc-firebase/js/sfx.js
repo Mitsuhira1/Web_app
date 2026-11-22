@@ -265,6 +265,15 @@ function moveSound(id, m) {
     case "quarto": case "geister": return ["WOOD"];
     case "rummikub": return [m === 0 ? "DEAL" : "TILE"];
     case "pegsolitaire": return ["PEG"];
+    case "coyote": return m === 0 ? ["CARD_FLIP"] : ["CARD"];
+    case "skull": return m >= 200 && m < 300 ? ["CARD_FLIP"] : m === 0 ? null : ["CARD"];
+    case "liarsdice": return m < 100 ? ["CARD_FLIP"] : ["TILE"];
+    case "incangold": return m === 1 ? ["MARBLE"] : ["CARD"];
+    case "take6": return ["CARD"];
+    case "blokus": return m === 999999 ? null : ["TILE"];
+    case "quoridor": return m >= 100 ? ["WOOD"] : ["STONE"];
+    case "battleship": return null;
+    case "chinchiro": return ["DICE"];
     // ソリティア: 山札をめくる(スパイダーは配る)・札を置く。やめる(1)は鳴らさない
     case "solitaire": { const c = m % 1000000; return c === 1 ? null : c === 0 ? ["CARD_FLIP"] : ["CARD"]; }
     case "spider": { const c = m % 1000000; return c === 1 ? null : c === 0 ? ["DEAL"] : ["CARD"]; }

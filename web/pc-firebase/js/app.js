@@ -34,7 +34,8 @@ const sfx = (() => { try { return createSfx(call); } catch (e) { return { init: 
 const ORDER = ['shogi', 'gogo', 'reversi', 'connect4', 'gomoku', 'hex', 'mancala', 'morris', 'checkers', 'chess', 'dots', 'hitblow', 'hare', 'chinese', 'ludo', 'backgammon', 'go', 'yacht', 'mahjong', 'life',
   'hanafuda', 'sevens', 'memory', 'speed', 'poker', 'holdem', 'blackjack', 'daifugo', 'uno', 'solitaire', 'slide', 'bunyo', 'pakuris', 'mine', 'bozu', 'wolf', 'roulette',
   'war', 'takoyaki', 'butanoshippo', 'oldmaid', 'hearts', 'ginrummy', 'vulture',
-  'goita', 'quarto', 'geister', 'rummikub', 'pegsolitaire', 'munage'];
+  'goita', 'quarto', 'geister', 'rummikub', 'pegsolitaire', 'munage',
+  'coyote', 'skull', 'liarsdice', 'incangold', 'take6', 'blokus', 'quoridor', 'battleship', 'chinchiro'];
 const APP_NAME = `あそび箱${ORDER.length}`;
 const ART_ID = { gogo: 'minishogi' };
 const BREAK = { morris: 'ナインメンズ<wbr>モリス', chinese: 'チャイニーズ<wbr>チェッカー', dots: 'ドット＆<wbr>ボックス', holdem: 'テキサス<wbr>ポーカー', yacht: 'ヨット', blackjack: 'ブラック<wbr>ジャック', backgammon: 'バック<wbr>ギャモン', hitblow: 'ヒット＆<wbr>ブロー', life: '人生<wbr>すごろく' };

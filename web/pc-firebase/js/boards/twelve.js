@@ -680,8 +680,8 @@ function renderTwelve(b,base) {
 }
 
 for (const id of Object.keys(boards)) window.RENDER[id]=renderTwelve;
-window.TWELVE_HAS = id => Object.hasOwn(boards,id);
-window.TWELVE_STATUS=status;
+window.TWELVE_HAS = id => Object.hasOwn(boards,id) || !!(window.NINE_HAS && window.NINE_HAS(id));
+window.TWELVE_STATUS=b => status(b) || (window.NINE_STATUS ? window.NINE_STATUS(b) : '');
 window.TWELVE_AIM = (b,mv,seat,q,button) => {
   const move = n => q(`[data-m="${n}"]`);
   // 手札や非公開の配置を狙うと答えが見えるため、その場合は公開されている場所だけを示す。
@@ -707,7 +707,7 @@ window.TWELVE_AIM = (b,mv,seat,q,button) => {
       if (mv>=2000) return [move(mv)];
       if (mv>=500 && mv<599) return [q(`[data-rummi-set="${mv-500}"]`)];
       return mv===0 || mv===1 ? [button(mv===0?/山から引く/:/ターン確定/)] : [];
-    default: return [];
+    default: return window.NINE_AIM ? window.NINE_AIM(b,mv,seat,q,button) : [];
   }
 };
 })();

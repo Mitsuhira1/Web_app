@@ -60,6 +60,7 @@
 | `boards/table.js` | 花札・7ならべ・神経衰弱・ポーカー・ホールデム・ブラックジャック・大富豪・Oh, No! |
 | `boards/extra.js` / `boards/life.js` | 麻雀・スピード・ソリティア / 人生すごろく |
 | `boards/twelve.js`(規則は `core/games/<id>.mjs`) | 戦争・たこ焼き・ぶたのしっぽ・ババ抜き・ハーツ・ジンラミー・ハゲタカ・ごいた・クアルト・ガイスター・ラミィキューブ・ペグ・ソリティア |
+| `boards/nine.js`(規則は `core/games/<id>.mjs`、状態・カーソル・音は twelve.js 経由で委譲) | コヨーテ・スカル・ライアーズダイス・インカの黄金・6ニムト・ブロックス・コリドール・バトルシップ・チンチロリン |
 | `boards/roulette.js`(＋ `roulette-motion.mjs`・`core/games/roulette.mjs`) | ルーレット |
 | `slide.js` / `bunyo.js` / `pakuris.js` / `mines.js`・`mine-versus.js`・`mine-noguess.js` / `poet-cards.js` / `wolf.js` | スライドパズル / ぶにょぶにょ / パクリス / マインスイーパー / 坊主めくり / 人狼 |
 | `falling-match.js`(対戦・先取・並び)・`falling-fx.js`(光・音・ぷよの描き方)・`css/falling.css` | ぶにょぶにょ・パクリス共通(規則の試験: `tools/tests/test_falling_rules.mjs`) |

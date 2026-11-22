@@ -1,10 +1,11 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261122-new5games-1";
+const CACHE = "asobipcfb-20261123-nine-impl-3";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",
 "./css/munage.css",
 "./js/boards/twelve.js",
+"./js/boards/nine.js",
 "./js/boards/roulette.js",
 "./js/boards/roulette-motion.mjs",
 "./assets/rules/bg_hit.mp4",
@@ -213,6 +214,15 @@ const FILES = [
 "./assets/game-icons/yacht.webp",
 "./js/icon-images.js",
 "./assets/game-icons/munage.webp",
+"./assets/game-icons/coyote.webp",
+"./assets/game-icons/skull.webp",
+"./assets/game-icons/liarsdice.webp",
+"./assets/game-icons/incangold.webp",
+"./assets/game-icons/take6.webp",
+"./assets/game-icons/blokus.webp",
+"./assets/game-icons/quoridor.webp",
+"./assets/game-icons/battleship.webp",
+"./assets/game-icons/chinchiro.webp",
 "./assets/tex/noise.webp",
 "./assets/tex/noise@2x.webp",
 "./assets/tex/noise@3x.webp",

@@ -135,6 +135,16 @@
 <script src="js/boards/cards.js"></script>
 <script src="js/boards/table.js"></script>
 <script src="js/boards/twelve.js"></script>
+<script src="js/boards/nine.js"></script>
+<script type="module">
+  // 新規9ゲームの盤面が、ピースの形や役の評価などコアの定義をそのまま使うための読み込み
+  try {
+    const [blokus, quoridor, battleship, chinchiro] = await Promise.all([
+      import('./core/games/blokus.mjs'), import('./core/games/quoridor.mjs'),
+      import('./core/games/battleship.mjs'), import('./core/games/chinchiro.mjs')]);
+    window.__nineCore = { blokus, quoridor, battleship, chinchiro };
+  } catch (e) { console.warn('[nine] core helpers', e); }
+</script>
 <script src="js/boards/roulette.js"></script>
 <script src="js/boards/fix.js"></script>
 <script src="js/boards/fix2.js"></script>
