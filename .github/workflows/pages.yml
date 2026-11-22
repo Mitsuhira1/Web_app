@@ -1,5 +1,8 @@
 name: Web を公開する(GitHub Pages)
 # web/ の中身をそのまま公開する(規則・CPU の JS は tools/build_web.sh で作って web/core/ に入れてある)。
+# アップロード(build)と公開(deploy)を別の作業に分ける(GitHub の見本と同じ形)。
+# 1 つの作業で続けて行うと、アップロードした物が GitHub 側で見えるようになる前に公開が探しに行き、
+# 「No artifacts named "github-pages" were found」で失敗することがあった(2026-11-21 に何度も起きた)。
 on:
   push:
     branches: [ccr-efc07031-6exjqs, main]
@@ -8,20 +11,32 @@ permissions:
   contents: read
   pages: write
   id-token: write
+# 公開の途中で打ち切らない(新しいプッシュは、今の公開が終わってから順に公開する)
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.d.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url || steps.d2.outputs.page_url }}
+    steps:
       - id: d
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      # それでも失敗した時は、30 秒待ってもう一度だけ試す
+      - if: steps.d.outcome == 'failure'
+        run: sleep 30
+      - id: d2
+        if: steps.d.outcome == 'failure'
         uses: actions/deploy-pages@v4

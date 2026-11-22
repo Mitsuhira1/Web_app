@@ -70,6 +70,20 @@
 - 効果が無かった物(そのまま): 胸毛絶体絶命の舞台のぼかし、チェス・将棋・ペグ・Oh,No! などの駒・札の影。麻雀の牌の影は、ユーザーの了承を得て次の記録で画像にした。
 - ファイル: `css/app.css`・`css/twelve.css`・`js/boards/fix.js`・`assets/tex/`(新規)・`tools/build_textures.cjs`(新規)・`sw.js`(FILES・キャッシュ名)・`START_HERE.md`・`docs/CHECKLIST_PENDING.md`・`docs/PORTING_TODO.md`
 - 確かめたこと(Chromium): 元の版と画面を撮って画素を比べた(等倍・2 倍・1.25 倍、PC・スマホ幅)、sw.js の FILES が全部ある、読み込みエラー 0。未確認: Edge・実機での軽さ。
+### 2026-11-21 / Claude / 坊主めくりのカットイン・山札の数の廃止、公開の仕組み
+- 坊主めくり: 「姫ボーナス」のカットインをやめ、「姫」の後に「もう一枚引く」(場札が無い時)/「+〇枚」(場札があった時の枚数)を同じ筆文字で出す。山札の一番上の坊主・姫の数を見せる設定(peek・state.tops)は全部消した。カットインの字体はユーザーが見本から選んだ Kaisei Tokumin(太い明朝)に。Yuji Boku の筆文字の字体ファイル(YujiBoku-Bozu.woff2)は削除。
+- `.github/workflows/pages.yml`: アップロード(build)と公開(deploy)を別の作業に分け、公開が失敗したら 30 秒後にもう一度。`cancel-in-progress: false`。「No artifacts named github-pages」の失敗が続いたため。
+
+### 2026-11-21 / Claude / ソリティア: ダブルタップで動かない・2枚ハイライトされる
+- 原因: 札を選ぶと `.pcard.on` で 14px 持ち上がるので、ダブルタップの2回目が1枚上の札(同じ列・data-n=2)に当たり、「2枚まとめて選び直し」になっていた(2枚ハイライト。置き先が無ければ選択が消えて何も動かない)。
+- 直し方(`js/boards/extra.js`): 選んでから 0.45 秒以内に同じ列(置き場)を押したら、選び直さずに選んだ札のダブルタップとして扱う(`solSelAt`・`solQuickAgain`)。行き先は組札(右上)を優先、置けなければ置ける列(前から同じ)。スパイダーも同じ。
+- 確かめたこと(Chromium・スマホのタッチを再現): 直す前は列の一番上の札のダブルタップで手数が増えず。直した後は 5 回とも 1 回で動き、ハイライトは残らない。
+- ファイル: `js/boards/extra.js`・`sw.js`(キャッシュ名)
+
+### 2026-11-21 / Claude / ソリティア: スマホで組札からドラッグできるように
+- 組札(右上)の札に `touch-action:none` が無く、スマホでは指を動かすとブラウザがスクロールとして扱い、ドラッグが取り消されていた(pointercancel)。捨て札・列と同じ指定を組札にも付けた(`css/app.css` の `.drag-enabled .sol .soltop .slot > [data-src]`)。PC のマウスでは前から動いていた。
+- 確かめたこと(Chromium・タッチを再現): 直す前はスマホで pointercancel・ドラッグの札が出ない → 直した後は出る。PC のマウスも出る。
+- ファイル: `css/app.css`・`sw.js`(キャッシュ名)
 
 ### 2026-11-21 / Claude / 途中から再開で盤を組み立て直さない・ルーレットの画面
 - 再開: `enterPlay` が再開でも新しい対局と同じに扱い(`view` がまだ無いので `moves` が 0 扱い)、配る演出・「対局開始」・シャッフル音を出していた → `resume()` から `enterPlay(true)` で呼び、出さない。
