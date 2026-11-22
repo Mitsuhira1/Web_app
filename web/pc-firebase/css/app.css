@@ -2579,11 +2579,11 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
 .poet-slot { position:relative; display:block; aspect-ratio:.68; border-radius:3px;
   outline:1px dashed #f8e7c363; outline-offset:-1px; }
 .poet-slot:not([data-count="0"])::before { content:""; position:absolute; inset:auto 0 0; height:var(--depth);
-  border-radius:0 0 3px 3px; border-inline:1px solid #1b2747;
-  background:repeating-linear-gradient(to top,#2c3a5c 0 1px,#e6d8b6 1px 2px,#b3a585 2px 3px);
+  border-radius:0 0 3px 3px; border-inline:1px solid #4a0f18;
+  background:repeating-linear-gradient(to top,#5a1520 0 1px,#e6d8b6 1px 2px,#b3a585 2px 3px);
   box-shadow:0 2px 4px #071c1670; }
 .poet-slot > .poet-card.back { position:absolute; inset:0; height:100%; translate:0 calc(-1 * var(--depth));
-  box-shadow:inset 0 0 0 2px #24345e,inset 0 0 0 3px #d9b56a,0 1px 0 #1b2747; }
+  box-shadow:inset 0 0 0 2px #7a1d29,inset 0 0 0 3px #d9b56a,0 1px 0 #4a0f18; }
 .poet-pick:enabled:is(:hover,:focus-visible) .poet-card { outline:3px solid #e2372b; outline-offset:1px; }
 .poet-pot { position:relative; }
 .poet-pot::before { content:""; position:absolute; left:calc(-1 * clamp(11px,2.2cqw,25px)); inset-block:0 0;
@@ -2651,11 +2651,13 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   border:clamp(2px,.35vw,5px) solid #284e4e; border-radius:3px; box-shadow:0 2px 0 #182c2b,0 4px 8px #0005;
   background:repeating-linear-gradient(102deg,#fff2 0 1px,#ab80540a 1px 3px),linear-gradient(112deg,#fcf8eb,#f1e7cf);
   font-family:"Zen Antique","Yu Mincho",serif; font-weight:400; text-align:start; }
-.poet-card.back { border-color:#1b2747;
+/* 札の裏: 臙脂(えんじ)の地に金の青海波(せいがいは)。緑の卓に紛れない色にする */
+.poet-card.back { border-color:#4a0f18;
   background:
-    radial-gradient(circle at 50% 50%,transparent 0 21%,#d9b56a66 22% 23.5%,transparent 24.5%),
-    linear-gradient(115deg,#ffffff1a,#0000 45%,#0000002e),-webkit-image-set(url("../assets/tex/noise.webp") 1x,url("../assets/tex/noise@2x.webp") 2x),#24345e;
-  box-shadow:inset 0 0 0 2px #24345e,inset 0 0 0 3px #d9b56a,0 2px 0 #c9b48a,0 3px 0 #1b2747,0 5px 0 #c9b48a,0 6px 0 #1b2747,0 9px 11px #0006; }
+    linear-gradient(115deg,#ffffff1f,#0000 45%,#00000038),
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='20'><g fill='%237a1d29' stroke='%23d4ad62' stroke-opacity='.62' stroke-width='1.25'><circle cx='0' cy='0' r='19.3'/><circle cx='0' cy='0' r='14.6'/><circle cx='0' cy='0' r='9.9'/><circle cx='0' cy='0' r='5.2'/><circle cx='40' cy='0' r='19.3'/><circle cx='40' cy='0' r='14.6'/><circle cx='40' cy='0' r='9.9'/><circle cx='40' cy='0' r='5.2'/><circle cx='20' cy='10' r='19.3'/><circle cx='20' cy='10' r='14.6'/><circle cx='20' cy='10' r='9.9'/><circle cx='20' cy='10' r='5.2'/><circle cx='0' cy='20' r='19.3'/><circle cx='0' cy='20' r='14.6'/><circle cx='0' cy='20' r='9.9'/><circle cx='0' cy='20' r='5.2'/><circle cx='40' cy='20' r='19.3'/><circle cx='40' cy='20' r='14.6'/><circle cx='40' cy='20' r='9.9'/><circle cx='40' cy='20' r='5.2'/><circle cx='20' cy='30' r='19.3'/><circle cx='20' cy='30' r='14.6'/><circle cx='20' cy='30' r='9.9'/><circle cx='20' cy='30' r='5.2'/></g></svg>") 0 0/25% auto,
+    #7a1d29;
+  box-shadow:inset 0 0 0 2px #7a1d29,inset 0 0 0 3px #d9b56a,0 2px 0 #c9b48a,0 3px 0 #4a0f18,0 5px 0 #c9b48a,0 6px 0 #4a0f18,0 9px 11px #0006; }
 .poet-lines { position:absolute; inset:7% 8%; display:flex; flex-direction:row-reverse; justify-content:space-between;
   line-height:1.08; letter-spacing:.025em; }
 .poet-lines > span,.poet-author { writing-mode:vertical-rl; text-orientation:upright; white-space:nowrap; }
