@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261122-roulette-roll-2";
+const CACHE = "asobipcfb-20261122-roulette-marble-1";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",
@@ -88,6 +88,7 @@ const FILES = [
 "./audio/go_stone_5.mp3",
 "./audio/go_stone_5.ogg",
 "./audio/koma_piece.mp3",
+"./audio/marble_rolling_wood.mp3",
 "./audio/koma_piece.ogg",
 "./core/asobi-pc-core.mjs",
 "./core/kotlin-kotlin-stdlib.mjs",

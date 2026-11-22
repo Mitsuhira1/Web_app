@@ -16,7 +16,7 @@ const transientAudio = (() => {
   const guard = fn => { const ownEpoch = epoch; return (...args) => { if (ownEpoch === epoch && allowed()) return fn(...args); }; };
   return {allowed, track, later, guard};
 })();
-// 効果音。元のアプリと同じ「計算で作る音」(Kotlin の Synth)と、本物の録音(碁石=KaTrain、将棋の駒=ShogiHome。どちらも MIT License)を鳴らす。
+// 効果音。元のアプリと同じ「計算で作る音」(Kotlin の Synth)と、本物の録音(碁石=KaTrain、将棋の駒=ShogiHome。どちらも MIT License。ルーレットの球が転がる音=Freesound の InspectorJ)を鳴らす。
 const SAMPLES = {
   GO: ["go_stone_1", "go_stone_2", "go_stone_3", "go_stone_4", "go_stone_5"],
   STONE: ["go_stone_1", "go_stone_2", "go_stone_3", "go_stone_4", "go_stone_5"],
@@ -27,7 +27,7 @@ const GAIN = { FLIP: 0.7 }; // 裏返すだけ 0.7 倍(元のアプリと同じ)
 
 // Render the rolling contact and its short impact responses on one audio clock.
 // A single tracked source can be cancelled even after the browser suspends a tab.
-function rouletteAudioBuffer(ctx, {duration, impacts, panAt}) {
+function rouletteAudioBuffer(ctx, {duration, impacts, panAt}, recordedRoll = false) {
   const rate = 24000;
   const seconds = duration / 1000;
   const buffer = ctx.createBuffer(2, Math.ceil((seconds + .16) * rate), rate);
@@ -38,24 +38,15 @@ function rouletteAudioBuffer(ctx, {duration, impacts, panAt}) {
     return seed / 2147483648 - 1;
   }
 
-  // 縁を転がる音: 木の上を球が転がる低い「ゴロゴロ」。
-  // 本物の録音(人の声を除いた、転がっている間ずっと続く音)は 250〜350Hz がいちばん強く、
-  // 1〜3kHz は 16〜20dB 弱く、4kHz より上はほとんど無い。長く鳴り続ける響き(金属のような音)は無い。
-  // 前の音は 12kHz まで平らな雑音で「布をこする」ように聞こえたので、
-  // 高い雑音を出さず、すぐ消える木の響き(数ミリ秒)と、球が 1 回転するごとの「ゴロ」のうねりで作る。
+  // Microscopic contacts excite a low wooden resonance and a brighter race
+  // surface. Their spacing and treble both fall with the speed of the ball.
   const drop = impacts.find(hit => hit.kind === 'deflector');
   const raceEnd = drop ? drop.at / duration : .55;
   const finish = Math.floor(seconds * .92 * rate);
-  // 2 次の帯域フィルター(木の胴の、幅の広い響き。q が大きいほど幅が広く、すぐ消える)
-  function band(f, q) {
-    let low = 0, mid = 0;
-    const k = 2 * Math.sin(Math.PI * f / rate);
-    return x => { low += k * mid; const high = x - low - q * mid; mid += k * high; return mid; };
-  }
-  const bodyLow = band(300, .55), bodyMid = band(620, 1.3), bodyHigh = band(1500, 1.6), bodyTop = band(2500, 1.5);
-  let lp1 = 0, lp2 = 0, hp = 0, o1 = 0, o2 = 0, o3 = 0, o4 = 0, o5 = 0, h1 = 0, h2 = 0, spin = 0, swell = 1, swellTarget = 1, untilSwell = 0, knock = 0, untilKnock = 0;
-  let pan = 0, panStep = 0;
-  for (let i = 0; i < finish; i++) {
+  // 録音の転がる音を鳴らす時(rouletteSpin の rollBuffer)は、ここでは転がる音を作らず、当たる音だけを作る。
+  let grain = 0, low = 0, surface = 0, pulse = 0, resonance = 0, previous = 0;
+  let pan = 0, panStep = 0, untilGrain = 0;
+  for (let i = 0; i < (recordedRoll ? 0 : finish); i++) {
     const t = i / (seconds * rate);
     const speed = 1 - .76 * Math.min(1, t / raceEnd);
     if (i % 192 === 0) {
@@ -64,37 +55,21 @@ function rouletteAudioBuffer(ctx, {duration, impacts, panAt}) {
     }
     pan += panStep;
     const grit = noise();
-    // 球の 1 回転ごとの「ゴロ」(速い時は細かく、遅くなると「ゴロ…ゴロ…」と粗く)
-    spin += (14 + 38 * speed) * (1 + .18 * noise()) / rate;
-    const roll = .55 + .45 * Math.sin(2 * Math.PI * spin) ** 2;
-    // 木目の小さなでこぼこに当たる「コッ」(すぐ消える)
-    if (--untilKnock <= 0) {
-      knock += (.5 + .9 * Math.abs(noise())) * (.6 + .4 * speed);
-      untilKnock = rate / (45 + 70 * speed) * (.5 + Math.abs(noise()));
+    low += .076 * (grit - low);
+    surface += (.19 + .39 * speed) * (grit - surface);
+    grain += .009 * (Math.abs(grit) - grain);
+    if (--untilGrain <= 0) {
+      pulse += (.25 + .55 * Math.abs(grit)) * speed;
+      untilGrain = (rate / (215 * speed + 30)) * (.70 + .57 * Math.abs(noise()));
     }
-    knock *= .93;
-    const excite = grit * roll + knock * grit * .7;
-    // 低域を中心に: 高い雑音を 2 段で削る(速い時ほど少し明るい)
-    const cut = .055 + .06 * speed;
-    lp1 += cut * (excite - lp1);
-    lp2 += cut * (lp1 - lp2);
-    hp += .012 * (lp2 - hp);
-    const dark = lp2 - hp;
-    const wood = bodyLow(excite) * .75 + bodyMid(excite) * .1 + (bodyHigh(excite) * .1 + bodyTop(excite) * .24) * (.5 + .5 * speed);
-    // ゆっくりしたうねり(1 周ごとに近づく・遠ざかる+不ぞろいな揺れ)
-    if (--untilSwell <= 0) { swellTarget = .7 + .55 * Math.abs(noise()); untilSwell = rate * (.08 + .16 * Math.abs(noise())); }
-    swell += (swellTarget - swell) * .0016;
-    const around = 1 + .35 * pan / .38;
+    pulse *= .74;
+    const ring = 1.945 * resonance - .956 * previous + .014 * pulse;
+    previous = resonance;
+    resonance = ring;
     const release = Math.min(1, i / (rate * .055));
     const trail = Math.exp(-11 * Math.max(0, t - raceEnd)) * Math.min(1, (finish - i) / (rate * .05));
-    // 仕上げ: 低すぎる所(170Hz 未満)と、高い所(2kHz ほどより上)をさらに削り、本物の録音と同じ釣り合いにする
-    let y = .3 * dark + .9 * wood;
-    h1 += .06 * (y - h1); y -= h1;
-    h2 += .06 * (y - h2); y -= h2;
-    const top = .42 + .14 * speed;
-    o1 += top * (y - o1); o2 += top * (o1 - o2); o3 += top * (o2 - o3);
-    o4 += .62 * (o3 - o4); o5 += .62 * (o4 - o5);
-    const sample = release * trail * (.45 + .55 * speed) * swell * around * o5 * 1.7;
+    const sample = release * trail * (.4 + .6 * speed) *
+      (.48 * low + .23 * (surface - low) * (.5 + grain) + .62 * resonance);
     left[i] = sample * (.8 - .32 * pan);
     right[i] = sample * (.8 + .32 * pan);
   }
@@ -136,11 +111,27 @@ function createSfx(call) {
   const unlock = () => { const c = ensure(); if (c && c.state === "suspended") c.resume().catch(() => {}); };
   window.addEventListener("pointerdown", unlock, { passive: true });
 
+  // ルーレットの球が縁を転がる音: 録音「Marble, Rolling on Wood, A.wav」by InspectorJ(www.jshaw.co.uk)Freesound.org
+  // (licenses.html に表記)。録音をそのまま(同じ速さ・高さ・ステレオで)鳴らす。読めない時は計算で作る音。
+  let rollBuffer = null, rollStart = 0;
+  async function loadRoll(c) {
+    try {
+      const res = await fetch('audio/marble_rolling_wood.mp3');
+      const b = await c.decodeAudioData(await res.arrayBuffer());
+      // 録音の頭の無音を飛ばす(音が始まる 10ms 前から)
+      const d = b.getChannelData(0);
+      let first = 0;
+      while (first < d.length && Math.abs(d[first]) < .01) first++;
+      rollStart = Math.max(0, first / b.sampleRate - .01);
+      rollBuffer = b;
+    } catch { /* 読めない時は計算で作る音を使う */ }
+  }
   async function init() {
     const list = JSON.parse(await call("soundList"));
     const rate = await call("soundRate");
     const c = ensure();
     if (!c) return;
+    loadRoll(c);
     for (const s of list) vol[s.name] = s.volume;
     for (const s of list) {
       bufs[s.name] = [];
@@ -178,36 +169,65 @@ function createSfx(call) {
     src.start();
   }
 
-  let wheelSource = null;
+  let wheelSource = null, wheelRoll = null;
   function rouletteSpin(plan) {
     if (!enabled || !S.set.sound || !ctx || ctx.state !== 'running' || !transientAudio.allowed()) return;
     const volume = S.set.master / 100 * S.set.sfxVol / 100;
     if (volume <= 0) return;
     const clock = performance.now();
     const src = transientAudio.track(ctx.createBufferSource());
-    src.buffer = rouletteAudioBuffer(ctx, plan);
+    const recorded = !!(rollBuffer && plan.duration);
+    src.buffer = rouletteAudioBuffer(ctx, plan, recorded);
     const gain = ctx.createGain();
     gain.gain.value = volume;
     src.connect(gain).connect(ctx.destination);
+    // 縁を転がる音(録音)は、同じ時計で別に鳴らし、球がひし形に当たったら計算の音と同じ速さで消していく
+    let roll = null, rollGain = null;
+    if (recorded) {
+      roll = transientAudio.track(ctx.createBufferSource());
+      roll.buffer = rollBuffer;
+      rollGain = ctx.createGain();
+      roll.connect(rollGain).connect(ctx.destination);
+    }
+    const halt = node => { try { node?.stop(); } catch {} };
     const stop = () => {
       if (wheelSource !== src) return;
       wheelSource = null;
       src.stop();
+      halt(roll);
     };
     src.addEventListener('ended', () => {
       if (wheelSource === src) wheelSource = null;
       src.disconnect();
       gain.disconnect();
     }, {once:true});
+    halt(wheelRoll);
     wheelSource?.stop();
     wheelSource = src;
+    wheelRoll = roll;
     const offset = plan.duration ? (performance.now() - clock) / 1000 : 0;
     src.start(0, Math.min(offset, src.buffer.duration));
+    if (roll) {
+      const now = ctx.currentTime;
+      const drop = plan.impacts.find(hit => hit.kind === 'deflector');
+      const dropIn = Math.max(0, (drop ? drop.at : plan.duration * .55) / 1000 - offset);
+      const fade = plan.duration / 1000 / 11;
+      rollGain.gain.setValueAtTime(volume, now);
+      rollGain.gain.setValueAtTime(volume, now + dropIn);
+      rollGain.gain.setTargetAtTime(0, now + dropIn, fade);
+      roll.addEventListener('ended', () => {
+        if (wheelRoll === roll) wheelRoll = null;
+        roll.disconnect();
+        rollGain.disconnect();
+      }, {once:true});
+      roll.start(now, Math.min(rollStart + offset, rollBuffer.duration));
+      roll.stop(now + dropIn + fade * 7);
+    }
     return stop;
   }
   return {
     init, play, rouletteSpin,
-    set enabled(v) { enabled = v; if (!v) wheelSource?.stop(); },
+    set enabled(v) { enabled = v; if (!v) { wheelSource?.stop(); try { wheelRoll?.stop(); } catch {} } },
     get enabled() { return enabled; },
   };
 }
