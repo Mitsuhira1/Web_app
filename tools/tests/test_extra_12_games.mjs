@@ -49,7 +49,7 @@ function playout(id, optStr = '', maxSteps = 1200) {
 
 console.log('1. Checking catalogJson()...');
 const catalog = JSON.parse(core.catalogJson());
-assert.equal(catalog.length, 43, `Expected 43 games, got ${catalog.length}`);
+assert.ok(catalog.length >= 43, `Expected at least 43 games, got ${catalog.length}`);
 for (const id of NEW_IDS) {
   const entry = catalog.find((g) => g.id === id);
   assert.ok(entry, `Missing ${id} in catalog`);

@@ -56,6 +56,12 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-22 / Antigravity / コヨーテ(`coyote`, No.44)コア処理実装＆引き継ぎ資料作成
+- ユーザーの指示により、盤面デザインには触れずゲーム処理の中身のみを実装。
+- **エンジン**(`web/pc-firebase/core/games/coyote.mjs` 新規): 2〜6人対応、全36枚（通常32枚＋特殊4枚 `×2`, `MAX→0`, `?`, `0(夜)`）、オプション（人数・特殊カード抜き・ライフ数1〜3）、隠匿情報マスキング（自分だけ非公開・他全員公開）、決定論的PRNGによるリシャッフル再現性、未公開プール確率計算ベースのCPU AI(Lv0〜2)を実装。
+- **登録・試験・資料**: `web/pc-firebase/core/extra-games.mjs` に登録、`web/pc-firebase/sw.js` の `FILES` 更新、`tools/tests/test_coyote_core.mjs` 新規作成（全項目通過）、`tools/tests/test_extra_12_games.mjs` のカタログ件数チェックを `>= 43` に調整。UI実装用の引き継ぎ仕様書 `docs/COYOTE_SPEC_FOR_AI.md` を作成。
+- 確かめたこと: `node tools/tests/test_coyote_core.mjs`、`node tools/tests/test_extra_12_games.mjs`、`node tools/tests/test_roulette_core.mjs` 全通過。未実装: 盤面UI・デザイン・メニュー(`ORDER`)登録（別AIへ引き継ぎ）。
+
 ### 2026-11-22 / Claude / カードの動きで字・マークの大きさが変わる・坊主めくりの札の裏を和柄に
 - ユーザー「ソリティアなどで、めくった時などに文字の大きさや記号が変わる。カードとして変わらないので自然に」「坊主めくりの裏が洋風なので和風に、背景とかぶらないように」。
 - **ソリティア**(`js/boards/extra.js` の `solFloat`): 浮かせて飛ばす札の `--w` を `Object.assign(el.style, {'--w': …})` で入れていたが、CSS の変数はこれでは入らず、飛ぶ間だけ既定の小さい札の大きさの字・マーク(PC で 24.7px→14.4px)になり、着くと元に戻っていた → `style.setProperty('--w', …)`。測って、飛ぶ間・めくる間の字の大きさ・字体・位置が着いた後と一致することを確かめた(PC・スマホ)。

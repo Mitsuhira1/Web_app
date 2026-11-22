@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261122-card-flip-1";
+const CACHE = "asobipcfb-20261122-coyote-core-1";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",
@@ -48,6 +48,7 @@ const FILES = [
 "./assets/rules/uno_play.mp4",
 "./assets/rules/yacht_roll.mp4",
 "./js/gamepad.js",
+"./core/games/coyote.mjs",
 "./core/games/roulette.mjs",
 "./core/games/war.mjs",
 "./core/games/vulture.mjs",

@@ -11,6 +11,7 @@ import { GEISTER_SPEC } from './games/geister.mjs';
 import { RUMMIKUB_SPEC } from './games/rummikub.mjs';
 import { PEGSOLITAIRE_SPEC } from './games/pegsolitaire.mjs';
 import { ROULETTE_SPEC } from './games/roulette.mjs';
+import { COYOTE_SPEC } from './games/coyote.mjs';
 
 export const EXTRA_GAME_SPECS = [
   WAR_SPEC,
@@ -26,6 +27,7 @@ export const EXTRA_GAME_SPECS = [
   RUMMIKUB_SPEC,
   PEGSOLITAIRE_SPEC,
   ROULETTE_SPEC,
+  COYOTE_SPEC,
 ];
 
 function wrapRules(rawRules, OutcomeCtor) {
