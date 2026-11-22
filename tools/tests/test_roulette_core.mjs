@@ -128,7 +128,7 @@ console.log('3. Checking exact payout math & La Partage at raw rules level...');
     for (let seed = 1; seed < 5000; seed++) {
       let s = rules.initial(() => ((seed * 1664525 + 1013904223) >>> 0) / 4294967296);
       s = { ...s, rngState: seed >>> 0 };
-      const after = rules.play(s, MOVE_CONFIRM);
+      const after = rules.play(rules.play(s, 0), MOVE_CONFIRM); // 0 枚では確定できないので 1 枚置く
       if (after.lastRound.pocketStr === targetPocketStr) return seed >>> 0;
     }
     throw new Error(`Could not find rngState producing pocket ${targetPocketStr}`);
@@ -255,6 +255,17 @@ console.log('4. Checking rebet, endless rebuy, broke-seat skipping & restoreMatc
   assert.ok(stFin.outcome != null, 'Finite mode should terminate when all players bust');
 }
 console.log('   OK: Rebet, endless rebuy, all-bust early termination, and restoreMatch verified.');
+
+console.log('4c. Checking: confirming with no chips on the table (pass) is not allowed...');
+{
+  const h = core.newMatch('roulette', 'players=2;rounds=10;startChips=1000', '5', '', 'normal');
+  const v0 = getView(h, 0);
+  assert.ok(!v0.legal.includes(MOVE_CONFIRM), 'confirm is not legal before betting');
+  assert.equal(core.playMove(h, MOVE_CONFIRM), false);
+  core.playMove(h, 0 * 200 + 1);
+  assert.ok(getView(h, 0).legal.includes(MOVE_CONFIRM), 'confirm is legal after one chip');
+}
+console.log('   OK: no pass without a bet.');
 
 console.log('4b. Checking: only one seat left with chips ends the match (2 players), 3+ players continue...');
 {

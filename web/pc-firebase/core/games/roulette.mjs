@@ -497,7 +497,8 @@ function makeRouletteRules(opts) {
       if (curTotal > 0) moves.push(MOVE_CLEAR);
       if (computeCanRebet(s, p)) moves.push(MOVE_REBET);
       if (computeCanDouble(s, p)) moves.push(MOVE_DOUBLE);
-      moves.push(MOVE_CONFIRM);
+      // チップを 1 枚も置かずに確定(パス)はできない(2026-11-22 ユーザーの指示)
+      if (curTotal > 0) moves.push(MOVE_CONFIRM);
       if (computeCanRebuy(s, p)) moves.push(MOVE_REBUY);
 
       return moves;
@@ -525,7 +526,7 @@ function makeRouletteRules(opts) {
       if (m === MOVE_CLEAR) return curTotal > 0;
       if (m === MOVE_REBET) return computeCanRebet(s, p);
       if (m === MOVE_DOUBLE) return computeCanDouble(s, p);
-      if (m === MOVE_CONFIRM) return true;
+      if (m === MOVE_CONFIRM) return curTotal > 0;
       if (m === MOVE_REBUY) return computeCanRebuy(s, p);
       return false;
     },
@@ -690,7 +691,7 @@ function chooseRouletteMove(rules, s, seat, level, rng) {
 
   // Always confirm if nothing left to bet or CPU reached its bet-count cap
   const maxSteps = lv === 0 ? 2 : lv === 1 ? 3 : 4;
-  if (avail <= 0 || s.turnSteps >= maxSteps) {
+  if (curTotal > 0 && (avail <= 0 || s.turnSteps >= maxSteps)) {
     return MOVE_CONFIRM;
   }
 
@@ -756,7 +757,11 @@ function chooseRouletteMove(rules, s, seat, level, rng) {
   }
 
   const move = chosenChipIdx * 200 + spot.idx;
-  return rules.isLegal(s, move) ? move : MOVE_CONFIRM;
+  if (rules.isLegal(s, move)) return move;
+  if (curTotal > 0) return MOVE_CONFIRM;
+  // まだ 1 枚も置いていない時は、確定できないので一番小さいチップを置ける枠に置く
+  const fallback = ROULETTE_SPOTS.find((sp) => rules.isLegal(s, sp.idx));
+  return fallback ? fallback.idx : MOVE_CONFIRM;
 }
 
 export const ROULETTE_SPEC = {

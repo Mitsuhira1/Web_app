@@ -663,7 +663,7 @@ input,textarea{user-select:text}
 .countbar .dimtxt{font-size:13px}
 .cutlayer{position:absolute;inset:0;pointer-events:none;container-type:size;z-index:20}
 .cutlayer .cutin{pointer-events:auto}
-.resultlayer{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.35);z-index:15;animation:fxfade .25s both}
+.resultlayer{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.35);z-index:15;animation:fxfade .25s both} /* 設定の歯車(.play-settings z-index:16)は結果の画面の上に出して、終わった後も押せるように */
 .rbox{background:var(--surface);border-radius:18px;padding:22px 26px;min-width:360px;max-width:90%;box-shadow:0 18px 44px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:10px;text-align:center}
 .rbox h3{margin:0;font-size:26px;font-weight:900}
 .rbox p{margin:0;color:var(--sub)}
@@ -1625,7 +1625,7 @@ html.reduce .wfx .wpop{display:none!important}
 
 /* Inline SVG fill must survive the room's inherited currentColor defaults too. */
 .rcur.live svg path{fill:var(--cc);stroke:#fff}
-.play-settings{position:absolute;left:16px;bottom:26px;z-index:12;width:46px;height:46px;border-radius:50%;box-shadow:0 4px 12px #0004;background:var(--surface);display:grid;place-items:center}
+.play-settings{position:absolute;left:16px;bottom:26px;z-index:16;width:46px;height:46px;border-radius:50%;box-shadow:0 4px 12px #0004;background:var(--surface);display:grid;place-items:center}
 .play-settings svg{width:24px;height:24px}
 .mbox.sheet.play-settings-dialog{
   width:min(900px,94vw);height:min(660px,86dvh);max-height:86dvh;
