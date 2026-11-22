@@ -56,6 +56,12 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-22 / Muse / 新規5ゲームのコア実装（6ニムト・ブロックス・コリドール・バトルシップ・チンチロリン）
+- ユーザーの指示により、盤面デザインには触れずゲーム処理（コア）のみを実装。コヨーテ・スカル・ライアーズダイス・インカの黄金は既存実装のテスト合格を再確認したのみ。
+- **エンジン**（各 `web/pc-firebase/core/games/<id>.mjs` 新規）: take6（No.48、同時選択＋列選択フェーズ、professional / to66）、blokus（No.49、21ピース・角接触、20×20 / duo 14×14）、quoridor（No.50、壁の経路保証BFS、2〜4人）、battleship（No.51、配置＋攻撃、salvo / chain / noAdjacent、view の艦位置マスク）、chinchiro（No.52、全役と倍率精算、bankerInstant / shonben）。いずれも隠し情報は view でマスクし、CPU（brain）を実装。
+- **登録・試験・資料**: `web/pc-firebase/core/extra-games.mjs` に5件を登録、`web/pc-firebase/sw.js` の `FILES` とキャッシュ名を更新、テスト5件（`tools/tests/test_{take6,blokus,quoridor,battleship,chinchiro}_core.mjs`）を新規作成。引き継ぎ資料はまとめて `docs/NEW_GAMES_CORE_SPEC_FOR_AI.md` に作成（ゲームごとの個別ファイルは作っていない）。
+- 確かめたこと: `tools/tests/test_*.mjs` 全13件合格、エンジン経由（カタログ・rulesJson・CPU完走）のスモークテストも代表オプションで合格。未実装: 盤面UI・メニュー（`ORDER`）登録・アイコン（別AIへ引き継ぎ）。コミット・プッシュはユーザーの指示があるまで行わない。
+
 ### 2026-11-22 / Claude / マインの拡大・ぶにょぶにょをさらに軽く、パクリスの回転ボタンと「パクリス」の字
 - マインスイーパーの拡大(`js/mines.js` の `applyZoom(live)`): 指で広げている途中・ホイールの途中は盤ごと `transform: scale` で拡大し、指を離した時(ホイールは止まって 0.16 秒後)にマスの大きさ `--zs` を変えて並べ直す。24×20 のピンチ 40 フレームで、スタイル+配置の計算 約 1000ms → 約 40ms。
 - ぶにょぶにょ(`js/bunyo.js` の `frameTick`): 層を 5 枚に(止まっている粒 base / 落ちている・着地でつぶれている・消える粒 anim / 操作中の組 pair / 組のふち rim / 落ちる所の印 fx)。base は中身が変わった時だけ(前は動かす・回すたびに描き直していた)。組は向きが決まった形を 1 回描き、回る途中は CSS の rotate で回す。ふち・印の明滅は層ごと CSS の不透明度(`.flayer.fglow`)。落とすのを含めた 10 秒の操作で描画 約 11.6 秒 → 約 1.4 秒(Pixel 7 の大きさ・手元の Chromium)。

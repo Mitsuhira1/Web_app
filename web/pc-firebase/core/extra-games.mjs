@@ -15,6 +15,11 @@ import { COYOTE_SPEC } from './games/coyote.mjs';
 import { SKULL_SPEC } from './games/skull.mjs';
 import { LIARSDICE_SPEC } from './games/liarsdice.mjs';
 import { INCANGOLD_SPEC } from './games/incangold.mjs';
+import { TAKE6_SPEC } from './games/take6.mjs';
+import { BLOKUS_SPEC } from './games/blokus.mjs';
+import { QUORIDOR_SPEC } from './games/quoridor.mjs';
+import { BATTLESHIP_SPEC } from './games/battleship.mjs';
+import { CHINCHIRO_SPEC } from './games/chinchiro.mjs';
 
 export const EXTRA_GAME_SPECS = [
   WAR_SPEC,
@@ -34,6 +39,11 @@ export const EXTRA_GAME_SPECS = [
   SKULL_SPEC,
   LIARSDICE_SPEC,
   INCANGOLD_SPEC,
+  TAKE6_SPEC,
+  BLOKUS_SPEC,
+  QUORIDOR_SPEC,
+  BATTLESHIP_SPEC,
+  CHINCHIRO_SPEC,
 ];
 
 function wrapRules(rawRules, OutcomeCtor) {

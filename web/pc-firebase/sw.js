@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261122-merge-mobile-incangold-1";
+const CACHE = "asobipcfb-20261122-new5games-1";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",
@@ -48,6 +48,11 @@ const FILES = [
 "./assets/rules/uno_play.mp4",
 "./assets/rules/yacht_roll.mp4",
 "./js/gamepad.js",
+"./core/games/chinchiro.mjs",
+"./core/games/battleship.mjs",
+"./core/games/quoridor.mjs",
+"./core/games/blokus.mjs",
+"./core/games/take6.mjs",
 "./core/games/incangold.mjs",
 "./core/games/liarsdice.mjs",
 "./core/games/skull.mjs",
