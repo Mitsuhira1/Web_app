@@ -50,3 +50,6 @@ SOFTWARE.
 
 ■ ルーレットの球が縁を転がる音
 「Marble, Rolling on Wood, A.wav」by InspectorJ(www.jshaw.co.uk)Freesound.org
+出典: https://freesound.org/s/429104/
+ライセンス: CC BY 4.0(Creative Commons 表示 4.0 国際)https://creativecommons.org/licenses/by/4.0/
+変更: mp3 に変換。ゲームでは頭の無音を飛ばし、球がひし形に当たった所から音を小さくして鳴らしている
