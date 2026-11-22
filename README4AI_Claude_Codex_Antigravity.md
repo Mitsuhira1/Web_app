@@ -56,6 +56,12 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-22 / Antigravity / インカの黄金(`incangold`, No.47)コア処理実装＆引き継ぎ資料作成
+- ユーザーの指示により、盤面デザインには触れずゲーム処理の中身のみを実装。
+- **エンジン**(`web/pc-firebase/core/games/incangold.mjs` 新規): 3〜6人・全5ラウンド対応、宝石15枚・障害5種×3枚・遺物5枚（オプション有無・単独帰還時のみ獲得5点/10点）、道への余り宝石配置＆帰還時均等割り、同種障害2枚バースト＆原因障害1枚の永久除外、同時選択マスキング、バースト確率計算＋席別リスク個性付きCPU AI(Lv0〜2)を実装。
+- **登録・試験・資料**: `web/pc-firebase/core/extra-games.mjs` に登録、`web/pc-firebase/sw.js` の `FILES` 更新、`tools/tests/test_incangold_core.mjs` 新規作成（全項目通過）。UI引き継ぎ仕様書 `docs/INCANGOLD_SPEC_FOR_AI.md` を作成。
+- 確かめたこと: `node tools/tests/test_incangold_core.mjs`、`node tools/tests/test_extra_12_games.mjs` 全通過。未実装: 盤面UI・デザイン・メニュー(`ORDER`)登録（別AIへ引き継ぎ）。
+
 ### 2026-11-22 / Antigravity / ライアーズダイス(`liarsdice`, No.46)コア処理実装＆引き継ぎ資料作成
 - ユーザーの指示により、盤面デザインには触れずゲーム処理の中身のみを実装。
 - **エンジン**(`web/pc-firebase/core/games/liarsdice.mjs` 新規): 2〜6人対応、各自5ダイス、宣言上書き・ダウト判定・脱落・最終生存者勝利、ローカルルール（1のワイルド扱い＋半分上書き / ジャスト宣言：他全員−1個・自分＋1個回復）、隠匿情報マスキング、決定論的PRNGダイスロール、二項分布確率ベースのCPU AI(Lv0〜2)を実装。
