@@ -38,13 +38,20 @@ function rouletteAudioBuffer(ctx, {duration, impacts, panAt}) {
     return seed / 2147483648 - 1;
   }
 
-  // Microscopic contacts excite a low wooden resonance and a brighter race
-  // surface. Their spacing and treble both fall with the speed of the ball.
+  // 縁を転がる音: 木の鉢(ボウル)が鳴る音にする。
+  // 本物の録音(縁を転がる間)では、決まった高さの響きの線が 340・720・1080・1450・1750・2100・2550Hz ほどに並び、
+  // 3kHz より上はほとんど無い。大きさは 1 周ごとにゆっくりうねる。
+  // 前の音は 12kHz まで平らな雑音で「布をこする」ように聞こえたので、高い雑音を削り、木の響き(共鳴)で鳴らす。
   const drop = impacts.find(hit => hit.kind === 'deflector');
   const raceEnd = drop ? drop.at / duration : .55;
   const finish = Math.floor(seconds * .92 * rate);
-  let grain = 0, low = 0, surface = 0, pulse = 0, resonance = 0, previous = 0;
-  let pan = 0, panStep = 0, untilGrain = 0;
+  const modes = [[340, .085, .55], [720, .07, 1], [1080, .06, .95], [1450, .05, .85], [1750, .045, .8], [2120, .04, .6], [2560, .032, .42]]
+    .map(([f, decay, weight]) => {
+      const w = 2 * Math.PI * f * (1 + noise() * .012) / rate, r = Math.exp(-1 / (decay * rate));
+      return {a1: 2 * r * Math.cos(w), a2: -r * r, g: weight * (1 - r) * 2.2, f, y1: 0, y2: 0};
+    });
+  let body = 0, body2 = 0, body3 = 0, bodyLow = 0, swell = 0, swellTarget = 1, untilSwell = 0, pulse = 0, untilGrain = 0;
+  let pan = 0, panStep = 0;
   for (let i = 0; i < finish; i++) {
     const t = i / (seconds * rate);
     const speed = 1 - .76 * Math.min(1, t / raceEnd);
@@ -54,21 +61,34 @@ function rouletteAudioBuffer(ctx, {duration, impacts, panAt}) {
     }
     pan += panStep;
     const grit = noise();
-    low += .076 * (grit - low);
-    surface += (.19 + .39 * speed) * (grit - surface);
-    grain += .009 * (Math.abs(grit) - grain);
+    // 球が木目の細かいでこぼこを越える小さな当たり(速いほど細かく強い)
     if (--untilGrain <= 0) {
-      pulse += (.25 + .55 * Math.abs(grit)) * speed;
-      untilGrain = (rate / (215 * speed + 30)) * (.70 + .57 * Math.abs(noise()));
+      pulse += (.4 + .6 * Math.abs(grit)) * speed;
+      untilGrain = (rate / (160 * speed + 25)) * (.6 + .8 * Math.abs(noise()));
     }
-    pulse *= .74;
-    const ring = 1.945 * resonance - .956 * previous + .014 * pulse;
-    previous = resonance;
-    resonance = ring;
+    pulse *= .8;
+    const excite = grit * (.55 + .45 * speed) + pulse * .9;
+    // 木の響き: 速いほど高い響きまでよく鳴る
+    let ring = 0;
+    for (const m of modes) {
+      const y = m.a1 * m.y1 + m.a2 * m.y2 + m.g * excite;
+      m.y2 = m.y1; m.y1 = y;
+      // 遅くなると高い響きが弱まり、低い 340Hz の「ゴー」が残る
+      ring += y * (m.f < 500 ? .5 + .8 * (1 - speed) : m.f < 1200 ? 1 : .3 + .7 * speed);
+    }
+    // 接する所のこもった雑音(3kHz より上はほとんど出さない)
+    const cut = .2 + .2 * speed;
+    body += cut * (grit - body);
+    body2 += cut * (body - body2);
+    body3 += cut * (body2 - body3);
+    bodyLow += .06 * (body3 - bodyLow);
+    // ゆっくりしたうねり(1 周ごとに近づく・遠ざかる+不ぞろいな揺れ)
+    if (--untilSwell <= 0) { swellTarget = .6 + .8 * Math.abs(noise()) ** 1.5; untilSwell = rate * (.06 + .16 * Math.abs(noise())); }
+    swell += (swellTarget - swell) * .0016;
+    const around = 1 + .4 * pan / .38;
     const release = Math.min(1, i / (rate * .055));
     const trail = Math.exp(-11 * Math.max(0, t - raceEnd)) * Math.min(1, (finish - i) / (rate * .05));
-    const sample = release * trail * (.4 + .6 * speed) *
-      (.48 * low + .23 * (surface - low) * (.5 + grain) + .62 * resonance);
+    const sample = release * trail * (.4 + .6 * speed) * swell * around * (.5 * ring + .3 * (body3 - .7 * bodyLow));
     left[i] = sample * (.8 - .32 * pan);
     right[i] = sample * (.8 + .32 * pan);
   }
