@@ -2103,3 +2103,58 @@ toastEl.addEventListener('pointercancel', () => { drag = null; toastHide(); });
     if (S.set.win === '全画面') setFullscreen(true);
   } catch (e) { app.innerHTML = `<div class="empty">読み込みに失敗しました: ${esc(e.message)}</div>`; }
 })();
+
+// ---- スマホの下から出る詳細(ゲーム説明)シート: 中を動かしても後ろのメニューを動かさない／横棒を下へ引くと閉じる
+(() => {
+  let t0 = null; // { y, drag, sheet, last, lastT, v }
+  const openSheet = () => { const d = document.querySelector('.detail.open'); return d && getComputedStyle(d).position === 'fixed' ? d : null; };
+  const scrollerOf = (el, sheet) => {
+    for (let n = el; n && n !== sheet.parentNode; n = n.parentElement) {
+      if (n.nodeType !== 1) continue;
+      const oy = getComputedStyle(n).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight + 1) return n;
+      if (n === sheet) break;
+    }
+    return null;
+  };
+  document.addEventListener('touchstart', (e) => {
+    const sheet = openSheet(); if (!sheet || e.touches.length !== 1) { t0 = null; return; }
+    const tgt = e.target;
+    if (!sheet.contains(tgt) && !tgt.closest('.detail-backdrop')) { t0 = null; return; }
+    const drag = sheet.contains(tgt) && !!tgt.closest('.detail-mobhd') && !tgt.closest('button');
+    t0 = { y: e.touches[0].clientY, drag, sheet, moved: 0, last: e.touches[0].clientY, lastT: performance.now(), v: 0 };
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    if (!t0) return;
+    const y = e.touches[0].clientY, dy = y - t0.y;
+    if (t0.drag) {
+      e.preventDefault();
+      const now = performance.now(); t0.v = (y - t0.last) / Math.max(1, now - t0.lastT); t0.last = y; t0.lastT = now;
+      t0.moved = Math.max(0, dy);
+      t0.sheet.style.transition = 'none';
+      t0.sheet.style.transform = `translateY(${t0.moved}px)`;
+      return;
+    }
+    // シートの中で動かせる所が端まで来た・動かせない所・背景の暗い所 → 後ろへ伝えない
+    const sc = t0.sheet.contains(e.target) ? scrollerOf(e.target, t0.sheet) : null;
+    const step = y - (t0.prevY == null ? t0.y : t0.prevY); t0.prevY = y;
+    if (!sc || (step > 0 && sc.scrollTop <= 0) || (step < 0 && sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1)) e.preventDefault();
+  }, { passive: false });
+  const end = () => {
+    if (!t0) return;
+    const { sheet, drag, moved, v } = t0; t0 = null;
+    if (!drag) return;
+    const close = moved > Math.min(120, sheet.offsetHeight * 0.25) || (v > 0.6 && moved > 20);
+    sheet.style.transition = 'transform .2s cubic-bezier(.22,.85,.32,1)';
+    if (close) {
+      sheet.style.transform = 'translateY(105%)';
+      const bd = document.querySelector('.detail-backdrop'); if (bd) { bd.style.transition = 'opacity .2s'; bd.style.opacity = '0'; }
+      setTimeout(() => { sheet.style.transition = ''; sheet.style.transform = ''; if (S.mobDetail) { S.mobDetail = false; render(); } }, 200);
+    } else {
+      sheet.style.transform = '';
+      setTimeout(() => { sheet.style.transition = ''; }, 220);
+    }
+  };
+  document.addEventListener('touchend', end, { passive: true });
+  document.addEventListener('touchcancel', end, { passive: true });
+})();

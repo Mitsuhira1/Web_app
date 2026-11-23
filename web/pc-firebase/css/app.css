@@ -1743,6 +1743,9 @@ html.reduce .rail-filter .seg button.filter-pop,html.reduce .main.filter-enter .
   .detail.open{transform:translateY(0);visibility:visible;pointer-events:auto}
   .detail-mobhd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px 4px;flex:none;position:relative}
   .detail-handle{position:absolute;left:50%;top:7px;transform:translateX(-50%);width:40px;height:4px;border-radius:999px;background:var(--line)}
+  .detail-mobhd{touch-action:none;min-height:46px}
+  .detail .scroll,.detail .chat .log{overscroll-behavior:contain}
+  .detail-backdrop{touch-action:none}
   .detail-mobhd .btn{margin-left:auto;height:32px;padding:0 12px;font-size:12px;border-radius:999px}
   .detail .scroll{padding:8px 14px 12px}
   .detail .foot{padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px))}
