@@ -599,7 +599,8 @@ async function cpuTurn(my, opts = {}) {
   }
   if (my !== token) return;
   const choice = cpuPaceChoice();
-  const delay = cur.id === 'roulette' ? 90 : usesExtraCpuPace(cur.id) ? extraCpuDelay(choice) : (PACE[choice] || 450) * Math.max(0.3, SPEED());
+  const bsPlacing = cur.id === 'battleship' && view.board && view.board.phase === 'place';
+  const delay = bsPlacing ? 0 : cur.id === 'roulette' ? 90 : usesExtraCpuPace(cur.id) ? extraCpuDelay(choice) : (PACE[choice] || 450) * Math.max(0.3, SPEED());
   const wait = delay - (performance.now() - t0);
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   if (my !== token) return;
@@ -702,7 +703,7 @@ function api() {
       wrap.innerHTML = html.startsWith('<svg') ? `<div class="plate">${html}</div>` : html;
       // 表になった札(.flipin)は、裏から表へ本当にめくる(前は表の札を裏返しのまま回していたので、字・マークが左右反対に見えた)
       wrap.querySelectorAll('.pc.flipin').forEach((e) => { e.classList.remove('flipin'); if (!S.set.reduce) flipCard(e, 420 * SPEED(), 'pc'); });
-      wrap.onclick = (e) => { if (busy || cutOn() || dragJust || (online && isMySeatAutoCpu())) return; const t = e.target.closest('[data-sq],[data-roll],[data-spin],[data-off],[data-tok],[data-i],[data-col],[data-hand],[data-m],[data-z],[data-k],[data-e],[data-p],[data-pt],[data-d],[data-c],[data-a],[data-s],[data-t],[data-tgt],[data-card],[data-src],[data-dest],[data-draw],[data-lm],[data-guess],[data-bet],[data-pass],[data-pit],[data-die],[data-cat],[data-seat]') || e.target; onTap(t.dataset || {}, t); };
+      wrap.onclick = (e) => { if (busy || cutOn() || dragJust || (online && isMySeatAutoCpu())) return; const t = e.target.closest('[data-sq],[data-roll],[data-spin],[data-off],[data-tok],[data-i],[data-col],[data-hand],[data-m],[data-z],[data-k],[data-e],[data-p],[data-pt],[data-d],[data-c],[data-a],[data-s],[data-t],[data-tgt],[data-card],[data-src],[data-dest],[data-draw],[data-lm],[data-guess],[data-bet],[data-pass],[data-pit],[data-die],[data-cat],[data-seat],[data-bscell],[data-bsship],[data-bkpiece],[data-qdhit],[data-qpawn],[data-ldface]') || e.target; onTap(t.dataset || {}, t); };
     },
     acts: (list) => {
       const box = $('#acts'); if (!box) return;
@@ -1117,12 +1118,14 @@ function showResult() {
     if (cur.id === 'chess' && mate) cut({ text: 'Checkmate', tone: 'noir', font: 'yo', ms: 1600, afterAnim: true });
     const delayWinCut = (cur.id === 'chess' && mate) || (cur.id === 'yacht' && yachtCutJust);
     yachtCutJust = false;
+    // ブロックスは、最後のピースが置かれた余韻を見せてから 0.5 秒空けてカットインを出す
+    const winCutDelay = delayWinCut ? 1700 : cur.id === 'blokus' ? 500 : 0;
     setTimeout(() => {
       if (key !== resultShown || !view || !view.outcome) return;
       const onShow = S.set.cutin && !S.set.reduce ? endSound : undefined;
       if (o.winner < 0) cut({ text: '引き分け', tone: 'dark', ms: 1800, _tok: token, afterAnim: true, onShow });
       else cut({ who: null, text: `${winnerName} の勝利`, tone: o.winner === mySeat || pass ? 'gold' : 'dark', ms: 2000, _tok: token, afterAnim: true, onShow });
-    }, delayWinCut ? 1700 : 0);
+    }, winCutDelay);
   }
   const title = o.winner < 0 ? '引き分け' : solo ? (o.winner === 0 ? '成功' : '終了') : `${seatName(o.winner)} の勝利`;
   const sc = cur.id !== 'uno' && view.scores && view.scores.length >= 2 ? `<div class="rscore num">${view.scores.map((s, i) => `<span>${esc(seatName(i))} <b>${s}</b></span>`).join('')}</div>` : '';
@@ -1132,7 +1135,7 @@ function showResult() {
     const tb = view.board && view.board.tbl, place = tb && Array.isArray(tb.place) ? tb.place : null;
     const key = (i) => (i === o.winner ? -1e9 : 0) + (place && place[i] >= 0 ? place[i] * 1000 - 1e6 : 0) - (+view.scores[i] || 0);
     const order = view.seats.map((_, i) => i).sort((x, y) => key(x) - key(y));
-    rankHtml = `<ol class="rrank">${order.map((i, k) => `<li class="${i === mySeat && (!online || (view && view.mine === i)) ? 'me' : ''}"><b>${k + 1}位</b><span>${esc(seatName(i))}</span>${cur.id !== 'uno' && cur.id !== 'daifugo' ? `<em class="num">${view.scores[i]}</em>` : ''}</li>`).join('')}</ol>`;
+    rankHtml = `<ol class="rrank">${order.map((i, k) => `<li class="${i === mySeat && (!online || (view && view.mine === i)) ? 'me' : ''}"><b><span class="rnum">${k + 1}</span>位</b><span>${esc(seatName(i))}</span>${cur.id !== 'uno' && cur.id !== 'daifugo' ? `<em class="num">${view.scores[i]}</em>` : ''}</li>`).join('')}</ol>`;
   }
   const two = view.seats.length === 2 && !pass && !online;
   const p = $('#result'); if (!p) return;
@@ -1265,7 +1268,7 @@ function turnCut(a, b) {
     ? (b.mine >= 0 && b.toMove === b.mine && !b.remote && !isSeatAutoCpu(b.toMove))
     : (mode === 'pass' ? b.toMove === 0 : (!!b.human && b.toMove === mySeat));
   if (!S.set.cutin || S.set.reduce) {
-    if (isSelfTurn) transientAudio.later(() => { if (view && view.toMove === b.toMove && view.human && !view.outcome) sfxYourTurn(); }, a ? 120 : 1450);
+    if (isSelfTurn) transientAudio.later(() => { if (view && view.toMove === b.toMove && view.human && !view.outcome) sfxYourTurn(); }, a ? 800 : 1450);
     return;
   }
   const text = mode === 'pass' ? `${b.seats[b.toMove].name} の番です` : 'あなたの番です';
@@ -1274,7 +1277,7 @@ function turnCut(a, b) {
     if (view && view.toMove === b.toMove && view.human && !view.outcome) {
       cut({ text, tone: 'gold', ms: 900, soft: true, afterAnim: true, _tok: token, onShow: isSelfTurn ? sfxYourTurn : undefined, onEnd: () => { turnPending = 0; } });
     } else turnPending = 0;
-  }, a ? 120 : 1450);
+  }, a ? 800 : 1450);
 }
 // カードを切る音のあとに、札を配る(卓の真ん中から順に)
 function dealIntro() {

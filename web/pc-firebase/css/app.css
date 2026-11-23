@@ -121,8 +121,8 @@ svg.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;str
 .switch[aria-checked="true"]{background:var(--felt-a)}
 .switch[aria-checked="true"]::after{left:23px}
 .detail .foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:10px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 16px;border-radius:12px;font-weight:700;background:var(--surface2);border:1px solid var(--line)}
-.btn:hover:not(:disabled){filter:brightness(.96)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 16px;border-radius:12px;font-weight:700;background:var(--surface2);border:1px solid var(--line);transition:filter .12s ease,box-shadow .12s ease,transform .12s ease}
+.btn:hover:not(:disabled){filter:brightness(1.14);box-shadow:0 3px 10px #00000055;transform:translateY(-1px)}
 .btn.primary{background:linear-gradient(var(--primary-a),var(--primary-b));color:var(--on-primary);border:0;letter-spacing:.3em;flex:1;font-weight:900}
 .btn.gold{background:var(--gold);color:var(--on-gold);border:0}
 .empty{flex:1;display:grid;place-items:center;color:var(--sub);text-align:center;padding:24px}
@@ -674,7 +674,7 @@ input,textarea{user-select:text}
 .rbtns .btn.primary{flex:none;letter-spacing:.1em}
 .sidenote{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
 .kv{display:flex;justify-content:space-between;align-items:baseline}
-.kv b{font-size:20px}
+.kv b{font-size:20px;font-variant-numeric:tabular-nums}
 .askcard{z-index:25}
 
 /* 名札(盤の描画が作る .pl を、側板の席の形にする) */
@@ -685,7 +685,8 @@ input,textarea{user-select:text}
 .pl .dot.koma-dot{border-radius:4px;background:linear-gradient(#F3DCA8,#DEBA74);clip-path:polygon(50% 0,90% 20%,100% 100%,0 100%,10% 20%)}
 .pl .who{flex:1;min-width:0}
 .pl .nm{display:block;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pl .nt{display:block;color:var(--sub);font-size:12px;white-space:nowrap}
+.pl .nt{display:block;color:var(--sub);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pl .nt .snum{display:inline-block;min-width:2ch;text-align:right}
 .pl.turn .nt{color:var(--gold);font-weight:700}
 .pl .num{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums}
 .pl .num.sm{font-size:16px}
@@ -1571,8 +1572,9 @@ html.reduce .stagehead .myturn{animation:none}
 .tw .mytag em{font-style:normal;font-size:1.8cqh;padding:.2cqh 1cqh;border-radius:999px;background:rgba(255,255,255,.18)}
 .rrank{list-style:none;margin:6px 0 10px;padding:0;display:flex;flex-direction:column;gap:4px}
 .rrank li{display:flex;align-items:center;gap:10px;padding:5px 12px;border-radius:10px;background:var(--surface2);font-weight:700}
-.rrank li b{min-width:3em;color:var(--gold)}
-.rrank li.me{box-shadow:inset 0 0 0 2px var(--gold)}
+.rrank li b{min-width:3em;color:var(--gold);font-variant-numeric:tabular-nums;text-align:left}
+.rrank .rnum{display:inline-block;min-width:1.1em;text-align:center}
+.rrank li.me{box-shadow:inset 0 0 0 2px var(--gold);margin-top:0;border-top:0;width:auto}
 .rrank li em{margin-left:auto;font-style:normal}
 /* 通信対戦: 相手の番は、盤の中の操作ボタン(サイコロを振る・引く・パス・ルーレットなど)も灰色で、光らせない */
 .stage.notmine .yroll,.stage.notmine #boardwrap [data-roll],.stage.notmine #boardwrap [data-draw],.stage.notmine #boardwrap .upass,.stage.notmine #boardwrap .ustock,.stage.notmine .side [data-spin],.stage.notmine .side [data-lm],.stage.notmine .side [data-act]{filter:grayscale(1);opacity:.55;animation:none!important;box-shadow:none!important}
