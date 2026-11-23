@@ -924,11 +924,12 @@ function chatBox() {
     : (list.length ? list.map((m) => {
         if (m.kind === 2) return `<div class="msg sys">${esc(m.body)}</div>`;
         const mine = ost && m.slot === ost.mySlot;
-        return `<div class="msg ${mine ? 'mine' : ''} ${stampIdx(m) >= 0 ? 'st' : ''}">${mine ? '' : `<small>${esc(m.name)}</small>`}${stampIdx(m) >= 0 ? stamp(stampIdx(m)) : esc(m.body)}</div>`;
+        const si = stampIdx(m);
+        return `<div class="msg cb${mine ? ' mine' : ''}${si >= 0 ? ' st' : ''}"><small class="who">${esc(m.name)}</small>${si >= 0 ? `<span class="stw">${stamp(si)}</span>` : `<span class="bub">${esc(m.body)}</span>`}</div>`;
       }).join('') : '<div class="dimtxt">チャットはまだありません</div>');
   return `<div class="chat${chatOn ? '' : ' chat-off'}"><div class="log" id="log">${bodyHtml}</div>
    ${canSend && S.stOpen ? `<div class="stpanel">${STAMPS.map((s, i) => `<button type="button" data-stamp="${i}" title="${s[0]}" aria-label="${s[0]}">${stamp(i)}</button>`).join('')}</div>` : ''}
-   <form id="chatf"><button type="button" class="stbtn" data-stopen aria-expanded="${canSend && S.stOpen}" aria-label="スタンプ" ${canSend ? '' : 'disabled'}>${ic('smile')}</button><input id="chatin" placeholder="${chatOn ? 'メッセージ' : 'チャット無効'}" maxlength="40" autocomplete="off" aria-label="メッセージ" ${canSend ? '' : 'disabled'}><button ${canSend ? '' : 'disabled'}>送る</button></form></div>`;
+   <form id="chatf"><button type="button" class="stbtn" data-stopen aria-expanded="${canSend && S.stOpen}" aria-label="スタンプ" ${canSend ? '' : 'disabled'}>${ic('smile')}</button><input id="chatin" placeholder="${chatOn ? 'メッセージを入力' : 'チャット無効'}" maxlength="40" autocomplete="off" aria-label="メッセージ" ${canSend ? '' : 'disabled'}><button ${canSend ? '' : 'disabled'}>送る</button></form></div>`;
 }
 function sendChat(t, st) {
   if (!mainCore || !ost || !wolfGame.canRoomChat(netApi?.uid)) return;
@@ -963,23 +964,25 @@ function applyRoomSettingsUpdate(partial) {
   render();
 }
 
-function roomSettingsRows(s, editable, minMax) {
+function roomSettingsRows(s, editable, minMax, specRow) {
   const rseg = (key, opts, val) => `<div class="seg" data-rseg="${key}">${opts.map(([v, l]) => `<button type="button" data-rv="${esc(v)}" aria-pressed="${String(v) === String(val)}">${esc(l)}</button>`).join('')}</div>`;
+  // 自分の観戦モード(ホスト・ゲストとも操作できる。対局中は切り替えられないので押せない形で残す)
+  const spec = specRow ? `<div class="row"><span>観戦モード（あなた）</span><div class="seg" data-specseg>${[['0', '参加'], ['1', '観戦']].map(([v, l]) => `<button type="button" data-specset="${v}" aria-pressed="${(v === '1') === mySpectatingOn()}" ${ost && ost.phase === 'PLAYING' ? 'disabled' : ''}>${l}</button>`).join('')}</div></div>` : '';
   if (!editable) {
     return `
-      <div class="row"><span>公開設定</span><b>${s.isPublic ? '公開' : '非公開'}</b></div>
-      <div class="row"><span>チャット</span><b>${s.chatEnabled ? 'ON' : 'OFF'}</b></div>
-      <div class="row"><span>最大人数</span><b class="num">${s.maxPlayers}人</b></div>
-      <div class="row"><span>部屋のロック</span><b>${s.locked ? 'ロック中' : '開放'}</b></div>
-      <div class="row"><span>雰囲気</span><b>${esc(s.vibe)}</b></div>`;
+      <div class="row"><span>公開設定</span><b class="rval">${s.isPublic ? '公開' : '非公開'}</b></div>
+      <div class="row"><span>チャット</span><b class="rval">${s.chatEnabled ? 'ON' : 'OFF'}</b></div>
+      <div class="row"><span>最大人数</span><b class="rval num">${s.maxPlayers}人</b></div>
+      <div class="row"><span>部屋のロック</span><b class="rval">${s.locked ? 'ロック中' : '開放'}</b></div>
+      <div class="row"><span>雰囲気</span><b class="rval">${esc(s.vibe)}</b></div>${spec}`;
   }
   const minP = Math.max(2, Math.min(6, minMax || 2));
   return `
     <div class="row"><span>公開設定</span>${rseg('isPublic', [['false', '非公開'], ['true', '公開']], String(!!s.isPublic))}</div>
     <div class="row"><span>チャット</span>${rseg('chatEnabled', [['true', 'ON'], ['false', 'OFF']], String(s.chatEnabled !== false))}</div>
     <div class="row"><span>最大人数</span><span class="stepper"><button type="button" data-rmax="-1" aria-label="減らす" ${s.maxPlayers > minP ? '' : 'disabled'}>−</button><b class="num">${s.maxPlayers}人</b><button type="button" data-rmax="1" aria-label="増やす" ${s.maxPlayers < 6 ? '' : 'disabled'}>＋</button></span></div>
-    <div class="row"><span>部屋のロック<small class="sub">これ以上入れない</small></span><button type="button" class="switch" role="switch" aria-checked="${!!s.locked}" data-rlock aria-label="部屋のロック"></button></div>
-    <div class="row"><span>雰囲気</span>${rseg('vibe', [['ガチ', 'ガチ'], ['ボチボチ', 'ボチボチ'], ['まったり', 'まったり']], s.vibe || 'ボチボチ')}</div>`;
+    <div class="row"><span>部屋のロック</span><button type="button" class="switch" role="switch" aria-checked="${!!s.locked}" data-rlock aria-label="部屋のロック"></button></div>
+    <div class="row"><span>雰囲気</span>${rseg('vibe', [['ガチ', 'ガチ'], ['ボチボチ', 'ボチボチ'], ['まったり', 'まったり']], s.vibe || 'ボチボチ')}</div>${spec}`;
 }
 
 function publicRoomsListHtml() {
@@ -1107,90 +1110,105 @@ function openPublicRoomSheet(roomId) {
 }
 
 // ---------------------------------------------------------------- 部屋の画面 (4桁のルームコードマッチング)
+// 入口(コード入力・部屋を作る・公開ルーム)と、ロビー(コードの帯・メンバー枠・チャット・ルーム設定・退出/解散)
+function roomEntry() {
+  const busy = fbState.creating || fbState.joining;
+  const code = String(drafts.join || '');
+  const boxes = [0, 1, 2, 3].map((i) => `<span class="rl-cbox${code[i] ? ' filled' : ''}">${esc(code[i] || '')}</span>`).join('');
+  const left = `<section class="panel rl-card"><h3>コードを入力</h3>
+      <div class="rl-codewrap">
+        <label class="rl-cboxes" aria-label="ルームコード">${boxes}<input id="joinIn" value="${esc(code)}" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="ルームコード" spellcheck="false" ${fbState.joining ? 'disabled' : ''}></label>
+        <button class="btn primary rl-joinbtn" data-join ${busy || code.length < 4 ? 'disabled' : ''}>${fbState.joining ? '入室中…' : '参加する'}</button>
+      </div>
+      ${fbState.error ? `<p class="err">${esc(fbState.error)}</p>` : ''}</section>
+    <section class="panel rl-card"><h3>部屋を作る</h3>
+      <button class="btn primary rl-mkbtn" data-mkroom ${busy ? 'disabled' : ''}>${fbState.creating ? '部屋を作っています…' : '部屋を作る'}</button></section>`;
+  const right = `<section class="panel rl-card"><div class="pubrooms-hd"><h3>公開ルーム <span class="badge" id="pubroomsCount">${(fbState.publicRooms || []).length}</span></h3><button type="button" class="btn pubrefresh-btn${fbState.publicRoomsLoading ? ' is-spin' : ''}" data-pubrefresh aria-label="公開ルーム一覧を更新" title="更新">${ic('refresh')}</button></div><div id="pubroomsBox">${publicRoomsListHtml()}</div></section>`;
+  return { left, right };
+}
+
+function roomMemberSlots(st, maxP) {
+  const host = st.role === 'host';
+  const hostSlot = hostSlotOfRoom();
+  const myUid = netApi ? netApi.uid : null;
+  const slots = st.members.map((m, i) => {
+    const uid = playerUidBySlot(m.slot);
+    const isMe = m.slot === st.mySlot;
+    const p = uid ? playerByUid(uid) : null;
+    const off = !!(p && p.offline);
+    const tags = (isSlotSpectating(m.slot) ? '<span class="rl-tag">観戦</span>' : '') + (isSlotAutoCpu(m.slot) ? '<span class="rl-tag">CPU操作中</span>' : '');
+    const canManage = host && uid && uid !== myUid;
+    return `<div class="rl-slot">
+      ${m.slot === hostSlot ? '<span class="rl-crown">ホスト</span>' : ''}
+      ${canManage ? `<button type="button" class="rl-dots" data-pmenu="${esc(uid)}" aria-label="${esc(m.name)}の管理メニュー" title="ホスト変更・キック">…</button>` : ''}
+      ${isMe ? meAv('rl-av') : slotAvHtml(m.slot, m.name, i).replace('class="avatar', 'class="avatar rl-av')}
+      <div class="rl-nm"><span class="rl-nmt">${esc(m.name)}${isMe ? '（あなた）' : ''}</span>${tags}</div>
+      <div class="rl-st"><i class="rl-dot${off ? ' off' : ''}"></i>${off ? '切断中' : '接続中'}</div>
+    </div>`;
+  });
+  for (let k = st.members.length; k < Math.max(maxP, st.members.length); k++) slots.push('<div class="rl-slot empty">空き</div>');
+  return slots.join('');
+}
+
 function room() {
   const st = ost || { role: 'none', members: [] };
   const host = st.role === 'host', none = st.role === 'none';
   const g = st.gameId && gInfo(st.gameId);
-  const hostSlot = hostSlotOfRoom();
-  const myUid = netApi ? netApi.uid : null;
-  const mySpec = mySpectatingOn();
   const rSet = currentRoomSettings();
   const maxP = rSet.maxPlayers || 6;
-  let left = '';
+  const authPanel = fbState.authError ? `<div class="panel" style="border-color:#C8463C;background:rgba(200,70,60,.08)"><h3>通信の設定案内</h3><p class="err" style="white-space:pre-wrap;margin:4px 0">${esc(fbState.authError)}</p></div>` : '';
 
-  if (fbState.authError) {
-    left += `<div class="panel" style="border-color:#C8463C;background:rgba(200,70,60,.08)"><h3>通信の設定案内</h3><p class="err" style="white-space:pre-wrap;margin:4px 0">${esc(fbState.authError)}</p></div>`;
-  }
-
-  // 1. 部屋を作る / ルームコード
-  left += `<div class="panel" style="padding-bottom:12px"><h3>${none ? '部屋を作る' : 'ルームコード'}</h3>
-     ${none ? `${roomSettingsRows(rSet, true, 2)}<button class="btn primary" style="width:100%;margin-top:10px;letter-spacing:.1em" data-mkroom ${fbState.creating || fbState.joining ? 'disabled' : ''}>${fbState.creating ? '部屋を作っています…' : '部屋を作る'}</button>` : ''}
-     ${ fbState.roomId ? `<div class="invite"><p>${host ? 'このルームコードを相手に伝えてください' : '参加中のルームコード'}</p>
-       <div class="code" style="font-size:28px;font-weight:900;letter-spacing:.25em;text-align:center;padding:12px 10px">${esc(fbState.roomId)}</div>
-       <button class="btn gold copybig" data-copy="${esc(fbState.roomId)}">${ic('copy')}ルームコードをコピー</button></div>` : '' }
-     ${fbState.error && host ? `<p class="err">${esc(fbState.error)}</p>` : ''}</div>`;
-
-  // 2. ルームコードを入力して参加する (未入室時) / ルーム設定 (入室中)
   if (none) {
-    left += `<div class="panel" style="padding-bottom:10px"><h3>部屋に入る</h3>
-      ${fbState.error ? `<p class="err">${esc(fbState.error)}</p>` : ''}
-      <div class="codebox"><input id="joinIn" placeholder="ルームコード (例: 1234)" value="${esc(drafts.join)}" maxlength="4" inputmode="numeric" pattern="[0-9]*" aria-label="ルームコード" spellcheck="false" ${fbState.joining ? 'disabled' : ''}><button class="btn primary" style="height:38px" data-join ${fbState.joining ? 'disabled' : ''}>${fbState.joining ? '入室中…' : '参加する'}</button></div></div>`;
-  } else {
-    left += `<div class="panel" style="padding-bottom:8px"><h3>ルーム設定</h3>${roomSettingsRows(rSet, host, Math.max(2, st.members.length))}</div>`;
+    const e = roomEntry();
+    return `<div class="screen">${rail('room')}<div class="main"><h2 class="pagehead">みんなで遊ぶ</h2><div class="cols rl-cols"><div class="stack">${authPanel}${e.left}</div><div class="stack">${e.right}</div></div></div></div>`;
   }
 
-  // 3. 参加者一覧と退出・解散
-  if (!none) {
-    const memberRows = st.members.map((m, i) => {
-      const uid = playerUidBySlot(m.slot);
-      const isMe = m.slot === st.mySlot;
-      const isH = m.slot === hostSlot;
-      const spec = isSlotSpectating(m.slot);
-      const cpu = isSlotAutoCpu(m.slot);
-      const canClick = host && uid && uid !== myUid;
-      const offP = uid ? playerByUid(uid) : null;
-      const tags = [isH ? 'ホスト' : '参加者', offP && offP.offline ? '切断中(戻るのを待っています)' : '接続中', spec ? '観戦モード' : '', cpu ? 'CPUが操作中…' : ''].filter(Boolean).join('・');
-      const inner = `${isMe ? meAv() : slotAvHtml(m.slot, m.name, i)}<span class="nm">${esc(m.name)}${isMe ? '(あなた)' : ''}<small>${esc(tags)}</small></span>`;
-      return canClick
-        ? `<button type="button" class="seat seat-btn" data-pmenu="${esc(uid)}" title="クリックしてホスト変更・キック">${inner}<span class="seat-act">管理 ▾</span></button>`
-        : `<div class="seat">${inner}</div>`;
-    }).join('');
-    left += `<div class="panel" style="padding-bottom:10px"><h3>参加メンバー ${st.members.length}/${maxP}</h3>
-    <div class="seats" style="padding-top:6px">${memberRows}</div>
-    ${st.transportError ? `<p class="err">${esc(st.transportError)}</p>` : ''}
-    <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap">
-      ${st.phase === 'LOBBY' ? `<button class="btn ${mySpec ? 'gold' : ''}" data-toggle-spec style="height:38px">${mySpec ? '観戦モード: ON' : '観戦モード'}</button>` : '<span></span>'}
-      <button class="btn" data-leave style="height:38px">${host ? (st.members.length > 1 ? '部屋を出る / 解散' : '部屋を解散する') : '部屋を出る'}</button>
-    </div></div>`;
-    left += `<div style="height:260px;display:flex">${chatBox().replace('class="chat"', 'class="chat" style="flex:1"')}</div>`;
-  }
+  const n = st.members.length;
+  const band = `<div class="rl-band">
+    <div><div class="rl-lb">ルームコード</div><div class="rl-code num">${esc(fbState.roomId || '')}</div></div>
+    <button class="btn gold rl-copy" data-copy="${esc(fbState.roomId || '')}" data-copydone="✓ コピー済み">${ic('copy')}コピー</button>
+    <span class="rl-pill num">● ${n}/${maxP}人</span>
+  </div>${fbState.error && host ? `<p class="err">${esc(fbState.error)}</p>` : ''}`;
 
-  // 4. 公開ルーム一覧(未入室時) / 対局中案内(入室時) ＋ 遊び方
-  const howtoPanel = `<div class="panel"><h3>遊び方</h3><div class="howto"><p><b>部屋を作る人</b>: 「部屋を作る」を押して、発行された4桁のルームコードを相手に伝えます。公開に設定すると一覧にも表示されます。</p><p><b>参加する人</b>: 4桁のルームコードを入力するか、公開ルーム一覧から選んで参加します。</p><p><b>ホスト機能・観戦</b>: ホストは参加メンバーをクリックして「ホストを変更」「キック」ができます。次の対局を見学したい時は「観戦モード」をONにしてください。</p><p class="dimtxt">Webブラウザ版・Androidアプリ版・Windows版のどれからでも同じルームコードで対戦できます。</p></div></div>`;
-  let right = '';
-  if (none) {
-    right += `<div class="panel"><div class="pubrooms-hd"><h3>公開ルーム一覧 <span class="badge" id="pubroomsCount">${(fbState.publicRooms || []).length}</span></h3><button type="button" class="btn pubrefresh-btn${fbState.publicRoomsLoading ? ' is-spin' : ''}" data-pubrefresh aria-label="公開ルーム一覧を更新" title="更新">${ic('refresh')}</button></div><div id="pubroomsBox">${publicRoomsListHtml()}</div></div>`;
-  }
-  if (!none && boardMatch.active()) {
-    right = `<div class="panel"><h3>対局中</h3><p>${esc(gInfo(boardMatch.state.game)?.name)}</p><button class="btn primary" data-oreturn>対局に戻る</button></div>`;
-  } else if (!none && wolfGame.active()) {
-    right = '<div class="panel"><h3>対局中</h3><p>人狼</p><button class="btn primary" data-oreturn>対局に戻る</button></div>';
-  } else if (!none && st.phase === 'PLAYING') {
+  // 対局中の案内(対局に戻る・観戦する)
+  let playing = '';
+  if (boardMatch.active()) {
+    playing = `<div class="panel"><h3>対局中</h3><p>${esc(gInfo(boardMatch.state.game)?.name)}</p><button class="btn primary" data-oreturn>対局に戻る</button></div>`;
+  } else if (wolfGame.active()) {
+    playing = '<div class="panel"><h3>対局中</h3><p>人狼</p><button class="btn primary" data-oreturn>対局に戻る</button></div>';
+  } else if (st.phase === 'PLAYING') {
     const inMatch = st.match >= 0;
     const isSpectator = fbState.roomState && Array.isArray(fbState.roomState.seatSlots) && !fbState.roomState.seatSlots.includes(st.mySlot);
-    right = `<div class="panel"><h3>対局中</h3><div class="hero" style="margin:8px 0">${g ? `<span class="art">${artOf(g.id)}</span>` : ''}<div><h2>${g ? esc(g.name) : ''}</h2><p>${isSpectator ? '対局を観戦できます（次の対局から参加できます）' : inMatch ? '対局の画面から部屋に戻っています' : '次の対局から加わります。いまの対局が終わるまで待ってください'}</p></div></div>${inMatch ? `<div style="display:flex;justify-content:flex-end"><button class="btn primary" style="flex:none;width:280px" data-oreturn>${isSpectator ? '対局を観戦する' : '対局に戻る'}</button></div>` : ''}</div>`;
+    playing = `<div class="panel"><h3>対局中</h3><div class="hero" style="margin:8px 0">${g ? `<span class="art">${artOf(g.id)}</span>` : ''}<div><h2>${g ? esc(g.name) : ''}</h2>${inMatch ? '' : '<p>次の対局から加わります</p>'}</div></div>${inMatch ? `<button class="btn primary" style="width:100%" data-oreturn>${isSpectator ? '対局を観戦する' : '対局に戻る'}</button>` : ''}</div>`;
   }
-  right += howtoPanel;
-  return `<div class="screen">${rail('room')}<div class="main"><h2 class="pagehead">みんなで遊ぶ</h2><div class="cols"><div class="stack">${left}</div><div class="stack">${right}</div></div></div></div>`;
+
+  const members = `<section class="panel rl-card"><h3>参加メンバー　<span class="num">${n}/${maxP}</span></h3>
+    <div class="rl-slots">${roomMemberSlots(st, maxP)}</div>
+    ${st.transportError ? `<p class="err">${esc(st.transportError)}</p>` : ''}</section>`;
+  const chat = `<div class="rl-chat">${chatBox()}</div>`;
+  const settings = `<section class="panel rl-card rl-set"><h3>ルーム設定</h3>${roomSettingsRows(rSet, host, Math.max(2, n), true)}</section>`;
+  const danger = host
+    ? `<div class="rl-danger"><button class="btn" data-leavego ${n > 1 ? '' : 'disabled'}>部屋を出る</button><button class="btn danger" data-dissolve>部屋を解散する</button></div>`
+    : '<div class="rl-danger"><button class="btn" data-leave>部屋を出る</button></div>';
+  return `<div class="screen">${rail('room')}<div class="main rl-lobby">${authPanel}${band}<div class="cols rl-cols"><div class="stack">${members}${chat}</div><div class="stack">${playing}${settings}${danger}</div></div></div></div>`;
 }
 
 function afterRoom() {
   const ji = $('#joinIn');
   if (ji) {
+    // 4 つの枠に 1 字ずつ映す。4 桁そろうまで「参加する」は押せない
+    const paint = () => {
+      const v = ji.value;
+      document.querySelectorAll('.rl-cbox').forEach((b, i) => { b.textContent = v[i] || ''; b.classList.toggle('filled', !!v[i]); b.classList.toggle('cur', i === Math.min(v.length, 3)); });
+      const btn = document.querySelector('[data-join]');
+      if (btn) btn.disabled = v.length < 4 || fbState.creating || fbState.joining;
+    };
     ji.oninput = () => {
       ji.value = ji.value.replace(/[^\d]/g, '').slice(0, 4);
       drafts.join = ji.value;
+      paint();
     };
+    paint();
     ji.onkeydown = (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -1480,7 +1498,26 @@ function onlineClick(d, bElem) {
   if (d.autocpu != null) { toggleAutoCpu(); return true; }
   if (d.copy) {
     const b = bElem || document.querySelector(`[data-copy="${CSS.escape(d.copy)}"]`);
-    navigator.clipboard.writeText(d.copy).then(() => { toast({ w: 'お知らせ', t: 'コピーしました' }); if (b) { const old = b.innerHTML; b.classList.add('done'); b.innerHTML = '✓ コピーしました'; setTimeout(() => { if (b.isConnected) { b.classList.remove('done'); b.innerHTML = old; } }, 2000); } }, () => toast({ w: 'お知らせ', t: 'コピーできませんでした。選んでコピーしてください' }));
+    navigator.clipboard.writeText(d.copy).then(() => { toast({ w: 'お知らせ', t: 'コピーしました' }); if (b) { const old = b.innerHTML; b.classList.add('done'); b.innerHTML = b.dataset.copydone || '✓ コピーしました'; setTimeout(() => { if (b.isConnected) { b.classList.remove('done'); b.innerHTML = old; } }, 2000); } }, () => toast({ w: 'お知らせ', t: 'コピーできませんでした。選んでコピーしてください' }));
+    return true;
+  }
+  if (d.leavego != null) {
+    // ホストが自分だけ抜ける(ホストは残りの人に引き継ぐ)。参加者がいない時は押せない
+    if (!isHostRoom() || !(ost && ost.members.length > 1)) return true;
+    setTimeout(focusPrimary, 0);
+    openSheet(`<h2>部屋を出ますか</h2><p>ホストは他のメンバーに引き継がれます。</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn danger" id="lvHandoff">出る</button></div>`);
+    $('#lvHandoff').onclick = async () => { closeSheet(); sfx.play('BACK'); await handoffHostAndLeave(); render(); };
+    return true;
+  }
+  if (d.dissolve != null) {
+    if (!isHostRoom()) return true;
+    setTimeout(focusPrimary, 0);
+    openSheet(`<h2>部屋を解散しますか</h2><p>ルームを閉じ、チャット履歴を削除します。</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn danger" id="lvYes">解散する</button></div>`);
+    $('#lvYes').onclick = () => { closeSheet(); sfx.play('BACK'); leaveOnline('dissolve'); render(); };
+    return true;
+  }
+  if (d.specset != null) {
+    if ((d.specset === '1') !== mySpectatingOn()) toggleSpectating();
     return true;
   }
   if (d.leave != null) {
@@ -2326,9 +2363,6 @@ function roomSummary() {
  const leaveTxt = host ? (ost.members.length > 1 ? '部屋を出る / 解散' : '部屋を解散する') : '部屋を出る';
  return `<section class="room-summary"><h4>ルームコード</h4><b class="room-code">${esc(fbState.roomId)}</b><button class="btn" data-copy="${esc(fbState.roomId)}">${ic('copy')}コピー</button><div class="room-members">${membersHtml}</div><button class="btn" data-leave>${leaveTxt}</button></section>`;
 }
-function roomHowto() {
- return `<details class="room-howto" open><summary>遊び方</summary><p>「部屋を作る」で発行された4桁のルームコードを相手に伝えてください。参加する人はルームコードを入力します。</p><p>人が集まるまではホスト1人でもゲームを始められます。参加メンバーをクリックすると「ホストを変更」「キック」が行えます。</p></details>`;
-}
 function chooseWish(id) {
  if (!roomChoosing() || !gInfo(id)) return;
  const mine=fbState.players[netApi.uid];if(mine)mine.choice=id;
@@ -2356,5 +2390,5 @@ function onlineMenuDetail() {
  const specToggle = roomChoosing() ? `<div style="margin:6px 0 4px"><button class="btn ${mySpec ? 'gold' : ''}" data-toggle-spec style="width:100%;height:34px;font-size:12px">${mySpec ? '観戦モード: ON（クリックで参加に戻る）' : '観戦モードにする'}</button></div>` : '';
  const mobHd = `<div class="detail-mobhd"><span class="detail-handle" aria-hidden="true"></span><button type="button" class="btn" data-detailclose aria-label="閉じる">✕ 閉じる</button></div>`;
  const openCls = S.mobDetail ? ' open' : '';
- return `<aside class="detail online-detail${openCls}">${mobHd}<div class="scroll">${g?`<div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div>`:'<div class="empty">ゲームを選んでください</div>'}<p>${hint}</p>${specToggle}${roomHowto()}</div>${chatBox()}<div class="foot">${g?ruleButton(g.id):''}${roomChoosing()?`<button class="btn primary" data-next ${canStart?'':'disabled'}>${startLabel}</button>`:`<button class="btn primary" data-oreturn>${isSpectator ? '対局を観戦する' : '対局に戻る'}</button>`}</div></aside>`;
+ return `<aside class="detail online-detail${openCls}">${mobHd}<div class="scroll">${g?`<div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div>`:'<div class="empty">ゲームを選んでください</div>'}<p>${hint}</p>${specToggle}</div>${chatBox()}<div class="foot">${g?ruleButton(g.id):''}${roomChoosing()?`<button class="btn primary" data-next ${canStart?'':'disabled'}>${startLabel}</button>`:`<button class="btn primary" data-oreturn>${isSpectator ? '対局を観戦する' : '対局に戻る'}</button>`}</div></aside>`;
 }
