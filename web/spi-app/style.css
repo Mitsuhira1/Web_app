@@ -1,0 +1,286 @@
+/* SPI試験対策 Web版 — Android版（Material 3）の配色・寸法をそのまま再現 */
+:root, body[data-theme="dark"] {
+  --primary: #A8C7FA;
+  --on-primary: #0A305F;
+  --bg: #111318;
+  --on-bg: #E3E6EB;
+  --surface: #191C21;
+  --on-surface: #E3E6EB;
+  --surface-variant: #23262D;
+  --on-surface-variant: #B8BCC4;
+  --outline-variant: #3A3E46;
+  --outline: #938F99;
+  --dialog-bg: #26292F;
+  --correct: #43A047;
+  --wrong: #E53935;
+  --mark-gray: #9AA0A6;
+  --correct-bg: rgba(67, 160, 71, 0.18);
+  --wrong-bg: rgba(229, 57, 53, 0.15);
+  --selected-bg: rgba(168, 199, 250, 0.22);
+  --dimmed-bg: rgba(35, 38, 45, 0.45);
+  --scrim: rgba(0, 0, 0, 0.55);
+}
+body[data-theme="light"] {
+  --primary: #0B57D0;
+  --on-primary: #FFFFFF;
+  --bg: #F8F9FA;
+  --on-bg: #1F1F1F;
+  --surface: #FFFFFF;
+  --on-surface: #1F1F1F;
+  --surface-variant: #E9EDF2;
+  --on-surface-variant: #5F6368;
+  --outline-variant: #C4C7C5;
+  --outline: #79747E;
+  --dialog-bg: #FFFFFF;
+  --correct: #43A047;
+  --wrong: #E53935;
+  --mark-gray: #9AA0A6;
+  --correct-bg: rgba(67, 160, 71, 0.18);
+  --wrong-bg: rgba(229, 57, 53, 0.15);
+  --selected-bg: rgba(11, 87, 208, 0.16);
+  --dimmed-bg: rgba(233, 237, 242, 0.5);
+  --scrim: rgba(0, 0, 0, 0.4);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--on-bg);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  overscroll-behavior-y: none;
+}
+.hidden { display: none !important; }
+
+/* ---------- splash ---------- */
+#splash {
+  position: fixed; inset: 0; background: #111318; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.3s ease;
+}
+#splash.fade { opacity: 0; pointer-events: none; }
+.splash-inner { text-align: center; }
+.splash-title { color: #A8C7FA; font-size: 34px; font-weight: 700; letter-spacing: 0.02em; }
+.splash-sub { color: #B8BCC4; font-size: 14px; margin-top: 10px; }
+
+/* ---------- screen transition (Android版: fade + slide 230ms) ---------- */
+@keyframes screen-in {
+  from { opacity: 0; transform: translateX(4%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.screen { animation: screen-in 0.23s ease-out; min-height: 100dvh; display: flex; flex-direction: column; }
+.screen.no-anim { animation: none; }
+
+/* ---------- top bar ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center;
+  min-height: 64px; padding: 4px 16px 4px 4px;
+  padding-top: calc(4px + env(safe-area-inset-top));
+  background: var(--bg);
+}
+.topbar .back-btn {
+  width: 48px; height: 48px; border: none; background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+  color: var(--on-bg); flex: none;
+}
+.topbar .title { font-size: 22px; line-height: 28px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar .actions { display: flex; align-items: center; flex: none; }
+.icon-btn {
+  width: 48px; height: 48px; border: none; background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+  color: var(--on-surface-variant);
+}
+svg.icon { width: 24px; height: 24px; fill: currentColor; }
+
+/* ---------- layout ---------- */
+.content { flex: 1; padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
+.content.top-gap { padding-top: 2px; }
+.bottom-spacer { height: 16px; flex: none; }
+.bottom-spacer-lg { height: 24px; flex: none; }
+
+/* ---------- typography helpers ---------- */
+.title-large { font-size: 22px; line-height: 28px; }
+.title-medium { font-size: 16px; line-height: 24px; font-weight: 500; }
+.title-small { font-size: 14px; line-height: 20px; font-weight: 500; }
+.body-large { font-size: 16px; line-height: 24px; }
+.body-medium { font-size: 14px; line-height: 20px; }
+.label-large { font-size: 14px; line-height: 20px; font-weight: 500; }
+.bold { font-weight: 700; }
+.muted { color: var(--on-surface-variant); }
+.primary-text { color: var(--primary); }
+.pre-line { white-space: pre-line; }
+.q-text { font-size: 16px; line-height: 27px; font-weight: 500; }
+.exp-text { font-size: 16px; line-height: 27px; }
+
+/* ---------- cards ---------- */
+.card { background: var(--surface-variant); border-radius: 12px; border: 1px solid transparent; }
+.card.pad { padding: 16px; }
+.card.clickable { cursor: pointer; }
+.progress-track { height: 6px; border-radius: 3px; background: var(--outline-variant); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; background: var(--primary); transition: width 0.25s ease; }
+.progress-track.thin { height: 4px; border-radius: 2px; }
+
+/* ---------- home ---------- */
+.section-title { font-size: 16px; font-weight: 700; margin-top: 4px; }
+.genre-card-main { display: flex; align-items: center; gap: 12px; }
+.genre-card-main .play { color: var(--primary); display: flex; }
+.genre-card-main .gname { font-size: 22px; font-weight: 700; flex: 1; }
+.genre-card-main .gcount { font-size: 14px; color: var(--on-surface-variant); }
+.genre-card .progress-track { margin-top: 14px; }
+.exam-card .desc { margin-top: 8px; font-size: 14px; line-height: 20px; color: var(--on-surface-variant); }
+
+/* ---------- topic list ---------- */
+.group-header { font-size: 14px; font-weight: 700; color: var(--primary); margin-top: 6px; }
+.topic-card { padding: 14px 16px; }
+.topic-card .row { display: flex; align-items: center; }
+.topic-card .tmain { flex: 1; }
+.topic-card .tname { font-size: 16px; font-weight: 500; }
+.topic-card .tcount { font-size: 14px; margin-left: 12px; }
+.topic-card .progress-track { margin-top: 6px; width: 70%; }
+
+/* ---------- question list ---------- */
+.qlist-row {
+  display: flex; align-items: center; padding: 12px 0; cursor: pointer;
+}
+.qlist-row .qno { width: 44px; flex: none; font-size: 14px; font-weight: 500; color: var(--on-surface-variant); }
+.qlist-row .qtext { flex: 1; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mark-slot { width: 26px; height: 26px; flex: none; display: flex; align-items: center; justify-content: center; margin-left: 8px; }
+
+/* ---------- choice rows ---------- */
+.choice {
+  display: flex; align-items: center;
+  background: var(--surface-variant); border-radius: 12px;
+  border: 2px solid transparent;
+  padding: 13px 14px; width: 100%; text-align: left;
+  font: inherit; color: var(--on-surface); cursor: pointer;
+}
+.choice .clabel { width: 30px; flex: none; font-size: 16px; font-weight: 700; }
+.choice .ctext { flex: 1; font-size: 16px; line-height: 24px; }
+.choice .cmark { width: 28px; flex: none; text-align: center; font-size: 22px; font-weight: 700; }
+.choice.correct { background: var(--correct-bg); border-color: var(--correct); }
+.choice.correct .cmark { color: var(--correct); }
+.choice.wrongpick { background: var(--wrong-bg); border-color: var(--wrong); }
+.choice.wrongpick .cmark { color: var(--wrong); }
+.choice.selected { background: var(--selected-bg); border-color: var(--primary); }
+.choice.dimmed { background: var(--dimmed-bg); color: var(--on-surface-variant); }
+.choice.static { cursor: default; }
+
+/* ---------- passage / question cards ---------- */
+.passage-card { background: var(--surface); border: 1px solid var(--outline-variant); border-radius: 12px; padding: 14px; }
+.passage-card .p-label, .question-card .p-label { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+.passage-card .p-body { font-size: 14px; line-height: 24px; white-space: pre-line; }
+.question-card { background: var(--surface-variant); border-radius: 12px; padding: 16px; }
+
+/* ---------- result banner ---------- */
+.banner { border-radius: 12px; padding: 14px; }
+.banner.ok { background: rgba(67, 160, 71, 0.15); }
+.banner.ng { background: rgba(229, 57, 53, 0.12); }
+.banner .b-title { font-size: 16px; font-weight: 700; }
+.banner.ok .b-title { color: var(--correct); }
+.banner.ng .b-title { color: var(--wrong); }
+.banner .b-body { font-size: 14px; margin-top: 4px; }
+
+/* ---------- buttons ---------- */
+.btn {
+  min-height: 40px; border-radius: 20px; border: none; cursor: pointer;
+  background: var(--primary); color: var(--on-primary);
+  font-size: 14px; font-weight: 500; padding: 10px 24px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn.block { width: 100%; }
+.btn.outline {
+  background: transparent; color: var(--primary);
+  border: 1px solid var(--outline);
+}
+.btn.outline.marked { color: var(--mark-gray); font-weight: 700; }
+.btn:disabled { opacity: 0.38; cursor: default; }
+.btn-row { display: flex; gap: 10px; }
+.btn-row .btn { flex: 1; }
+.text-btn {
+  border: none; background: none; cursor: pointer; color: var(--primary);
+  font-size: 14px; font-weight: 500; padding: 10px 8px; font-family: inherit;
+}
+.text-btn.red { color: var(--wrong); }
+
+/* ---------- bottom bar ---------- */
+.bottombar {
+  position: sticky; bottom: 0; z-index: 20;
+  background: var(--bg);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  display: flex; gap: 10px;
+}
+.bottombar .btn { flex: 1; }
+
+/* ---------- exam ---------- */
+.timer {
+  width: 104px; flex: none; text-align: right; padding-right: 0;
+  font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.timer.low { color: var(--wrong); }
+.exam-head { display: flex; align-items: center; }
+.exam-head .h-label { flex: 1; font-size: 14px; font-weight: 500; color: var(--on-surface-variant); }
+
+/* ---------- result ---------- */
+.rank-card { text-align: center; padding: 20px; }
+.rank-letter { font-size: 57px; line-height: 64px; font-weight: 700; }
+.rank-score { font-size: 16px; font-weight: 700; margin-top: 2px; }
+.rank-msg { font-size: 14px; color: var(--on-surface-variant); margin-top: 6px; }
+.review-row { display: flex; align-items: center; padding: 8px 0; cursor: pointer; }
+.review-row .qno { font-size: 14px; font-weight: 500; color: var(--on-surface-variant); padding-right: 8px; flex: none; }
+.review-row .qtext { flex: 1; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- settings ---------- */
+.radio-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; cursor: pointer; }
+.radio {
+  width: 20px; height: 20px; border-radius: 50%; flex: none;
+  border: 2px solid var(--on-surface-variant); position: relative;
+}
+.radio.on { border-color: var(--primary); }
+.radio.on::after {
+  content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--primary);
+}
+.reset-link { color: var(--wrong); font-size: 14px; padding: 12px 0; cursor: pointer; }
+.caption { font-size: 12px; line-height: 18px; color: var(--on-surface-variant); white-space: pre-line; }
+
+/* ---------- dialogs ---------- */
+.dialog-scrim {
+  position: fixed; inset: 0; background: var(--scrim); z-index: 60;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.dialog {
+  background: var(--dialog-bg); color: var(--on-bg); border-radius: 28px;
+  padding: 24px; width: 100%; max-width: 420px; max-height: 85dvh; overflow-y: auto;
+  animation: screen-in 0.18s ease-out;
+}
+.dialog .d-title { font-size: 22px; line-height: 28px; margin-bottom: 12px; }
+.dialog .d-text { font-size: 14px; line-height: 20px; color: var(--on-surface-variant); }
+.dialog .d-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.grid-wrap { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-height: 320px; overflow-y: auto; }
+.grid-cell {
+  height: 44px; border-radius: 8px; border: none; cursor: pointer;
+  background: var(--surface-variant); color: var(--on-surface);
+  font-size: 14px; font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+}
+.grid-cell.answered { background: var(--selected-bg); }
+.grid-cell.current { background: var(--primary); color: var(--on-primary); font-weight: 700; }
+
+/* ---------- markup (解説の強調) ---------- */
+.mk-u {
+  text-decoration: underline;
+  text-decoration-color: #E53935;
+  text-decoration-thickness: 2.4px;
+  text-underline-offset: 3px;
+}
+.mk-num { color: #E53935; font-weight: 700; font-size: 0.72em; vertical-align: super; }
+
+/* ---------- end screen ---------- */
+.end-screen {
+  position: fixed; inset: 0; background: #111318; z-index: 55;
+  display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px;
+}
+.end-screen .e-title { color: #E3E6EB; font-size: 22px; font-weight: 700; }
+.end-screen .e-sub { color: #B8BCC4; font-size: 14px; margin-top: 10px; line-height: 22px; }
