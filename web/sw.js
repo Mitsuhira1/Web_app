@@ -69,6 +69,7 @@ const save = (req, res) => { if (res.ok) { const copy = res.clone(); caches.open
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
+  if (new URL(req.url).pathname.includes("/spi-app/")) return; // SPI試験対策は別アプリ。あそび箱の保存・代替表示に巻き込まない
   if (req.mode === "navigate") {
     e.respondWith(fetch(req, { cache: "no-cache" }).then((res) => { if (!res.ok) throw new Error("bad"); return save(req, res); })
       .catch(() => caches.match(req, { ignoreSearch: true }).then((hit) => hit || caches.match("./index.html"))));
