@@ -211,11 +211,18 @@ window.addEventListener('popstate', () => {
     render(true);
     return;
   }
-  // On the home (menu) screen: ask before exiting.
-  openExitConfirm();
-  history.pushState({ spi: 1 }, '');
-  histDepth++;
+  // On the home (menu) screen: exit immediately, no confirmation.
+  doExit();
 });
+
+function doExit() {
+  exiting = true;
+  // Jump past every entry we own (plus the base entry): if the user came
+  // from another page this leaves the app; if the app was opened directly
+  // the go() is a no-op and the fallback timer shows the end screen.
+  history.go(-(histDepth + 1));
+  setTimeout(() => { if (exiting) showEndScreen(); }, 400);
+}
 
 function showEndScreen() {
   stopExamTimer();
@@ -315,12 +322,7 @@ $dialog.addEventListener('click', (ev) => {
       render(false);
     } else if (kind === 'exit') {
       closeDialog();
-      exiting = true;
-      // Jump past every entry we own (plus the base entry): if the user came
-      // from another page this leaves the app; if the app was opened directly
-      // the go() is a no-op and the fallback timer shows the end screen.
-      history.go(-(histDepth + 1));
-      setTimeout(() => { if (exiting) showEndScreen(); }, 400);
+      doExit();
     }
   }
 });
