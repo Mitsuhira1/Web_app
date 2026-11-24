@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：スカル</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>スカル の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="sk-step1-v3.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">成功とポイント</b>：宣言した枚数をすべて花でめくり切れば成功で、1ポイント獲得します。盤面の金色のコインがポイントの目印です。2ポイント先取で勝利です。</li>
+      <li><b class="k">失敗の代償</b>：ドクロをめくるとそのラウンドは失敗になり、持ちカードを1枚失います。自分のドクロをめくった場合は自分で捨てるカードを選べます。他人のドクロの場合は、持ちカードからランダムに1枚失います。</li>
+      <li><b class="k">めくる順番</b>：最高宣言者は、必ず自分の場のカードから先に全部めくります。自分の場だけで宣言枚数に届く場合は、他人のカードをめくる必要はありません。</li>
+      <li><b class="k">脱落</b>：持ちカードが0枚になると脱落です。ポイントに届かなくても、最後まで生き残ったプレイヤーの勝ちです。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦人数</b>：3〜6人（標準は4人）。</li>
+      <li><b class="k">勝利ポイント</b>：2ポイント先取（標準）／1ポイント先取（時短ルール）、から選べます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：自分のドクロの位置を知っているのは自分だけです。自分の場にドクロを置いたラウンドは無理に宣言せず、他の人に宣言させてめくってもらう方が安全です。</li>
+      <li><b class="k">有利に進める</b>：宣言の目安は「自分の場の安全な枚数＋他人の場で花だと思う枚数」。誰がいつも同じ置き方をするか、といった癖を読むと精度が上がります。</li>
+      <li><b class="k">上級</b>：早めに宣言してプレッシャーをかけ、相手に高い宣言をさせて自滅を誘う手もあります。逆に場の枚数が多い終盤はドクロの密度が上がるので、宣言は慎重に。花ばかり置いて油断させ、勝負所でドクロを置くのも有効です。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. カードを伏せて置く", d: "手札は花3枚とドクロ1枚。まず全員が1枚ずつ、自分の前に伏せて置きます。中身を知っているのは自分だけです。", src: "sk-step1-v3.mp4" },
+    { t: "2. 置くか、宣言するか", d: "自分の番では、カードをもう1枚伏せて追加するか、「ドクロを引かずにめくれる枚数」を宣言します。宣言が出たら、他の人はさらに多い枚数を宣言するかパスします。", src: "sk-step2-v2.mp4" },
+    { t: "3. めくって判定", d: "最高宣言者は、まず自分の場のカードをすべてめくり、足りない分を他の人の場から選んでめくります。ドクロを引いたら失敗です。", src: "sk-step3-v2.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

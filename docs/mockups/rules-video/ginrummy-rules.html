@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：6ニムト</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>6ニムト の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="gn-step1-v2.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+<div class="sec">
+<p><b>札の点数</b>：A=1点、2〜10は数字通り、J・Q・K=10点。デッドウッド（組に入らない札）の合計がそのまま失点のもとになります。</p>
+<p><b>ジンとアンダーカット</b>：デッドウッド0点で上がると「ジン」で、相手のデッドウッド＋25点が入ります。逆に、ノックしたのに相手のデッドウッドの方が少なかった場合は「アンダーカット」で、相手に点差＋25点が入ってしまいます。</p>
+<p><b>最初の捨て札</b>：対局は、場にめくられた1枚（最初の捨て札）を取るかどうかから始まります。取らない場合は相手に順番が移り、それでも取らなければ通常の引き合いが始まります。</p>
+</div>
+<h2>ローカルルール</h2>
+<div class="sec">
+<table>
+<tr><th>目標点数</th><td>100点（標準）<br>50点（短縮）</td></tr>
+<tr><th>ノック条件</th><td>標準：デッドウッド10点以下でノック可<br>オクラホマ・ジン：最初の場札の数字がノックの上限（Aの場合はジンのみ）<br>ストレートジン：デッドウッド0点のジンでしか上がれない</td></tr>
+<tr><th>Q-K-Aの連番</th><td>A-2-3のみ（標準）<br>Q-K-Aも可</td></tr>
+</table>
+</div>
+<h2>コツ</h2>
+<div class="sec">
+<p><b>【基本】高いバラ札から捨てる</b>：デッドウッドの点数は絵札が10点と重いので、組になりそうにないJ・Q・Kは早めに捨てるのが基本です。逆に小さい札は残しておくと、ノックできる圏内（10点以下）に入りやすくなります。</p>
+<p><b>【有利】相手の捨て札を読む</b>：相手が拾った捨て札は、相手の作っている組のヒントです。その数字・マークの近くは自分も相手も欲しい札。逆に相手が捨てた札の近く（同じ数字や連番の隣）は、相手が使えない札の可能性が高く、自分が拾っても安全なことが多いです。</p>
+<p><b>【上級】早いノックは点差が小さい</b>：序盤にデッドウッド10点でノックしても、相手のデッドウッドもまだ少なく、点差は小さくなりがちです。アンダーカット（+25点）の危険と比べて、「もう1〜2枚引いてジンを狙う」か「小さいうちに確実に取る」かを、相手の進み具合で判断しましょう。</p>
+</div>
+  </section>
+</div>
+<script>
+  const STEPS = [
+{ t: "1. 引いて捨てる", d: "自分の番では、山札か捨て札の山から1枚引き、手札から1枚捨てます。手札は常に10枚です。", src: "gn-step1-v2.mp4" },
+{ t: "2. 組（メルド）", d: "同じ数字3〜4枚、または同じマークの連番3枚以上が「組」です。組に入らない札がデッドウッドとなり、点数が画面に表示されます。", src: "gn-step2.mp4" },
+{ t: "3. ノック", d: "捨てる札を選んだときにデッドウッドが10点以下なら「ノック・ジン」で上がれます。相手のデッドウッドとの点差が得点です。", src: "gn-step3.mp4" }
+];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

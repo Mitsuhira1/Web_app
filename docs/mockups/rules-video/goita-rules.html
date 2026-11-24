@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：6ニムト</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>6ニムト の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="gi-step1-v3.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+<div class="sec">
+<p><b>駒と点数</b>：し（10枚）=10点 / 香（4枚）=20点 / 馬（4枚）=20点 / 銀（4枚）=30点 / 金（4枚）=30点 / 角（2枚）=40点 / 飛（2枚）=40点 / 王（2枚）=50点。全32枚を4人で8枚ずつ分けます。</p>
+<p><b>王の受けの制限</b>：王は多くの攻めを受けられる万能の駒ですが、「し」と「香」の攻めだけは受けられません。し・香の攻めは、同じ駒でしか受けられません。</p>
+<p><b>場が流れたら</b>：全員がパスして攻めが一巡したら場が流れ、最後に攻めた人が好きな駒で攻め直します。新しい場の1枚目は、伏せて出すこともできます。</p>
+<p><b>チーム戦</b>：向かいに座る人（1・3番どうし、2・4番どうし）が味方です。点数はチームで合計します。</p>
+</div>
+<h2>ローカルルール</h2>
+<div class="sec">
+<table>
+<tr><th>勝利点</th><td>150点（標準）<br>100点</td></tr>
+<tr><th>王の倍付け</th><td>あり（標準）：最後の2枚が連続で王（7枚目を受け、8枚目で攻める等）なら、上がりが倍の100点になります<br>なし</td></tr>
+<tr><th>し5枚以上の扱い</th><td>5枚は配り直し／6枚以上は即勝ち（標準）<br>特別処理なし</td></tr>
+</table>
+</div>
+<h2>コツ</h2>
+<div class="sec">
+<p><b>【基本】味方の攻めにはパス</b>：相方が攻めた駒を自分が受けてしまうと、相方の上がりを邪魔することになります。味方の攻めには基本パス。逆に自分の攻めは、相方が受けやすい駒（相方が出しそうな駒）を選ぶと連携がつながります。</p>
+<p><b>【有利】王は「上がり駒」の第一候補</b>：王は50点と最も高く、受けにも使える万能駒です。序盤の受けで安易に切らず、終盤まで残しておくと「最後の攻め駒」として大きな得点になります。ただし、し・香の攻めは王で受けられない点は忘れずに。</p>
+<p><b>【上級】王・王の倍付けを狙う</b>：手駒が残り2枚になったとき、両方とも王なら倍付けで100点が入ります（標準設定）。王を2枚持っているときは、他の駒から先に出して、最後を王・王で締める組み立てを意識しましょう。</p>
+</div>
+  </section>
+</div>
+<script>
+  const STEPS = [
+{ t: "1. 攻める", d: "手駒から1枚出して攻めます。次の人は、同じ駒（または王）で「受け」なければパスです。", src: "gi-step1-v3.mp4" },
+{ t: "2. 受けて攻める", d: "攻め駒を受けられたら、受け駒を出してから自分の攻め駒を出します。受けと攻めは常にペアで進みます。", src: "gi-step2.mp4" },
+{ t: "3. 上がりと点数", d: "手駒を全部出し切ったら上がりです。最後の攻め駒の点数がチームに入り、先に目標点に達したチームの勝ちです。", src: "gi-step3-v2.mp4" }
+];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

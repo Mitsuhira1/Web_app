@@ -56,6 +56,14 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-24 / Claude / ルール説明の動画化(20ゲーム)をアプリに組み込み(未コミット)
+
+- 引き継ぎメモ(asobi-rules-video-all-20261124)に従い、ルール画面を「上段=左にステップ・右に動画(終わると次のステップへ自動)、下に 補足 → ローカルルール → コツ」の形で組み込んだ。対象 20 ゲーム: war・takoyaki・butanoshippo・oldmaid・hearts・ginrummy・vulture・goita・quarto・geister・roulette・coyote・skull・liarsdice・incangold・take6・blokus・quoridor・battleship・chinchiro。それ以外のゲームは従来のルール画面のまま。
+- 作り方: 見本 `<game>-rules.html` の文面・ステップを `tools/build_rule_steps.cjs <rules-video のフォルダ>` で取り出して `js/rules-steps.js`(自動生成。直接は直さない)にし、現行版の動画 60 本だけを `assets/rule-steps/` に入れる(旧版は取り込んでいない)。画面は `js/app.js` の `fillRuleSteps`(ルール画面 `fillRules` から呼ぶ)、見た目は `css/app.css` 末尾の `.rs-*`。見本の HTML と NOTES.md は `docs/mockups/rules-video/` に置いた(動画は assets 側にあるので重ねて置いていない。再生成する時はメモの ZIP のフォルダを渡す)。
+- スマホ幅では、動画を上・ステップを下にした(見本は縦並びでステップが先だと動画が画面の下になるため)。
+- sw.js: `js/rules-steps.js` を FILES に追加。**動画 60 本(約 17MB)は FILES に入れていない**(インストール時に一度に落とさないため)。ユーザー了承(2026-11-24): Web 版はオフラインで動画が出なくてよい。動画を読み込めない時は、動画の欄を消してステップの文だけの説明に置き換える(`fillRuleSteps` の error 処理・`.rs-novid`)。CACHE = asobipcfb-20261124-rulesteps-1。
+- 確かめたこと(Playwright): PC 1280/スマホ 390 で 3 ゲーム(チンチロリン・戦争・ブロックス)がステップ 3 つ・節 3 つ・動画の読み込み・横はみ出しなし、ステップのボタンで切り替え、動画終了で次へ(最後は止まる)、動画を使わないゲーム(将棋)は従来表示。全 20 ゲームの文面は取り込み時に節の構成(補足/ローカルルール/コツ)と余分なタグ無しを確認。実機・全 20 ゲームの目視は未確認。
+
 ### 2026-11-24 / Claude / スマホの詳細シート(ゲーム説明): 中を動かしても後ろのメニューが動かない・横棒を下へ引いて閉じる
 
 - ユーザー指摘: 下から出るゲーム説明のシートの下の部分を指で動かすと、後ろのメニューが動く。

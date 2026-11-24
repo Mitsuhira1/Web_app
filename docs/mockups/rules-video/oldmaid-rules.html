@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：6ニムト</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>6ニムト の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="om-step1-v2.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+<div class="sec">
+<p><b>最初のペアは自動で捨てられる</b>：カードが配られた時点で、すでに同じ数字のペアがそろっている札は、ゲーム開始時に自動で捨てられます。残った手札で引き合いが始まります。</p>
+<p><b>引く相手</b>：標準では「次の人（左隣）」から引きます。すでに上がった人は飛ばして、その次の人が相手になります。</p>
+<p><b>ジョーカーだけはペアにならない</b>：ジョーカー（ババ）はどの札ともペアになりません。最後まで誰かの手札に残り続けます。</p>
+</div>
+<h2>ローカルルール</h2>
+<div class="sec">
+<table>
+<tr><th>ルール種別</th><td>ババ抜き（標準）：ジョーカー1枚がババ<br>ジジ抜き：52枚からランダムに1枚を抜いて始めます。何の札がババなのか、最後まで誰にも分かりません<br>クイーン抜き：ジョーカーなしで、スペードのQがババになります</td></tr>
+<tr><th>引く向き</th><td>次の人から引く（標準）<br>前の人から引く</td></tr>
+<tr><th>手札シャッフル</th><td>あり（標準）：自分の手札の並びを「手札を混ぜる」ボタンで変えられます<br>なし</td></tr>
+</table>
+</div>
+<h2>コツ</h2>
+<div class="sec">
+<p><b>【基本】引く位置の偏りをなくす</b>：人間はつい端や真ん中など決まった位置を引きがちです。相手も同じなので、自分が引く位置を毎回変えること、そして自分の手札は引かれる前に「手札を混ぜる」で並びを変えておくことが、読み合いの第一歩です。</p>
+<p><b>【有利】ババを持ったら、引かれる直前に混ぜる</b>：ババが自分の手札にあるとき、相手は「端には置かないだろう」と読んで中央寄りを引くことがあります。引かれる直前にシャッフルすれば、その読みを外せます。逆に、自分が引く番では、相手が直前に混ぜたかどうかも判断材料になります。</p>
+<p><b>【上級】捨てられたペアを数える</b>：誰がどの数字のペアを捨てたかを覚えておくと、終盤に「どの数字がまだ場に残っているか」が絞り込めます。2人対決になったら、相手の手札は「自分の札とペアになる札＋ババ」が中心のはず。引く位置の読み合いと合わせて、最後の数枚の動きを予測しましょう。</p>
+</div>
+  </section>
+</div>
+<script>
+  const STEPS = [
+{ t: "1. 引く", d: "自分の番になったら、隣の人の裏向きの手札から好きな1枚を引きます。引いた札は自分の手札に加わります。", src: "om-step1-v2.mp4" },
+{ t: "2. ペアを捨てる", d: "引いた札が自分の手札とペア（同じ数字）になれば、その2枚を捨てられます。手札が0枚になった人から上がりです。", src: "om-step2.mp4" },
+{ t: "3. 勝敗", d: "全員が上がると、最後にババ（ジョーカー）を1枚だけ持っていた人の負けです。", src: "om-step3.mp4" }
+];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

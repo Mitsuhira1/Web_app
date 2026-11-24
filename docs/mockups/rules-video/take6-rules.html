@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：6ニムト</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>6ニムト の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="t6-step1-v3.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">牛の数（失点）</b>：カードに描かれた牛の数が失点になります。55は7頭、11の倍数（11・22・…・99）は5頭、10の倍数は3頭、5で終わる数は2頭、その他は1頭です。</li>
+      <li><b class="k">どの列にも入らない小さいカード</b>：どの列の末尾よりも小さいカードを出した人は、好きな列を1つ選んで全部引き取り、自分のカードがその列の1枚目になります。</li>
+      <li><b class="k">同時公開の読み合い</b>：全員いっせいに公開し、小さい順に置かれるので、自分のカードが置かれるまでに列の様子が変わることがあります。</li>
+      <li><b class="k">勝敗</b>：全10ターン終わった時点で、引き取った牛（失点）が一番少ない人の勝ちです。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦人数</b>：2〜6人（標準は4人）。</li>
+      <li><b class="k">プロフェッショナル</b>：なし＝1〜104を全部使う（標準）。あり＝使うカードを「人数×10＋4」枚までに制限し、場に出るカードを数えやすくします。</li>
+      <li><b class="k">終了条件</b>：1ラウンドで終了（標準）／誰かの累計失点が66点を超えるまでラウンドを繰り返す、も選べます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：出す前に、4列すべての「末尾の数字」と「枚数」を確認しましょう。すでに5枚ある列に続くカードは絶対に出さないこと。牛の重い列（55や11の倍数が入った列）にも近づかないのが無難です。</li>
+      <li><b class="k">有利に進める</b>：あえて列を5枚に育てて、次の人に6枚目を踏ませるのがこのゲームの醍醐味です。小さいカードは「好きな列を丸ごと引き取れる」切り札になるので、むやみに序盤で切らないこと。引き取らざるを得ない時は、牛の合計が一番小さい列を選びましょう。</li>
+      <li><b class="k">上級</b>：1〜104の出現済みカードを数え、各列の「安全地帯」（末尾の次〜次の列の末尾まで）の残り枚数を読むと、事故の確率が読めます。55（牛7頭）の列は誰も近づきたがらないため、安全地帯が広くなりやすい狙い目です。累計66点制では、自分の累計と残りラウンド数を見て、攻めるラウンドと守るラウンドを分けるのが効きます。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. カードを1枚出す", d: "自分の番になったら、手札から出すカードを1枚選びます。全員が伏せて同時に出します。", src: "t6-step1-v3.mp4" },
+    { t: "2. いっせいに公開して配置", d: "全員のカードをいっせいに公開し、小さい順に、末尾が自分より小さい一番近い列の末尾へ置かれます。", src: "t6-step2.mp4" },
+    { t: "3. 6枚目は引き取り", d: "列の6枚目を置いた人は、その列の5枚を全部引き取り、カードの牛の数が失点になります。", src: "t6-step3-v2.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

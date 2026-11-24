@@ -1500,9 +1500,29 @@ function rulesModal() {
 async function fillRules() {
   const b = $('#rulesbody'); if (!b) return;
   const id = S.rulesId;
+  const vs = window.RULE_STEPS && window.RULE_STEPS[id];
+  if (vs) return fillRuleSteps(b, vs);
   const secs = EXTRA_GAME_RULES[id] || JSON.parse(await callW('rulesJson', id));
   b.innerHTML = secs.length ? RULES.html(id, secs) : '<p>ルールの説明はまだありません</p>';
   RULES.start(b);
+}
+// 動画つきのルール(上段: 左にステップ・右に動画。終わったら次のステップへ。下に 補足 → ローカルルール → コツ)。文面は js/rules-steps.js
+function fillRuleSteps(b, vs) {
+  const reduce = document.documentElement.classList.contains('reduce');
+  b.innerHTML = `<div class="rs-top"><div class="rs-steps">${vs.steps.map((s, i) => `<button type="button" class="rs-step" data-rstep="${i}" aria-pressed="${i === 0}"><b>${esc(s.t)}</b><span>${esc(s.d)}</span></button>`).join('')}</div>
+    <div class="rs-stage"><video class="rs-vid" muted playsinline controls preload="auto"></video></div></div>
+    ${vs.secs.map((c) => `<section class="rs-sec${c.h === 'コツ' ? ' tip' : ''}"><h4>${esc(c.h)}</h4><div class="rs-body">${c.html}</div></section>`).join('')}`;
+  const v = b.querySelector('.rs-vid'), btns = [...b.querySelectorAll('[data-rstep]')];
+  const play = (i, auto = true) => {
+    btns.forEach((x, k) => x.setAttribute('aria-pressed', String(k === i)));
+    v.dataset.i = i; v.src = 'assets/rule-steps/' + vs.steps[i].src;
+    if (auto && !reduce) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+  };
+  btns.forEach((x, i) => { x.onclick = () => play(i); });
+  v.addEventListener('ended', () => { const n = +v.dataset.i + 1; if (n < vs.steps.length) play(n); });
+  // 動画を読み込めない時(オフラインなど)は、動画の欄を消して、ステップの文だけの説明にする
+  v.addEventListener('error', () => { b.querySelector('.rs-top').classList.add('rs-novid'); });
+  play(0);
 }
 function listModal() {
   return `<div class="modal"><button class="mback" data-mback aria-label="閉じる"></button><div class="mbox" role="dialog"><div class="mhd"><h3>${/shogi|gogo|chess/.test(cur.id) ? '駒の一覧' : '役の一覧'}</h3><button class="btn gold" data-mclose style="height:38px;width:110px">完了</button></div><div class="mbody rules" id="listbody">読み込んでいます…</div></div></div>`;

@@ -3337,3 +3337,35 @@ html,body{overscroll-behavior-y:none}
   .rl-danger .btn{flex:1;width:auto}
   .rl-chat .chat{height:280px}
 }
+
+/* ---- ルール説明(動画のステップ形式)。js/rules-steps.js ---- */
+.mbody.rules .rs-top{display:flex;gap:16px;align-items:flex-start;margin-bottom:14px}
+.rs-steps{width:300px;flex:none;display:flex;flex-direction:column;gap:8px}
+.rs-step{text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;display:block;width:100%}
+.rs-step b{display:block;font-size:15px;margin-bottom:2px}
+.rs-step span{display:block;font-size:12.5px;color:var(--sub);line-height:1.55;font-weight:500}
+.rs-step[aria-pressed="true"]{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,var(--surface))}
+.rs-stage{flex:1;min-width:0}
+.rs-vid{width:100%;display:block;border-radius:12px;background:#222;aspect-ratio:16/9}
+.mbody.rules .rs-sec{margin:0 0 14px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.mbody.rules .rs-sec.tip{border-color:color-mix(in srgb,var(--mark) 55%,var(--line));background:color-mix(in srgb,var(--mark) 7%,var(--bg))}
+.rs-body{font-size:14.5px;line-height:1.8}
+.rs-body p,.mbody.rules .rs-body p{margin:0 0 8px;font-size:14.5px;line-height:1.8;white-space:normal}
+.rs-body p:last-child{margin-bottom:0}
+.rs-body ul{margin:0;padding:0;list-style:none}
+.rs-body li{margin:0 0 8px;padding-left:1em;text-indent:-1em}
+.rs-body li:last-child{margin-bottom:0}
+.rs-body li::before{content:"・"}
+.rs-body table{border-collapse:collapse;width:100%}
+.rs-body th{text-align:left;white-space:nowrap;padding:4px 12px 4px 0;vertical-align:top}
+.rs-body td{padding:4px 0}
+@media (max-width:760px){
+  .mbody.rules .rs-top{flex-direction:column}
+  .rs-stage{order:-1;width:100%}
+  .rs-steps{width:100%}
+}
+
+.rs-novid .rs-stage{display:none}
+.rs-novid .rs-steps{width:100%}
+.rs-novid .rs-step{pointer-events:none;border-color:var(--line);background:var(--surface)}
+.rs-novid .rs-step span{font-size:14px}

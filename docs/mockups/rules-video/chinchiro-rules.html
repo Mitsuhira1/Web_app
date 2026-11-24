@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画 試作：チンチロリン</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  h2{ font-size:16px; margin:20px 0 8px; padding-top:14px; border-top:1px solid var(--line); }
+  .sec{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; font-size:13.5px; line-height:1.75; }
+  .sec p{ margin:0 0 8px; } .sec p:last-child{ margin-bottom:0; }
+  .sec table{ border-collapse:collapse; width:100%; }
+  .sec th{ text-align:left; white-space:nowrap; padding:4px 10px 4px 0; vertical-align:top; color:var(--ink); }
+  .sec td{ padding:4px 0; }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>チンチロリン の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="cc-step1-v6.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+  <h2>補足</h2>
+  <div class="sec">
+    <p><b>役の強さと倍率</b>：強い順に、ピンゾロ（1・1・1）＝5倍、アラシ（ゾロ目）＝3倍、シゴロ（4・5・6）＝2倍、通常の目（ペア＋残り1つの数字、その数字が目になります）＝1倍です。ペアも役もない目は「目なし」で、最大3回まで振り直せます。3回とも目なしなら、目なしで確定します。</p>
+    <p><b>ヒフミ</b>：1・2・3は一番弱い役で、ヒフミで負けた側は賭け金の2倍を払います。</p>
+    <p><b>精算のしかた</b>：子は全員、親と1対1で比べます。勝った側の役の倍率で、賭け金×倍率のチップが負けた側から勝った側へ動きます。</p>
+    <p><b>親と終了</b>：親はラウンドごとに次の人へ交代し、全員が1回ずつ親を務めたら終了です。最後にチップが一番多い人の勝ちで、チップがマイナスになっても脱落はありません。</p>
+  </div>
+  <h2>ローカルルール</h2>
+  <div class="sec">
+    <table>
+      <tr><th>人数</th><td>2〜6人（標準4人）</td></tr>
+      <tr><th>賭け金</th><td>10枚（標準）／20枚</td></tr>
+      <tr><th>引き分け</th><td>親の勝ち（標準）／精算なし</td></tr>
+      <tr><th>親の即勝ち・即負け</th><td>なし（標準）／あり：親がピンゾロ・アラシ・シゴロ・6の目を出すと子が振る前に即勝ち、ヒフミ・目なし・1の目なら即負けになります</td></tr>
+      <tr><th>ションベン</th><td>なし（標準）／あり（5%）：振るたびに5%の確率でサイコロが椀の外へ飛び出し、その振り手は即負け確定になります</td></tr>
+    </table>
+  </div>
+  <h2>コツ</h2>
+  <div class="sec">
+    <p><b>【基本】役の順位と倍率を覚える</b>：勝敗は「親の目と自分の目、どちらが強いか」だけで決まります。ピンゾロ5倍・アラシ3倍・シゴロ2倍という倍率まで覚えておくと、精算でどれだけ動くかが読めます。</p>
+    <p><b>【有利】親の番の振れ幅を意識する</b>：親は子全員と勝負するため、1ラウンドで動くチップが一番大きくなります。自分の親番がいつ来るかと、その時点のチップ差を意識しておくと、終盤の順位争いが見通せます。</p>
+    <p><b>【上級】確率を知っておく</b>：1回の振りで目が決まる確率は約半分（216通り中、目なしが108通り）で、目なしでも3回まで振り直せるため、最終的に目なしで終わることはまれです。操作で確率は変えられないゲームなので、開始前に「親の即勝ち・即負け」などの設定を確認し、精算の倍率を把握しておくことが一番の備えになります。</p>
+  </div>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. サイコロを振る", d: "親から順番に振ります。自分の番になったら、椀か下のボタンをタップ。", src: "cc-step1-v6.mp4" },
+    { t: "2. 役が決まる", d: "止まった目で役が決まります。役なしの目は3回まで振り直しできます。", src: "cc-step2-v5.mp4" },
+    { t: "3. 精算", d: "全員が振り終わると、親の目と子1人ずつ比べて、勝った方がチップを受け取ります。", src: "cc-step3-v5.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

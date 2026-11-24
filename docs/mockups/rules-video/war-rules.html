@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：6ニムト</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>6ニムト の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="war-step1-v3.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+<div class="sec">
+<p><b>数字の強さ</b>：2が一番弱く、数字が大きいほど強くなります。Kの上がAで、Aが一番強い札です（標準設定）。スート（柄）は強さに関係ありません。</p>
+<p><b>獲得札の行き先</b>：取った札は「獲得札」になります。山札が尽きたら、獲得札をシャッフルして新しい山札にします（全取りルールの場合）。</p>
+<p><b>戦争が続く場合</b>：戦争の決着札でも同じ数字が出たら、もう一度戦争です。場札はそのまま積み上がり、勝った方が全部を総取りします。</p>
+</div>
+<h2>ローカルルール</h2>
+<div class="sec">
+<table>
+<tr><th>Aの強さ</th><td>Aが最強（標準）／Aが最弱</td></tr>
+<tr><th>戦争の伏せ札</th><td>1枚伏せる（標準）／3枚伏せる：戦争のときに裏向きで出す枚数です</td></tr>
+<tr><th>2がAに勝つ</th><td>なし（標準）／あり：2対Aのときだけ2が勝つ下克上ルールです</td></tr>
+<tr><th>ジョーカー</th><td>なし（標準・52枚）／あり（54枚）：ジョーカーは最強の札です</td></tr>
+<tr><th>決着ルール</th><td>相手の札を全取り（標準）／26戦の獲得枚数：26回戦って、獲得枚数の多い方が勝ちです</td></tr>
+</table>
+</div>
+<h2>コツ</h2>
+<div class="sec">
+<p><b>【基本】出す札は選べない運勝負</b>：戦争は、出てくる札を自分で選べない、完全な運比べのゲームです。強い札・弱い札の順番は山札次第なので、1戦ごとの勝ち負けに一喜一憂せず、全体の流れを楽しむのが基本です。</p>
+<p><b>【有利】戦争（あいこ）が勝負どころ</b>：あいこになると場札が積み上がり、勝った方が総取りするため、1回の戦争で形勢が大きく動きます。特に伏せ札3枚ルールでは1回の戦争で8枚が動くので、獲得枚数の差は戦争の結果で決まると考えてよいでしょう。</p>
+<p><b>【上級】残り枚数から展開を読む</b>：全取りルールでは、山札＋獲得札の合計（持ち札）が相手より多い方が有利です。26戦ルールでは、残りの戦数と獲得差を比べれば、終盤に逆転の可能性があるかどうかが読めます。終盤の戦争は、どちらの山札にも強い札が残っているか分からない、最も盛り上がる場面です。</p>
+</div>
+  </section>
+</div>
+<script>
+  const STEPS = [
+{ t: "1. カードを出す", d: "2人に同じ枚数ずつ裏向きに配り、「札を出す」で両者が同時に1枚ずつ表に出します。数字の大きい方が、場の札を全部取ります。Aが一番強い札です。", src: "war-step1-v3.mp4" },
+{ t: "2. 戦争（あいこ）", d: "同じ数字が出たら「戦争」です。両者が伏せ札を置いてから、もう1枚ずつ出して比べます。勝った方が、積み上がった場の札を全部総取りします。", src: "war-step2.mp4" },
+{ t: "3. 勝敗", d: "取った札は獲得札になり、山札が尽きたら獲得札をシャッフルして山札に戻します。相手の札を全部取った人の勝ちです（26戦ルールでは、26戦して獲得枚数の多い方が勝ち）。", src: "war-step3-v2.mp4" }
+];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>
