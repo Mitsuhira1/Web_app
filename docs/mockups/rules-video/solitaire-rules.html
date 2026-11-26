@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：ソリティア</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>ソリティア の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。1人で遊ぶクロンダイクです。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="so-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">概要と目的</b>：1人で遊ぶクロンダイクです。7列の場札を組み立て、4つの組札を完成させます。多人数では同じ配札を別々に解く競争になり、最初の完成者が勝ちです。</li>
+      <li><b class="k">準備</b>：7列に1〜7枚を配り、各列の一番上だけを表にします。残りの札は山札です。解ける配札が配られます。</li>
+      <li><b class="k">場札の移動</b>：赤と黒が交互、数字は1つずつ小さくなるよう重ねます。表向きでつながった札はまとめて移動できます。空の列にはKからの組だけ置けます。隠れていた一番上の札は、表向きの札を動かすと自動で表になります。</li>
+      <li><b class="k">組札と操作</b>：組札は同じマークでAからKの順に積みます。札は指でドラッグして行き先に落とすか、タップで選んでから行き先をタップして動かします。選んだ札をもう一度タップすると、組札（置けなければ置ける列）へ自動で動きます。左上の山札をタップすると1枚めくり、山札がなくなったらもう一度タップで捨て札が山札に戻ります。組札から場札へ戻すこともできます。</li>
+      <li><b class="k">勝敗</b>：4組すべて完成で成功です。続けられない時は終了できます。</li>
+      <li><b class="k">スパイダー</b>：設定の「種類」でスパイダーを選ぶと、2組104枚・10列のスパイダーになります（詳しくはスパイダーのページをご覧ください）。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">種類</b>：クロンダイク（標準）／スパイダー。</li>
+      <li><b class="k">めくる枚数</b>：1枚（標準）／3枚。3枚めくりでは捨て札の上から3枚目だけが使えます。</li>
+      <li><b class="k">山札の周回</b>：無制限（標準）／3回。3回では山札を3周し終わるとめくれなくなります。</li>
+      <li><b class="k">マークの数</b>：スパイダーの時のみ。1種（標準）／2種／4種。</li>
+      <li><b class="k">制限時間</b>：なし（標準）／15秒／30秒／60秒。時間切れの扱いはランダムな一手（標準）／負け。</li>
+      <li><b class="k">人数</b>：1人固定です。1台の交代形式には対応していません。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：裏向きの札を多く開くことを優先しましょう。表向きの札を動かして隠れた札を開くのが第一です。Aが出たらすぐ組札へ移すのが基本です。空の列はKを置くためだけに使い、むやみに埋めないこと。山札は1枚めくりなら全部の札がいつか表に出るので、焦らず何周もさせて場の組み立てを考えましょう。</li>
+      <li><b class="k">有利に進める</b>：組札へ送るタイミングが分かれ目です。Aと2は場で使うことがないので、すぐ組札へ送ってかまいません。3以上の札は、場でまだ使えるうちは残しておくと連結の選択肢が広がります。Kを空列へ移す前に、そのKの組がどこまで伸びるか、移したあと空いた列に何を置くかを見ておきましょう。裏向き札の多い列から開けていくと、新しい札が場に出る確率が上がります。</li>
+      <li><b class="k">上級</b>：札を組札へ送ってよい目安があります。反対色の1つ小さい札が両方とも組札にそろっている札は、場ではもう必要ないので安全に送れます。たとえば黒の5を送るなら、赤の4が2枚とも組札にあるかを確認します。山札の周回が無制限でも、同じ並びを繰り返すだけでは進まないので、場の並びを変える手を探すこと。最後の数枚は、組札の順番と場の空き列を数えてから動かすと、取り返しのつかない詰まりを防げます。どうしても動かせなくなったら、組札から場へ札を戻す手も使えます。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 山札をめくって場へ出す", d: "山札をタップして1枚めくり、出た札を場札の列へ重ねます。赤と黒が交互、数字は1つずつ小さくなるよう置きます。", src: "so-step1.mp4" },
+    { t: "2. 連なりを動かして裏向き札をめくる", d: "表向きでつながった札はまとめて動かせます。動かすと隠れていた裏向きの札が自動で表になります。", src: "so-step2.mp4" },
+    { t: "3. Aが出たら組札へ集める", d: "同じマークでAからKの順に組札へ積みます。4組すべてそろえば成功です。", src: "so-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

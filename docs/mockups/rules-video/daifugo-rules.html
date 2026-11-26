@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：大富豪</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>大富豪 の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="df-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">人数・道具</b>：3〜6人（あなた以外はCPU）。ジョーカー1枚を入れた53枚のトランプを、全部配ります。</li>
+      <li><b class="k">札の強さ</b>：弱い順に 3・4・5・6・7・8・9・10・J・Q・K・A・2。ジョーカーは1枚で出すと一番強く、組にした時はどの数の代わりにもなります。マークの強さはありません。</li>
+      <li><b class="k">出し方</b>：前の人と同じ形で、より強い札を出します。1枚には1枚、2枚（同じ数）には2枚、3枚には3枚…。場に何もない時（親）は、好きな形で出せます。一度パスすると、場が流れるまで出せません。最後に出した人以外が全員パスしたら場が流れ（札を片づけ）、最後に出した人が親になります。</li>
+      <li><b class="k">革命</b>：同じ数の4枚を出すと、その回が終わるまで（次の革命が起きるまで）3〜2の強さが逆になります。ジョーカー1枚の強さは変わりません。</li>
+      <li><b class="k">1回戦の先手</b>：♦3を持っている人から始めます。</li>
+      <li><b class="k">身分と交換</b>：上がった順に、大富豪（1位）・富豪（2位）・平民・貧民（下から2番目）・大貧民（最下位）。3人の時は大富豪・平民・大貧民です。2回目からは配った後に、大貧民が一番強い札2枚を大富豪へ渡し、大富豪は好きな札2枚を大貧民へ返します（4人以上なら、貧民と富豪の間も1枚ずつ）。大貧民から始めます。</li>
+      <li><b class="k">勝敗</b>：決めた回数（3回か5回）を遊びます。毎回、順位で点が入ります（1位が「人数-1」点、2位がその1点下 … 最下位は0点）。合計点の一番多い人の勝ちです。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">階段</b>（あり）：同じマークの3枚以上続いた数（例 ♠5-6-7）。階段には同じ枚数の、より強い階段だけを出せます。</li>
+      <li><b class="k">革命</b>（あり）：同じ数の4枚を出すと、その回が終わるまで3〜2の強さが逆になります。</li>
+      <li><b class="k">しばり</b>（なし）：前と同じマークの組み合わせで出すと、場が流れるまでそのマークしか出せなくなります。</li>
+      <li><b class="k">8切り</b>（なし）：8を含む札を出すと、その場で場が流れ、出した人がもう一度親になります。</li>
+      <li><b class="k">スペ3返し</b>（なし）：1枚で出たジョーカーには、♠3だけが勝てます（出すと場が流れます）。</li>
+      <li><b class="k">7渡し</b>（なし）：7を出したら、出した枚数だけ好きな札を次の人に渡します。7渡しで手札がなくなったら上がりです。</li>
+      <li><b class="k">10捨て</b>（なし）：10を出したら、出した枚数だけ好きな札を捨てます。10捨てで手札がなくなったら上がりです。</li>
+      <li><b class="k">11バック</b>（なし）：Jを出すと、場が流れるまで強さが逆になります（革命と重なると元に戻ります）。</li>
+      <li><b class="k">12ボンバー</b>（なし）：Qを出したら、出した枚数だけ数を言います。全員が、その数の札を手札から全部捨てます。</li>
+      <li><b class="k">5スキップ</b>（なし）：5を出したら、出した枚数だけ次の人をとばします。階段にふくまれる時は1枚として数えます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：強い札（2・ジョーカー・A）は「場を取る」ための札です。早く使うと、弱い札ばかりが手に残ります。親になったら、弱い札から出すのが基本。特に弱い組（3・4のペア）は、親の時にしか出せないことが多いので、親の時に処理します。</li>
+      <li><b class="k">有利に進める</b>：上がりの道筋を数えましょう。「誰にも勝てない札（場を取れる札）」の数＋1手で残りを出し切れるなら、勝てない札から先に出していけば上がれます。場に出た札を覚えるのも効きます。2やジョーカーが何枚出たかで、自分のAやKが「最強」になったかが分かります。8は流れを切る札です。親を取り返したい時や、弱い札を出す番を作りたい時に使います。</li>
+      <li><b class="k">上級</b>：革命は、弱い札が多い時の逆転の手です。強い札が多い時に革命されないよう、相手の残り枚数にも気をつけます。相手の残りが1〜2枚になったら、パスして様子を見るのは危険です。止められる札で止めます。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 前の札より強い札を出す", d: "場の♥3に、♥6を出します。前の人と同じ枚数で、より強い札を出します。", src: "df-step1.mp4" },
+    { t: "2. 階段でまとめて出す", d: "♣6・7・8・9・10・Jの階段を出します。同じマークの続きなら、まとめて出せます。", src: "df-step2.mp4" },
+    { t: "3. 上がって1位になる", d: "9を3枚出して手札が0枚になり、1位で上がります。早く上がるほど上の身分になります。", src: "df-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

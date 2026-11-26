@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：ルドー</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>ルドー の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="lu-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">盤と目的</b>：十字形の盤の上を、サイコロの目だけ駒を進めて一周させ、自分の色のゴールに4つ全部入れた人の勝ちです。インドの古い遊び「パチーシ」から生まれ、世界中で遊ばれています。</li>
+      <li><b class="k">人数・道具</b>：2〜4人（あなた以外はCPU）。十字形の盤、サイコロ1個、4色の駒各4つ。</li>
+      <li><b class="k">手番の操作</b>：「振る」でサイコロを振り、動かす駒をタップします。動かせる駒には印が付きます。動かせる駒がない時は、自動で次の人の番になります。</li>
+      <li><b class="k">出発と進み方</b>：駒は家から始まり、6が出た時だけ自分の色の出発のマスに出せます。盤を時計回りに一周したら、自分の色の道に入ってゴールを目指します。ゴールにはぴったりの目で入ります（目が大きすぎる駒は動かせません）。</li>
+      <li><b class="k">特殊ルール</b>：6が出たら、もう一度振れます。ただし3回続けて6が出たら、その手番は終わりです。相手の駒がいるマスにぴったり止まると、その駒を家に戻せます。各色の出発のマスと星のマスは安全な場所で、ここにいる駒は取られません。</li>
+      <li><b class="k">勝敗</b>：4つの駒を全部ゴールに入れた人の勝ちです。</li>
+      <li><b class="k">このアプリのルール</b>：6で出発・6でもう一度・3回続けて6で手番終わり。取った時のおまけの振り直しはありません。同じマスに自分の駒が2つあっても壁にはなりません。「待った」はできません。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦人数</b>：CPUと対戦するか、手番ごとに交代して遊ぶかを選べます。</li>
+      <li><b class="k">CPUの強さ</b>：初級／中級／上級（既定は中級）。</li>
+      <li><b class="k">1手の制限時間</b>：なし／15秒／30秒／60秒（既定はなし）。時間切れの時はランダムな一手／負けを選べます（既定はランダムな一手）。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：駒を分散させるのが基本です。6が出るたびに家から出して、動かせる駒を増やしておくと、どんな目でも無駄になりません。駒が1つしか出ていない時は、6が出たらまず出発を優先しましょう。出ている駒が増えてきたら、進みで危険を逃がす使い方も考えます。</li>
+      <li><b class="k">有利に進める</b>：危険を数えましょう。相手の駒の1〜6マス先は、次の相手の番に取られる可能性があります。安全なマス（出発のマス・星のマス）に止まるか、相手の駒の後ろにつけて逃げる準備をしましょう。逆に、相手の駒のすぐ後ろ（1〜6マス後ろ）にいると、次の番に取るチャンスがあります。取れそうな時は、取りに行く手を優先しましょう。</li>
+      <li><b class="k">上級</b>：ゴールへの道は安全地帯です。自分の色の道に入った駒は取られません。危ない駒から先に逃がしましょう。終盤は、ゴールにぴったり入る目を待つ駒と、ほかの駒の動かし分けで無駄な手を減らしましょう。ゴール前の駒はぴったりの目でしか入れないので、目の大きい時はほかの駒を進めて、待つ駒の番を調整します。同じマスに自分の駒が2つあっても壁にはならないので、2つ重ねて進む手も使えます。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 6が出たら家から出発", d: "6が出た時だけ、家の駒を出発のマスに出せます。", src: "lu-step1.mp4" },
+    { t: "2. 相手の駒を取って家に戻す", d: "相手の駒にぴったり止まると、その駒は家に戻ります。星のマスでは取られません。", src: "lu-step2.mp4" },
+    { t: "3. 自分の色の道からゴールへ", d: "盤を一周したら自分の色の道に入り、ぴったりの目でゴールします。", src: "lu-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：麻雀</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>麻雀 の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="mj-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">概要と目的</b>：4人のリーチ麻雀です。手牌をそろえ、役を作って和了し、点数を競います。</li>
+      <li><b class="k">人数・道具</b>：4人。萬子・筒子・索子各1〜9と、東南西北白發中が各4枚。赤ドラありでは各5の1枚を赤にします。東風戦・半荘・1局を選べます。親は14枚から打ち、以後ツモは自動です。</li>
+      <li><b class="k">手番の操作</b>：手牌を選んで固定の「打牌」で確定します。リーチは「リーチ」を選択してから宣言牌を打ちます。鳴きの応答時はチー・ポン・カン・ロン・パス。候補が複数なら使う牌を選びます。</li>
+      <li><b class="k">役と符</b>：「役」で役の一覧と点数の基本を確認できます。平和ツモ20符、七対子25符、その他は面子・雀頭・待ち・門前ロン等で符を加算し10符単位に切り上げます。連風牌の雀頭は4符。喰いタン・赤ドラ・ダブル役満を設定で選べます。</li>
+      <li><b class="k">フリテンと槓</b>：自分の河に待ち牌がある場合、ロンを見逃した直後、リーチ後のロン見逃しはフリテンでロン不可。ツモは可能です。通常の見逃しは自分の次のツモで解除されます。リーチ後の暗槓は待ちが変わらない場合だけ。加槓は槓槓、暗槓は国士無双の槓槓を認めます。槓ドラは即時に増えます。</li>
+      <li><b class="k">流局と終局</b>：流局ではテンパイ者に3000点を分けます。九種九牌・四風連打・四家立直・複数人の四開槓、複数ロン設定での三家和は途中流局。和了のテンパイは連続です。流し満貫・人和・切り上げ満貫は採用しません。箱下で終局・和了やめは設定可能。順位点・オカは付けず、同点は起家順です。</li>
+      <li><b class="k">精算と進行</b>：ロンは放銃者、ツモは全員が点数に応じて支払います。本場とリーチ供託を加算します。大三元・大四喜には包則を適用します。ロンは頭ハネ／複数を設定でき、複数ロンの供託は放銃者に近い和了者へ。局の結果を確認し、CPU戦では自分、通信ではホストが「次の局」で進めます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">長さ</b>：1局／東風戦／半荘（既定は東風戦）。</li>
+      <li><b class="k">赤ドラ</b>：3枚／なし（既定は3枚）。</li>
+      <li><b class="k">喰いタン</b>：あり／なし（既定はあり）。</li>
+      <li><b class="k">複数のロン</b>：頭ハネ／複数（三家和は流局）（既定は頭ハネ）。</li>
+      <li><b class="k">特殊役満のダブル役満</b>：なし／あり（既定はなし）。</li>
+      <li><b class="k">箱下で終局</b>：する／しない（既定はする）。</li>
+      <li><b class="k">最終局の親トップで和了やめ</b>：する／しない（既定はする）。</li>
+      <li><b class="k">対戦人数</b>：CPUと対戦するか、手番ごとに交代して遊ぶかを選べます。</li>
+      <li><b class="k">CPUの強さ</b>：初級／中級／上級（既定は中級）。</li>
+      <li><b class="k">1手の制限時間</b>：なし／15秒／30秒／60秒（既定はなし）。時間切れの時はランダムな一手／負けを選べます（既定はランダムな一手）。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：手牌は、まず孤立した字牌や老頭牌（1・9・字）から切り、両面のつながり（例：三四萬のような2枚で両側を待てる形）を残します。両面は待ちが2種類あって和了しやすく、辺張（1・2で3を待つ形）や嵌張（2・4で3を待つ形）よりずっと強いです。序盤は「どのターツ（面子の種）を残すか」だけを考えれば十分で、残すターツは多いほど手が進みます。鳴く前に「鳴いた後も役が残るか」を確かめましょう。役なしで鳴いてしまうと、和了しても点数になりません。相手がリーチしたら、その人の河にある牌（現物）はロンされません。まずは現物を切って様子を見るのが基本です。ドラは強い加点ですが、役の代わりにはなりません。ドラだけを頼りに手を作ると、和了できずに終わりがちです。</li>
+      <li><b class="k">有利に進める</b>：ターツが5つ以上ある時は、弱いターツ（辺張・嵌張・孤立牌）から切って強い形に寄せます。逆にターツが4つしかない時は、弱いターツでも残しておくと手が止まりにくいです。ドラは「持っているだけで1翻」ですが、使い道も考えましょう。ドラが面子に組み込めれば手牌の価値が上がり、孤立ドラは最後まで残す価値があります。鳴きはスピードと引き換えです。親番や点数が欲しい場面では積極的に鳴いて局を進め、トップ目で逃げたい場面では門前でゆっくり構える、と場面で使い分けます。相手のリーチには、現物→筋（リーチ者の河に出ていない牌のうち、比較的安全な筋）→無筋の順に危険度が上がります。自分の手が安い時はベタオリ（安全牌だけを切って和了を諦める）も立派な戦術です。点数状況も意識しましょう。トップ目は無理に攻めず、ラス目は満貫以上の手を作って一気にまくる、など順位ごとに狙いが変わります。</li>
+      <li><b class="k">上級</b>：待ちの読みは河と副露から進めます。相手の河に同じ種類の牌が並んでいれば、その周辺は切られやすく、逆に河に一度も出ていない牌は危険です。壁（同じ種類の牌が4枚見えている状態）を使えば、その牌の両側の筋が安全になると分かります。例えば五萬が4枚見えていれば、四萬・六萬の片側は比較的安全です。リーチするかダマテン（リーチをかけずに待つ）で迷ったら、待ちの良さ・点数・他家の気配で決めます。待ちが良くて他家が攻めていればダマテンで確実に取り、待ちが悪ければリーチで裏ドラに賭ける、という判断です。供託（リーチ棒）や本場は、和了した時にまとめてもらえるので、点数が接している終盤では積極的に取りにいく価値があります。オーラスでは、自分の順位と必要な点数を先に計算してから手を進めましょう。親番は連荘できる分だけ価値が高く、親の時は少々無理をしてでも攻めるのが得です。逆に親のリーチには、他家は慎重になるので、親番のリーチはプレッシャーそのものが武器になります。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 牌を選んで打牌する", d: "手牌から九筒を選び、「打牌」を押すと河に置かれます。不要な牌から切って手を整えます。", src: "mj-step1.mp4" },
+    { t: "2. 上家の捨て牌でチーする", d: "上家の捨て牌でチーすると、3枚が手元に並んで副露します。鳴いた後は打牌して手番を続けます。", src: "mj-step2.mp4" },
+    { t: "3. 和了すると結果が表示される", d: "CPU 4 がツモ和了。結果が表示され、役（立直・門前清自摸和・ドラ・赤ドラ）と点数を確認できます。", src: "mj-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：神経衰弱</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>神経衰弱 の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="mm-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">概要と目的</b>：裏返して並べた札を2枚ずつめくり、同じ数字の2枚を当てて取るゲームです。札がなくなったら終わりで、取った組が一番多い人の勝ちです。</li>
+      <li><b class="k">人数と道具</b>：52枚（同じ数字が4枚ずつ）または26枚（♠と♥の13枚ずつ）で遊べます。マークは関係なく、数字だけが同じならペアになります。</li>
+      <li><b class="k">当たりと外れ</b>：2枚が同じ数字ならもらえて、続けてまためくれます。違う数字なら少し見せた後に裏に戻し、次の人の番になります。</li>
+      <li><b class="k">裏に戻るタイミング</b>：外れた2枚は、番が移って次の人が1枚目をめくるのと同時に裏に戻ります。タイマーで戻るのではありません。</li>
+      <li><b class="k">取った札の表示</b>：取った札は盤上から消えず、そのまま表向きで残ります。取った組の数は、右上の「取った組」で確認できます。</li>
+      <li><b class="k">1人で遊ぶとき</b>：全部取るまでにめくった回数（2枚で1回）が結果になります。</li>
+      <li><b class="k">CPUの強さ</b>：CPUは強さによって覚えていられる枚数が違います。上級は全部覚えています。</li>
+      <li><b class="k">待った</b>：「待った」はできません。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦形式</b>：CPUと対戦／手番ごとに交代。設定画面に人数の選択肢はなく、どちらの形式も2人で遊びます。</li>
+      <li><b class="k">CPUの強さ</b>（CPUと対戦のときのみ）：初級／中級／上級（既定は中級）。</li>
+      <li><b class="k">手番</b>（CPUと対戦のときのみ）：先手／後手／ランダム（既定は先手）。</li>
+      <li><b class="k">札の枚数</b>：52枚／26枚（既定は52枚）。</li>
+      <li><b class="k">制限時間</b>：なし／15秒／30秒／60秒（既定はなし）。</li>
+      <li><b class="k">時間切れのとき</b>：ランダムな一手／負け（既定はランダムな一手）。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：めくった札は、数字だけでなく場所もセットで覚えましょう。「あの場所が7」というように、場所のイメージで覚えると忘れにくいです。1枚目にめくる札は、まだ見たことのない場所を選ぶのが基本です。見たことのある場所を1枚目にめくっても、新しい情報は増えません。</li>
+      <li><b class="k">有利に進める</b>：2枚目をめくるときは、1枚目と同じ数字の札をどこかで見ていれば、そこをめくります。見ていなければ、まだ見たことのない場所をめくって新しい情報を集めましょう。相手がめくった札もよく見ておくこと。相手の番で表になった札は、自分の番でも使える情報です。同じ数字が4枚あるうち3枚の場所が分かれば、残り1枚の場所が分かったも同然です。</li>
+      <li><b class="k">上級</b>：覚えた札を「言葉」で整理すると、たくさん覚えられます。たとえば「Qは左上と右下」など、場所を言葉にして頭に置くのがコツです。相手がペアを取りそうな数字を覚えたら、その数字の残りの札を先に取ってしまうのも手です。序盤は情報を集めることを優先し、ペアが分かってきた終盤で一気に取るのが、取りこぼしの少ない進め方です。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 1枚目をめくる", d: "好きな札を1枚めくります。めくった札が何だったか、場所と一緒に覚えておきましょう。", src: "mm-step1.mp4" },
+    { t: "2. 2枚目でペア成立", d: "2枚目をめくって1枚目と同じ数字がそろえば、その2枚をもらえます。取った組が増え、続けてまためくれます。", src: "mm-step2.mp4" },
+    { t: "3. 違えば裏に戻る", d: "2枚目が違う数字なら、少し見せた後に2枚とも裏に戻り、番が次の人に移ります。", src: "mm-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

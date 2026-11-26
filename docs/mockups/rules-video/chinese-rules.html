@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：チャイニーズチェッカー</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>チャイニーズチェッカー の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="chx-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">盤と目的</b>：121個の穴がある星形の盤で遊びます。自分の陣地（星の先の三角）に並んだ10個のコマを、全部向かいの陣地へ運んだ人の勝ちです。コマは取られません。</li>
+      <li><b class="k">動かし方</b>：動かすコマをタップして選び、行き先（印の付いた穴）をタップします。1回の手番で動かせるのは1つのコマだけです。</li>
+      <li><b class="k">1つ進む</b>：隣の空いた穴へ、1つ進めます。</li>
+      <li><b class="k">跳び越える</b>：隣のコマ（誰のコマでも）を跳び越えて、その向こうの空いた穴へ移ります。跳んだ先からさらに跳べる時は、続けて何回でも跳べます。行き先を選ぶと、跳ぶ道筋どおりに動きます。1つ進む動きと跳ぶ動きは、同じ手番にまぜられません。</li>
+      <li><b class="k">勝敗</b>：自分のコマ10個を全部、向かいの陣地に入れた人の勝ちです。向かいの陣地に他の人のコマが居座っている時は、陣地の穴が全部埋まり、その中に自分のコマが1つ以上あれば勝ちになります。</li>
+      <li><b class="k">このアプリのルール</b>：一度向かいの陣地に入ったコマは、陣地の外へは出られません。600手に達したら、ゴールまでの距離の合計が一番小さい人の勝ちです。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦人数</b>：2人。CPUと対戦するか、手番ごとに交代して2人で遊ぶかを選べます。</li>
+      <li><b class="k">CPUの強さ</b>：初級／中級／上級（既定は中級）。</li>
+      <li><b class="k">手番</b>：先手／後手／ランダム（既定は先手）。</li>
+      <li><b class="k">1手の制限時間</b>：なし／15秒／30秒／60秒（既定はなし）。時間切れの時はランダムな一手／負けを選べます（既定はランダムな一手）。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：橋（はしご）を作るのが基本の戦い方です。自分のコマを1つおきに並べると、後ろのコマが何段も続けて跳べる「はしご」になります。はしごを作りながら進みましょう。遅れたコマを残さないことも大切です。一番後ろのコマから順に進めましょう。最後に1つだけ取り残されると、何手も無駄になります。</li>
+      <li><b class="k">有利に進める</b>：相手のコマも跳び台になります。相手の長い橋に乗って、一気に進めることがあります。盤の中央は全員の通り道です。中央で自分の橋を先に作ると有利です。跳べる時は跳ぶのが基本ですが、橋の材料になるコマを動かしてしまうと、後ろのコマが進めなくなるので、橋を壊さない手を選びましょう。</li>
+      <li><b class="k">上級</b>：向かいの陣地には、奥（先端）から埋めていくと、後から来るコマの入る場所がふさがりません。相手の陣地の穴に自分のコマを1つ置いておく「居座り」も覚えておきましょう。向かいの陣地に入ったコマは外へ出られないので、相手はその穴に入れなくなり、勝ちを遅らせることができます。ただし自分のコマも1つ減るので、使いどころを見極めましょう。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 隣へ1つ進む", d: "空いた隣の穴へ、コマを1つずつ進めます。", src: "chx-step1.mp4" },
+    { t: "2. 跳び越えて進む", d: "隣のコマを跳び越えると、一気に先へ進めます。跳んだ先からさらに跳べます。", src: "chx-step2.mp4" },
+    { t: "3. 向かいの陣地へ", d: "コマを10個全部、向かいの青い陣地へ運べば勝ちです。", src: "chx-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

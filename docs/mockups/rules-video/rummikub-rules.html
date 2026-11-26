@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：ラミィキューブ</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>ラミィキューブ の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="rm-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">タイル</b>：1〜13の数字タイル4色×2組（104枚）とジョーカー2枚の計106枚。手牌は14枚から始まります。</li>
+      <li><b class="k">組（メルド）</b>：グループ＝同じ数字で色がすべて異なる3〜4枚（例：赤7・青7・黒7）。ラン＝同じ色で数字が連続する3枚以上（例：青4・青5・青6・青7）。</li>
+      <li><b class="k">ジョーカー</b>：どのタイルの代わりにもなります。場の組の中で使われているジョーカーは、組み替えで別のタイルと入れ替えて回収することもできます。</li>
+      <li><b class="k">出せないとき</b>：山から1枚引いて手番終了です。「戻す」でその手番の操作をやり直せます。</li>
+      <li><b class="k">場の組み替え</b>：2回目以降は、場のすべての組が正しい組のままになる範囲で、組を割ったり組み替えたりして手牌を出せます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">人数</b>：2人（標準）／3人／4人。</li>
+      <li><b class="k">初回出し（30点ルール）</b>：合計30点以上必要（標準）／制限なし。</li>
+      <li><b class="k">残ったジョーカーの減点</b>：30点（標準）／50点。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：初回30点は「10以上のグループ」か「長いラン」で作るのが早いです。届かないうちは無理に出さず、山から引いて形を整えましょう。同じ数字の色違いペアはグループの種なので、バラバラに捨てず残しておくこと。</li>
+      <li><b class="k">有利に進める</b>：ジョーカーは序盤の小さい組で使わないこと。「あと1枚で完成する組」や、終盤の出し切りの決め手に使うと価値が高いです。場に長いランが出たら、両端に足せるタイルがないか毎手番チェックしましょう。</li>
+      <li><b class="k">上級</b>：場の組み替えで出すのが最速の減らし方です。場の組を割って自分のタイルを差し込めば、場のタイルを実質タダで使えます。相手の残り枚数が少なくなったら、相手が足しやすい組（長いランや3枚グループ）を先に崩して、出す先を減らす守りも有効です。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 初回は30点以上", d: "手牌から組を作って出します。最初に出すときは、場の組を使わず手牌だけで合計30点以上が必要です（13×3＝39点）。", src: "rm-step1.mp4" },
+    { t: "2. 場の組に足す・組み替える", d: "2回目以降は、場にある組へ手牌を足したり、場の組を組み替えたりして出せます。相手が出した組も利用できます。", src: "rm-step2-v2.mp4" },
+    { t: "3. 勝敗と点数", d: "手牌をすべて出し切った人の勝ちです。山が尽きて全員出せなくなった場合は、残った手牌の合計点が一番小さい人の勝ち。残りタイルはマイナス点になり、ジョーカーが残っていると大きく響きます。", src: "rm-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

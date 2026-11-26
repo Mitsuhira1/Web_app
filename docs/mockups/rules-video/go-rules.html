@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：碁</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>碁 の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="go-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">盤と目的</b>：黒と白が交互に、盤の線の交わる所に石を置きます。石で囲んだ空き（地）と、取った相手の石の合計が多い方が勝ちです。囲碁は4000年以上の歴史がある、陣取りの遊びです。</li>
+      <li><b class="k">人数・道具</b>：2人。盤（このアプリでは9路・13路・19路）と、黒と白の碁石。黒が先手です。</li>
+      <li><b class="k">手番の操作</b>：置きたい所（線の交わる点）をタップすると、そこに石が置けます。「パス」で打たずに相手の番にでき、「投了」で負けを認めて終わります。</li>
+      <li><b class="k">石を取る</b>：相手の石の周りの空き（呼吸点）を全部ふさぐと、その石を取れます。相手の石のかたまりの周りの空き（呼吸点）を全部ふさぐと、そのかたまりを取れます。取った石は「アゲハマ」として自分の点になります。周りが全部ふさがる所（取られる所）には、相手の石を取れる時を除いて置けません。</li>
+      <li><b class="k">コウ</b>：1つ取り返すと、すぐ前と同じ形に戻ってしまう所では、すぐには取り返せません（ほかの所に1手打ってから取り返します）。このアプリでは、前に出た局面に戻る手は打てません。</li>
+      <li><b class="k">終わりと数え方</b>：両方が続けてパスしたら終わりです。囲んだ地の目の数と、取った石（アゲハマ）の数を足します。白には後手の分としてコミ6目半を足し、多い方の勝ちです（半目があるので引き分けはありません）。終わった時に、逃げられずに取られるはずの石（死に石）は、取ったものとして数えます。</li>
+      <li><b class="k">このアプリのルール</b>：日本ルール（地とアゲハマを数える）・コミ6目半。死に石は、終局の局面からの試し打ちで「たいてい取られる石」を自動で判定します。前に出た局面に戻る手は打てません（コウ）。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦人数</b>：CPUと対戦するか、手番ごとに交代して遊ぶかを選べます。</li>
+      <li><b class="k">CPUの強さ</b>：初級／中級／上級（既定は中級）。</li>
+      <li><b class="k">手番</b>：黒（先手）／白（後手）／ランダム。</li>
+      <li><b class="k">盤の大きさ</b>：9路／13路／19路（既定は9路）。小さい盤ほど短く終わります。</li>
+      <li><b class="k">1手の制限時間</b>：なし／15秒／30秒／60秒（既定はなし）。時間切れの時はランダムな一手／負けを選べます（既定はランダムな一手）。</li>
+      <li><b class="k">パス</b>：盤下の「パス」ボタンで打たずに相手の番にできます。両方パスで終局です。</li>
+      <li><b class="k">降参</b>：盤下の「降参」ボタンで負けを認めて対局を終えられます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：序盤は、少ない石で地を囲みやすい隅から打ち、次に辺、最後に中央へ広げます。盤の黒い点（星）を目安に、隅の星の近くから打ち始めると形がまとまりやすいです。石は仲間とつなげて打つのが基本です。1子だけポツンと置くと取られやすいので、打つ前に「この石は仲間とつながっているか」「取られそうになったら逃げ道はあるか」を確かめましょう。相手の石にくっつけて打つ時は、自分の石の呼吸点の数も数えてから打つと、逆に取られる失敗が減ります。</li>
+      <li><b class="k">有利に進める</b>：かたまりの中に別々の空きを2つ作る（二眼）と、そのかたまりは決して取られません。生き死にの分かれ目は、眼を2つ作れるかどうかです。アタリをかける時は、相手の逃げ道（呼吸点が増える方向）を先にふさいでからかけると逃げられません。端へ追い込むシチョウ（はしご状の追いかけ）は、逃げても取れる形なので、読めた時の強力な武器になります。取れそうな石は最後まで追い、取れない石は早めに見切ってほかの大きな所を打つ「捨て石」の判断が、形勢を分けます。定石（隅での決まった打ち方）をいくつか覚えると、序盤で損をしにくくなります。</li>
+      <li><b class="k">上級</b>：外側に強い壁（厚み）を作ると、後で戦いにも地にも生きてきます。地を急ぐより、弱い石を作らないことが大切です。コウを争う時は、ほかの場所での脅かし（コウ材）を用意してから挑みましょう。終盤のヨセは、大きい所から打ちます。相手が打つと大きく減る所（逆ヨセ・両先手）を優先するのが鉄則です。9路盤では中央の戦いが早く始まるので、隅を固めたら辺・中央へ広げる速度が勝負になります。終局が近い時は、自分の地の境界線を埋める順番にも気を配りましょう。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 星に打って石を置く", d: "線の交わる所（この例では隅の星）に黒を打ちます。石の周りの空きが呼吸点です。", src: "go-step1.mp4" },
+    { t: "2. 呼吸点をふさいで石を取る", d: "白の石は呼吸点があと1つ。そこに黒を打つと、白い石が取れてアゲハマになります。", src: "go-step2.mp4" },
+    { t: "3. 両方パスで終局・数え方", d: "打つ所がなくなったらパス。両方パスで終局し、地とアゲハマを数えて勝敗を決めます。", src: "go-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：7ならべ</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>7ならべ の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="sv-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">目的</b>：手札をすべて出し切ること。最初に上がった人が1位です。</li>
+      <li><b class="k">人数・道具</b>：2〜6人（あなた以外はCPU）。ジョーカーを除いた52枚を全部配ります。</li>
+      <li><b class="k">準備</b>：配った後、4枚の7を場に出します（自動）。♦7を持っている人から始めます。</li>
+      <li><b class="k">出せる札</b>：場の各マークの列の、両端の隣の数だけを出せます。例：♠の列が6-7-8なら、♠5か♠9。出せる札は少し持ち上がっています。場の枠のうち黄色の枠が、あなたが出せる場所です。</li>
+      <li><b class="k">パス</b>：出せる札があってもパスできます。パスは3回まで。4回目のパスで失格になり、手札は全部、場の決まった位置に置かれます。</li>
+      <li><b class="k">勝敗</b>：手札を早くなくした順に順位が付きます。1位の人の勝ちです。失格した人は最下位です。1人を除いて全員が上がり（または失格）したら対局終了です。</li>
+      <li><b class="k">その他</b>：ジョーカーは使いません。「待った」はできません。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦人数</b>：2〜6人（標準は4人）。</li>
+      <li><b class="k">トンネル（AとKをつなぐ）</b>：なし（標準）／あり＝Aの次にK、Kの次にAを出せます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：止め札は、自分の持っている札で列を止めることです。自分が持っている札で列を止めると、その先の札を持っている人は出せません。先の札を自分が持っていない列は、なるべく開けずに止めておきましょう。列を開く前に、自分の手札にその列の続きがあるか確認する習慣をつけると、無駄なパスが減ります。</li>
+      <li><b class="k">有利に進める</b>：出した札の先に自分の札が続く列は、どんどん伸ばしましょう。手札がつながっている列ほど、自分の番が回ってきた時に出せる札が増えます。パスは「時間を稼ぐ道具」です。相手を止めている時に、出せる札があってもあえてパスすると、相手のパスを先に使い切らせられます。ただし、自分の失格に気をつけましょう。パス回数は席の横に表示されているので、残り回数を数えて使いましょう。</li>
+      <li><b class="k">上級</b>：AとKは列の終わりなので、出しても相手を助けません（トンネルなしの時）。列の端をAやKまで伸ばすのは、相手に新しい出せる札を与えない安全な手です。どの列を相手が止めているかは、「その列が長く伸びない」ことで分かります。止められている列の先の札を持っている時は、別の列を伸ばして手札を減らすのが先です。止め札を持っている相手が、自分の番でその列を開くかどうかも見ておきましょう。開かれた列の先の札を自分が持っていれば、すぐに続きを出せます。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 7の隣の札を出す", d: "最初に4枚の7が場に並び、♦7の持ち主から始めます。7の隣の札だけ出せます。", src: "sv-step1.mp4" },
+    { t: "2. 列の両端の隣だけ出せる", d: "各マークの列は、両端の隣の札だけが伸ばせます。真ん中の札は出せません。", src: "sv-step2.mp4" },
+    { t: "3. 上がって1位になる", d: "手札をすべて出し切ると上がりです。最初に上がった人が1位になります。", src: "sv-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

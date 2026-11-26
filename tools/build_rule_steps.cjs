@@ -5,10 +5,12 @@ const fs = require('fs'), path = require('path'), vm = require('vm');
 const src = path.resolve(process.argv[2] || 'docs/mockups/rules-video');
 const out = path.join(__dirname, '..', 'web', 'pc-firebase');
 const dest = path.join(out, 'assets', 'rule-steps');
-fs.mkdirSync(dest, { recursive: true });
+fs.rmSync(dest, { recursive: true, force: true }); fs.mkdirSync(dest, { recursive: true }); // 取り込み済みの動画は毎回作り直す(旧版を残さない)
+// 見本のファイル名とアプリのゲーム ID が違う物(ほかは同じ)。spider・mine-versus は solitaire・mine の「種類」としてアプリ側で切り替える
+const ID = { mj: 'mahjong', ohno: 'uno', texas: 'holdem', 'mine-versus': 'mineVersus' };
 const data = {}; const used = new Set();
 for (const f of fs.readdirSync(src).filter((n) => /-rules\.html$/.test(n)).sort()) {
-  const id = f.replace(/-rules\.html$/, ''); const h = fs.readFileSync(path.join(src, f), 'utf8');
+  const fid = f.replace(/-rules\.html$/, ''), id = ID[fid] || fid; const h = fs.readFileSync(path.join(src, f), 'utf8');
   const m = /const STEPS = (\[[\s\S]*?\]);\s*\n/.exec(h); if (!m) throw new Error(f + ': STEPS なし');
   const steps = vm.runInNewContext(m[1]).map((s) => ({ t: s.t, d: s.d, src: s.src }));
   // 見本には 2 通りの書き方がある(<h2> の後に <div class="sec"> / <section class="sec"> の中に <h2>)。どちらも <h2> ごとに切って中身だけ取る

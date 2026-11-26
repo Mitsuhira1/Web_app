@@ -56,6 +56,14 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-26 / Claude / ルール動画を全ゲーム分に拡大(61 本=59 ゲーム+スパイダー・マインスイーパー対戦)(未コミット)
+
+- 引き継ぎメモ(HANDOVER-rules-video-20261126)の ZIP 2 点(見本 HTML 61・動画 183・NOTES.md)を取り込んだ。`tools/build_rule_steps.cjs` を、見本のファイル名とアプリの ID の違い(mj→mahjong・ohno→uno・texas→holdem・mine-versus→mineVersus)に対応させ、`assets/rule-steps/` は毎回作り直す形にした(旧版を残さない)。`js/rules-steps.js` は自動生成。
+- 1 つのゲームに 2 種類の説明がある物は、ルール画面の上の切り替えで選ぶ(`RULE_VARIANTS`・`fillRuleSteps`): ソリティア=クロンダイク/スパイダー(対局中にスパイダーなら最初からスパイダー)、マインスイーパー=ふつう/対戦(メニューで対戦のタイルから開けば最初から対戦)。
+- 動画が読み込めない時は文字だけの説明になる(前回の仕様のまま)。動画は約 41MB で sw.js FILES には入れていない。CACHE = asobipcfb-20261126-rulesteps-2。
+- 確かめたこと(Playwright): ORDER の全 59 ゲームを PC 1280・スマホ 390 で開き、すべてステップ 3・節 3・動画の読み込み成功・横はみ出しなし。切り替え 2 組(solitaire→spider・mine→mineVersus)の動画切り替え。実機は未確認。
+- 参考(メモより・対応しない): 花札の山札フェーズで「場に出す」ボタンが描画されない不具合(`js/boards/table.js` 325 付近のフィルタ)は、ユーザーの確認待ちなので直していない。
+
 ### 2026-11-24 / Claude / ルール説明の動画化(20ゲーム)をアプリに組み込み(未コミット)
 
 - 引き継ぎメモ(asobi-rules-video-all-20261124)に従い、ルール画面を「上段=左にステップ・右に動画(終わると次のステップへ自動)、下に 補足 → ローカルルール → コツ」の形で組み込んだ。対象 20 ゲーム: war・takoyaki・butanoshippo・oldmaid・hearts・ginrummy・vulture・goita・quarto・geister・roulette・coyote・skull・liarsdice・incangold・take6・blokus・quoridor・battleship・chinchiro。それ以外のゲームは従来のルール画面のまま。

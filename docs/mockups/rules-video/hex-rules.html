@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：ヘックス</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>ヘックス の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="hx-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">引き分けなし</b>：ヘックスは必ずどちらかがつながるので、引き分けがありません。</li>
+      <li><b class="k">つながり方</b>：石は、辺を共有する6方向でつながります。角で触れるだけではつながりません。</li>
+      <li><b class="k">盤の大きさ</b>：設定で7×7／9×9／11×11が選べます。大きいほど長い勝負になります。</li>
+    </ul>
+  </section>
+<section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">遊び方</b>：CPUと対戦／2人で対戦。</li>
+      <li><b class="k">CPUの強さ</b>：初級／中級／上級。</li>
+      <li><b class="k">手番</b>：先手／後手／ランダム。</li>
+      <li><b class="k">盤の大きさ</b>：7×7／9×9／11×11。</li>
+      <li><b class="k">1手の制限時間</b>：なし／15秒／30秒／60秒。</li>
+    </ul>
+  </section>
+<section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：自分の辺から辺へ、最短でつながる道を1本決めて進めるのが基本です。あちこちに散らすと、どこもつながりません。</li>
+      <li><b class="k">有利に進める</b>：「橋渡し」（2つの石が、共通の空きマス2つと接している形）を作ると、相手が片方を取っても、もう片方でつながります。実質的に切られない形です。</li>
+      <li><b class="k">上級</b>：相手の道をふさぐ時は、相手の最短路の真ん中を取るのが最も効果的です。自分の道は、相手に1手で切られないよう、2通りの道を保つのが大切です。</li>
+    </ul>
+  </section>
+
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 石を置く", d: "空いたマスに、自分の色の石を1つずつ置いていきます。置いた石は動きません。", src: "hx-step1.mp4" },
+    { t: "2. 相手の道をふさぐ", d: "相手が自分の辺をつなぎそうな場所は、先に取って止めます。攻めと守りを両方考えるゲームです。", src: "hx-step2.mp4" },
+    { t: "3. 向かい合う辺をつなぐ", d: "赤は上と下の赤い辺、青は左と右の青い辺を、自分の石で先につないだ方が勝ちです。", src: "hx-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

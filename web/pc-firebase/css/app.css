@@ -3369,3 +3369,6 @@ html,body{overscroll-behavior-y:none}
 .rs-novid .rs-steps{width:100%}
 .rs-novid .rs-step{pointer-events:none;border-color:var(--line);background:var(--surface)}
 .rs-novid .rs-step span{font-size:14px}
+
+.rs-tabs{display:inline-flex;margin:0 0 12px}
+.rs-tabs button{padding:6px 18px}

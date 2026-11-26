@@ -1500,16 +1500,20 @@ function rulesModal() {
 async function fillRules() {
   const b = $('#rulesbody'); if (!b) return;
   const id = S.rulesId;
-  const vs = window.RULE_STEPS && window.RULE_STEPS[id];
-  if (vs) return fillRuleSteps(b, vs);
+  // 1 つのゲームに 2 種類の説明がある物(ソリティア=クロンダイク/スパイダー、マインスイーパー=ふつう/対戦)は、上の切り替えで選ぶ
+  const tabs = RULE_VARIANTS[id];
+  const vkey = tabs ? ((S.ruleVar || {})[id] || (id === 'solitaire' && S.screen === 'play' && view?.board?.variant === 'spider' ? 'spider' : id === 'mine' && S.sel === 'mineVersus' ? 'mineVersus' : tabs[0][0])) : id;
+  const vs = window.RULE_STEPS && window.RULE_STEPS[vkey];
+  if (vs) return fillRuleSteps(b, vs, tabs && `<div class="seg rs-tabs">${tabs.map(([k, n]) => `<button type="button" data-rvar="${k}" aria-pressed="${k === vkey}">${n}</button>`).join('')}</div>`, id);
   const secs = EXTRA_GAME_RULES[id] || JSON.parse(await callW('rulesJson', id));
   b.innerHTML = secs.length ? RULES.html(id, secs) : '<p>ルールの説明はまだありません</p>';
   RULES.start(b);
 }
 // 動画つきのルール(上段: 左にステップ・右に動画。終わったら次のステップへ。下に 補足 → ローカルルール → コツ)。文面は js/rules-steps.js
-function fillRuleSteps(b, vs) {
+const RULE_VARIANTS = { solitaire: [['solitaire', 'クロンダイク'], ['spider', 'スパイダー']], mine: [['mine', 'ふつう'], ['mineVersus', '対戦']] };
+function fillRuleSteps(b, vs, tabsHtml = '', gid = '') {
   const reduce = document.documentElement.classList.contains('reduce');
-  b.innerHTML = `<div class="rs-top"><div class="rs-steps">${vs.steps.map((s, i) => `<button type="button" class="rs-step" data-rstep="${i}" aria-pressed="${i === 0}"><b>${esc(s.t)}</b><span>${esc(s.d)}</span></button>`).join('')}</div>
+  b.innerHTML = `${tabsHtml}<div class="rs-top"><div class="rs-steps">${vs.steps.map((s, i) => `<button type="button" class="rs-step" data-rstep="${i}" aria-pressed="${i === 0}"><b>${esc(s.t)}</b><span>${esc(s.d)}</span></button>`).join('')}</div>
     <div class="rs-stage"><video class="rs-vid" muted playsinline controls preload="auto"></video></div></div>
     ${vs.secs.map((c) => `<section class="rs-sec${c.h === 'コツ' ? ' tip' : ''}"><h4>${esc(c.h)}</h4><div class="rs-body">${c.html}</div></section>`).join('')}`;
   const v = b.querySelector('.rs-vid'), btns = [...b.querySelectorAll('[data-rstep]')];
@@ -1519,6 +1523,7 @@ function fillRuleSteps(b, vs) {
     if (auto && !reduce) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
   };
   btns.forEach((x, i) => { x.onclick = () => play(i); });
+  b.querySelectorAll('[data-rvar]').forEach((x) => { x.onclick = () => { (S.ruleVar = S.ruleVar || {})[gid] = x.dataset.rvar; fillRules(); }; });
   v.addEventListener('ended', () => { const n = +v.dataset.i + 1; if (n < vs.steps.length) play(n); });
   // 動画を読み込めない時(オフラインなど)は、動画の欄を消して、ステップの文だけの説明にする
   v.addEventListener('error', () => { b.querySelector('.rs-top').classList.add('rs-novid'); });

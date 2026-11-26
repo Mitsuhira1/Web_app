@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：ぶにょぶにょ</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>ぶにょぶにょ の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="bu-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">お邪魔</b>：対戦で送られてくる灰色の粒は、色としてつながらず単独では消えませんが、隣の粒が消えると一緒に消えます。</li>
+      <li><b class="k">全消し</b>：盤面の粒を全部消すと「全消し!」になり、対戦ではお邪魔ボーナスが付きます。</li>
+      <li><b class="k">終了</b>：粒が上まで積み上がって置けなくなると終了です。ソロでは最大れんさとスコアが表示されます。</li>
+      <li><b class="k">操作</b>：スマホは盤をなぞって移動、下へはらって一気に落とす、軽くたたいて回転、長押しで早落としです。</li>
+    </ul>
+  </section>
+<section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">CPU</b>：なし（ひとり・標準）／1人／2人／3人。強さは よわい／ふつう／つよい。</li>
+      <li><b class="k">何本先取</b>：対戦の勝利条件になる先取数を設定できます。</li>
+      <li><b class="k">落ちる速さ</b>：ゆっくり／標準／速い。</li>
+      <li><b class="k">次のブロックの表示</b>：表示（標準）／非表示。</li>
+    </ul>
+  </section>
+<section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：同じ色をバラバラに置かず、3個までそろえて「あと1個で消える」形をいくつか作っておくこと。端の列から積むと、真ん中が低く保てます。</li>
+      <li><b class="k">有利に進める</b>：連鎖は「1段目が消えると、上の段が落ちてそろう」2段構えが基本です。消える色の上に、次に消したい色を乗せておきましょう。</li>
+      <li><b class="k">上級</b>：お邪魔が来る対戦では、すぐ消せる小さい連鎖を温存しておくと、お邪魔を消すきっかけや反撃に使えます。全消しを狙える形では、最後の1組の置き場所を先に決めておくこと。</li>
+    </ul>
+  </section>
+
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 4個つなげて消す", d: "2個1組の粒が落ちてきます。←→で動かし、↑/X・Zで回して置きます。同じ色が上下左右に4個以上つながると消えます。", src: "bu-step1.mp4" },
+    { t: "2. 連鎖（れんさ）", d: "消えた上にあった粒が落ちて、落ちた先でまた4個つながると続けて消えます。これが連鎖です。連鎖が大きいほど高得点になります。", src: "bu-step2.mp4" },
+    { t: "3. 大きな連鎖", d: "連鎖をつなげるほど点数が伸びます。対戦では連鎖の大きさに応じて、相手にお邪魔（灰色の粒）を送れます。全消しするとさらにお邪魔が増えます。", src: "bu-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

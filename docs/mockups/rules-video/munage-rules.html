@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：胸毛絶体絶命</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>胸毛絶体絶命 の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="mg-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">点火スイッチの場所</b>：ゲームの最初にランダムで決まります。誰の画面にも表示されないので、誰にも分かりません。</li>
+      <li><b class="k">セーフの合図</b>：セーフだと「セーフ！」と表示され、おっさんが少し跳ねます。押したボタンは緑に変わります。</li>
+      <li><b class="k">心臓の音</b>：残りのボタンが少なくなると、心臓の音が鳴って緊張感が高まります。</li>
+      <li><b class="k">アニメ</b>：点火すると短いアニメが流れます。画面をタップすると飛ばせます。</li>
+    </ul>
+  </section>
+<section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">CPUの人数</b>：1〜5人。</li>
+      <li><b class="k">最初の手番</b>：自分／CPU／ランダム。</li>
+      <li><b class="k">ボタンの数</b>：12個／24個。</li>
+      <li><b class="k">おっさんを飛ばした人</b>：負け／勝ち（逆ルール）。</li>
+    </ul>
+  </section>
+<section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：完全に運のゲームで、どのボタンを押しても確率は同じです。好きな数字や並びの端など、自分の決め方を持っておくと、迷わずテンポよく遊べます。</li>
+      <li><b class="k">有利に進める</b>：「飛ばした人が勝ち」の逆ルールでは、残りが少ない終盤に自分の番が回ってくると有利です。逆に「負け」ルールでは、終盤に番が来ない人数設定（大人数）だと比較的安全です。</li>
+      <li><b class="k">上級</b>：残りのボタンと人数から「あと何周か」を読むと、終盤の山場が予想できます。24個・大人数の長丁場と、12個・少人数の短い勝負では盛り上がり方が変わります。</li>
+    </ul>
+  </section>
+
+</div>
+<script>
+  const STEPS = [
+    { t: "1. ボタンを押す", d: "自分の番では、ボタンを1つ選んで押します。点火スイッチでなければセーフで、ボタンが緑に変わり、次の人の番になります。", src: "mg-step1.mp4" },
+    { t: "2. 残りが減るとドキドキ", d: "押されていないボタンが減るほど、次の1回で点火スイッチを引く確率が上がります。残りの数は右側に表示されます。", src: "mg-step2.mp4" },
+    { t: "3. 点火スイッチで飛ぶ", d: "どれか1つだけある点火スイッチを押すと、大砲が発射しておっさんが飛んでいきます。標準ルールでは、飛ばした人の負けです。", src: "mg-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

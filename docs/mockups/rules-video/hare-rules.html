@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：ウサギと猟犬</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>ウサギと猟犬 の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。動画ではウサギ側で遊んでいます。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="hr-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">猟犬の動き</b>：猟犬は3匹いますが、1手に動かせるのは1匹だけです。右・上・下には進めますが、左（後ろ）には下がれません。</li>
+      <li><b class="k">ウサギの動き</b>：ウサギは、線でつながった点なら後ろにも自由に動けます。</li>
+      <li><b class="k">猟犬の勝ち</b>：ウサギの行き先を全部ふさぐと、猟犬の勝ちです。</li>
+    </ul>
+  </section>
+<section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">遊び方</b>：CPUと対戦／2人で対戦。</li>
+      <li><b class="k">CPUの強さ</b>：初級／中級／上級。</li>
+      <li><b class="k">手番</b>：猟犬（先手）／ウサギ（後手）／ランダム。</li>
+      <li><b class="k">1手の制限時間</b>：なし／15秒／30秒／60秒。</li>
+    </ul>
+  </section>
+<section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本（ウサギ）</b>：猟犬は後ろに下がれません。1匹でも抜ければ勝ちが見えるので、常に一番左の猟犬より左を目指しましょう。</li>
+      <li><b class="k">有利に進める（ウサギ）</b>：真ん中の点は行き先が多く、囲まれにくい要の場所です。端の点は行き先が少ないので、むやみに入らないこと。</li>
+      <li><b class="k">上級（猟犬側）</b>：猟犬は3匹の足並みをそろえ、横一線で押すのが基本です。1匹だけ先行すると、その後ろを抜かれます。</li>
+    </ul>
+  </section>
+
+</div>
+<script>
+  const STEPS = [
+    { t: "1. ウサギを動かす", d: "ウサギは、線でつながった隣の点へ、どの方向にも動けます。", src: "hr-step1.mp4" },
+    { t: "2. 猟犬の間を抜ける", d: "猟犬は前にしか進めず、後ろ（左）には下がれません。その弱点を使って、間をすり抜けます。", src: "hr-step2.mp4" },
+    { t: "3. 左端まで逃げ切る", d: "一番左の点まで逃げ切ればウサギの勝ちです。逆に、行き先を全部ふさがれると猟犬の勝ちです。", src: "hr-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

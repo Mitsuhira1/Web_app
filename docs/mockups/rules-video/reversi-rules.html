@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：リバーシ</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>リバーシ の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="rv-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">盤と目的</b>：8×8の盤の上で、黒と白の石を交互に置き、相手の石を自分の石で挟んで裏返します。最後に自分の色の石が多い方が勝ちです。</li>
+      <li><b class="k">人数・道具</b>：2人。8×8の盤と、表裏が黒と白の石。</li>
+      <li><b class="k">準備</b>：盤の中央の4マスに、白と黒を斜めに2個ずつ置きます。黒が先手です。</li>
+      <li><b class="k">手番の操作</b>：置きたいマスをタップします。置けるのは、縦・横・斜めのどれかで相手の石を1個以上挟めるマスだけです。置けるマスには点が表示されます（設定で消せます）。</li>
+      <li><b class="k">裏返る石</b>：置いた石と、すでにある自分の石の間に挟まれた相手の石は、すべて自分の色に裏返ります。いくつもの方向を同時に挟めます。</li>
+      <li><b class="k">パスと終わり</b>：置ける場所がない時はパスになります（自動）。両方とも置けなくなったら、空きマスが残っていても終わりです。</li>
+      <li><b class="k">勝敗</b>：終わった時に石の多い方が勝ちです。同じ数なら引き分けです。</li>
+      <li><b class="k">このアプリのルール</b>：標準の8×8。パスは自動です。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦人数</b>：CPUと対戦するか、手番ごとに交代して遊ぶかを選べます。</li>
+      <li><b class="k">CPUの強さ</b>：初級／中級／上級（既定は中級）。</li>
+      <li><b class="k">手番</b>：黒（先手）／白（後手）／ランダム。</li>
+      <li><b class="k">1手の制限時間</b>：なし／15秒／30秒／60秒（既定はなし）。時間切れの時はランダムな一手／負けを選べます（既定はランダムな一手）。</li>
+      <li><b class="k">置ける場所の表示</b>：設定（歯車）で、置けるマスに付く点の表示を消せます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：序盤は石を少なくしましょう。序盤に多く返すほど、相手に打てる場所を与えてしまいます。返す石が少なく、周りの空きマスに触れない手（開放度の低い手）が良い手です。石の数で勝っているかどうかは、序盤・中盤はほとんど意味がありません。終盤になってから数を数えればよいのです。</li>
+      <li><b class="k">有利に進める</b>：相手の石に囲まれた内側の石だけを返す「中割り」は、相手に新しい打ち場所を与えない強い手です。辺の形にも気を配りましょう。辺に6個並んだ「山」は強く、片側が1つだけ空いた「ウイング」は隅を取られやすい形です。隅は一度取ると二度と返されない特別な場所なので、隅の周りから固めていく意識が大切です。</li>
+      <li><b class="k">上級</b>：隅の斜め隣（Xうち）や隅の縦横の隣（Cうち）は、隅を取られる原因になります。隅が取れる見込みがない限り打ちません。終盤は「偶数理論」を使いましょう。空きマスが偶数の区画に打つと、その区画の最後の1手を自分が打てます。最後の10手前後では、石の数を最後まで正確に読み切った方が勝ちます。相手に打てる場所を残さないよう、自分の手で空きマスの数を調整する意識を持ちましょう。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 置くと挟んだ石が裏返る", d: "黒を置くと、黒ではさまれた白がすべて黒に裏返ります。8個いっぺんに返りました。", src: "rv-step1.mp4" },
+    { t: "2. 置けるのは挟めるマスだけ", d: "置けるのは、相手の石をはさめるマス（点の所）だけです。点の所に置くと、白が黒に裏返ります。", src: "rv-step2.mp4" },
+    { t: "3. 最後に多い方が勝ち", d: "盤がすべて埋まると、石の多い方が勝ちです。黒50・白14であなたの勝利です。", src: "rv-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：チェス</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>チェス の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="ch-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">盤と目的</b>：8×8の盤の上で、白と黒の駒を交互に動かし、相手のキングをチェックメイトしたら勝ちです。白が先手です。</li>
+      <li><b class="k">人数・道具</b>：2人。8×8の盤と、白黒の駒6種類（キング・クイーン・ルーク・ビショップ・ナイト・ポーン）ずつ。</li>
+      <li><b class="k">準備</b>：駒を決められた並びに置きます。白が先手です。</li>
+      <li><b class="k">手番の操作</b>：自分の駒をタップして選び、行き先のマスをタップします。行けるマスには点が、取れる駒のマスには赤い枠が表示されます（設定で消せます）。最後の手は黄色で表示されます。</li>
+      <li><b class="k">駒の動き</b>：キングは周囲8マスに1つ、クイーンは縦・横・斜めにどこまでも、ルークは縦・横にどこまでも、ビショップは斜めにどこまでも、ナイトはL字に跳び越えて、ポーンは前に1つ（最初だけ2つ進めます。取る時は斜め前1つ）です。ナイト以外は、間の駒があるとその先へ進めません。</li>
+      <li><b class="k">取り方</b>：相手の駒のいるマスへ自分の駒を動かすと、その駒を取れます。取られた駒は盤から消えます。</li>
+      <li><b class="k">チェックとチェックメイト</b>：キングが取られる状態がチェックです。チェックされた側は、キングを逃がす・駒で受ける・攻めている駒を取るのいずれかで逃れなければなりません。どうしても逃れられないとチェックメイトで負けです。チェック中のキングのマスは赤く表示されます。</li>
+      <li><b class="k">キャスリング</b>：キングとルークがまだ動いておらず、間に駒がなく、王手を受けていない時に、キングをルークの方へ2つ動かすと、ルークがキングを跳び越えて隣に来ます。キングを隅へ逃がす特別な手です。</li>
+      <li><b class="k">アンパッサン</b>：相手のポーンが2つ進んで自分のポーンの真横に来た直後だけ、斜め前に進んでそのポーンを取れます。</li>
+      <li><b class="k">昇格</b>：ポーンが相手の陣地の奥の段に着くと、クイーン・ルーク・ビショップ・ナイトのどれかに変わります。好きな駒を選べます。</li>
+      <li><b class="k">引き分け</b>：ステイルメイト（手番の側に合法手がなく、チェックもされていない状態）・同一局面3回・50手ルール・チェックメイトできない駒だけが残った時などです。このアプリでは500手で引き分けになります。</li>
+      <li><b class="k">このアプリのルール</b>：標準のチェスです。駒の動きは盤右の「駒の一覧」ボタンでも確認できます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦人数</b>：CPUと対戦するか、手番ごとに交代して遊ぶかを選べます。</li>
+      <li><b class="k">CPUの強さ</b>：初級／中級／上級（既定は中級）。</li>
+      <li><b class="k">手番</b>：白（先手）／黒（後手）／ランダム。</li>
+      <li><b class="k">1手の制限時間</b>：なし／15秒／30秒／60秒（既定はなし）。時間切れの時はランダムな一手／負けを選べます（既定はランダムな一手）。</li>
+      <li><b class="k">駒の一覧</b>：盤右の「駒の一覧」ボタンで、各駒の動けるマスを確認できます。</li>
+      <li><b class="k">昇格の駒</b>：ポーンが奥の段に着いた時に、クイーン・ルーク・ビショップ・ナイトから選べます。</li>
+      <li><b class="k">降参</b>：盤右の「降参」ボタンで負けを認めて対局を終えられます。</li>
+      <li><b class="k">置ける場所の表示</b>：設定（歯車）で、行けるマスに付く点と、取れる駒に付く赤い枠の表示を消せます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：序盤は中央のポーン（e4・d4）を突いて、ナイトとビショップを早く展開しましょう。クイーンを序盤から前に出しすぎると狙われて手損になります。キングはキャスリングで早めに隅へ逃がして安全にしましょう。駒を動かす前に「その駒はタダで取られないか」を毎手確認する習慣が、負けを大きく減らします。</li>
+      <li><b class="k">有利に進める</b>：駒の価値（ポーン1・ナイト3・ビショップ3・ルーク5・クイーン9）を意識し、価値の低い駒で高い駒を取る交換を狙いましょう。ポーンの形にも気を配り、孤立ポーンや二重ポーン（同じ縦の列に2つ並んだポーン）は弱いので作らないようにします。ルークはポーンのない縦の列（オープン・ファイル）に置くとよく働きます。相手のキングの周りのポーンを崩すと、チェックメイトの形が作りやすくなります。</li>
+      <li><b class="k">上級</b>：チェックメイトの形（バックランクメイト、スカラーズメイトなど）を覚えておくと、詰みが見えた時に逃しません。相手の駒を2つ同時に狙うフォーク、動けない駒を狙うピン、駒をどけて後ろの駒の利きを通すディスカバード・アタックといった手筋を意識しましょう。終盤はキングも積極的に前へ出し、ポーンを昇格させることが勝負を決めます。相手の狙いを読むには「相手が次に何をしたいか」を毎手考える癖が大切です。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 駒を選んで行き先をタップ", d: "駒を選ぶと行けるマスが表示され、相手の駒のマスへ動くと取れます。ナイトはL字に跳び越えます。", src: "ch-step1.mp4" },
+    { t: "2. チェックメイトで勝ち", d: "クイーンがポーンを取るとキングに王手。逃げ場がなければチェックメイトで勝ちです。", src: "ch-step2.mp4" },
+    { t: "3. キャスリングでキングを守る", d: "キングを2つ動かすと、ルークが跳び越えて隣に来ます。キングを隅へ逃がす特別な手です。", src: "ch-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

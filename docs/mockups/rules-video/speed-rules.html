@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：スピード</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>スピード の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="sd-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">目的</b>：2人が同時に台札へカードを出し、先に自分の札をすべてなくすゲームです。手番はなく、相手の操作を待たずに出せます。</li>
+      <li><b class="k">人数・道具</b>：2人（あなた以外はCPU）。52枚を26枚ずつ配り、各人の4枚を手元に表向き、1枚ずつを中央の台札に置きます。残りは補充用の山札です。</li>
+      <li><b class="k">出せる札</b>：どちらかの台札と数字が1つ違う札を出せます。マークは関係ありません。AとKをつなぐかは設定で切り替えます（標準は「つなぐ」）。</li>
+      <li><b class="k">手番の操作</b>：自分の札を選んで、左か右の台札へ出します。相手の操作を待つ必要はありません。出した後は自動で4枚まで補充されます。両方とも出せなければ「台札を替える」ボタンで台札を更新できます。山札がなくなったら手元の札で更新します。</li>
+      <li><b class="k">勝敗</b>：自分の手元と山札が先に空になれば勝ちです。同時に空なら引き分けです。1台2交代形式には対応しません。</li>
+      <li><b class="k">その他</b>：通信の競合はホストで受け付けた順に処理します。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦人数</b>：2人（固定）。</li>
+      <li><b class="k">CPUの強さ</b>：初級／中級（標準）／上級。</li>
+      <li><b class="k">手番</b>：先手（標準）／後手／ランダム。</li>
+      <li><b class="k">AとKをつなぐ</b>：つなぐ（標準）／つなげない。</li>
+      <li><b class="k">1手の制限時間</b>：なし（標準）／15秒／30秒／60秒。</li>
+      <li><b class="k">時間切れ</b>：ランダムな一手（標準）／負け。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：出せる札は、見つけたらすぐに出しましょう。相手より先に出すことが勝負です。台札は2枚あるので、両方の数字を常に確認し、手札の4枚の中に出せる札がないか見渡す習慣をつけましょう。出して補充された新しい札も、すぐに出せるかどうか確認しましょう。自分の手札と山札の残り枚数は右パネルに表示されているので、残りが少なくなってきたら意識して見ておきましょう。</li>
+      <li><b class="k">有利に進める</b>：出す前に「次に続けられる数字」を見てから出しましょう。台札が5なら、6を出した後に7が手札にあれば、続けて出せます。2つの台札の数字はバラバラに保つのが有利です。同じ数字に偏ると、出せる札が少なくなります。両方の台札に出せる札は、出した後の台札で次に続きやすい方を選びましょう。「台札を替える」は、両方とも出せない時だけにしましょう。むやみに替えると、相手に出しやすい台札を与えてしまうことがあります。</li>
+      <li><b class="k">上級</b>：相手の残り枚数（右パネルの数字）を見て、相手が残り少ない時は自分のペースを上げましょう。相手が残り1〜2枚の時は、台札替えをためらわず、自分の出せる札を優先します。相手が出した札で台札の数字が変わったら、その新しい数字に自分の札が合うか即判断しましょう。AとKをつなぐ設定では、Aの次は2、Kの次はAというつながりも使えます。Aや2、KやQといった端の数字は、つながりが片側しかないため、手札に残すと出しにくくなります。山札が少なくなってきたら、手札の数字の偏りに注意し、台札替えのタイミングを計りましょう。終盤は、相手より1枚でも早く出し切ることがすべてです。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. 台札と1つ違う札を出す", d: "台札の6♣に5♣を出します。マークは関係ありません。", src: "sd-step1.mp4" },
+    { t: "2. 連続で出す", d: "5♣を出して台札が5♣になったら、6♠がすぐに出せます。", src: "sd-step2.mp4" },
+    { t: "3. 最後の1枚を出して上がり", d: "8♠を7♣の台札に出して、手札と山札が0枚になれば勝ちです。", src: "sd-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

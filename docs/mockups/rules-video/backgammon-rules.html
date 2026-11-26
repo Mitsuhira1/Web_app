@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：バックギャモン</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>バックギャモン の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="bg-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">盤と目的</b>：24の細長い三角（ポイント）が並ぶ盤の上で、2個のサイコロの目で15個の駒を進め、自分の陣地（内側の6つのポイント）に全部集めてから盤の外へ「上げ」ます。先に15個全部を上げた方が勝ちです。約5000年の歴史があり、世界で最も古い遊びの1つと言われています。</li>
+      <li><b class="k">人数・道具</b>：2人。24のポイントがある盤、白と黒の駒各15個、サイコロ2個。白が先手で、24から1へ向かって進みます。黒はその反対へ進みます。</li>
+      <li><b class="k">手番の操作</b>：「振る」でサイコロを2個振り、動かす駒をタップして、行き先（印の付いたポイント）をタップします。目は1つずつ使い、2つの目で別々の駒を動かしても、同じ駒を続けて動かしてもかまいません。ゾロ目の時は、同じ目を4回使えます。動かせる駒には印が付きます。</li>
+      <li><b class="k">止まれる所と打つ</b>：相手の駒が2つ以上あるポイント（ブロック）には止まれません。相手の駒が1つだけのポイント（ブロット）に止まると、その駒を「打って」バー（盤の真ん中）へ送れます。バーに駒がある人は、それを相手の陣地へ戻し入れるまで、ほかの駒を動かせません。</li>
+      <li><b class="k">上げる</b>：15個全部が自分の陣地に入ったら、駒を盤の外へ上げられます。ぴったりの目で上げるか、その目より奥に駒がない時は大きい目でも上げられます。</li>
+      <li><b class="k">目の使い方の決まり</b>：使える目は必ず使います。両方の目を使える動かし方がある時は、両方を使う動かし方しか選べません。片方しか使えない時は、大きい方の目を使います。動かせる駒がない時は、自動で相手の番になります。</li>
+      <li><b class="k">勝敗</b>：先に15個全部を上げた方の勝ちです。相手が1個も上げていない時は「ギャモン勝ち」、さらに相手の駒がバーか自分の陣地に残っている時は「バックギャモン勝ち」です。</li>
+      <li><b class="k">このアプリのルール</b>：ダブリングキューブ（賭け点の倍増）はありません。勝ちは1回の勝ちとして数え、ギャモン・バックギャモンは結果に表示します。「待った」はできません。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦人数</b>：CPUと対戦するか、手番ごとに交代して遊ぶかを選べます。</li>
+      <li><b class="k">CPUの強さ</b>：初級／中級／上級（既定は中級）。</li>
+      <li><b class="k">1手の制限時間</b>：なし／15秒／30秒／60秒（既定はなし）。時間切れの時はランダムな一手／負けを選べます（既定はランダムな一手）。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：自分の駒を2つ以上重ねたポイント（ポイント作り）は、相手が止まれない壁になります。特に自分の陣地の5番のポイントと、バーの外の7番のポイントは価値の高い場所です。最初の1手の定番は、3と1なら5のポイントを作る、6と1ならバーの外にポイントを作る手です。駒を1つずつ残したまま進める（ブロットを残す）のは、相手に打たれる危険があるので、できれば2つ重ねて進みましょう。</li>
+      <li><b class="k">有利に進める</b>：壁を並べて「プライム」を作りましょう。壁が6つ続くと、相手の駒はそれを越えられなくなります。後ろに残った相手の駒を閉じ込めるのが強力な作戦です。ブロットの危険を数えましょう。相手の駒から1〜6マス先のブロットは、36通りの目のうち11通り以上で打たれます。7マス以上離れると、ぐっと打たれにくくなります。ピップ数（ゴールまでの残りの目の合計）で、競走で勝っているか負けているかを判断します。勝っていれば駒をすれ違わせて競走へ進み、負けていれば相手の陣地に残って打つ機会を待ちます。</li>
+      <li><b class="k">上級</b>：相手の陣地に自分のポイントを作って残しておく「アンカー」は、相手が逃げる時に打つ機会を生みます。大きく負けている時は、あえて後ろに駒を残し、相手が上げる時に打って逆転を狙う「バックゲーム」も強力です。終盤の上げでは、ぴったりの目で上げる駒と大きい目で上げる駒の順番を考え、目の無駄を減らしましょう。相手がまだ陣地に入っていない駒を持っている時は、上げを急がず、相手の駒が戻る隙を与えないよう注意します。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. サイコロを振って駒を進める", d: "2つの目を使い、駒を進めます。白は24から1へ向かって進みます。", src: "bg-step1.mp4" },
+    { t: "2. バーから戻して相手の駒を打つ", d: "バーにある駒は先に戻します。相手の駒が1つだけの場所に止まると、その駒を打ってバーへ送れます。", src: "bg-step2.mp4" },
+    { t: "3. 全部集めたら盤の外へ上げる", d: "15個全部が自分の陣地に入ったら、サイコロの目で盤の外へ上げます。先に全部上げた方の勝ちです。", src: "bg-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

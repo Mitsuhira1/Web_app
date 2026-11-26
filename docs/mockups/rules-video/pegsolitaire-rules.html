@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：ペグ・ソリティア</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>ペグ・ソリティア の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="pg-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">1人用パズル</b>：イギリス式は33穴にペグ32本、中央の穴だけが空いた状態から始まります。</li>
+      <li><b class="k">動けるペグ</b>：隣（上下左右）にペグがあり、その先が空き穴になっているペグだけが動けます。斜めには飛べません（三角形盤は6方向に飛べます）。</li>
+      <li><b class="k">待った</b>：詰んでしまったら「待った」で一手戻せます。</li>
+      <li><b class="k">ペグの色</b>：色は見た目の違いだけで、性能差はありません。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">盤面の形</b>：イギリス式（33穴・標準）／ヨーロッパ式（37穴）／三角形（15穴・斜め移動あり）。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：端や角のペグから処理すると詰みにくいです。中央付近に空き穴を残しておくと手が続きます。逆に、周りが全部空いてしまった孤立ペグは二度と動かせないので作らないこと。</li>
+      <li><b class="k">有利に進める</b>：ペグの固まりは、同じ向きのジャンプを続けて端から崩すのが基本です。飛び越えた先に次のジャンプが待っている「連鎖」になる着地を選ぶと、盤面が一気に片付きます。</li>
+      <li><b class="k">上級</b>：終盤は残り5本前後から逆算しましょう。最後の1本を中央に残すには、終盤のジャンプが中央の周りで完結する順序が必要です。詰んだら、行き止まりになった数手前まで「待った」で戻って分岐を変えるのが近道です。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. ペグを選んで飛び越える", d: "ペグを選び、隣のペグを飛び越えてその先の空き穴へ動かします。飛び越えたペグは取り除かれます。最初は中央の穴だけが空いています。", src: "pg-step1.mp4" },
+    { t: "2. 1手で1本ずつ消えていく", d: "飛び越えるたびにペグが1本ずつ減ります。着地できる空き穴がなくならないよう、次の手も考えながら進めます。", src: "pg-step2.mp4" },
+    { t: "3. 残り1本でクリア", d: "動かせるペグがなくなったとき、残りが1本ならクリアです。最後の1本が中央の穴に残るとパーフェクトになります。", src: "pg-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>

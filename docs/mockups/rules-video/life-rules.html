@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ルール動画：人生すごろく</title>
+<style>
+  :root{ --ink:#3a2c18; --sub:#8a7a5c; --line:#e3d7bd; --gold:#b5851c; --bg:#f6efdd; --panel:#fffdf6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"Hiragino Maru Gothic ProN","Zen Maru Gothic",sans-serif; background:var(--bg); color:var(--ink); }
+  .dlg{ max-width:1060px; margin:18px auto; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 20px 20px; box-shadow:0 10px 30px #0002; }
+  h1{ font-size:20px; margin:2px 0 4px; }
+  .lead{ color:var(--sub); font-size:13px; margin:0 0 14px; }
+  .cols{ display:flex; gap:16px; align-items:flex-start; }
+  .steps{ width:300px; flex:none; display:flex; flex-direction:column; gap:8px; }
+  .step{ text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; font:inherit; }
+  .step b{ display:block; font-size:15px; margin-bottom:2px; }
+  .step span{ font-size:12px; color:var(--sub); line-height:1.5; display:block; }
+  .step.on{ border-color:var(--gold); background:#fdf3d7; box-shadow:0 0 0 2px #b5851c33; }
+  .stage{ flex:1; min-width:0; }
+  video{ width:100%; border-radius:12px; background:#222; display:block; }
+  .cap{ font-size:13px; color:var(--sub); margin-top:8px; }
+  .sec{ border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px 16px 6px; margin-top:14px; }
+  .sec h2{ font-size:16px; margin:0 0 8px; color:var(--ink); }
+  .sec p, .sec li{ font-size:13.5px; line-height:1.7; }
+  .sec ul{ margin:0 0 8px; padding-left:20px; }
+  .sec li{ margin-bottom:4px; }
+  .sec b.k{ color:var(--gold); }
+  @media (max-width:760px){ .cols{ flex-direction:column; } .steps{ width:100%; } }
+</style>
+</head>
+<body>
+<div class="dlg">
+  <h1>人生すごろく の遊び方</h1>
+  <p class="lead">ステップを選ぶと、実際の盤面の短い動画で説明します。</p>
+  <div class="cols">
+    <div class="steps" id="steps"></div>
+    <div class="stage">
+      <video id="v" src="lf-step1.mp4" autoplay muted playsinline controls></video>
+      <p class="cap" id="cap"></p>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>補足</h2>
+    <ul>
+      <li><b class="k">進み方</b>：ルーレット（1〜10）を回して、町から夢の山の頂上まで進みます。止まったマスの出来事でお金が増えたり減ったりします。全員がゴールするか「はじまりの村」に着いたら、家とお宝を売り、手形を返して、お金のいちばん多い人の勝ちです。</li>
+      <li><b class="k">給料日と家のマス</b>：給料日（赤）と家のマスは、通り過ぎるだけでも給料が入ったり家を買えたりします。</li>
+      <li><b class="k">「ストップ！」とぴったりボーナス</b>：「ストップ！」のマスは数が余っても必ず止まります。ぴったりボーナスは、ちょうど止まった時だけ給料3回分がもらえます。</li>
+      <li><b class="k">職業</b>：職業のマスに止まると、空いている職業に就けます。最初の給料日までに職業がない人はフリーターで、給料はルーレットの数×$1,000です。</li>
+      <li><b class="k">ゆめチケット</b>：1人5枚まで持てます。「はらう」マスを「もらう」に変えたり、ランクアップ・転職・フリーターの就職に使います。ゴールでの価値は$0です。</li>
+      <li><b class="k">結婚</b>：結婚のマスでルーレットを回し、出た数×$1,000をお祝いとして全員からもらいます。1〜7は近場コース、8〜10は世界コースです。</li>
+      <li><b class="k">ゆめの谷</b>：入り口ではゆめチケット0〜2枚で谷の格（ゴールド・プラチナ・レジェンド）を決めます。格は全員に共通で、下がることはありません。続けてルーレットの1〜7はお金コース、8〜10はお宝コースです。</li>
+      <li><b class="k">家とお宝</b>：家は1人1軒まで。マンションだけ6人まで買え、ほかは早い者勝ちです。お宝は谷の格で引ける種類が変わります。「ドッカン玉」を持ったままゴールすると、ほかのお宝の価値が全部$0になります。</li>
+      <li><b class="k">約束手形と精算所</b>：お金が足りない時は自動で約束手形を出して$20,000ずつ借ります。回す前なら$20,000で1枚返せます。ふもとの精算所では子ども1人につき$50,000もらい、手形1枚$25,000で全部返します。足りなければ家を買値の2倍、お宝を2倍で売ります。それでも足りなければ持ち物を場にもどして「はじまりの村」へ行きます。</li>
+      <li><b class="k">ゴール後と順位</b>：頂上に着いた人は、着いた順に場のお宝を1つ選びます。その後は番のたびに数1つを決めて回し、当たれば$20,000。村の人は番のたびに回して7が出ると村のお宝「ふしぎなふくろ」をもらいます（持っている時は$10,000）。最後に、お金＋家（買値の3倍）＋お宝−手形（1枚$20,000）で順位を決めます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>ローカルルール</h2>
+    <ul>
+      <li><b class="k">対戦人数</b>：4人固定（自分＋CPU 3人）。設定画面に人数の選択肢はありません。</li>
+      <li><b class="k">CPUの強さ</b>：初級／中級／上級から選べます。</li>
+      <li><b class="k">盤の長さ</b>：短縮版（88マス）／本来の長さ（141マス）から選べます。</li>
+      <li><b class="k">制限時間</b>：なし／ありから選べます。</li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>コツ</h2>
+    <ul>
+      <li><b class="k">基本</b>：職業は早めに就きましょう。フリーターのまま最初の給料日（15マス目）を迎えると、給料がルーレットの数×$1,000だけになってしまいます。給料日は通り過ぎるだけでも給料が入るので、給料の高い職業ほど、通り過ぎるたびに差が開いていきます。</li>
+      <li><b class="k">有利に進める</b>：家は最後に買値の3倍で売れるので、早めに高い家を買うほど有利です。マンションは6人まで買えますが、ほかの家は早い者勝ちなので、高い家が出たら迷わず買いましょう。ゆめチケットは「はらう」を「もらう」に変える使い方が地味に強く、精算所の前に手形を返しておくと、$25,000ではなく$20,000で返せます。</li>
+      <li><b class="k">上級</b>：ゆめの谷の格は全員に共通で下がらないため、誰かがレジェンドに上げると全員が恩恵を受けます。自分が上げるか、誰かが上げるのを待つかの判断が分かれ目です。「ドッカン玉」を持ったままゴールするとほかのお宝が全部$0になるので、持っている時はゴール前に手放す算段を立てましょう。ゴール後は番のたびに数を決めて回し、当たれば$20,000もらえるので、着いた順位だけでなくその後の当て勘も最後まで効いてきます。</li>
+    </ul>
+  </section>
+</div>
+<script>
+  const STEPS = [
+    { t: "1. ルーレットを回して進む", d: "自分の番になったらルーレットを回し、出た数だけコマが進みます。職業のマスに止まると、その職業に就けます。", src: "lf-step1.mp4" },
+    { t: "2. 結婚のマスで止まる", d: "結婚のマスに止まると、もう一度ルーレットを回し、出た数×$1,000をお祝いとして全員からもらえます。", src: "lf-step2.mp4" },
+    { t: "3. ゴールしてお宝を選ぶ", d: "夢の山の頂上に着いたら、着いた順に場のお宝を1つ選べます。金のさかずきは$200,000です。", src: "lf-step3.mp4" },
+  ];
+  const box = document.getElementById('steps');
+  const v = document.getElementById('v');
+  const cap = document.getElementById('cap');
+  let cur = 0;
+  STEPS.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.className = 'step' + (i === 0 ? ' on' : '');
+    b.innerHTML = '<b>' + s.t + '</b><span>' + s.d + '</span>';
+    b.onclick = () => play(i);
+    box.appendChild(b);
+  });
+  function play(i) {
+    cur = i;
+    [...box.children].forEach((el, k) => el.classList.toggle('on', k === i));
+    v.src = STEPS[i].src;
+    cap.textContent = STEPS[i].t + '：' + STEPS[i].d;
+    v.play().catch(() => {});
+  }
+  v.addEventListener('ended', () => { if (cur + 1 < STEPS.length) play(cur + 1); });
+  cap.textContent = STEPS[0].t + '：' + STEPS[0].d;
+</script>
+</body>
+</html>
