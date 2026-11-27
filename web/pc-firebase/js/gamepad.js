@@ -103,6 +103,7 @@
 
   function clearFocus(keepRef = false) {
     document.querySelectorAll('.gp-focus').forEach((e) => e.classList.remove('gp-focus'));
+    document.body.classList.remove('gpnav');
     if (!keepRef) curFocus = null;
   }
 
@@ -111,6 +112,7 @@
     document.querySelectorAll('.gp-focus').forEach((e) => {
       if (e !== el) e.classList.remove('gp-focus');
     });
+    document.body.classList.add('gpnav');
     curFocus = el;
     el.classList.add('gp-focus');
     try { el.focus({ preventScroll: true }); } catch (e) {}
@@ -126,7 +128,7 @@
 
   function ensureFocus() {
     if (curFocus && curFocus.isConnected && getScope().contains(curFocus) && isActionable(curFocus)) {
-      if (!curFocus.classList.contains('gp-focus')) curFocus.classList.add('gp-focus');
+      if (!curFocus.classList.contains('gp-focus')) { curFocus.classList.add('gp-focus'); document.body.classList.add('gpnav'); }
       return curFocus;
     }
     const all = getCandidates();
@@ -145,6 +147,14 @@
   function moveFocus(dirKey) {
     const all = getCandidates();
     if (!all.length) return;
+    /* キーボード等でフォーカスが別の要素へ移っていたら、それを現在の枠として取り込む */
+    const ae = document.activeElement;
+    if (ae && ae !== curFocus && all.includes(ae)) {
+      document.querySelectorAll('.gp-focus').forEach((e) => { if (e !== ae) e.classList.remove('gp-focus'); });
+      curFocus = ae;
+      ae.classList.add('gp-focus');
+      document.body.classList.add('gpnav');
+    }
     if (!curFocus || !all.includes(curFocus)) {
       ensureFocus();
       return;
@@ -296,8 +306,14 @@
     const ay = gp.axes && gp.axes.length > base + 1 ? gp.axes[base + 1] : 0;
     return [ax || 0, ay || 0];
   }
-  function updateStickCursor(gp, now, cfgGame, modalOpen) {
-    if (modalOpen) { if (cur.shown) hideCursor(); cur.lastNow = now; return; }
+  /* カーソルを絶対に使わないゲーム(盤は表示のみで、操作は方向+ボタンの離散操作だけ):
+     パクリス/ぶにょぶにょ=盤へのクリック自体が無く、操作は方向キーとボタンで完結する。
+     チンチロリン=対局中の操作は「サイコロを振る」の単一アクションのみで、盤上の位置を選ぶ操作が無い。
+     (人生すごろく=進路の選択、スライドパズル=タイルを指す、ヨット=サイコロを指す、坊主めくり=山を選ぶ、
+      ルーレット=ベット位置、カードゲーム=手札の選択、など「指す」操作があるゲームは対象外) */
+  const NO_CURSOR_GAMES = new Set(['pakuris', 'bunyo', 'chinchiro']);
+  function updateStickCursor(gp, now, cfgGame, blocked) {
+    if (blocked) { if (cur.shown) hideCursor(); cur.lastNow = now; return; }
     const [sx, sy] = cursorStick(gp, cfgGame);
     const mag = Math.hypot(sx, sy);
     const dt = Math.min(64, Math.max(1, now - (cur.lastNow || now)));
@@ -444,15 +460,46 @@
     if (act && act !== 'up' && act !== 'down' && act !== 'left' && act !== 'right') commonAction(act);
   }
 
-  /* キーコンフィグ画面を開いている時のボタン(タブ切替・決定・キャンセルだけを受け付ける) */
-  function modalButton(btn) {
-    const act = PADCFG.actionFor('common', btn);
+  /* シート(終了確認・設定など)やモーダルを開いている時のボタン。
+     ゲーム側の割り当ては一切使わず、共通の割り当てだけでダイアログ内を操作する
+     (決定=枠の要素を押す / キャンセル=閉じる / タブ切替)。方向は focusRepeat が枠を動かす */
+  function overlayButton(btn) {
+    const act = (typeof PADCFG !== 'undefined') ? PADCFG.actionFor('common', btn) : null;
     if (!act) return;
-    if (act === 'ok') triggerClick(ensureFocus());
-    else if (act === 'cancel') PADCFG.close();
-    else if (act === 'tabPrev') { PADCFG.tab = 'common'; PADCFG.waiting = null; PADCFG.refresh(); }
-    else if (act === 'tabNext') { PADCFG.tab = 'game'; PADCFG.waiting = null; PADCFG.refresh(); }
-    else if (act === 'settings') PADCFG.close();
+    if (act === 'ok') { if (!clickAtCursor()) triggerClick(ensureFocus()); return; }
+    if (act === 'cancel') { handleCancel(); return; }
+    if (act === 'tabPrev') return handleBumper(-1);
+    if (act === 'tabNext') return handleBumper(1);
+    // up/down/left/right は focusRepeat が処理する。settings/chat はダイアログ表示中は無効
+  }
+
+  /* パクリス/ぶにょぶにょ: 左スティックも十字キーと同じ方向操作として使う。
+     倒した方向に割り当てられた操作(そのゲームの十字キー割り当て)を出す。
+     押し続け: 初回は即時 → DAS 160ms の後に ARR 40ms で連続(テトリス/ぷよぷよの標準的な操作感)。
+     ハードドロップ等の単発操作は、倒した瞬間に1回だけ出す */
+  const stickFallState = { dir: '', nextAt: 0, startedAt: 0 };
+  const FALL_ACT_MAP = { left: 'left', right: 'right', down: 'down', drop: 'drop', rotR: 'rotate', rotL: 'rotateL', hold: 'hold' };
+  function stickFall(gp, now, cfgGame) {
+    const ax = gp.axes && gp.axes.length > 0 ? gp.axes[0] : 0;
+    const ay = gp.axes && gp.axes.length > 1 ? gp.axes[1] : 0;
+    let dir = '';
+    if (Math.abs(ax) > 0.55 || Math.abs(ay) > 0.55) dir = Math.abs(ax) >= Math.abs(ay) ? (ax > 0 ? 'right' : 'left') : (ay > 0 ? 'down' : 'up');
+    if (!dir) { stickFallState.dir = ''; return; }
+    const btn = { left: 'dleft', right: 'dright', down: 'ddown', up: 'dup' }[dir];
+    const act = (typeof PADCFG !== 'undefined') ? PADCFG.actionFor(cfgGame, btn) : null;
+    const m = act ? FALL_ACT_MAP[act] : null;
+    if (!m) { stickFallState.dir = ''; return; }
+    const game = cfgGame === 'pakuris' ? pakurisGame : bunyoGame;
+    if (m !== 'left' && m !== 'right' && m !== 'down') {
+      if (stickFallState.dir !== dir) { stickFallState.dir = dir; game.action(m); }
+      return;
+    }
+    if (stickFallState.dir !== dir) {
+      stickFallState.dir = dir; stickFallState.startedAt = now; stickFallState.nextAt = now + 160;
+      game.action(m);
+      return;
+    }
+    if (now >= stickFallState.nextAt) { stickFallState.nextAt = now + 40; game.action(m); }
   }
 
   /* 方向の連続入力(選択枠移動)。now は rAF の時刻 */
@@ -525,26 +572,27 @@
     const pressed = (i) => !!pressedArr[i];
     const justPressed = (i) => pressedArr[i] && !prev[i];
 
-    const modalOpen = (typeof PADCFG !== 'undefined') && PADCFG.isOpen();
-    const capturing = modalOpen && PADCFG.isCapturing();
+    const padcfgOpen = (typeof PADCFG !== 'undefined') && PADCFG.isOpen();
+    /* キーコンフィグ以外のシート(終了確認・設定など)/モーダルが開いているか */
+    const overlayOpen = !padcfgOpen && !!(document.querySelector('#sheetwrap') || document.querySelector('.modal'));
     const cfgGame = currentCfgGame();
-    const fg = (!modalOpen && PLAY_SCREENS.includes(S.screen)) ? fallingGame() : null;
+    const appGame = (typeof PADCFG !== 'undefined') ? PADCFG.currentGame() : null;
+    const noCursor = !!appGame && NO_CURSOR_GAMES.has(appGame);
+    const fg = (!padcfgOpen && !overlayOpen && PLAY_SCREENS.includes(S.screen)) ? fallingGame() : null;
 
-    updateStickCursor(gp, now, cfgGame, modalOpen);
+    updateStickCursor(gp, now, cfgGame, padcfgOpen || overlayOpen || noCursor);
 
     // 方向入力
-    if (capturing) {
+    if (padcfgOpen) {
+      /* コンフィグ画面を開いている間、パッド入力は padconfig 側だけが受け取る
+         (割り当て待ちの取り込みとパッド図のハイライトのみ)。ここでは何もしない */
       repeatState.dir = ''; repeatState.nextAt = 0;
+      stickFallState.dir = '';
     } else if (fg) {
       fallingHeld(gp, pressedArr, now, fg);
-    } else if (modalOpen) {
-      let dir = '';
-      if (pressed(12)) dir = 'ArrowUp';
-      else if (pressed(13)) dir = 'ArrowDown';
-      else if (pressed(14)) dir = 'ArrowLeft';
-      else if (pressed(15)) dir = 'ArrowRight';
-      focusRepeat(dir, now);
+      stickFall(gp, now, fg);
     } else {
+      stickFallState.dir = '';
       let dir = '';
       if (typeof PADCFG !== 'undefined') {
         for (const [act, dk] of [['up', 'ArrowUp'], ['down', 'ArrowDown'], ['left', 'ArrowLeft'], ['right', 'ArrowRight']]) {
@@ -555,10 +603,10 @@
       focusRepeat(dir, now);
     }
 
-    // 右スティックでスクロール
+    // 右スティックでスクロール(コンフィグ画面では反映しない)
     const rx = gp.axes && gp.axes.length > 2 ? gp.axes[2] : 0;
     const ry = gp.axes && gp.axes.length > 3 ? gp.axes[3] : 0;
-    if (Math.abs(rx) > 0.25 || Math.abs(ry) > 0.25) {
+    if (!padcfgOpen && (Math.abs(rx) > 0.25 || Math.abs(ry) > 0.25)) {
       const box = (curFocus && curFocus.closest('.main, .setupbody, .mbody, .lifemap, #boardwrap, .log')) ||
         document.querySelector('.mbody, .setupbody, .main, .lifemap');
       if (box) box.scrollBy(Math.abs(rx) > 0.25 ? rx * 14 : 0, Math.abs(ry) > 0.25 ? ry * 14 : 0);
@@ -567,9 +615,9 @@
     // ボタンエッジ
     for (let i = 0; i < 16; i++) {
       if (!justPressed(i)) continue;
-      if (capturing) continue;                    // 割り当て待ちは padconfig 側が受け取る
+      if (padcfgOpen) continue;                    // コンフィグ画面では padconfig 側だけが受け取る
       const btn = PAD_ID_BY_INDEX[i];
-      if (modalOpen) { modalButton(btn); continue; }
+      if (overlayOpen) { overlayButton(btn); continue; }
       if (fg && i >= 12 && i <= 15) continue;      // 落ちもの中は十字キーを fallingHeld が処理する
       dispatchButton(btn);
     }

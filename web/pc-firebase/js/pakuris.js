@@ -223,10 +223,13 @@ const pakurisGame = (() => {
   }
   function cpuDriver(level) {
     const L=LEVEL[level]||LEVEL.normal;
+    /* シングルプレイで設定・確認を開いている間は、CPU の手を進めない(app.js の modalPause) */
+    const waitUi = async () => { while (typeof modalPause === 'function' && modalPause()) await sleep(200); };
     return { level, plan(board) {
       const gen=board.gen, id=board.pieceId;
       setTimeout(async ()=>{
         if (gen!==board.gen||board.pieceId!==id||!board.piece) return;
+        await waitUi(); if (gen!==board.gen||board.pieceId!==id||!board.piece) return;
         const k=board.piece.k, nextK=board.queue[0];
         const list=drops(board.grid,k).map(d=>{ let v=judge(d.grid,d.lines);
           if (L.depth>1) { let best=-1e9; for (const e of drops(d.grid,nextK)) best=Math.max(best,judge(e.grid,e.lines)); v=v*.5+best*.5; }
@@ -235,7 +238,7 @@ const pakurisGame = (() => {
         const turn=pick.r;
         if (turn===3) { board.rotate(-1); await sleep(L.step); } else for (let i=0;i<turn;i++) { if (gen!==board.gen||board.pieceId!==id) return; board.rotate(1); await sleep(L.step); }
         for (let i=0;i<12&&board.piece&&board.piece.x!==pick.x;i++) { if (gen!==board.gen||board.pieceId!==id) return; if (!board.move(Math.sign(pick.x-board.piece.x))) break; await sleep(L.step); }
-        if (gen===board.gen&&board.pieceId===id) { await sleep(L.step); if (gen===board.gen&&board.pieceId===id) board.hard(); }
+        if (gen===board.gen&&board.pieceId===id) { await sleep(L.step); await waitUi(); if (gen===board.gen&&board.pieceId===id) board.hard(); }
       }, L.think*(.7+Math.random()*.6));
     }};
   }

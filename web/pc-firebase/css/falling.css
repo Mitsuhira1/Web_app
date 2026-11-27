@@ -87,6 +87,9 @@ canvas.ffx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
 
 /* 札(パクリスの消し方・REN) */
 .ftags{display:flex;flex-direction:column;gap:6px;align-items:flex-end;width:100%;min-height:110px;justify-content:flex-end}
+/* パクリスの札(BACK to BACK 等)は横幅が広く、出すたびに横の欄が広がって盤が左右に動いていた。
+   札の欄は一番広い札でも収まる幅を常に確保し、盤の位置が変わらないようにする */
+.f-pakuris .ftags{min-width:132px}
 .ftag{font-family:"Dela Gothic One",var(--font);font-size:13px;letter-spacing:.04em;padding:5px 9px;border-radius:8px;color:#fff;white-space:nowrap;box-shadow:0 3px 8px #0003;animation:ftagIn .28s cubic-bezier(.2,1.6,.4,1) both;transform-origin:right center}
 .ftag.out{animation:ftagOut .3s ease-in both}
 .ftag.lines{background:linear-gradient(180deg,#36C2E6,#1B86C4)}

@@ -56,6 +56,12 @@
 
 ## 5. 変更の記録(新しいものを上に)
 
+### 2026-11-27 / Claude / ゲームパッド・キーコンフィグの修正 6 件(Muse の ZIP)を取り込み
+
+- 前回(キーコンフィグ本実装)の ZIP を基準に、公開側のロビー画面・ルール動画・詳細シートの変更を残して 3 者マージで取り込んだ(`js/app.js`・`css/app.css`・`sw.js`)。ほかの 6 ファイル(`gamepad.js`・`falling.css`・`falling-match.js`・`pakuris.js`・`bunyo.js`・`mines.js`)は ZIP の版。
+- 内容(Muse の記録のとおり): (1) パクリスの札で横の欄が広がり盤が動く不具合 (2) メニューの選択枠が 2 つ見える問題 (3) キーコンフィグ画面中はパッド入力を処理しない (4) シート/モーダル表示中は共通割り当てだけでダイアログを操作 (5) シングルプレイでシート/モーダル表示中は一時停止する `modalPause()`(落下時計・CPU・制限時間・マインスイーパーのタイマー。通信対戦は止めない) (6) カーソルを使わないゲーム(pakuris/bunyo/chinchiro)ではスティックでカーソルを出さず、パクリス/ぶにょぶにょはスティックを方向操作化。sw.js CACHE = asobipcfb-20261127-padconfig-2。
+- 確かめたこと: JS 構文チェック、`test_falling_rules` 11 passed、ロビー入口・詳細シートの引き閉じ・キーコンフィグ画面の表示・ルール動画が従来どおり。パッドの実操作・一時停止などは Muse 側のセルフチェックに頼っており、こちらでは未確認(CHECKLIST_PENDING の AF)。
+
 ### 2026-11-27 / Claude / ゲームパッドのキーコンフィグ(Muse 実装・承認済み v11)を取り込み＋選択枠ナビの修正
 
 - ZIP(asobi-padconfig-impl-20261127)の内容を、公開側に入っているロビー画面・ルール動画・詳細シートの変更を残したまま 3 者マージで取り込んだ(上書きはしていない)。新規 `js/padconfig.js`(定義・保存・設定画面・ベンダー判別)、`js/gamepad.js` 全面改修(割り当て参照・スティック専用カーソル・6 ゲームの実効)、`js/app.js`(`padButton`・行タイプ `padcfg`・`navMove` の幾何修正)、`js/online.js`(部屋時の詳細欄のフッタに `padButton` を追加。「遊び方」は ZIP 側の版に残っていたが、ユーザー指示(2026-11-24)で消したままにした)、`js/boards/nine.js`(ブロックスの反転フック)、`css/app.css` 末尾にキーコンフィグ用、`index.html`・`sw.js`(CACHE = asobipcfb-20261127-padconfig-1。FILES に padconfig.js と rules-steps.js の両方)。

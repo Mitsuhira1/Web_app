@@ -299,6 +299,15 @@ const minesGame=(()=>{
   }
   redraw();
  }
- setInterval(()=>{if(S.screen==='minePlay'&&board?.status==='playing'&&started)tick();},1000);
+ /* シングルプレイで設定・確認を開いている間は、タイマーを止める(開いていた時間を started に足して差し引く)。
+    協力プレイ(onlineMode)では止めない */
+ let pauseMark=0;
+ setInterval(()=>{
+  if(S.screen!=='minePlay'||!board){pauseMark=0;return;}
+  const pz=!onlineMode&&typeof modalPause==='function'&&modalPause();
+  if(pz){if(started&&!pauseMark)pauseMark=performance.now();return;}
+  if(pauseMark){if(started)started+=performance.now()-pauseMark;pauseMark=0;}
+  if(board.status==='playing'&&started)tick();
+ },250);
  return{setup,setupHtml,setMode,start,playHtml,mounted,move,exit,personal,personalOptions,setPersonal,remote,actionFromGuest,requestUndo,stop,Board,LEVELS,paint,cellHtml,mountZoom,resetZoom,resetZoomState:()=>{Z.s=1;Z.x=0;Z.y=0;},longPressedRecently:()=>performance.now()-lastLong<900,get level(){return level},set level(v){if(Object.hasOwn(LEVELS,v)){level=v;store.set('mineCoopLevel',v);}},get flagMode(){return flagMode},set flagMode(v){flagMode=!!v},get board(){return board}};
 })();

@@ -173,8 +173,10 @@ const fallingMatch = (() => {
   /* ------------------------------------------------ 画面の並び */
   /* 「つぎ」の欄の幅(盤の大きさで変わる) */
   const nextWidth = (id,c) => id==='bunyo' ? Math.max(9,Math.round(c*.78))+30 : c<18 ? Math.max(28,Math.round(c*2.4)) : Math.max(58,Math.min(84,Math.round(c*3.1)));
+  /* 横の欄の幅: パクリスは札(.ftags の min-width 132px)の分も確保する(盤の位置が札で動かないように、大きさ計算も合わせる) */
+  const sideWidth = (id,c) => Math.max(nextWidth(id,c), id==='pakuris'?132:0);
   /* 1人分の幅: 盤 + (パクリスは目盛り) + つぎ + すき間 */
-  const playerWidth = (id,c) => games[id].W*c+4+(id==='pakuris'?11:0)+nextWidth(id,c)+10;
+  const playerWidth = (id,c) => games[id].W*c+4+(id==='pakuris'?11:0)+sideWidth(id,c)+10;
   function sizesFor(id, n) {
     const g=games[id], mob=isMob(), H=g.H, k=n-1;
     /* スマホ: 画面の高さから、上の見出し・下の側板(共通)を引いた分に収める(スクロールしない)。はみ出したら mountViews で 1 段ずつ小さくする */
@@ -294,6 +296,9 @@ const fallingMatch = (() => {
   setInterval(() => {
     if (!ses || document.hidden) return;
     const scr=ses.mode==='online'?'extraPlay':ses.id+'Play'; if (S.screen!==scr) return;
+    /* シングルプレイ(CPU戦を含む)では、設定・終了確認などのシート/モーダルを開いている間は落下を止める。
+       止めている間は nextAt を戻し、閉じた時にまとめて落ちないようにする。通信対戦は止めない */
+    if (ses.mode!=='online' && (S.modal || $('#sheetwrap'))) { for (const pl of ses.players) if (pl.board) pl.board.nextAt=0; return; }
     const now=performance.now(), g=games[ses.id];
     for (const pl of ses.players) { const b=pl.board; if (!b||b.over||b.stopped) continue;
       /* 早送り(↓を押したまま・スマホは長押し): 速く落とす。底に着いた後の 1 拍はそのまま(パクリスの tick) */

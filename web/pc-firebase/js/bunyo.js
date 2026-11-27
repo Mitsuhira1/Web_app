@@ -268,17 +268,20 @@ const bunyoGame = (() => {
   }
   function cpuDriver(level) {
     const L=LEVEL[level]||LEVEL.normal;
+    /* シングルプレイで設定・確認を開いている間は、CPU の手を進めない(app.js の modalPause) */
+    const waitUi = async () => { while (typeof modalPause === 'function' && modalPause()) await sleep(200); };
     return { level, plan(board) {
       const gen=board.gen, pair=board.pair, id=board.pairId; if (!pair) return;
       setTimeout(async ()=>{
         if (gen!==board.gen||board.pairId!==id||!board.pair) return;
+        await waitUi(); if (gen!==board.gen||board.pairId!==id||!board.pair) return;
         const danger=Math.max(...Array.from({length:W},(_,x)=>H-1-landRow(board.cells,x)))>=8;
         const list=placements(board.cells,pair.a,pair.b).map(pl=>({...pl,v:evaluate(pl.cells,L.depth,board.next[0],danger)+(Math.random()-.5)*L.noise}));
         list.sort((p,q)=>q.v-p.v); const pick=list[Math.floor(Math.random()*Math.min(L.top,list.length))]; if (!pick) return board.hard();
         const turn=(pick.dir-board.pair.dir+4)%4;
         for (let i=0;i<(turn===3?1:turn);i++) { if (gen!==board.gen||!board.pair) return; board.rotate(turn===3?-1:1); await sleep(L.step); }
         for (let i=0;i<8&&board.pair&&board.pair.x!==pick.x;i++) { if (gen!==board.gen) return; if (!board.move(Math.sign(pick.x-board.pair.x))) break; await sleep(L.step); }
-        if (gen===board.gen&&board.pair) { await sleep(L.step); if (gen===board.gen) board.hard(); }
+        if (gen===board.gen&&board.pair) { await sleep(L.step); await waitUi(); if (gen===board.gen&&board.pair) board.hard(); }
       }, L.think*(.7+Math.random()*.6));
     }};
   }

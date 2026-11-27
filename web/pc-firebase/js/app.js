@@ -559,6 +559,8 @@ async function refresh() {
       setStatus('動かせないので、パスします');
       await new Promise((r) => setTimeout(r, 1100));
       if (my !== token || revision !== refreshRevision) return;
+      while (modalPause() && my === token) await new Promise((r) => setTimeout(r, 200));
+      if (my !== token || revision !== refreshRevision) return;
       if (online) mainCore.onlinePlay(h, pm); else await call('playMove', h, pm);
       if (!online) pendSnd = pm;
       return refresh();
@@ -605,6 +607,9 @@ async function cpuTurn(my, opts = {}) {
   const delay = bsPlacing ? 0 : cur.id === 'roulette' ? 90 : usesExtraCpuPace(cur.id) ? extraCpuDelay(choice) : (PACE[choice] || 450) * Math.max(0.3, SPEED());
   const wait = delay - (performance.now() - t0);
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  if (my !== token) return;
+  /* 設定・確認を開いている間は、CPU は手を出さずに待つ(シングルプレイのみ。modalPause が判定) */
+  while (modalPause() && my === token) await new Promise((r) => setTimeout(r, 200));
   if (my !== token) return;
   if (auto && (!online || !view || view.outcome || view.toMove !== forSeat || !isSeatAutoCpu(forSeat))) {
     busy = false; cpuTurnKey = ''; hideCursor(); drawPlay(); return refresh();
@@ -946,6 +951,7 @@ function rouletteCpuLoop(seat, my) {
   const end = () => { rlCpu.timers.delete(seat); rlCpu.busy.delete(seat); };
   async function step() {
     if (my !== token || !view || view.outcome || S.screen !== 'play') return end();
+    if (modalPause()) return next(300); // 設定・確認を開いている間は打たない
     // 回転盤の表示・カットインの間は打たない
     const lag = Math.max(animUntil, cutBusy) - performance.now();
     if (lag > 0) return next(lag + 80);
@@ -1012,6 +1018,7 @@ async function runConcurrent(my) {
   const wait = (cur.id === 'speed' ? [1700, 1200, 800][lvl] : 600) / Math.max(0.5, 1 / SPEED()) + Math.max(0, Math.max(animUntil, cutBusy) - performance.now());
   concTimer = setTimeout(async () => {
     concTimer = null; if (my !== token || !view || view.outcome) return;
+    if (modalPause()) return runConcurrent(my); // 設定・確認を開いている間は進めない
     const m = await call('cpuChooseSeat', h, seat, 80);
     if (my !== token) return;
     if (m >= 0) {
@@ -1062,6 +1069,7 @@ function startClock(my) {
   drawClock();
   clock.t = setInterval(async () => {
     if (my !== token || !clock) return stopClock();
+    if (modalPause()) return; // 設定・確認を開いている間は持ち時間を数えない
     clock.left--;
     if (clock.left > 0 && clock.left <= 5) sfx.play(clock.left <= 3 ? 'COUNT_LAST' : 'COUNT');
     drawClock();
@@ -1624,6 +1632,9 @@ function closeSheet() {
   if (s) { s.remove(); syncAppHistory(); }
 }
 function focusPrimary() { setTimeout(() => { const b = $('#sheet .btns .btn:last-child') || $('#sheet .btn.gold'); if (b) b.focus({ preventScroll: true }); }, 0); }
+/* シングルプレイ中だけ、シート(設定・終了確認など)やモーダルを開いている間は対局を一時停止する。
+   通信対戦(online)では止めない。各ゲームの進行側(時計・CPU・落下・タイマー)がこれを見て待つ */
+function modalPause() { return !online && (!!S.modal || !!$('#sheetwrap')); }
 
 // ---------------------------------------------------------------- 操作
 function openLocalSetup(id, clickCount) {
@@ -1991,6 +2002,9 @@ function navMove(key) {
   if (best) focusNav(best);
 }
 function focusNav(el) {
+  document.body.classList.add('gpnav');
+  /* パッド側の選択枠(.gp-focus)が別の要素に残っていたら消す(枠が2つにならないように) */
+  document.querySelectorAll('.gp-focus').forEach((e) => { if (e !== el) e.classList.remove('gp-focus'); });
   if (el.dataset.tile && S.screen === 'menu' && S.sel !== el.dataset.tile) { S.sel = el.dataset.tile; document.querySelectorAll('[data-tile]').forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.tile === S.sel))); const dt = $('.detail'); if (dt) dt.outerHTML = detail(); sfxHover(); }
   el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }

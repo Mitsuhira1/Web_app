@@ -2954,6 +2954,10 @@ body:has(#bgs:not([hidden])) .chatpop{bottom:calc(120px + env(safe-area-inset-bo
   box-shadow: 0 0 0 5px rgba(255, 198, 92, .34), 0 6px 16px rgba(0, 0, 0, .4) !important;
   z-index: 25;
 }
+/* 選択枠は常に1つだけにする: パッド/矢印キーで枠を動かしている間(body.gpnav)は、
+   選択中タイルの枠(.tile[aria-pressed])は、いま枠が当たっているタイル以外では出さない。
+   (サイドバーへ移ってもタイルの枠が残り、枠が2つ見える不具合の修正) */
+body.gpnav .tile[aria-pressed="true"]:not(:focus-visible):not(.gp-focus) { outline: none; }
 
 /* ---- チャット通知の強調表示 (#21) ---- */
 .toast.chat-toast {
