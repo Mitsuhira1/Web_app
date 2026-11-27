@@ -56,7 +56,9 @@
   // ------------------------------------------------------------ 大富豪
   function daifugo(b, A) {
     const t = b.tbl, me = A.mySeat, human = A.view.human, total = t.n.length;
-    A.round(`${t.round + 1}回戦`);
+    // 終了直後は状態が次の回戦に進んでいるため、終わった回までの数を出す(結果ダイアログ表示中の「N+1回戦」対策)
+    const roundNo = A.view.outcome && t.round >= (parseInt(A.cfg && A.cfg.opts && A.cfg.opts.rounds) || 3) ? t.round : t.round + 1;
+    A.round(`${roundNo}回戦`);
     const RANKN = ['大富豪', '富豪', '平民', '貧民', '大貧民'];
     const rankOf = (p) => t.place[p] >= 0 ? `${t.place[p] + 1}位で上がり` : t.prev[p] >= 0 ? (total === 4 ? [RANKN[0], RANKN[1], RANKN[3], RANKN[4]] : RANKN)[t.prev[p]] || '' : '';
     A.strip(b.scores.map((s, i) => `<div class="pl${s.turn ? ' turn' : ''}">${i === me ? A.face(24) : `<span class="dot face">${esc(A.name(i)[0])}</span>`}<span class="who"><span class="nm">${esc(A.name(i))}</span><span class="nt">${esc(rankOf(i) || t.pts[i] + '点')}</span></span><span class="num">${t.n[i]}</span></div>`).join(''));
@@ -73,7 +75,7 @@
     const nf = fresh(A, 'df', field.map((c) => c.id));
     const seats = seatsOf(A, total, me).map((s) => seatHtml(A, s, { count: t.n[s.seat], note: t.place[s.seat] >= 0 ? `${t.place[s.seat] + 1}位` : t.passed[s.seat] ? 'パス' : '', dim: t.place[s.seat] >= 0 })).join('');
     const tags = (t.rev ? '<span class="tag2 red">革命中</span>' : '') + (t.lock ? '<span class="tag2">しばり</span>' : '');
-    const center = `<div class="pile2">${field.length ? field.map((c) => pc(c.id, nf.includes(c.id) ? 'new' : '')).join('') : '<span class="none">場は空です</span>'}</div><div class="pinfo">${field.length && t.fieldOwner >= 0 ? `${esc(A.name(t.fieldOwner))} が出した札` : t.phase === 0 ? '札を交換します' : ''} ${tags}</div><div class="tround">${t.round + 1}回戦</div>`;
+    const center = `<div class="pile2">${field.length ? field.map((c) => pc(c.id, nf.includes(c.id) ? 'new' : '')).join('') : '<span class="none">場は空です</span>'}</div><div class="pinfo">${field.length && t.fieldOwner >= 0 ? `${esc(A.name(t.fieldOwner))} が出した札` : t.phase === 0 ? '札を交換します' : ''} ${tags}</div><div class="tround">${roundNo}回戦</div>`;
     const handHtml = handRow(hand, hand.map((c) => pc(c.id, `${picked.has(c.id) ? 'on' : ''} ${human && !can.has(c.id) ? 'no' : ''} ${human && can.has(c.id) ? 'tap' : ''}`, `data-card="${c.id}"`)).join(''));
     // 自分の札の前(卓の下の真ん中)にも、ほかの人と同じ名札と残りの枚数
     const mine = seatHtml(A, { seat: me, x: 50, y: 93 }, { count: t.n[me], note: t.place[me] >= 0 ? `${t.place[me] + 1}位` : t.passed[me] ? 'パス' : '', dim: t.place[me] >= 0 }).replace('class="tseat', 'class="tseat myseat');
@@ -322,7 +324,7 @@
       const m = hit != null ? hit : ms.length === 1 ? ms[0] : plain; if (m != null) { A.sel = null; A.play(m); } } });
     if (nfF.length && nfF.length < 3) fly(A, '.hfield .pc.new', t.phase === 1 || A.view.toMove === me ? -1 : opp, 320);
     if (nfC.length || nfO.length) A.anim(300);
-    const acts = b.buttons.filter((x) => t.phase !== 1 || !tgt.size).map((x) => ({ label: x.label, move: x.m, enabled: human, cls: x.label === 'こいこい' ? 'ohno' : undefined }));
+    const acts = b.buttons.filter((x) => t.phase !== 1 || x.m === 10000).map((x) => ({ label: x.label, move: x.m, enabled: human, cls: x.label === 'こいこい' ? 'ohno' : t.phase === 1 && x.m === 10000 ? 'gold' : undefined }));
     if (t.phase === 1 && human && tgt.size) acts.push({ label: '光っている場札から、取る札を選んでください', enabled: false, cls: '' });
     if (t.phase === 0 && human && sel >= 0 && hand[sel]) { const ms = movesOf(hand[sel]); const plain = ms.find((m) => (m - t.mPlay) % 64 === 0); if (ms.length === 1) acts.push({ label: tgt.size ? '合わせて取る' : '場に出す', enabled: true, cls: 'gold', fn: () => { A.sel = null; A.play(ms[0]); } }); else if (plain != null) acts.push({ label: '場に出す', enabled: true, cls: '', fn: () => { A.sel = null; A.play(plain); } }); }
     A.acts(acts);
@@ -331,7 +333,8 @@
   // ------------------------------------------------------------ ポーカー・テキサスポーカー
   function poker(b, A) {
     const t = b.tbl, me = A.mySeat, human = A.view.human, total = t.chips.length, hold = t.g === 'holdem';
-    A.round(hold ? `${t.round + 1}手目` : `${t.hand + 1}ゲーム目・${['1回目の賭け', '札の交換', '2回目の賭け'][t.phase] || ''}`);
+    // 終了直後は状態が次の手に進んでいるため、終わった手までの数を出す(結果ダイアログ表示中の「N+1」対策)
+    A.round(hold ? `${A.view.outcome && t.round >= (parseInt(A.cfg && A.cfg.opts && A.cfg.opts.rounds) || 10) ? t.round : t.round + 1}手目` : `${A.view.outcome && t.hand >= 10 ? t.hand : t.hand + 1}ゲーム目・${['1回目の賭け', '札の交換', '2回目の賭け'][t.phase] || ''}`);
     const fold = (p) => hold ? t.fold.includes(p) : t.fold[p];
     A.strip(b.scores.map((s, i) => `<div class="pl${s.turn ? ' turn' : ''} ${fold(i) ? 'dimmed' : ''}">${i === me ? A.face(24) : `<span class="dot face">${esc(A.name(i)[0])}</span>`}<span class="who"><span class="nm">${esc(A.name(i))}${t.dealer === i ? ' <i class="dlr">ディーラー</i>' : ''}</span><span class="nt">${fold(i) ? '降りた' : t.bets[i] ? `賭け ${t.bets[i]}` : hold ? '' : esc(t.act[i] || '')}</span></span><span class="num">${t.chips[i]}</span></div>`).join(''));
     const mask = typeof A.sel === 'number' ? A.sel : 0;
@@ -357,7 +360,8 @@
     // 引き上げた後は、札のない卓で賭ける
     const t = t0.delta && bjCleared[A.handle + ':' + t0.round] ? Object.assign({}, t0, { delta: null, dealer: [], dealerTotal: -1, hands: t0.hands.map(() => []) }) : t0;
     if (t !== t0) prevBj = { h: A.handle, r: t.round };
-    A.round(`${t.round + 1}回目`);
+    // 終了直後は状態が次の回に進んでいるため、終わった回までの数を出す(結果ダイアログ表示中の「N+1回目」対策)
+    A.round(`${A.view.outcome && t.round >= 10 ? t.round : t.round + 1}回目`);
     A.strip(b.scores.map((s, i) => `<div class="pl${s.turn ? ' turn' : ''}">${i === me ? A.face(24) : `<span class="dot face">${esc(A.name(i)[0])}</span>`}<span class="who"><span class="nm">${esc(A.name(i))}</span><span class="nt">${t.delta ? (t.delta[i] > 0 ? '+' : '') + t.delta[i] : '持ち点'}</span></span><span class="num">${t.chips[i]}</span></div>`).join(''));
     const all = []; t.dealer.forEach((c, i) => all.push(8000 + i * 60 + c)); t.hands.forEach((hs, p) => hs.forEach((h, k) => h.c.forEach((c, i) => all.push(p * 1000 + k * 300 + i * 53 + c))));
     const nf = fresh(A, 'bj', all);

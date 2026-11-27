@@ -154,7 +154,7 @@
   const pawnSvg = (x, y, col, turn, i, me, nm = '', tagUp = 0, nameW = Math.max(36, [...nm].length * 11 + 12)) => `<g class="lpawn ${turn ? 'turn' : ''}" data-pawn="${i}" transform="translate(${x},${y}) scale(1.3)">
     ${turn ? `<circle r="36" cy="-8" fill="url(#lglow)" class="halo"/>` : ''}
     <path d="M-14 16Q-15 -2 -6 -5H6Q15 -2 14 16Z" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/><circle cy="-14" r="11" fill="none" stroke="#fff" stroke-width="7"/>
-    <g transform="translate(0,${-34 - tagUp})"><rect x="${-(nameW / 2)}" y="-11" width="${nameW}" height="18" rx="9" fill="${col}" stroke="#fff" stroke-width="${me ? 3 : 2}"/><text y="3.5" font-size="11.5" font-weight="900" text-anchor="middle" fill="#fff">${E(nm)}</text><path d="M-4 7L0 12L4 7Z" fill="${col}"/></g>
+    <g transform="translate(0,${26 - tagUp})"><rect x="${-(nameW / 2)}" y="-11" width="${nameW}" height="18" rx="9" fill="${col}" stroke="#fff" stroke-width="${me ? 3 : 2}"/><text y="3.5" font-size="11.5" font-weight="900" text-anchor="middle" fill="#fff">${E(nm)}</text><path d="M-4 -8L0 -14L4 -8Z" fill="${col}"/></g>
     <ellipse cx="0" cy="17" rx="15" ry="5" fill="#000" opacity=".3"/>
     <path d="M-14 16Q-15 -2 -6 -5H6Q15 -2 14 16Z" fill="${col}" stroke="${LINE}" stroke-width="2.6" stroke-linejoin="round"/>
     <path d="M-9 13Q-10 0 -4 -2" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".5"/>

@@ -159,7 +159,7 @@
 .cy2-seat .cy-hearts i{font-style:normal;color:rgba(255,255,255,.25);margin-left:1px}
 .cy2-seat .cy-hearts i.on{color:#FF5A4E}
 .cy2-plate{position:relative;background:linear-gradient(180deg,#2c2c31,#16161a);border:2px solid #c9a227;border-radius:14px;padding:10px 34px 12px;box-shadow:0 9px 19px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.16);text-align:center}
-.cy2-plate .by{position:absolute;top:-13px;right:14px;background:linear-gradient(180deg,#ffd968,#dfa92c);color:#3a2703;font-size:12px;font-weight:800;letter-spacing:.05em;padding:2.5px 10px;border-radius:999px;box-shadow:0 2px 5px rgba(0,0,0,.4);white-space:nowrap}
+.cy2-plate .by{position:absolute;bottom:-9px;right:14px;background:linear-gradient(180deg,#ffd968,#dfa92c);color:#3a2703;font-size:12px;font-weight:800;letter-spacing:.05em;padding:2.5px 10px;border-radius:999px;box-shadow:0 2px 5px rgba(0,0,0,.4);white-space:nowrap}
 .cy2-bid{color:#f6efdb;font-size:56px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
 .cy2-hists{display:flex;align-items:center;gap:6px}
 .cy2-hchip{background:linear-gradient(180deg,#8a5a2e,#6f421d);color:#ffe9c4;font-weight:800;font-size:15.5px;min-width:37px;text-align:center;padding:3.5px 8px;border-radius:8px;border:1.5px solid #4e2a0e;box-shadow:0 4px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,220,160,.35);box-sizing:border-box;font-variant-numeric:tabular-nums}

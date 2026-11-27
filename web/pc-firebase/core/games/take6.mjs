@@ -225,7 +225,7 @@ export const TAKE6_SPEC = {
         if (target === -1) {
           ns.phase = TAKE6_PHASE_ROW_PICK;
           ns.turn = e.seat;
-          return ns;
+          return attachView(ns);
         }
         ns.queue.shift();
         if (ns.rows[target].length >= 5) {

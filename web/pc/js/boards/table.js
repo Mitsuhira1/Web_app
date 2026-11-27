@@ -195,8 +195,8 @@
       const m = hit != null ? hit : ms.length === 1 ? ms[0] : plain; if (m != null) { A.sel = null; A.play(m); } } });
     if (nfF.length && nfF.length < 3) fly(A, '.hfield .pc.new', t.phase === 1 || A.view.toMove === me ? -1 : opp, 320);
     if (nfC.length || nfO.length) A.anim(300);
-    const acts = b.buttons.filter((x) => t.phase !== 1).map((x) => ({ label: x.label, move: x.m, enabled: human, cls: x.label === 'こいこい' ? 'ohno' : undefined }));
-    if (t.phase === 1 && human) acts.push({ label: '光っている場札から、取る札を選んでください', enabled: false, cls: '' });
+    const acts = b.buttons.filter((x) => t.phase !== 1 || x.m === 10000).map((x) => ({ label: x.label, move: x.m, enabled: human, cls: x.label === 'こいこい' ? 'ohno' : t.phase === 1 && x.m === 10000 ? 'gold' : undefined }));
+    if (t.phase === 1 && human && tgt.size) acts.push({ label: '光っている場札から、取る札を選んでください', enabled: false, cls: '' });
     if (t.phase === 0 && human && sel >= 0 && hand[sel]) { const ms = movesOf(hand[sel]); const plain = ms.find((m) => (m - t.mPlay) % 64 === 0); if (ms.length === 1) acts.push({ label: tgt.size ? '合わせて取る' : '場に出す', enabled: true, cls: 'gold', fn: () => { A.sel = null; A.play(ms[0]); } }); else if (plain != null) acts.push({ label: '場に出す', enabled: true, cls: '', fn: () => { A.sel = null; A.play(plain); } }); }
     A.acts(acts);
   }
