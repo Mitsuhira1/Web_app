@@ -1553,6 +1553,18 @@ function renderBlokus(b, A) {
     }, enabled: !!canRotate });
     acts.push({ label: 'パス', move: NC.BLOKUS_MOVE_PASS, cls: 'gold', enabled: A.legal.has(NC.BLOKUS_MOVE_PASS) });
   }
+  // ゲームパッドのキーコンフィグ用: 選択中ピースの「反転」(左右鏡像の向きへ切り替える)
+  if (NC && myTurn && selPiece != null && byPiece.get(selPiece)) {
+    window.__bkPadFlip = () => {
+      const oris = NC.orientationsFor(selPiece);
+      const curShape = oris[selOri];
+      if (!curShape) return;
+      const norm = (sh) => { const mx = Math.min(...sh.map((c) => c[0])), my = Math.min(...sh.map((c) => c[1])); return sh.map(([x, y]) => (x - mx) + ',' + (y - my)).sort().join('|'); };
+      const mir = norm(curShape.map(([x, y]) => [-x, y]));
+      const target = [...byPiece.get(selPiece).keys()].find((o) => norm(oris[o]) === mir);
+      if (target != null && target !== selOri) { A.sel = { kind: 'blokus', moves: A.view.moves, piece: selPiece, ori: target }; A.redraw(); }
+    };
+  } else window.__bkPadFlip = null;
   A.acts(acts);
 }
 window.RENDER.blokus = renderBlokus;

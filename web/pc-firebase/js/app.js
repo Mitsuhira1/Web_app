@@ -215,7 +215,7 @@ function detail() {
   const openCls = S.mobDetail ? ' open' : '';
   if (!g) return `<aside class="detail${openCls}">${mobHd}<div class="empty">ゲームを選んでください</div></aside>`;
   if (Object.hasOwn(newGameSetup,g.id)) return `<aside class="detail${openCls}">${mobHd}<div class="scroll"><div class="hero"><span class="art">${artOf(g.id)}</span><div><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p><span class="tag">${esc(g.players)}</span></div></div></div>
-    <div class="foot">${ruleButton(g.id)}<button class="btn primary" data-next>進む</button></div></aside>`;
+    <div class="foot">${ruleButton(g.id)}${padButton(g.id)}<button class="btn primary" data-next>進む</button></div></aside>`;
   const c = cfg(g.id);
   const ok = playable(g.id);
   return `<aside class="detail${openCls}">${mobHd}<div class="scroll">
@@ -225,7 +225,7 @@ function detail() {
       <div class="row"><span>CPUの強さ</span><b>${LV[c.level]}</b></div>
       <div class="row"><span>1手の制限時間</span><b>${c.limit ? c.limit + '秒' : 'なし'}</b></div></div>
     ${ok ? '' : '<div class="panel"><div class="row"><span>このゲームは準備中です</span></div></div>'}
-   </div><div class="foot"><button class="btn" data-rule="${g.id}">${ic('book')}ルール</button><button class="btn primary" data-next ${ok ? '' : 'disabled'}>進む</button></div></aside>`;
+   </div><div class="foot"><button class="btn" data-rule="${g.id}">${ic('book')}ルール</button>${padButton(g.id)}<button class="btn primary" data-next ${ok ? '' : 'disabled'}>進む</button></div></aside>`;
 }
 
 // ---------------------------------------------------------------- ゲームごとの設定(記憶する)
@@ -240,6 +240,8 @@ function saveCfg(id, c) { const all = store.get('cfg', {}); all[id] = c; store.s
 const engineOpts = (g, c, withOnline) => g.options.filter((o) => withOnline || o.group !== 'online').map((o) => `${o.key}=${c.opts[o.key] ?? o.default}`).sort().join(';');
 const isBool = (o) => o.values.length === 2 && o.values.every(([v]) => v === 'true' || v === 'false');
 const ruleButton = id => `<button class="btn" data-rule="${id}">${ic('book')}ルール</button>`;
+const PAD_ICON = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10a5 5 0 0 1 5 5.2c0 2.9-2.3 4.8-4.7 4.3-1.5-.3-2.6-1.3-3.6-2.5H10.3c-1 1.2-2.1 2.2-3.6 2.5C4.3 18 2 16.1 2 13.2A5 5 0 0 1 7 8Z"/><path d="M7.5 11v4M5.5 13h4"/><circle cx="16.4" cy="11.6" r=".4" fill="currentColor"/><circle cx="18.2" cy="13.8" r=".4" fill="currentColor"/></svg>';
+const padButton = id => `<button class="btn padentry" data-padsetup="${id}" aria-label="キーコンフィグ（ゲームパッド）" title="キーコンフィグ（ゲームパッド）">${PAD_ICON}</button>`;
 const setupRow = (label, control, hint = '') => `<div class="row"><span>${esc(label)}${hint ? `<small class="sub">${esc(hint)}</small>` : ''}</span>${control}</div>`;
 const setupPanel = (title, body) => `<section class="panel"><h3>${esc(title)}</h3>${body}</section>`;
 function setupLayout(id, label, back, left, right, action) {
@@ -248,7 +250,7 @@ function setupLayout(id, label, back, left, right, action) {
     <div class="setuphead"><button class="btn" data-go="${back}" aria-label="戻る">${ic('back')}</button><span class="art">${artOf(id)}</span>
     <div class="txt"><h2>${esc(g.name)}</h2><p>${esc(g.intro)}</p></div><span class="tagl">${esc(g.players)}</span><span class="tagl">${esc(label)}</span></div>
     <div class="setupbody"><div class="cols2"><div class="stack">${left}</div><div class="stack">${right}</div></div></div>
-    <div class="setupfoot">${ruleButton(id)}${action}</div></div>`;
+    <div class="setupfoot">${ruleButton(id)}${padButton(id)}${action}</div></div>`;
 }
 function canStartExtraMatch() {
   return isHostRoom() && roomChoosing() && activeMembers().length >= 2;
@@ -1432,7 +1434,7 @@ const SDEF = {
   game: [['置ける場所の表示', 'sw', 'hints'], ['取れる駒の表示', 'sw', 'caps'], ['仮置きする', 'sw', 'pre'], ['CPUの強さ', 'seg', 'cpuLv', LV], ['CPUの手番の長さ', 'seg', 'cpuLen', ['短い', 'ふつう', '長い']], ['相手のカーソル', 'seg', 'cursor', ['表示しない', '手番のみ', '全員']], ['カットイン', 'sw', 'cutin'], ['アニメーションの速度', 'seg', 'speed', ['ゆっくり', 'ふつう', '速い']]],
   view: [['テーマ', 'theme'], ['画面', 'seg', 'win', ['ウィンドウ', '全画面']], ['ウィンドウの大きさ', 'sel', 'res', ['1280×720', '1366×768', '1600×900', '1920×1080', '2560×1440']], ['文字と部品の大きさ', 'seg', 'scale', ['100%', '125%', '150%']], ['盤の質感', 'seg', 'look', ['軽量', '標準']], ['アニメーションの省略', 'sw', 'reduce'], ['チャットの通知', 'sw', 'notify']],
   sound: [['全体の音量', 'rng', 'master'], ['効果音', 'sw', 'sound'], ['効果音の音量', 'rng', 'sfxVol'], ['カーソル音', 'sw', 'hover'], ['チャットの通知音', 'sw', 'chatSnd'], ['BGM', 'sw', 'bgm'], ['BGMの音量', 'vol'], ['無効のBGM', 'btn', '選ぶ', 'data-modal="bgmoff"'], ['バックグラウンドでも音を鳴らす', 'sw', 'bgSound']],
-  ctrl: Object.keys(KEYNAME).map((k) => [KEYNAME[k], 'key', k]).concat([['駒の動かし方', 'seg', 'drag', ['クリック', 'ドラッグ', '両方']]]),
+  ctrl: Object.keys(KEYNAME).map((k) => [KEYNAME[k], 'key', k]).concat([['駒の動かし方', 'seg', 'drag', ['クリック', 'ドラッグ', '両方']], ['キーコンフィグ（ゲームパッド）', 'padcfg']]),
   prof: [['表示名', 'name'], ['アイコン', 'icon']],
   data: [['途中の対局', 'btn', 'すべて消す', 'data-clear="saved"'], ['成績', 'btn', '消す', 'data-clear="stats"'], ['保存の場所', 'btn', 'フォルダを開く', 'data-openfolder'], ['設定', 'btn', '初期設定に戻す', 'data-clear="set"']],
   about: [['版', 'txt', APP_VERSION], ['ライセンス', 'btn', '開く', 'data-modal="license"']],
@@ -1448,6 +1450,7 @@ function setRow([l, t, k, x]) {
   else if (t === 'vol') c = `<span class="ctl"><input type="range" id="volIn" min="0" max="100" value="${Math.round(S.vol * 100)}" style="flex:1" ${S.set.bgm ? '' : 'disabled'} aria-label="${l}"></span>`;
   else if (t === 'btn') c = `<span class="ctl"><button class="btn" style="height:38px;flex:1" ${x || ''} ${k === 'フォルダを開く' && !window.__TAURI__ ? 'disabled' : ''}>${k}</button></span>`;
   else if (t === 'key') c = `<span class="ctl"><kbd>${esc(keyLabel(S.keys[k]))}</kbd><button class="btn" style="height:38px;margin-left:auto" data-rekey="${k}">${S.rekey === k ? 'キーを押す…' : '変える'}</button></span>`;
+  else if (t === 'padcfg') c = `<span class="ctl"><button class="btn" style="height:38px;flex:1" data-padcfg>開く</button></span>`;
   else if (t === 'img') c = `<span class="ctl"><img src="${k}" alt="" width="72" height="72" style="margin:6px auto"></span>`;
   else if (t === 'txt') c = `<span class="ctl"><b class="num" style="flex:1;text-align:center">${k}</b></span>`;
   else if (t === 'name') c = `<span class="field"><input id="nameIn" value="${esc(S.set.name)}" maxlength="12" placeholder="あなた" aria-label="表示名"></span>`;
@@ -1589,6 +1592,7 @@ function render() {
   if (S.modal === 'license') { app.insertAdjacentHTML('beforeend', licenseModal()); fillLicenses(); }
   if (S.modal === 'rules') { app.insertAdjacentHTML('beforeend', rulesModal()); fillRules(); }
   if (S.modal === 'list') { app.insertAdjacentHTML('beforeend', listModal()); fillList(); }
+  if (S.modal === 'padcfg') { app.insertAdjacentHTML('beforeend', PADCFG.modalHtml()); PADCFG.paintPad(); }
   // 窓を開いた時だけ、ふわっと出す(中身の描き直しでは出し直さない)
   if (S.modal && S.modal !== lastModal) { const m = app.querySelector(':scope > .modal:last-of-type'); if (m) m.classList.add('pop'); }
   lastModal = S.modal;
@@ -1669,6 +1673,8 @@ app.addEventListener('click', async (e) => {
   if(d.mineAgain!=null)return minesGame.start();
   if(d.mineZoomreset!=null)return minesGame.resetZoom();
   if(d.mineCell!=null)return minesGame.move(+d.mineCell, mineSwapped || minesGame.flagMode);
+  if (d.padsetup != null) return PADCFG.open(d.padsetup);
+  if (d.padcfg != null) return PADCFG.open(PADCFG.currentGame());
   if (d.playsettings != null) return openPlaySettings();
   if (d.playsettingsclose != null) { closeSheet(); return; }
   if (d.chatfab != null) return togglePlayChat();
@@ -1971,9 +1977,17 @@ function navMove(key) {
   if (!curEl || !all.includes(curEl)) { const pick = (S.sel && scope.querySelector(`[data-tile="${S.sel}"]`)) || scope.querySelector('[aria-pressed="true"][data-tile]') || all[0]; return focusNav(pick); }
   const a = curEl.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
   const dir = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] }[key];
-  let best = null, bs = Infinity;
+  // まず「その方向の帯の中(直交軸で重なる要素)」だけから一番近いものを探し、
+  // 無い時だけ方向のコーン(横ずれが縦距離の1.5倍+24px以内)にあるものを探す。
+  // これで、グリッドの上移動の途中で横のサイドバーへ飛ぶような幾何的におかしい移動を防ぐ。
+  const horiz = dir[0] !== 0;
+  let band = null, bandMain = Infinity, bandSide = Infinity, cone = null, coneScore = Infinity;
   for (const x of all) { if (x === curEl) continue; const r = x.getBoundingClientRect(), dx = r.left + r.width / 2 - ax, dy = r.top + r.height / 2 - ay;
-    const main = dx * dir[0] + dy * dir[1]; if (main <= 4) continue; const side = Math.abs(dx * dir[1] + dy * dir[0]); const sc = main + side * 2.2; if (sc < bs) { bs = sc; best = x; } }
+    const main = dx * dir[0] + dy * dir[1]; if (main <= 4) continue; const side = Math.abs(dx * dir[1] + dy * dir[0]);
+    const overlap = horiz ? (Math.max(a.top, r.top) <= Math.min(a.bottom, r.bottom) + 6) : (Math.max(a.left, r.left) <= Math.min(a.right, r.right) + 6);
+    if (overlap) { if (main < bandMain || (main === bandMain && side < bandSide)) { band = x; bandMain = main; bandSide = side; } }
+    else if (side <= main * 1.5 + 24) { const sc = main + side * 2.2; if (sc < coneScore) { coneScore = sc; cone = x; } } }
+  const best = band || cone;
   if (best) focusNav(best);
 }
 function focusNav(el) {

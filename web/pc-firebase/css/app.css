@@ -3372,3 +3372,69 @@ html,body{overscroll-behavior-y:none}
 
 .rs-tabs{display:inline-flex;margin:0 0 12px}
 .rs-tabs button{padding:6px 18px}
+/* ---- ゲームパッドのキーコンフィグ ---- */
+/* 入口ボタン(設定画面の下部バー: ルールと進む/スタートの間) */
+.padentry{flex:none;width:44px;padding:0;border-radius:50%}
+.padentry svg.ic{width:22px;height:22px}
+/* コンパクトなレイアウトではルールをアイコンだけにして、進むの幅を元の比率に保つ */
+@media (max-width:680px), (max-width:960px) and (max-height:540px){
+  .setupfoot [data-rule], .detail .foot [data-rule]{font-size:0;gap:0;padding:0;width:44px;flex:none}
+  .setupfoot [data-rule] svg.ic, .detail .foot [data-rule] svg.ic{width:20px;height:20px}
+  .setupfoot .padentry, .detail .foot .padentry{flex:none;width:44px}
+}
+/* スティック専用カーソル(相手カーソル .rcur の自分版。スティック操作中だけ出す) */
+#padcursor{position:fixed;left:0;top:0;z-index:300;opacity:0;transition:opacity .25s ease}
+#padcursor.on{opacity:1}
+/* キーコンフィグ画面 */
+.pcfg-box{height:min(860px,100%)}
+.pcfg-detect{color:var(--sub);font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcfg-tabs{display:flex;align-items:center;gap:8px;padding:10px 18px 0;flex-wrap:wrap}
+.pcfg-tab{height:38px;padding:0 22px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);font-weight:900}
+.pcfg-tab[aria-pressed="true"]{background:var(--gold);color:var(--on-gold);border-color:transparent}
+.pcfg-games{display:flex;gap:6px;flex-wrap:wrap;margin-left:6px}
+.pcfg-gbtn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface2);display:grid;place-items:center;padding:0;overflow:hidden}
+.pcfg-gbtn .pcfg-gart{display:grid;place-items:center;width:100%;height:100%;font-weight:900}
+.pcfg-gbtn .pcfg-gart svg, .pcfg-gbtn .pcfg-gart img{width:100%;height:100%;object-fit:cover}
+.pcfg-gbtn.on{background:var(--gold);border-color:transparent;color:var(--on-gold)}
+.pcfg-gbtn:disabled{opacity:.32;cursor:default}
+.pcfg-waitbar{margin:10px 18px 0;padding:9px 14px;border-radius:10px;background:#4a3517;border:1px solid var(--gold);font-weight:700;color:#F3EBDD}
+.pcfg-waitbar b{color:var(--gold)}
+.pcfg-main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(340px,1fr) minmax(380px,1.15fr);gap:14px;padding:12px 18px}
+.pcfg-rows{overflow:auto;min-height:0;padding-right:2px}
+.pcfg-sticknote{border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.6;margin-bottom:8px;color:var(--sub)}
+.pcfg-sticknote b{color:var(--ink)}
+.pcfg-nogame{padding:22px 10px;color:var(--sub);line-height:1.8}
+.pcfg-row{display:flex;align-items:center;gap:12px;min-height:52px;border-top:1px solid var(--line);padding:5px 8px;border-radius:8px;cursor:pointer}
+.pcfg-row:first-child{border-top:0}
+.pcfg-row:hover{background:var(--surface2)}
+.pcfg-row.sel{background:var(--gold);color:var(--on-gold)}
+.pcfg-row.sel .pcfg-chg{background:rgba(42,26,8,.16);border-color:transparent;color:var(--on-gold)}
+.pcfg-nm{flex:1;min-width:0;font-weight:700}
+.pcfg-warn{display:none;color:#ff9a86;font-size:12px;font-weight:700}
+.pcfg-row.dup{background:rgba(226,85,58,.15)}
+.pcfg-row.dup .pcfg-warn{display:block}
+.pcfg-row.waiting{background:#4a3517;animation:pcfgWait 1s ease-in-out infinite}
+.pcfg-row.waiting .pcfg-nm{color:#F3EBDD}
+.pcfg-row.waiting .pcfg-as b{color:var(--gold);font-size:14px}
+@keyframes pcfgWait{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
+.pcfg-as{display:flex;align-items:center;gap:10px;flex:none}
+.pcfg-bicon{display:grid;place-items:center}
+.pcfg-kbd{font-family:var(--font);font-weight:700;font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:3px 8px;color:var(--ink)}
+.pcfg-row.sel .pcfg-kbd{background:rgba(255,255,255,.25)}
+.pcfg-chg{height:36px;padding:0 14px;flex:none}
+.pcfg-padpanel{position:relative;border:1px solid var(--line);border-radius:14px;background:linear-gradient(#241c14,#1e1710);padding:10px 12px 8px;display:flex;flex-direction:column;min-height:0;overflow:auto}
+.pcfg-padpanel svg{width:100%;height:auto;margin:auto}
+.pcfg-padpanel .pbtn{cursor:pointer;transform-box:fill-box;transform-origin:center;transition:transform .07s ease}
+.pcfg-padpanel .pbtn .shape{transition:filter .12s ease}
+.pcfg-padpanel .pbtn.unassigned .shape{filter:grayscale(.9) brightness(.8)}
+.pcfg-padpanel .pbtn.unassigned text{opacity:.6}
+.pcfg-padpanel .pbtn.linked .shape, .pcfg-padpanel .pbtn.pressed .shape{filter:drop-shadow(0 0 7px var(--gold)) drop-shadow(0 0 3px var(--gold))}
+.pcfg-padpanel .pbtn.linked{animation:pcfgBlink .8s ease-in-out infinite}
+@keyframes pcfgBlink{0%,100%{opacity:1}50%{opacity:.55}}
+.pcfg-padpanel .pbtn.pressed{transform:scale(.9)}
+.pcfg-padpanel .pbtn text{pointer-events:none;font-family:var(--font)}
+.pcfg-padpanel .pbtn .segfill{fill:rgba(224,173,74,0);transition:fill .1s ease}
+.pcfg-padpanel .pbtn.linked .segfill, .pcfg-padpanel .pbtn.pressed .segfill{fill:rgba(224,173,74,.55)}
+.pcfg-foot{display:flex;gap:10px;align-items:center;padding:12px 18px 16px;border-top:1px solid var(--line)}
+.pcfg-note{margin-left:auto;color:var(--sub);font-size:12.5px}
+@media (max-width:900px){ .pcfg-main{grid-template-columns:1fr;overflow:auto} .pcfg-rows{overflow:visible} }
