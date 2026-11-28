@@ -5,26 +5,27 @@
 
 - **[x] 更新済み**: 新しい作り方(実際の対局画面を録画・1 本目は「何をするゲーム?」・注釈の決まりを守る)で作り直し、ユーザーの OK のあと公開した物。
 - **[ ] 未更新**: まだ以前の作り方の動画(3 本ずつ)。手引きの 2 章「以前の動画の、だめだった所」がそのまま残っている。
+- **作成済み・未アップ**: 新しい作り方で作り終えたが、まだ公開していない物(チェックは [ ] のまま、行にその旨を書く)。
 - 作業を始める時: 下の行の末尾に「(作業中: AI の名前・日付)」と書いてコミットする(2 つの AI が同じゲームを作らないため)。
 - 作り終えて公開したら: `[ ]` を `[x]` にし、本数・動画の名前・台本・公開日・作った AI を書く。手引き 10 章の表も直す。
 - 並びはメニューの順(`js/app.js` の `ORDER`)。ID は `js/rules-steps.js` の名前。見本の HTML(`docs/mockups/rules-video/<名前>-rules.html`)が ID と違う物は「見本」に書いた。
 
-最終更新: 2026-11-28(更新済み 3 / 全 61)
+最終更新: 2026-11-28(更新済み 3 / 全 61、作成済み・未アップ 1)
 
 ## 一覧
 - [x] **将棋**(`shogi`) — 7 本 `sh-v2-step1` `sh-v2-step2` `sh-v2-step3` `sh-v2-step4` `sh-v2-step5` `sh-v2-step6` `sh-v2-step7` ・台本 `tools/rule_video/shogi.cjs` ・2026-11-28 公開(Claude)
-- [ ] **5五将棋**(`gogo`) — 旧版 3 本 `gg-step1` `gg-step2` `gg-step3`
+- [ ] **5五将棋**(`gogo`) — 旧版 3 本 `gg-step1` `gg-step2` `gg-step3`(作業中: Muse・2026-11-28)
 - [ ] **リバーシ**(`reversi`) — 旧版 3 本 `rv-step1` `rv-step2` `rv-step3`
-- [ ] **コネクトフォー**(`connect4`) — 旧版 3 本 `c4-step1` `c4-step2` `c4-step3`
-- [ ] **五目ならべ**(`gomoku`) — 旧版 3 本 `gm-step1` `gm-step2` `gm-step3`
-- [ ] **ヘックス**(`hex`) — 旧版 3 本 `hx-step1` `hx-step2` `hx-step3`
+- [ ] **コネクトフォー**(`connect4`) — 旧版 3 本 `c4-step1` `c4-step2` `c4-step3`(作業中: Muse・2026-11-28)
+- [ ] **五目ならべ**(`gomoku`) — 旧版 3 本 `gm-step1` `gm-step2` `gm-step3`(作業中: Muse・2026-11-28)
+- [ ] **ヘックス**(`hex`) — 旧版 3 本 `hx-step1` `hx-step2` `hx-step3`(作業中: Muse・2026-11-28)
 - [x] **マンカラ**(`mancala`) — 6 本 `mc-v3-step1` `mc-v2-step2` `mc-v2-step3` `mc-v2-step4` `mc-v2-step5` `mc-v2-step6` ・台本 `tools/rule_video/mancala.cjs` ・2026-11-28 公開(Claude)
-- [ ] **ナインメンズモリス**(`morris`) — 旧版 3 本 `mr-step1` `mr-step2` `mr-step3`
-- [ ] **チェッカー**(`checkers`) — 旧版 3 本 `ck-step1` `ck-step2` `ck-step3`
-- [ ] **チェス**(`chess`) — 旧版 3 本 `ch-step1` `ch-step2` `ch-step3`
-- [ ] **ドット＆ボックス**(`dots`) — 旧版 3 本 `dt-step1` `dt-step2` `dt-step3`
-- [ ] **ヒット＆ブロー**(`hitblow`) — 旧版 3 本 `hb-step1` `hb-step2` `hb-step3`
-- [ ] **ウサギと猟犬**(`hare`) — 旧版 3 本 `hr-step1` `hr-step2` `hr-step3`
+- [ ] **ナインメンズモリス**(`morris`) — 旧版 3 本 `mr-step1` `mr-step2` `mr-step3`(作業中: Muse・2026-11-28)
+- [ ] **チェッカー**(`checkers`) — 旧版 3 本 `ck-step1` `ck-step2` `ck-step3`(作業中: Muse・2026-11-28)
+- [ ] **チェス**(`chess`) — 旧版 3 本 `ch-step1` `ch-step2` `ch-step3`(作業中: Muse・2026-11-28)
+- [ ] **ドット＆ボックス**(`dots`) — 旧版 3 本 `dt-step1` `dt-step2` `dt-step3`(作業中: Muse・2026-11-28)
+- [ ] **ヒット＆ブロー**(`hitblow`) — 旧版 3 本 `hb-step1` `hb-step2` `hb-step3`(作業中: Muse・2026-11-28)
+- [ ] **ウサギと猟犬**(`hare`) — 旧版 3 本 `hr-step1` `hr-step2` `hr-step3`(作業中: Muse・2026-11-28)
 - [ ] **チャイニーズチェッカー**(`chinese`) — 旧版 3 本 `chx-step1` `chx-step2` `chx-step3`
 - [ ] **ルドー**(`ludo`) — 旧版 3 本 `lu-step1` `lu-step2` `lu-step3`
 - [ ] **バックギャモン**(`backgammon`) — 旧版 3 本 `bg-step1` `bg-step2` `bg-step3`
@@ -34,7 +35,7 @@
 - [ ] **人生すごろく**(`life`) — 旧版 3 本 `lf-step1` `lf-step2` `lf-step3`
 - [ ] **花札**(`hanafuda`) — 旧版 3 本 `hn-step1` `hn-step2` `hn-step3`
 - [ ] **7ならべ**(`sevens`) — 旧版 3 本 `sv-step1` `sv-step2` `sv-step3`
-- [ ] **神経衰弱**(`memory`) — 旧版 3 本 `mm-step1` `mm-step2` `mm-step3`
+- [ ] **神経衰弱**(`memory`) — 作成済み・未アップ 6 本 `mm-v2-step1`〜`mm-v2-step6` ・台本 `tools/rule_video/memory.cjs` ・2026-11-28 作成(Muse)
 - [ ] **スピード**(`speed`) — 旧版 3 本 `sd-step1` `sd-step2` `sd-step3`
 - [ ] **ポーカー**(`poker`) — 旧版 3 本 `po-step1` `po-step2` `po-step3`
 - [ ] **テキサスポーカー**(`holdem`) — 旧版 3 本 `tp-step1` `tp-step2` `tp-step3`・見本 `texas-rules.html`
