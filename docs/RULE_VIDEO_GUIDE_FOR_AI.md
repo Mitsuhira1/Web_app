@@ -111,7 +111,7 @@
    - `tools/build_rule_steps.cjs` の `REMADE` に ID を足し、`node tools/build_rule_steps.cjs --text-only` で `js/rules-steps.js` を作り直す(**直接は直さない**)。ほかのゲームの文が変わっていないことを確かめる。
    - `web/pc-firebase/sw.js` の `CACHE` の名前を変える(動画は `FILES` に入れない)。
 9. ルール画面で確かめる: PC 1280×800 とスマホ 390×844 で、ステップ数・全部の動画の読み込み・横はみ出しなし。※ python の http.server は動画の途中から読む(Range)に対応していないので、`currentTime` を動かす試験は失敗する。`playbackRate` を上げて終わりまで再生し、次のステップへ進むかを見る。
-10. 記録: `README4AI_Claude_Codex_Antigravity.md` 5 章の先頭・`docs/CHECKLIST_PENDING.md` の先頭・この手引きの 10 章(済んだゲーム)。
+10. 記録: `README4AI_Claude_Codex_Antigravity.md` 5 章の先頭・`docs/CHECKLIST_PENDING.md` の先頭・この手引きの 10 章(済んだゲーム)・**チェックリスト `docs/RULE_VIDEO_STATUS.md`**(作業を始める時に「作業中」と書き、公開したら `[x]` にする)。
 11. 作業ブランチにコミット・プッシュし、ユーザーに動画を見せる。OK が出たら公開用ブランチ `ccr-efc07031-6exjqs` へ(先に `git fetch` して取り込む。重なった記録は両方残す。`sw.js` の CACHE は新しい名前に)。公開後は GitHub Actions の結果が success になったのを確かめてから「公開した」と言う。
 
 ---
@@ -175,6 +175,7 @@ ffmpeg -v error -y -ss 12 -i out.mp4 -frames:v 1 -vf scale=960:-1 one.png
 ---
 
 ## 10. リポジトリと、済んだゲーム
+- **全ゲームの進み具合は `docs/RULE_VIDEO_STATUS.md`(チェックリスト)**。作業を始める前に見て、ほかの AI が作業中でないか確かめる。
 - 主開発: `web/pc-firebase/`(公開: https://mitsuhira1.github.io/Web_app/pc-firebase/)。公開用ブランチ `ccr-efc07031-6exjqs`。作業ブランチは AI ごとに別(`README4AI…` 1 章)。
 - ルール画面: `js/app.js` の `fillRules`・`fillRuleSteps`。文面のデータ: `js/rules-steps.js`(自動生成)。見本: `docs/mockups/rules-video/<id>-rules.html`。動画: `web/pc-firebase/assets/rule-steps/`。
 - 1 つのゲームに 2 種類の説明がある物: ソリティア(クロンダイク `solitaire`/スパイダー `spider`)、マインスイーパー(ふつう `mine`/対戦 `mineVersus`)。見本のファイル名と ID が違う物: `mj`→mahjong・`ohno`→uno・`texas`→holdem・`mine-versus`→mineVersus。
