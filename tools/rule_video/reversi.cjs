@@ -59,7 +59,7 @@ async function replay(env, n) {
       await page.evaluate((m) => humanMove(m), e.m);
     } else {
       // CPU の手と、自動のパス
-      await page.waitForFunction((k) => view && view.moves === k + 1 && !busy, k, { timeout: 60000 });
+      await page.waitForFunction((k) => view && view.moves > k && !busy, k, { timeout: 60000 });
     }
   }
   await page.waitForFunction((n) => view && view.moves === n && !busy, n, { timeout: 60000 });
@@ -152,13 +152,10 @@ const step5 = async () => {
   await T.sleep(5200);
   await T.cap(null);
   window.__hold = false;
-  await T.until(() => view.moves === 47 && !busy);
-  await T.sleep(600);
+  await T.until(() => view.moves >= 48 && !busy);
   window.__hold = true;
   await RV.calm();
   await T.sleep(1200);
-  await RV.cpu();
-  await T.sleep(900);
   T.clearAll();
   await T.sleep(500);
 };
