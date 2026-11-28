@@ -114,7 +114,7 @@ const step3 = async () => {
   RV.setup();
   await T.sleep(600);
   T.ring('tg', { el: RV.cell(13), pad: 3, rr: 10 });
-  await T.cap('青い枠の所に置くと、いくつもの方向の白が裏返ります');
+  await T.cap('青い枠に置くと、<em>挟める全ての方向</em>の白が一度に裏返ります');
   await T.sleep(5000);
   T.clear('tg');
   await T.cap(null);
