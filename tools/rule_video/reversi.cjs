@@ -113,7 +113,7 @@ const step2 = async () => {
 const step3 = async () => {
   RV.setup();
   await T.sleep(600);
-  await T.cap('この白の石は、どこから挟むかで 裏返り方が変わります');
+  await T.cap('ここに置くと、いくつもの方向の白が裏返ります');
   await T.sleep(4600);
   await T.cap(null);
   await T.sleep(300);
@@ -132,7 +132,7 @@ const step4 = async () => {
   RV.setup();
   await T.sleep(600);
   T.ring('ng', { el: RV.cell(20), pad: 3, rr: 14 }, { ng: true, dash: true });
-  await T.cap('この白い所は、<em>挟めない</em>ので置けません');
+  await T.cap('ここは、<em>挟める白が無い</em>ので置けません');
   await T.sleep(4600);
   T.clear('ng');
   await T.cap('挟める所は、点で教えてくれます');
