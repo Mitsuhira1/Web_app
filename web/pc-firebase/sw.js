@@ -1,11 +1,13 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261128-quartopace-1";
+const CACHE = "asobipcfb-20261128-chinchiro-1";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",
 "./css/munage.css",
 "./js/boards/twelve.js",
 "./js/boards/nine.js",
+"./js/boards/chinchiro-motion.js",
+"./js/boards/chinchiro-table.js",
 "./js/boards/roulette.js",
 "./js/boards/roulette-motion.mjs",
 "./assets/rules/bg_hit.mp4",

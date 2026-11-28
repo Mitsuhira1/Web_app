@@ -99,6 +99,49 @@ function rouletteAudioBuffer(ctx, {duration, impacts, panAt}, recordedRoll = fal
   return buffer;
 }
 
+// チンチロリン専用。小さな樹脂のサイコロが釉薬のある器に当たる音を、
+// 短い接触ノイズと不調和な共鳴で作る。長い正弦波の「電子音」にしない。
+// 4種類の微差をキャッシュし、実際に衝突したフレームにだけ鳴らす。
+function chinchiroImpactBuffer(ctx, kind, variant = 0) {
+  const rate = 24000;
+  const materials = {
+    ceramic: { duration: .13, contact: .0022, body: .008, modes: [[923,.022,.15],[1571,.031,.10],[2717,.018,.075],[4259,.011,.036]], tone: .42 },
+    dice: { duration: .075, contact: .0015, body: .004, modes: [[1427,.006,.11],[2861,.004,.07],[4387,.003,.025]], tone: .60 },
+    wood: { duration: .11, contact: .003, body: .012, modes: [[347,.012,.14],[719,.009,.10],[1381,.006,.065]], tone: .25 },
+  };
+  const m = materials[kind] || materials.ceramic;
+  const buffer = ctx.createBuffer(1, Math.ceil(m.duration * rate), rate);
+  const data = buffer.getChannelData(0);
+  let seed = (3811 + variant * 7919 + kind.length * 131) >>> 0;
+  const noise = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2147483648 - 1; };
+  const tune = 1 + (variant - 1.5) * .019;
+  const modes = m.modes.map(([hz, decay, weight]) => {
+    const r = Math.exp(-1 / (rate * decay));
+    const angle = 2 * Math.PI * hz * tune / rate;
+    return { a: 2 * r * Math.cos(angle), b: r * r, coupling: Math.min(1, Math.sin(angle) / .28), weight, y: 0, previous: 0 };
+  });
+  let low = 0, smooth = 0, dc = 0;
+  for (let i = 0; i < data.length; i++) {
+    const t = i / rate;
+    const grit = noise();
+    // 接触の丸みを残し、耳につく超高域・不自然なバスの強調を避ける。
+    low += .12 * (grit - low);
+    smooth += m.tone * (grit - smooth);
+    const contact = smooth * Math.exp(-t / m.contact);
+    const excitation = (grit * .5 + .5) * Math.exp(-t / .00055);
+    let sample = .58 * contact + .36 * low * Math.exp(-t / m.body);
+    for (const mode of modes) {
+      const y = mode.a * mode.y - mode.b * mode.previous + excitation * .19 * mode.coupling;
+      mode.previous = mode.y; mode.y = y;
+      sample += y * mode.weight;
+    }
+    dc += .012 * (sample - dc);
+    const attack = Math.min(1, i / 5), release = Math.min(1, (data.length - i) / 80);
+    data[i] = (sample - dc) * attack * release * .83;
+  }
+  return buffer;
+}
+
 function createSfx(call) {
   let ctx = null;
   let enabled = true;
@@ -169,6 +212,38 @@ function createSfx(call) {
     src.start();
   }
 
+  const chinchiroBuffers = new Map(), chinchiroVoices = new Set();
+  let chinchiroVoice = 0, lastChinchiroHit = -Infinity;
+  function chinchiroImpact({kind = 'ceramic', strength = .5, pan = 0, rate = 1} = {}) {
+    if (!enabled || !S.set.sound || !ctx || ctx.state !== 'running' || !transientAudio.allowed()) return;
+    const level = Math.min(1, Math.max(0, Number(strength) || 0));
+    const volume = S.set.master / 100 * S.set.sfxVol / 100;
+    const now = performance.now();
+    // 同時衝突を後でまとめて再生しない。小さな接触を落として強い衝突を優先する。
+    if (level < .025 || volume <= 0 || now - lastChinchiroHit < 12 || chinchiroVoices.size >= 8) return;
+    lastChinchiroHit = now;
+    const material = ['ceramic', 'dice', 'wood'].includes(kind) ? kind : 'ceramic';
+    const variant = chinchiroVoice++ % 4, key = `${material}:${variant}`;
+    if (!chinchiroBuffers.has(key)) chinchiroBuffers.set(key, chinchiroImpactBuffer(ctx, material, variant));
+    const src = transientAudio.track(ctx.createBufferSource());
+    src.buffer = chinchiroBuffers.get(key);
+    src.playbackRate.value = Math.min(1.18, Math.max(.86, Number(rate) || 1));
+    const gain = ctx.createGain();
+    gain.gain.value = Math.min(1, volume * .78 * Math.pow(level, .72));
+    const panner = typeof ctx.createStereoPanner === 'function' ? ctx.createStereoPanner() : null;
+    if (panner) {
+      panner.pan.value = Math.min(.6, Math.max(-.6, (Number(pan) || 0) * .6));
+      src.connect(gain).connect(panner).connect(ctx.destination);
+    } else src.connect(gain).connect(ctx.destination);
+    chinchiroVoices.add(src);
+    src.addEventListener('ended', () => {
+      chinchiroVoices.delete(src);
+      src.disconnect(); gain.disconnect(); panner?.disconnect();
+    }, {once:true});
+    src.start();
+    return () => { try { src.stop(); } catch {} };
+  }
+
   let wheelSource = null, wheelRoll = null;
   function rouletteSpin(plan) {
     if (!enabled || !S.set.sound || !ctx || ctx.state !== 'running' || !transientAudio.allowed()) return;
@@ -226,8 +301,8 @@ function createSfx(call) {
     return stop;
   }
   return {
-    init, play, rouletteSpin,
-    set enabled(v) { enabled = v; if (!v) { wheelSource?.stop(); try { wheelRoll?.stop(); } catch {} } },
+    init, play, rouletteSpin, chinchiroImpact,
+    set enabled(v) { enabled = v; if (!v) { wheelSource?.stop(); try { wheelRoll?.stop(); } catch {} for (const src of chinchiroVoices) { try { src.stop(); } catch {} } } },
     get enabled() { return enabled; },
   };
 }
@@ -273,7 +348,7 @@ function moveSound(id, m) {
     case "blokus": return m === 999999 ? null : ["TILE"];
     case "quoridor": return m >= 100 ? ["WOOD"] : ["STONE"];
     case "battleship": return null;
-    case "chinchiro": return ["DICE"];
+    case "chinchiro": return null; // 衝突アニメーションから専用の器・サイコロ音を鳴らす
     // ソリティア: 山札をめくる(スパイダーは配る)・札を置く。やめる(1)は鳴らさない
     case "solitaire": { const c = m % 1000000; return c === 1 ? null : c === 0 ? ["CARD_FLIP"] : ["CARD"]; }
     case "spider": { const c = m % 1000000; return c === 1 ? null : c === 0 ? ["DEAL"] : ["CARD"]; }
