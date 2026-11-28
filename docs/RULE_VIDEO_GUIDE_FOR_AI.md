@@ -183,11 +183,12 @@ ffmpeg -v error -y -ss 12 -i out.mp4 -frames:v 1 -vf scale=960:-1 one.png
 |---|---|---|---|
 | マンカラ(mancala) | **済**(2026-11-28 公開) | mc-v3-step1・mc-v2-step2〜6(6 本) | `tools/rule_video/mancala.cjs` |
 | 大富豪(daifugo) | **済**(2026-11-28 公開) | df-v2-step1〜5,7,8・df-v3-step6(8 本) | `tools/rule_video/daifugo.cjs` |
-| ほかの 59(下の一覧) | まだ(以前の作り方の動画 3 本ずつ。2 章の問題がある) | `<略号>-step1〜3.mp4` | なし |
+| 将棋(shogi) | **済**(2026-11-28、公開はユーザーの確認待ち) | sh-v2-step1〜7(7 本) | `tools/rule_video/shogi.cjs` |
+| ほかの 58(下の一覧) | まだ(以前の作り方の動画 3 本ずつ。2 章の問題がある) | `<略号>-step1〜3.mp4` | なし |
 
-まだのゲーム(`js/rules-steps.js` の ID): shogi・gogo・reversi・connect4・gomoku・hex・morris・checkers・chess・dots・hitblow・hare・chinese・ludo・backgammon・go・yacht・mahjong・life・hanafuda・sevens・memory・speed・poker・holdem・blackjack・uno・solitaire・spider・slide・bunyo・pakuris・mine・mineVersus・bozu・wolf・roulette・war・takoyaki・butanoshippo・oldmaid・hearts・ginrummy・vulture・goita・quarto・geister・rummikub・pegsolitaire・munage・coyote・skull・liarsdice・incangold・take6・blokus・quoridor・battleship・chinchiro
+まだのゲーム(`js/rules-steps.js` の ID): gogo・reversi・connect4・gomoku・hex・morris・checkers・chess・dots・hitblow・hare・chinese・ludo・backgammon・go・yacht・mahjong・life・hanafuda・sevens・memory・speed・poker・holdem・blackjack・uno・solitaire・spider・slide・bunyo・pakuris・mine・mineVersus・bozu・wolf・roulette・war・takoyaki・butanoshippo・oldmaid・hearts・ginrummy・vulture・goita・quarto・geister・rummikub・pegsolitaire・munage・coyote・skull・liarsdice・incangold・take6・blokus・quoridor・battleship・chinchiro
 - 作り直したら `tools/build_rule_steps.cjs` の `REMADE` に足し、この表を直す。
-- 盤の種類で、見本にする台本が違う: 盤が SVG(マンカラ・リバーシ・碁など)は `mancala.cjs`、札・HTML の卓(トランプ・花札など)は `daifugo.cjs`。落ち物(ぶにょぶにょ・パクリス)・リアルタイム(スピード)・1 人用(ソリティア・スライド)は時計の扱いに注意(ページの時計を遅くしているので、操作のタイミングもページの時間で考える)。
+- 盤の種類で、見本にする台本が違う: 盤のマスを押すゲーム(将棋・5五将棋・チェスなど)は `shogi.cjs`(駒を押す → 点 → 行き先、成るかの確認、アプリの「駒の一覧」を開いて見せる形)、盤が SVG(マンカラ・リバーシ・碁など)は `mancala.cjs`、札・HTML の卓(トランプ・花札など)は `daifugo.cjs`。落ち物(ぶにょぶにょ・パクリス)・リアルタイム(スピード)・1 人用(ソリティア・スライド)は時計の扱いに注意(ページの時計を遅くしているので、操作のタイミングもページの時間で考える)。
 
 ---
 

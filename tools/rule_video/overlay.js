@@ -117,6 +117,8 @@
     const name = '「' + el.textContent.slice(0, 16) + '」';
     for (const sel of T.avoidSel) for (const e of document.querySelectorAll(sel)) {
       if (root.contains(e)) continue; const q = e.getBoundingClientRect(); if (!q.width || !q.height) continue;
+      { const top = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2); // 上に出た画面(一覧など)で隠れている物は調べない
+        if (top && !e.contains(top) && !top.contains(e) && top.closest('.mbox') && !e.closest('.mbox')) continue; }
       if (hit(rc, { l: q.left, t: q.top, r: q.right, b: q.bottom })) throw new Error(`かぶり: ${name} が ${sel}「${e.textContent.trim().slice(0, 12)}」に重なる`);
     }
     for (const [id, o] of items) { if (o === el || !o.classList.contains('on')) continue;
@@ -139,8 +141,8 @@
     if (capEl) { fadeOut(capEl); capEl = null; await T.sleep(380); }
     if (!html) return;
     const d = document.createElement('div'); d.className = 'tut-fade tut-cap'; d.innerHTML = html;
-    if (T.capBox) { // 決めた欄(右の側板の空いた所など)に出す
-      const b = T.capBox; d.classList.add('tut-side'); Object.assign(d.style, { left: b.left + 'px', top: b.top + 'px', width: b.width + 'px' });
+    if (T.capBox) { // 決めた欄(右の側板の空いた所など)に出す。狭い欄なので改行は入れず、言葉の切れ目で自動で折り返す
+      const b = T.capBox; d.classList.add('tut-side'); d.innerHTML = html.replace(/<br\s*\/?>/g, ''); Object.assign(d.style, { left: b.left + 'px', top: b.top + 'px', width: b.width + 'px' });
       root.appendChild(d); on(d); capEl = d;
       if (b.maxH && d.offsetHeight > b.maxH) throw new Error(`説明の文が欄に入らない(${d.offsetHeight}>${b.maxH} 幅${b.width}): ` + d.textContent);
     } else {
