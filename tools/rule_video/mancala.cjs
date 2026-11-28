@@ -50,7 +50,7 @@ const step1 = async () => {
   T.ring('row0', T.shape.row(0)); T.label('row0l', 'あなたの穴', [400, 184]);
   await T.cap('下の列の 6つの穴が、<em>あなたの穴</em>です');
   await T.sleep(4300);
-  T.ring('st6', T.shape.pit(6)); T.label('st6l', 'あなたの倉', [606, 184]);
+  T.ring('st6', T.shape.pit(6)); { const [x] = T.pt(730, 0), [, y] = T.pt(0, 0); T.label('st6l', 'あなたの倉', { page: [x - 10, y - 34] }); } // 倉の上側(下の列の名札とかぶらないように)
   await T.cap('右はしの大きな穴が <em>あなたの倉</em>。<br>ここに入った石が、あなたの点になります');
   await T.sleep(5200);
   T.clear('row0', 'row0l', 'st6', 'st6l');
@@ -234,7 +234,7 @@ const step6 = async () => {
 };
 
 const STEPS = [
-  { n: 1, run: step1, prefix: [] },
+  { n: 1, run: step1, prefix: [], file: 'mc-v3-step1.mp4' }, // 2026-11-28 名札の位置を直して録り直し(新しい名前にする)
   { n: 2, run: step2, prefix: [], cpu: [8] },
   { n: 3, run: step3, prefix: [] },
   { n: 4, run: step4, prefix: [4, 12, 3, 11, 4, 10, 2, 12] },
@@ -254,7 +254,7 @@ const STEPS = [
         if (pits.join() !== s.p.join()) throw new Error(`step${st.n}: 局面が台本と違う ${pits} / ${s.p}`); }
       await env.page.evaluate(`(${HELP})()`);
       await env.page.evaluate((q) => { window.__cpuQ.push(...q); window.__hold = true; }, st.cpu || []);
-      await record(env, path.join(OUT, `mc-v2-step${st.n}.mp4`), st.run.toString(), {}, K);
+      await record(env, path.join(OUT, st.file || `mc-v2-step${st.n}.mp4`), st.run.toString(), {}, K);
     } finally { await env.browser.close(); }
   }
 })().catch((e) => { console.error(e); process.exit(1); });
