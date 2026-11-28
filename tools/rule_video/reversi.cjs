@@ -20,8 +20,8 @@ const PLAN = {
   2: { upto: 0, live: [0, 1] },
   3: { upto: 26, live: [26, 27] },
   4: { upto: 2, live: [2], illegal: 20 },
-  5: { upto: 45, live: [45, 46] },
-  6: { upto: 58, live: [58, 59] },
+  5: { upto: 46, live: [46, 47] },
+  6: { upto: 59, live: [59, 60] },
 };
 const cpuQueue = (n) => { const last = PLAN[n].upto + PLAN[n].live.length; return E.slice(0, last).filter((x) => x.seat === 1 && !x.pass).map((x) => x.m); };
 
@@ -129,7 +129,7 @@ const step3 = async () => {
 const step4 = async () => {
   RV.setup();
   await T.sleep(600);
-  T.ring('ng', RV.cell(20), { ng: true, dash: true });
+  T.ring('ng', { el: RV.cell(20), pad: 3, rr: 14 }, { ng: true, dash: true });
   await T.cap('この白い所は、<em>挟めない</em>ので置けません');
   await T.sleep(4600);
   T.clear('ng');
@@ -152,7 +152,7 @@ const step5 = async () => {
   await T.sleep(5200);
   await T.cap(null);
   window.__hold = false;
-  await T.until(() => view.moves === 46 && !busy);
+  await T.until(() => view.moves === 47 && !busy);
   await T.sleep(600);
   window.__hold = true;
   await RV.calm();
