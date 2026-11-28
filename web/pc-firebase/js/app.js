@@ -342,6 +342,10 @@ const EXTRA_CPU_PACE = { 短い: 1000, ふつう: 2700, 長い: 3700 };
 const CPU_PACE_CHOICES = [['inherit','共通設定'],...Object.keys(PACE).map(label=>[label,label])];
 const cpuPaceSetting = choice => Object.hasOwn(PACE,choice) ? choice : S.set.cpuLen;
 const extraCpuDelay = choice => EXTRA_CPU_PACE[cpuPaceSetting(choice)] ?? EXTRA_CPU_PACE['ふつう'];
+// クアルト: 自分が駒を決めてから CPU が置き始めるまで 1 秒、CPU が置いてから駒を選び始めるまで 0.5 秒(ふつう。短い・長いはその比率)。
+// 置いた駒が落ちる動き(約 0.4 秒)の終わりを待ってから数え始めるので、pick 側の待ちはその分を引いた短い値にしている
+const QUARTO_CPU_PACE = { place: { 短い: 600, ふつう: 1000, 長い: 1500 }, pick: { 短い: 60, ふつう: 130, 長い: 330 } };
+const quartoCpuDelay = (choice, phase) => (QUARTO_CPU_PACE[phase === 'pick' ? 'pick' : 'place'][cpuPaceSetting(choice)]) ?? 1000;
 const usesExtraCpuPace = id => id === 'roulette' || window.TWELVE_HAS(id);
 const rouletteSolo = (id, c) => id === 'roulette' && c?.opts.players === '1';
 const cpuPaceChoice = () => cpuPaceSetting(!online || isSoloIdleMatch() ? pcfg?.cpuLen : null);
@@ -604,7 +608,7 @@ async function cpuTurn(my, opts = {}) {
   if (my !== token) return;
   const choice = cpuPaceChoice();
   const bsPlacing = cur.id === 'battleship' && view.board && view.board.phase === 'place';
-  const delay = bsPlacing ? 0 : cur.id === 'roulette' ? 90 : usesExtraCpuPace(cur.id) ? extraCpuDelay(choice) : (PACE[choice] || 450) * Math.max(0.3, SPEED());
+  const delay = bsPlacing ? 0 : cur.id === 'roulette' ? 90 : cur.id === 'quarto' ? quartoCpuDelay(choice, view.board && view.board.phase) : usesExtraCpuPace(cur.id) ? extraCpuDelay(choice) : (PACE[choice] || 450) * Math.max(0.3, SPEED());
   const wait = delay - (performance.now() - t0);
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   if (my !== token) return;

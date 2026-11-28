@@ -2107,52 +2107,6 @@ function renderBattleship(b, A) {
 window.RENDER.battleship = renderBattleship;
 
 // ================================================================ チンチロリン
-// サイコロの3Dキューブ(面の向き: 1=+Z 6=-Z 3=+X 4=-X 2=-Y 5=+Y。向かい合う面の和は7)
-const CC_FACE_N = { 1: [0, 0, 1], 6: [0, 0, -1], 3: [1, 0, 0], 4: [-1, 0, 0], 2: [0, -1, 0], 5: [0, 1, 0] };
-const CC_FACE_TR = { 1: '', 6: 'rotateY(180deg)', 3: 'rotateY(90deg)', 4: 'rotateY(-90deg)', 2: 'rotateX(90deg)', 5: 'rotateX(-90deg)' };
-const CC_TILTS = [-8, 6, 12];
-const qNorm = (q) => { const l = Math.hypot(q[0], q[1], q[2], q[3]) || 1; return [q[0] / l, q[1] / l, q[2] / l, q[3] / l]; };
-const qMul = (a, b) => [
-  a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1],
-  a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0],
-  a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3],
-  a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2]];
-const qAxis = (ax, ang) => { const s = Math.sin(ang / 2); return [ax[0] * s, ax[1] * s, ax[2] * s, Math.cos(ang / 2)]; };
-const qSlerp = (a, b, t) => {
-  let d = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
-  const bb = d < 0 ? b.map((v) => -v) : b; if (d < 0) d = -d;
-  if (d > 0.9995) return qNorm(a.map((v, i) => v + (bb[i] - v) * t));
-  const th = Math.acos(Math.min(1, d)), s = Math.sin(th);
-  const wa = Math.sin((1 - t) * th) / s, wb = Math.sin(t * th) / s;
-  return a.map((v, i) => wa * v + wb * bb[i]);
-};
-// 値 v の面を手前に向け、Z軸まわりに tilt 度だけ傾けた向き
-const qForFace = (v, tilt) => {
-  const n = CC_FACE_N[v];
-  let qa;
-  if (v === 6) qa = [0, 1, 0, 0];
-  else {
-    const ax = [n[1] * 1 - n[2] * 0, n[2] * 0 - n[0] * 1, n[0] * 0 - n[1] * 0]; // n × (0,0,1)
-    qa = qNorm([ax[0], ax[1], ax[2], 1 + n[2]]);
-  }
-  return qMul(qAxis([0, 0, 1], tilt * Math.PI / 180), qa);
-};
-const qMatrix = (q) => {
-  const [x, y, z, w] = qNorm(q), r = (v) => Math.round(v * 10000) / 10000;
-  return `matrix3d(${r(1 - 2 * (y * y + z * z))},${r(2 * (x * y + z * w))},${r(2 * (x * z - y * w))},0,${r(2 * (x * y - z * w))},${r(1 - 2 * (x * x + z * z))},${r(2 * (y * z + x * w))},0,${r(2 * (x * z + y * w))},${r(2 * (y * z - x * w))},${r(1 - 2 * (x * x + y * y))},0,0,0,0,1)`;
-};
-const ccCube = (v, size, i) => {
-  const faces = [1, 2, 3, 4, 5, 6].map((f) => {
-    const pips = Array.from({ length: 9 }, (_, k) => `<i class="${PIPS[f].includes(k) ? 'on' : ''}"></i>`).join('');
-    return `<span class="ccf${f === 1 ? ' one' : ''}" style="transform:${CC_FACE_TR[f]} translateZ(${size / 2}px)">${pips}</span>`;
-  }).join('');
-  return `<span class="cc-cube" style="transform:${qMatrix(qForFace(v, CC_TILTS[i % 3]))}">${faces}</span>`;
-};
-const CC_BOWL = (D) => `<svg viewBox="0 0 320 320" width="${D}" height="${D}"><defs><radialGradient id="ccIn" cx=".5" cy=".42" r=".68"><stop offset="0" stop-color="#FBF7EC"/><stop offset=".75" stop-color="#EFE6D0"/><stop offset="1" stop-color="#D8C9A6"/></radialGradient><radialGradient id="ccOut" cx=".5" cy=".35" r=".85"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DFE5EB"/></radialGradient></defs><ellipse cx="160" cy="304" rx="104" ry="12" fill="#00000035"/><circle cx="160" cy="158" r="150" fill="url(#ccOut)" stroke="#B9C2CC" stroke-width="1.5"/><circle cx="160" cy="158" r="138" fill="none" stroke="#2B5EA7" stroke-width="6"/><circle cx="160" cy="158" r="126" fill="none" stroke="#2B5EA7" stroke-width="2.6"/><circle cx="160" cy="158" r="117" fill="url(#ccIn)"/><circle cx="160" cy="158" r="117" fill="none" stroke="#C9B98F" stroke-width="1.4"/></svg>`;
-const cc2Stacks = (chips) => {
-  const mk = (cls, n) => n ? `<span class="cc2-stack">${`<i class="cc2-disc ${cls}"></i>`.repeat(n)}</span>` : '';
-  return mk('gold', Math.min(6, Math.floor(chips / 50))) + mk('blue', Math.min(6, Math.floor((chips % 50) / 10))) + mk('white', Math.min(3, Math.floor((chips % 10) / 5)));
-};
 function renderChinchiro(b, A) {
   prep(A);
   const me = Math.max(0, b.me);
@@ -2162,25 +2116,35 @@ function renderChinchiro(b, A) {
   A.side(`<div class="kv"><span>親</span><b>${esc(A.name(b.banker))}</b></div><div class="kv"><span>賭け金</span><b>${b.bet} 枚</b></div><div class="kv"><span>手番</span><b>${b.turn >= 0 ? esc(A.name(b.turn)) : '―'}</b></div>`);
   const la = b.lastAction && b.lastAction.type === 'roll' ? b.lastAction : null;
   const lr = b.lastRound;
-  const lrJust = !!lr && ninePrev && ninePrev.ccLr !== lr.roundNo;
-  const willAnim = !!(ninePrev && ninePrev.handle === A.handle && ninePrev.moves + 1 === A.view.moves && !A.reduce);
-  const ccRollMs = Math.min(2300, Math.max(1000, 1450 * (A.speed || 1)));
-  const diceShow = b.dice.length ? b.dice : (lrJust && la ? la.dice : []);
-  const D = mob ? 348 : 280, ds = mob ? 60 : 56;
-  const bowlCx = mob ? 280 : 450, bowlCy = mob ? 470 : 262;
-  const offs = [[-0.17, -0.11], [0.18, -0.09], [0.0, 0.16]];
-  const canRoll = A.canPlay && b.turn === b.me && !b.reason;
+  const lrJust = !!lr && (!b.dice.length || !!b.reason);
+  const willAnim = !!(la && ninePrev && ninePrev.handle === A.handle && ninePrev.moves + 1 === A.view.moves && !A.reduce && !document.hidden);
+  // The last throw belongs to the completed round even when the core has already
+  // cleared b.dice for the next round. A repaint or spectator join retains it.
+  const diceShow = b.dice.length ? b.dice : (la ? la.dice : []);
+  const rollKey = `${A.handle}:${A.view.moves}:${JSON.stringify(la)}`;
+  const session = diceShow.length === 3 ? ChinchiroTable.prepare({
+    key: rollKey, values: diceShow, seed: `${A.view.moves}:${JSON.stringify(la)}`,
+    escaped: !!(la && la.shonben), animate: willAnim, speed: A.speed || 1, reduce: A.reduce
+  }) : null;
+  const resultDelay = session ? session.resultDelay : 0;
+  const settleDelay = lrJust && session ? session.settleDelay : 0;
+  const holdDelay = session ? (lrJust ? session.releaseDelay : resultDelay) : 0;
+  const rolling = resultDelay > 0;
+  const D = mob ? 420 : 360;
+  const bowlCx = mob ? 280 : 450, bowlCy = mob ? 470 : 276;
+  const ownTurn = A.canPlay && b.turn === b.me && !b.reason;
+  const canRoll = ownTurn && !holdDelay;
   let html = `<div class="nine-table ntable rect cc-table"><div class="feltin"></div></div>`;
-  html += at(bowlCx, bowlCy, `<div class="cc-bowlwrap" style="width:${D}px;height:${D}px" ${canRoll ? 'data-m="0"' : ''}>${CC_BOWL(D)}${diceShow.map((v, i) => `<span class="cc-dshadow" style="left:${D / 2 + offs[i][0] * D}px;top:${D / 2 + offs[i][1] * D}px;width:${ds}px;height:${ds}px"></span><span class="cc-die" data-final="${v}" data-size="${ds}" style="left:${D / 2 + offs[i][0] * D}px;top:${D / 2 + offs[i][1] * D}px;width:${ds}px;height:${ds}px">${ccCube(v, ds, i)}</span>`).join('')}</div>`);
+  html += at(bowlCx, bowlCy, `<div class="cc-bowlwrap" role="img" aria-label="どんぶり${diceShow.length ? '、サイコロの出目 ' + diceShow.join('・') : ''}" style="width:${D}px;height:${D}px" ${canRoll ? 'data-m="0"' : ''}>${ChinchiroTable.markup()}</div>`);
   // 席のパネル(自分以外は周囲、自分は下)
   const POS = mob
     ? { 2: [[280, 86]], 3: [[110, 100], [450, 100]], 4: [[106, 116], [280, 80], [454, 116]], 5: [[102, 124], [188, 76], [372, 76], [458, 124]], 6: [[100, 132], [174, 72], [280, 64], [386, 72], [460, 132]] }
     : { 2: [[450, 64]], 3: [[150, 110], [750, 110]], 4: [[140, 120], [450, 64], [760, 120]], 5: [[140, 130], [252, 64], [648, 64], [760, 130]], 6: [[136, 140], [228, 64], [450, 64], [672, 64], [764, 140]] };
   const seatPanel = (seat) => {
     const res = b.results[seat];
-    const resDelay = willAnim && la && seat === la.seat;
+    const resDelay = rolling && la && seat === la.seat;
     // 結果ラベルはサイコロが完全に止まってから1拍置いて出す(目を見る間を取る)
-    const resHtml = `<div class="cc-seat-res${resDelay ? ' delay' : ''}"${resDelay ? ` style="animation-delay:${Math.round(ccRollMs + 700)}ms"` : ''}>${res ? `${res.dice.map((v) => dieFace(v, mob ? 21 : 23)).join('')}<b class="cc-res-lab ${res.kind}">${esc(res.label)}</b>` : ''}</div>`;
+    const resHtml = `<div class="cc-seat-res${resDelay ? ' delay' : ''}"${resDelay ? ` style="animation-delay:${Math.round(resultDelay)}ms"` : ''}>${res ? `${res.dice.map((v) => dieFace(v, mob ? 21 : 23)).join('')}<b class="cc-res-lab ${res.kind}">${esc(res.label)}</b>` : ''}</div>`;
     const avBg = seat === b.me ? '#FFC65C' : SEAT_COLORS[seat % SEAT_COLORS.length];
     const avFg = seat === b.me ? '#3A2616' : '#fff';
     return `<div class="cc3-seat${mob ? ' mob' : ''}${seat === b.turn && !b.reason ? ' turn' : ''}${b.chips[seat] <= 0 ? ' dead' : ''}"><span class="cc3-av" style="background:${avBg};color:${avFg}">${esc(A.name(seat).slice(0, 1))}</span><div class="cc3-main"><div class="cc3-nm"><span class="cc3-nmt">${esc(A.name(seat))}</span><span class="cc2-oya${seat === b.banker ? '' : ' off'}">親</span></div><div class="cc3-chips">チップ <b>${b.chips[seat]}</b> 枚</div></div><div class="cc3-res">${resHtml}</div></div>`;
@@ -2194,7 +2158,6 @@ function renderChinchiro(b, A) {
   html += at(bowlCx, mob ? 806 : 490, `<div class="cc-me">${seatPanel(me)}</div>`);
   // ラウンド精算のパネル(最後の振りの目と全員の結果をゆっくり見せてから、間を置いてふわりと出す)
   if (lrJust && lr) {
-    if (willAnim) A.anim(ccRollMs + 1300 + 3500);
     const bk = lr.results[lr.banker];
     const rows = lr.entries.map((e) => {
       const cr = lr.results[e.child];
@@ -2203,155 +2166,16 @@ function renderChinchiro(b, A) {
       return `<div class="cc-entry"><span class="cc-entry-nm">${esc(A.name(e.child))}</span><span class="cc-entry-res ${cr ? cr.kind : ''}">${cr ? esc(cr.label) : '―'}</span>${flow}</div>`;
     }).join('');
     const instant = lr.instant === 'win' ? '<div class="cc-instant">親の即勝ち！</div>' : lr.instant === 'lose' ? '<div class="cc-instant">親の即負け</div>' : '';
-    html += at(bowlCx, bowlCy, `<div class="cc-settle${willAnim ? ' delay' : ''}"${willAnim ? ` style="animation-delay:${Math.round(ccRollMs + 1300)}ms"` : ''}><div class="cc-settle-t">第 ${lr.roundNo} ラウンド 精算</div>${instant}<div class="cc-entry banker"><span class="cc-entry-nm">親 ${esc(A.name(lr.banker))}</span><span class="cc-entry-res ${bk ? bk.kind : ''}">${bk ? esc(bk.label) : '―'}</span></div>${rows}</div>`);
+    html += at(bowlCx, bowlCy, `<div class="cc-settle${settleDelay ? ' delay' : ''}"${settleDelay ? ` style="animation-delay:${Math.round(settleDelay)}ms"` : ''}><div class="cc-settle-t">第 ${lr.roundNo} ラウンド 精算</div>${instant}<div class="cc-entry banker"><span class="cc-entry-nm">親 ${esc(A.name(lr.banker))}</span><span class="cc-entry-res ${bk ? bk.kind : ''}">${bk ? esc(bk.label) : '―'}</span></div>${rows}</div>`);
   }
-  stage(A, b, html, tapMove(A), (wrap) => {
-    const dice = [...wrap.querySelectorAll('.cc-die')];
-    if (!dice.length) return;
-    const bowl = wrap.querySelector('.cc-bowlwrap');
-    if (!bowl) return;
-    // 椀へ投げ入れる物理アニメーション: 3個が少しずつ遅れて入ってきて、椀の内側を回り、
-    // 壁や互いに跳ね返りながら勢いを失い、最後は所定の位置へ1個ずつ落ち着く。
-    // サイコロはCSS 3Dのキューブで、角速度ベクトル(クォータニオン)で立体的に転がり、
-    // 静止時は最終の目が上になる向きに収まる。影と大きさで高さも表す。
-    // ションベン(ルールON時)は1個が椀の外へ飛び出して卓上で止まる。
-    const D = bowl.clientWidth || 280;
-    const cx = D / 2, cy = D * 0.494, R = D * 0.355;
-    const size = +dice[0].dataset.size || 56;
-    const T = ccRollMs;
-    A.anim(Math.round(T));
-    const outIdx = la && la.shonben ? dice.length - 1 : -1;
-    const spinDir = Math.random() < 0.5 ? -1 : 1;
-    let sndAt = 0, sndN = 0, settleSnd = false;
-    const clack = (name, vol, rate) => {
-      const now = performance.now();
-      if (now - sndAt < 55 || sndN >= 12) return;
-      sndAt = now; sndN++;
-      A.sfx(name, 0, { volume: Math.min(.7, Math.max(.1, vol)), rate });
-    };
-    const shadows = [...wrap.querySelectorAll('.cc-dshadow')];
-    const st = dice.map((el, i) => {
-      const fx = parseFloat(el.style.left) || cx, fy = parseFloat(el.style.top) || cy;
-      const sa = (-90 + (i - 1) * 26 + (Math.random() * 10 - 5)) * Math.PI / 180;
-      const px = cx + Math.cos(sa) * D * 0.27, py = cy + Math.sin(sa) * D * 0.27;
-      let txv = -(py - cy), tyv = px - cx;
-      const tl = Math.hypot(txv, tyv) || 1;
-      const spd = D * (1.5 + Math.random() * 0.45);
-      let vx = txv / tl * spd * spinDir + (cx - px) * 1.2;
-      let vy = tyv / tl * spd * spinDir + (cy - py) * 1.2;
-      let tx = fx, ty = fy;
-      if (i === outIdx) {
-        const th = (Math.random() * 70 - 35) * Math.PI / 180;
-        const odx = Math.sin(th), ody = Math.cos(th);
-        vx = odx * D * 1.45; vy = ody * D * 1.45;
-        tx = cx + odx * D * 0.63; ty = cy + ody * D * 0.63;
-      }
-      el.style.visibility = 'hidden';
-      // 3Dの回転: ランダムな軸まわりに毎秒9〜15ラジアンで回し始め、静止時は最終の目が上になる向きへ寄せる
-      const axr = [Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1];
-      const axl = Math.hypot(axr[0], axr[1], axr[2]) || 1;
-      const wsp = 9 + Math.random() * 6;
-      const fin = +el.dataset.final;
-      return { el, sh: shadows[i] || null, cube: el.querySelector('.cc-cube'), fx, fy, tx, ty, x: px, y: py, vx, vy, delay: i * 70,
-        q: qAxis([axr[0] / axl, axr[1] / axl, axr[2] / axl], Math.random() * Math.PI * 2),
-        wv: [axr[0] / axl * wsp, axr[1] / axl * wsp, axr[2] / axl * wsp],
-        qT: qForFace(fin, CC_TILTS[i % 3]), h: 1, locked: false, esc: false };
-    });
-    const t0 = performance.now();
-    let last = t0;
-    const frame = (now) => {
-      if (!dice[0].isConnected) return;
-      const dt = Math.min(0.033, Math.max(0.001, (now - last) / 1000)); last = now;
-      const t = now - t0;
-      let done = true;
-      st.forEach((s, i) => {
-        if (s.locked) return;
-        if (t < s.delay) { done = false; return; }
-        if (s.el.style.visibility === 'hidden') s.el.style.visibility = '';
-        done = false;
-        const out = i === outIdx;
-        const settle = Math.min(1, Math.max(0, (t - (out ? T * 0.42 : T * (0.5 + i * 0.09))) / (T * 0.22)));
-        if (settle > 0) {
-          const k = 160 * settle, c = 18 * settle;
-          s.vx += ((s.tx - s.x) * k - s.vx * c) * dt;
-          s.vy += ((s.ty - s.y) * k - s.vy * c) * dt;
-        }
-        s.x += s.vx * dt; s.y += s.vy * dt;
-        const fr = Math.exp(-(out && s.esc ? 2.6 : 1.5) * dt);
-        s.vx *= fr; s.vy *= fr;
-        if (out) {
-          if (!s.esc && Math.hypot(s.x - cx, s.y - cy) > R) s.esc = true;
-        } else if (settle <= 0) {
-          const dx = s.x - cx, dy = s.y - cy, d = Math.hypot(dx, dy);
-          if (d > R) {
-            const nx = dx / d, ny = dy / d;
-            s.x = cx + nx * R; s.y = cy + ny * R;
-            const vn = s.vx * nx + s.vy * ny;
-            if (vn > 0) {
-              s.vx -= 1.62 * vn * nx; s.vy -= 1.62 * vn * ny;
-              s.vx *= 0.94; s.vy *= 0.94;
-              // 壁に当たると少し跳ね上がり、回転の軸もずれる
-              s.h = Math.min(0.55, s.h + vn / (D * 3.2));
-              s.wv[0] += (Math.random() - 0.5) * vn * 0.02;
-              s.wv[1] += (Math.random() - 0.5) * vn * 0.02;
-              s.wv[2] += (Math.random() - 0.5) * vn * 0.014;
-              if (vn > 55) clack('TILE', vn / (D * 2.6), 1.2 + Math.random() * 0.35);
-            }
-          }
-        }
-        // 高さ(投げ入れ直後は高く、跳ねると少し浮く): 時間とともに落ち着く
-        const tIn = Math.max(0, (t - s.delay) / (T * 0.13));
-        if (tIn < 1) s.h = 1 - tIn; else s.h *= Math.exp(-5.5 * dt);
-        // 3D回転: 角速度ベクトルで転がし、静止フェーズでは最終の目が上になる向きへ補間する
-        const wl = Math.hypot(s.wv[0], s.wv[1], s.wv[2]);
-        if (wl > 0.001) s.q = qNorm(qMul(qAxis([s.wv[0] / wl, s.wv[1] / wl, s.wv[2] / wl], wl * dt), s.q));
-        const wfr = Math.exp(-(settle > 0 ? 7 : 1.9) * dt);
-        s.wv[0] *= wfr; s.wv[1] *= wfr; s.wv[2] *= wfr;
-        if (settle > 0) s.q = qSlerp(s.q, s.qT, 1 - Math.exp(-7 * settle * dt));
-        const spd = Math.hypot(s.vx, s.vy);
-        const qd = Math.abs(s.q[0] * s.qT[0] + s.q[1] * s.qT[1] + s.q[2] * s.qT[2] + s.q[3] * s.qT[3]);
-        if ((settle >= 1 && Math.hypot(s.tx - s.x, s.ty - s.y) < 1.4 && spd < 16 && qd > 0.9995) || t > T * 1.25) {
-          s.locked = true; s.x = s.tx; s.y = s.ty; s.q = s.qT;
-          s.el.style.transform = `translate(-50%,-50%) translate(${Math.round((s.tx - s.fx) * 10) / 10}px,${Math.round((s.ty - s.fy) * 10) / 10}px)`;
-          if (s.cube) s.cube.style.transform = qMatrix(s.qT);
-          if (s.sh) { s.sh.style.transform = ''; s.sh.style.opacity = ''; }
-          if (!settleSnd && st.every((o) => o.locked)) { settleSnd = true; A.sfx('WOOD', 0, { volume: .4, rate: 1.4 }); }
-          return;
-        }
-        const sc = 1 + 0.22 * s.h;
-        s.el.style.transform = `translate(-50%,-50%) translate(${Math.round((s.x - s.fx) * 10) / 10}px,${Math.round((s.y - s.fy) * 10) / 10}px) scale(${Math.round(sc * 100) / 100})`;
-        if (s.cube) s.cube.style.transform = qMatrix(s.q);
-        if (s.sh) {
-          s.sh.style.transform = `translate(-50%,-50%) translate(${Math.round((s.x - s.fx + 3 + 10 * s.h) * 10) / 10}px,${Math.round((s.y - s.fy + 5 + 14 * s.h) * 10) / 10}px) scale(${Math.round((1 + 0.35 * s.h) * 100) / 100})`;
-          s.sh.style.opacity = String(Math.round((0.9 - 0.35 * s.h) * 100) / 100);
-        }
-      });
-      for (let a = 0; a < st.length; a++) for (let b2 = a + 1; b2 < st.length; b2++) {
-        const p = st[a], q = st[b2];
-        if (p.locked || q.locked || t < p.delay || t < q.delay) continue;
-        const dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy), min = size * 1.04;
-        if (d > 0.01 && d < min) {
-          const nx = dx / d, ny = dy / d, push = (min - d) / 2;
-          p.x -= nx * push; p.y -= ny * push; q.x += nx * push; q.y += ny * push;
-          const rvn = (q.vx - p.vx) * nx + (q.vy - p.vy) * ny;
-          if (rvn < 0) {
-            const imp = -rvn * 0.86;
-            p.vx -= imp * nx; p.vy -= imp * ny; q.vx += imp * nx; q.vy += imp * ny;
-            p.wv[2] += imp * 0.01; q.wv[2] -= imp * 0.01;
-            p.wv[0] += (Math.random() - 0.5) * imp * 0.008; q.wv[1] += (Math.random() - 0.5) * imp * 0.008;
-            if (imp > 60) { p.h = Math.min(0.4, p.h + imp / (D * 4)); q.h = Math.min(0.4, q.h + imp / (D * 4)); }
-            if (rvn < -70) clack('WOOD', -rvn / (D * 3.2), 1.8 + Math.random() * 0.3);
-          }
-        }
-      }
-      if (!done) requestAnimationFrame(frame);
-    };
-    requestAnimationFrame(frame);
-  });
+  if (holdDelay) A.anim(holdDelay / (A.speed || 1));
+  stage(A, b, html, (d) => { if (canRoll && d.m === '0') A.play(0); });
+  if (session) ChinchiroTable.mount(document.querySelector('.cc-bowlwrap'), session, () => {
+    if (document.querySelector('.k-chinchiro')) A.redraw();
+  }, lrJust ? 4800 : 700);
   const acts = [];
-  if (canRoll) acts.push({ label: b.attempts > 0 ? 'もう一度振る' : 'サイコロを振る', move: 0, cls: 'gold', enabled: true });
+  if (ownTurn) acts.push({ label: b.attempts > 0 ? 'もう一度振る' : 'サイコロを振る', move: 0, cls: 'gold', enabled: canRoll });
   A.acts(acts);
-  if (lr) ninePrev.ccLr = lr.roundNo;
 }
 window.RENDER.chinchiro = renderChinchiro;
 
