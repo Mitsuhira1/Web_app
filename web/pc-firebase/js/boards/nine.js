@@ -185,16 +185,14 @@ function renderCoyote(b, A) {
   }
   const { mob: _m } = stage(A, b, html, tapMove(A));
   if (ninePrev) ninePrev.lr = lr ? lr.roundNo : ninePrev.lr;
-  if (A.canPlay) {
-    const setBid = (v) => { A.sel = { kind: 'coyote', moves: A.view.moves, bid: clamp(v, b.minBid, b.maxBid) }; A.redraw(); };
-    const acts = [
-      { label: '−', cls: 'step', fn: () => setBid(bid - 1), enabled: bid > b.minBid },
-      { label: `${bid} と宣言`, move: bid, cls: 'gold', enabled: A.legal.has(bid) },
-      { label: '＋', cls: 'step', fn: () => setBid(bid + 1), enabled: bid < b.maxBid },
-    ];
-    acts.push({ label: 'コヨーテ!', move: 0, cls: 'danger', enabled: !!(b.canCoyote && A.legal.has(0)) });
-    A.acts(acts);
-  } else A.acts([]);
+  // ボタンは消さずに常時表示し、自分の番でない時はグレーアウトする
+  const setBid = (v) => { A.sel = { kind: 'coyote', moves: A.view.moves, bid: clamp(v, b.minBid, b.maxBid) }; A.redraw(); };
+  A.acts([
+    { label: '−', cls: 'step', fn: () => setBid(bid - 1), enabled: A.canPlay && bid > b.minBid },
+    { label: `${bid} と宣言`, move: bid, cls: 'gold', enabled: A.legal.has(bid) },
+    { label: '＋', cls: 'step', fn: () => setBid(bid + 1), enabled: A.canPlay && bid < b.maxBid },
+    { label: 'コヨーテ!', move: 0, cls: 'danger', enabled: !!(b.canCoyote && A.legal.has(0)) },
+  ]);
 }
 function cyLegacyRender(b, A) {
   const me = Math.max(0, b.me);
@@ -249,16 +247,14 @@ function cyLegacyRender(b, A) {
   const { mob: _m } = stage(A, b, html, tapMove(A));
   if (ninePrev) ninePrev.lr = lr ? lr.roundNo : ninePrev.lr;
   // 操作: ステッパー+宣言+コヨーテ
-  if (A.canPlay) {
-    const setBid = (v) => { A.sel = { kind: 'coyote', moves: A.view.moves, bid: clamp(v, b.minBid, b.maxBid) }; A.redraw(); };
-    const acts = [
-      { label: '−', cls: 'step', fn: () => setBid(bid - 1), enabled: bid > b.minBid },
-      { label: `${bid} と宣言`, move: bid, cls: 'gold', enabled: A.legal.has(bid) },
-      { label: '＋', cls: 'step', fn: () => setBid(bid + 1), enabled: bid < b.maxBid },
-    ];
-    acts.push({ label: 'コヨーテ!', move: 0, cls: 'danger', enabled: !!(b.canCoyote && A.legal.has(0)) });
-    A.acts(acts);
-  } else A.acts([]);
+  // ボタンは消さずに常時表示し、自分の番でない時はグレーアウトする
+  const setBid = (v) => { A.sel = { kind: 'coyote', moves: A.view.moves, bid: clamp(v, b.minBid, b.maxBid) }; A.redraw(); };
+  A.acts([
+    { label: '−', cls: 'step', fn: () => setBid(bid - 1), enabled: A.canPlay && bid > b.minBid },
+    { label: `${bid} と宣言`, move: bid, cls: 'gold', enabled: A.legal.has(bid) },
+    { label: '＋', cls: 'step', fn: () => setBid(bid + 1), enabled: A.canPlay && bid < b.maxBid },
+    { label: 'コヨーテ!', move: 0, cls: 'danger', enabled: !!(b.canCoyote && A.legal.has(0)) },
+  ]);
 }
 window.RENDER = window.RENDER || {};
 window.RENDER.coyote = renderCoyote;
@@ -371,19 +367,18 @@ function renderSkull(b, A) {
   }
   stage(A, b, html, tapMove(A));
   if (ninePrev) ninePrev.lr = lr ? lr.roundNo : ninePrev.lr;
+  // ボタンは消さずに常時表示し、自分の番でない時はグレーアウトする
   const acts = [];
-  if (A.canPlay) {
-    if ((b.phase === 'play_or_bid' || b.phase === 'bidding') && b.totalPlaced > 0) {
-      const setBid = (v) => { A.sel = { kind: 'skull', moves: A.view.moves, bid: clamp(v, minBid, b.totalPlaced) }; A.redraw(); };
-      acts.push({ label: '−', fn: () => setBid(bid - 1), enabled: bid > minBid });
-      acts.push({ label: `${bid} 枚で宣言`, move: bid, cls: 'gold', enabled: A.legal.has(bid) });
-      acts.push({ label: '＋', fn: () => setBid(bid + 1), enabled: bid < b.totalPlaced });
-      acts.push({ label: 'パス', move: 0, enabled: b.phase === 'bidding' && A.legal.has(0) });
-    }
-    if (b.phase === 'discard_own') {
-      acts.push({ label: '花を捨てる', move: 300, cls: 'gold', enabled: A.legal.has(300) });
-      acts.push({ label: 'ドクロを捨てる', move: 301, cls: 'danger', enabled: A.legal.has(301) });
-    }
+  if ((b.phase === 'play_or_bid' || b.phase === 'bidding') && b.totalPlaced > 0) {
+    const setBid = (v) => { A.sel = { kind: 'skull', moves: A.view.moves, bid: clamp(v, minBid, b.totalPlaced) }; A.redraw(); };
+    acts.push({ label: '−', fn: () => setBid(bid - 1), enabled: A.canPlay && bid > minBid });
+    acts.push({ label: `${bid} 枚で宣言`, move: bid, cls: 'gold', enabled: A.legal.has(bid) });
+    acts.push({ label: '＋', fn: () => setBid(bid + 1), enabled: A.canPlay && bid < b.totalPlaced });
+    acts.push({ label: 'パス', move: 0, enabled: b.phase === 'bidding' && A.legal.has(0) });
+  }
+  if (b.phase === 'discard_own') {
+    acts.push({ label: '花を捨てる', move: 300, cls: 'gold', enabled: A.legal.has(300) });
+    acts.push({ label: 'ドクロを捨てる', move: 301, cls: 'danger', enabled: A.legal.has(301) });
   }
   A.acts(acts);
 }
@@ -473,19 +468,18 @@ function skMobileRender(b, A) {
   }
   stage(A, b, html, tapMove(A));
   if (ninePrev) ninePrev.lr = lr ? lr.roundNo : ninePrev.lr;
+  // ボタンは消さずに常時表示し、自分の番でない時はグレーアウトする
   const acts = [];
-  if (A.canPlay) {
-    if ((b.phase === 'play_or_bid' || b.phase === 'bidding') && b.totalPlaced > 0) {
-      const setBid = (v) => { A.sel = { kind: 'skull', moves: A.view.moves, bid: clamp(v, minBid, b.totalPlaced) }; A.redraw(); };
-      acts.push({ label: '−', fn: () => setBid(bid - 1), enabled: bid > minBid });
-      acts.push({ label: `${bid} 枚で宣言`, move: bid, cls: 'gold', enabled: A.legal.has(bid) });
-      acts.push({ label: '＋', fn: () => setBid(bid + 1), enabled: bid < b.totalPlaced });
-      acts.push({ label: 'パス', move: 0, enabled: b.phase === 'bidding' && A.legal.has(0) });
-    }
-    if (b.phase === 'discard_own') {
-      acts.push({ label: '花を捨てる', move: 300, cls: 'gold', enabled: A.legal.has(300) });
-      acts.push({ label: 'ドクロを捨てる', move: 301, cls: 'danger', enabled: A.legal.has(301) });
-    }
+  if ((b.phase === 'play_or_bid' || b.phase === 'bidding') && b.totalPlaced > 0) {
+    const setBid = (v) => { A.sel = { kind: 'skull', moves: A.view.moves, bid: clamp(v, minBid, b.totalPlaced) }; A.redraw(); };
+    acts.push({ label: '−', fn: () => setBid(bid - 1), enabled: A.canPlay && bid > minBid });
+    acts.push({ label: `${bid} 枚で宣言`, move: bid, cls: 'gold', enabled: A.legal.has(bid) });
+    acts.push({ label: '＋', fn: () => setBid(bid + 1), enabled: A.canPlay && bid < b.totalPlaced });
+    acts.push({ label: 'パス', move: 0, enabled: b.phase === 'bidding' && A.legal.has(0) });
+  }
+  if (b.phase === 'discard_own') {
+    acts.push({ label: '花を捨てる', move: 300, cls: 'gold', enabled: A.legal.has(300) });
+    acts.push({ label: 'ドクロを捨てる', move: 301, cls: 'danger', enabled: A.legal.has(301) });
   }
   A.acts(acts);
 }
@@ -569,19 +563,18 @@ function skLegacyRender(b, A) {
   stage(A, b, html, tapMove(A));
   if (ninePrev) ninePrev.lr = lr ? lr.roundNo : ninePrev.lr;
   // 操作ボタン
+  // ボタンは消さずに常時表示し、自分の番でない時はグレーアウトする
   const acts = [];
-  if (A.canPlay) {
-    if ((b.phase === 'play_or_bid' || b.phase === 'bidding') && b.totalPlaced > 0) {
-      const setBid = (v) => { A.sel = { kind: 'skull', moves: A.view.moves, bid: clamp(v, minBid, b.totalPlaced) }; A.redraw(); };
-      acts.push({ label: '−', fn: () => setBid(bid - 1), enabled: bid > minBid });
-      acts.push({ label: `${bid} 枚で宣言`, move: bid, cls: 'gold', enabled: A.legal.has(bid) });
-      acts.push({ label: '＋', fn: () => setBid(bid + 1), enabled: bid < b.totalPlaced });
-      acts.push({ label: 'パス', move: 0, enabled: b.phase === 'bidding' && A.legal.has(0) });
-    }
-    if (b.phase === 'discard_own') {
-      acts.push({ label: '花を捨てる', move: 300, cls: 'gold', enabled: A.legal.has(300) });
-      acts.push({ label: 'ドクロを捨てる', move: 301, cls: 'danger', enabled: A.legal.has(301) });
-    }
+  if ((b.phase === 'play_or_bid' || b.phase === 'bidding') && b.totalPlaced > 0) {
+    const setBid = (v) => { A.sel = { kind: 'skull', moves: A.view.moves, bid: clamp(v, minBid, b.totalPlaced) }; A.redraw(); };
+    acts.push({ label: '−', fn: () => setBid(bid - 1), enabled: A.canPlay && bid > minBid });
+    acts.push({ label: `${bid} 枚で宣言`, move: bid, cls: 'gold', enabled: A.legal.has(bid) });
+    acts.push({ label: '＋', fn: () => setBid(bid + 1), enabled: A.canPlay && bid < b.totalPlaced });
+    acts.push({ label: 'パス', move: 0, enabled: b.phase === 'bidding' && A.legal.has(0) });
+  }
+  if (b.phase === 'discard_own') {
+    acts.push({ label: '花を捨てる', move: 300, cls: 'gold', enabled: A.legal.has(300) });
+    acts.push({ label: 'ドクロを捨てる', move: 301, cls: 'danger', enabled: A.legal.has(301) });
   }
   A.acts(acts);
 }
@@ -606,7 +599,7 @@ function renderLiarsdice(b, A) {
   prep(A);
   const mob = isMob();
   const me = Math.max(0, b.me);
-  const legalBids = [...A.legal].filter((m) => m >= 100);
+  const legalBids = [...new Set(A.view.legal || [])].filter((m) => m >= 100);
   const minBidMove = legalBids.length ? Math.min(...legalBids) : 0;
   const selOk = A.sel && A.sel.kind === 'liarsdice' && A.sel.moves === A.view.moves;
   let qty = selOk ? A.sel.qty : Math.floor((minBidMove - 100) / 10);
@@ -648,9 +641,9 @@ function renderLiarsdice(b, A) {
   const myDice = b.myDice ? b.myDice.map((v, i) => ld2die(v, 54, [-4, 3, -2, 2, -3][i % 5])).join('') : '';
   html += at(mob ? 280 : 450, mob ? 690 : 436, `<div class="ld2-myseat"><span class="ld2-mycupwrap${newRound && !A.reduce ? ' shake' : ''}">${ldCupSvg(me, 84)}</span><div class="ld2-tray${newRound && !A.reduce ? ' roll' : ''}">${myDice}</div><div class="ld2-chip mine">${b.diceCounts[me]}</div></div>`);
   if (newRound && !A.reduce) A.sfx('DICE', 30);
-  if (A.canPlay && legalBids.length) {
+  if (legalBids.length) {
     const faces = [1, 2, 3, 4, 5, 6].map((f) => {
-      const ok = legalBids.some((m) => (m - 100) % 10 === f);
+      const ok = A.canPlay && legalBids.some((m) => (m - 100) % 10 === f);
       return control(ld2die(f, 42), `data-ldface="${f}"`, `${f} の目を選ぶ`, ok, `ld-face-btn${f === face ? ' sel' : ''}`);
     }).join('');
     html += at(mob ? 280 : 450, mob ? 812 : 528, `<div class="ld-faces">${faces}</div>`);
@@ -680,16 +673,17 @@ function renderLiarsdice(b, A) {
     tapMove(A)(d);
   });
   if (ninePrev) { ninePrev.lr = lr ? lr.roundNo : ninePrev.lr; ninePrev.round = b.roundNo; }
+  // ボタンは消さずに常時表示し、自分の番でない時はグレーアウトする
   const acts = [];
-  if (A.canPlay) {
+  {
     acts.push({ label: 'ダウト!', move: 0, cls: 'danger', enabled: !!(b.canDoubt && A.legal.has(0)) });
     acts.push({ label: 'ジャスト!', move: 1, enabled: !!(b.canExact && A.legal.has(1)) });
     if (legalBids.length) {
       const qtys = legalBids.filter((m) => (m - 100) % 10 === face).map((m) => Math.floor((m - 100) / 10));
       const setQty = (v) => { A.sel = { kind: 'liarsdice', moves: A.view.moves, face, qty: v }; A.redraw(); };
-      acts.push({ label: '−', cls: 'step', fn: () => setQty(Math.max(Math.min(...qtys), qty - 1)), enabled: qty > Math.min(...qtys) });
+      acts.push({ label: '−', cls: 'step', fn: () => setQty(Math.max(Math.min(...qtys), qty - 1)), enabled: A.canPlay && qty > Math.min(...qtys) });
       acts.push({ label: `${face} が ${qty} 個と宣言`, move: 100 + qty * 10 + face, cls: 'gold', enabled: A.legal.has(100 + qty * 10 + face) });
-      acts.push({ label: '＋', cls: 'step', fn: () => setQty(Math.min(Math.max(...qtys), qty + 1)), enabled: qty < Math.max(...qtys) });
+      acts.push({ label: '＋', cls: 'step', fn: () => setQty(Math.min(Math.max(...qtys), qty + 1)), enabled: A.canPlay && qty < Math.max(...qtys) });
     }
   }
   A.acts(acts);
@@ -698,7 +692,7 @@ function ldLegacyRender(b, A) {
   prep(A);
   const me = Math.max(0, b.me);
   // 宣言の初期値: 合法手の中で最小のコード(最小の個数→最小の目)
-  const legalBids = [...A.legal].filter((m) => m >= 100);
+  const legalBids = [...new Set(A.view.legal || [])].filter((m) => m >= 100);
   const minBidMove = legalBids.length ? Math.min(...legalBids) : 0;
   const selOk = A.sel && A.sel.kind === 'liarsdice' && A.sel.moves === A.view.moves;
   let qty = selOk ? A.sel.qty : Math.floor((minBidMove - 100) / 10);
@@ -742,9 +736,9 @@ function ldLegacyRender(b, A) {
   html += at(mob ? cx : cx - 292, mob ? myY + 74 : myY + 30, seatChip(A, b, me));
   if (newRound && !A.reduce) A.sfx('DICE', 30);
   // 宣言パネル(目を選ぶ)
-  if (A.canPlay && legalBids.length) {
+  if (legalBids.length) {
     const faces = [1, 2, 3, 4, 5, 6].map((f) => {
-      const ok = legalBids.some((m) => (m - 100) % 10 === f);
+      const ok = A.canPlay && legalBids.some((m) => (m - 100) % 10 === f);
       return control(dieFace(f, mob ? 38 : 42), `data-ldface="${f}"`, `${f} の目を選ぶ`, ok, `ld-face-btn${f === face ? ' sel' : ''}`);
     }).join('');
     html += at(cx, mob ? 762 : 512, `<div class="ld-faces">${faces}</div>`);
@@ -776,16 +770,17 @@ function ldLegacyRender(b, A) {
   });
   if (ninePrev) { ninePrev.lr = lr ? lr.roundNo : ninePrev.lr; ninePrev.round = b.roundNo; }
   // 操作ボタン: 個数ステッパー+宣言+ダウト/ジャスト
+  // ボタンは消さずに常時表示し、自分の番でない時はグレーアウトする
   const acts = [];
-  if (A.canPlay) {
+  {
     acts.push({ label: 'ダウト!', move: 0, cls: 'danger', enabled: !!(b.canDoubt && A.legal.has(0)) });
     acts.push({ label: 'ジャスト!', move: 1, enabled: !!(b.canExact && A.legal.has(1)) });
     if (legalBids.length) {
       const qtys = legalBids.filter((m) => (m - 100) % 10 === face).map((m) => Math.floor((m - 100) / 10));
       const setQty = (v) => { A.sel = { kind: 'liarsdice', moves: A.view.moves, face, qty: v }; A.redraw(); };
-      acts.push({ label: '−', cls: 'step', fn: () => setQty(Math.max(Math.min(...qtys), qty - 1)), enabled: qty > Math.min(...qtys) });
+      acts.push({ label: '−', cls: 'step', fn: () => setQty(Math.max(Math.min(...qtys), qty - 1)), enabled: A.canPlay && qty > Math.min(...qtys) });
       acts.push({ label: `${face} が ${qty} 個と宣言`, move: 100 + qty * 10 + face, cls: 'gold', enabled: A.legal.has(100 + qty * 10 + face) });
-      acts.push({ label: '＋', cls: 'step', fn: () => setQty(Math.min(Math.max(...qtys), qty + 1)), enabled: qty < Math.max(...qtys) });
+      acts.push({ label: '＋', cls: 'step', fn: () => setQty(Math.min(Math.max(...qtys), qty + 1)), enabled: A.canPlay && qty < Math.max(...qtys) });
     }
   }
   A.acts(acts);
@@ -940,12 +935,11 @@ function renderIncangold(b, A) {
   }
   stage(A, b, html, tapMove(A));
   if (ninePrev) { ninePrev.pathLen = b.pathCards.length; ninePrev.stepKey = stepKey; }
-  const acts = [];
-  if (A.canPlay && b.inCave[b.me]) {
-    acts.push({ label: '進む', move: 1, cls: 'gold', enabled: A.legal.has(1) });
-    acts.push({ label: '帰る', move: 0, enabled: A.legal.has(0) });
-  }
-  A.acts(acts);
+  // ボタンは消さずに常時表示し、使えない時はグレーアウトする
+  A.acts([
+    { label: '進む', move: 1, cls: 'gold', enabled: A.canPlay && !!b.inCave[b.me] && A.legal.has(1) },
+    { label: '帰る', move: 0, enabled: A.canPlay && !!b.inCave[b.me] && A.legal.has(0) },
+  ]);
 }
 const igSpline = (anchors) => {
   const ext = [anchors[0], ...anchors, anchors[anchors.length - 1]], pts = [];
@@ -1031,12 +1025,11 @@ function igMobileRender(b, A) {
   }
   stage(A, b, html, tapMove(A));
   if (ninePrev) { ninePrev.pathLen = b.pathCards.length; ninePrev.stepKey = stepKey; }
-  const acts = [];
-  if (A.canPlay && b.inCave[b.me]) {
-    acts.push({ label: '進む', move: 1, cls: 'gold', enabled: A.legal.has(1) });
-    acts.push({ label: '帰る', move: 0, enabled: A.legal.has(0) });
-  }
-  A.acts(acts);
+  // ボタンは消さずに常時表示し、使えない時はグレーアウトする
+  A.acts([
+    { label: '進む', move: 1, cls: 'gold', enabled: A.canPlay && !!b.inCave[b.me] && A.legal.has(1) },
+    { label: '帰る', move: 0, enabled: A.canPlay && !!b.inCave[b.me] && A.legal.has(0) },
+  ]);
 }
 function igLegacyRender(b, A) {
   prep(A);
@@ -1113,12 +1106,11 @@ function igLegacyRender(b, A) {
   }
   stage(A, b, html, tapMove(A));
   if (ninePrev) { ninePrev.pathLen = b.pathCards.length; ninePrev.stepKey = stepKey; }
-  const acts = [];
-  if (A.canPlay && b.inCave[b.me]) {
-    acts.push({ label: '進む', move: 1, cls: 'gold', enabled: A.legal.has(1) });
-    acts.push({ label: '帰る', move: 0, enabled: A.legal.has(0) });
-  }
-  A.acts(acts);
+  // ボタンは消さずに常時表示し、使えない時はグレーアウトする
+  A.acts([
+    { label: '進む', move: 1, cls: 'gold', enabled: A.canPlay && !!b.inCave[b.me] && A.legal.has(1) },
+    { label: '帰る', move: 0, enabled: A.canPlay && !!b.inCave[b.me] && A.legal.has(0) },
+  ]);
 }
 window.RENDER.incangold = renderIncangold;
 
@@ -1542,7 +1534,7 @@ function renderBlokus(b, A) {
     }
   }
   const acts = [];
-  if (NC && myTurn) {
+  if (NC) {
     // ボタンは消さずに常時表示し、使えない時はグレーアウトする
     const canRotate = selPiece != null && byPiece.get(selPiece) && byPiece.get(selPiece).size > 1;
     acts.push({ label: '向きを変える', fn: () => {
@@ -1550,8 +1542,8 @@ function renderBlokus(b, A) {
       const oris = [...byPiece.get(selPiece).keys()].sort((a, z) => a - z);
       A.sel = { kind: 'blokus', moves: A.view.moves, piece: selPiece, ori: oris[(oris.indexOf(selOri) + 1) % oris.length] };
       A.redraw();
-    }, enabled: !!canRotate });
-    acts.push({ label: 'パス', move: NC.BLOKUS_MOVE_PASS, cls: 'gold', enabled: A.legal.has(NC.BLOKUS_MOVE_PASS) });
+    }, enabled: A.canPlay && myTurn && !!canRotate });
+    acts.push({ label: 'パス', move: NC.BLOKUS_MOVE_PASS, cls: 'gold', enabled: A.canPlay && myTurn && A.legal.has(NC.BLOKUS_MOVE_PASS) });
   }
   // ゲームパッドのキーコンフィグ用: 選択中ピースの「反転」(左右鏡像の向きへ切り替える)
   if (NC && myTurn && selPiece != null && byPiece.get(selPiece)) {
@@ -1718,13 +1710,12 @@ function renderQuoridor(b, A) {
       A.land(150); A.anim(400);
     });
   });
+  // ボタンは消さずに常時表示し、使えない時はグレーアウトする
   const acts = [];
-  if (A.canPlay && b.turn === b.me) {
-    // ボタンは消さずに常時表示し、使えない時はグレーアウトする
-    const mv = ghost ? 100 + (ghost.y * 8 + ghost.x) * 2 + (ghost.vertical ? 1 : 0) : -1;
-    acts.push({ label: '向きを変える', fn: () => { if (!ghost) return; A.sel = { kind: 'quoridor', moves: A.view.moves, wall: { x: ghost.x, y: ghost.y, vertical: !ghost.vertical } }; A.redraw(); }, enabled: !!ghost });
-    acts.push({ label: '壁を置く', move: mv, cls: 'gold', enabled: !!ghost && A.legal.has(mv) });
-  }
+  const qMyTurn = A.canPlay && b.turn === b.me;
+  const mv = ghost ? 100 + (ghost.y * 8 + ghost.x) * 2 + (ghost.vertical ? 1 : 0) : -1;
+  acts.push({ label: '向きを変える', fn: () => { if (!ghost) return; A.sel = { kind: 'quoridor', moves: A.view.moves, wall: { x: ghost.x, y: ghost.y, vertical: !ghost.vertical } }; A.redraw(); }, enabled: qMyTurn && !!ghost });
+  acts.push({ label: '壁を置く', move: mv, cls: 'gold', enabled: qMyTurn && !!ghost && A.legal.has(mv) });
   A.acts(acts);
 }
 window.RENDER.quoridor = renderQuoridor;
@@ -2091,7 +2082,7 @@ function renderBattleship(b, A) {
         }
         tapMove(A)(d);
       });
-      if (myTurn) acts.push(target >= 0 ? { label: '発射！', move: target, cls: 'gold', enabled: true } : { label: '発射！', cls: 'gold', enabled: false });
+      acts.push(myTurn && target >= 0 ? { label: '発射！', move: target, cls: 'gold', enabled: true } : { label: '発射！', cls: 'gold', enabled: false });
     } else {
       // 観戦: 両海域に撃沈艦のみ表示
       const cell = mob ? 24 : 22;
@@ -2173,9 +2164,8 @@ function renderChinchiro(b, A) {
   if (session) ChinchiroTable.mount(document.querySelector('.cc-bowlwrap'), session, () => {
     if (document.querySelector('.k-chinchiro')) A.redraw();
   }, lrJust ? 4800 : 700);
-  const acts = [];
-  if (ownTurn) acts.push({ label: b.attempts > 0 ? 'もう一度振る' : 'サイコロを振る', move: 0, cls: 'gold', enabled: canRoll });
-  A.acts(acts);
+  // ボタンは消さずに常時表示し、自分の番でない時はグレーアウトする
+  A.acts([{ label: b.attempts > 0 ? 'もう一度振る' : 'サイコロを振る', move: 0, cls: 'gold', enabled: canRoll }]);
 }
 window.RENDER.chinchiro = renderChinchiro;
 
