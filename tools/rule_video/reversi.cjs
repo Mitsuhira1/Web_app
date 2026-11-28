@@ -113,8 +113,10 @@ const step2 = async () => {
 const step3 = async () => {
   RV.setup();
   await T.sleep(600);
-  await T.cap('ここに置くと、いくつもの方向の白が裏返ります');
-  await T.sleep(4600);
+  T.ring('tg', { el: RV.cell(13), pad: 3, rr: 10 });
+  await T.cap('青い枠の所に置くと、いくつもの方向の白が裏返ります');
+  await T.sleep(5000);
+  T.clear('tg');
   await T.cap(null);
   await T.sleep(300);
   await RV.move(13);
