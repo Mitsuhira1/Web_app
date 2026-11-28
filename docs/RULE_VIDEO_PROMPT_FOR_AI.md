@@ -13,7 +13,8 @@
 
 ■ 最初に読むもの(この順に、全部)
 1. START_HERE.md と CLAUDE.md
-2. docs/RULE_VIDEO_GUIDE_FOR_AI.md(作り方の手引き。とても大事。省略せずに全部読むこと)
+2. docs/RULE_VIDEO_GUIDE_FOR_AI.md(作り方の手引き。とても大事。省略せずに全部読むこと)と、
+   docs/RULE_VIDEO_STATUS.md(全ゲームのチェックリスト。ほかの AI が作業中でないか確かめ、始める時に「作業中」と書く)
 3. tools/rule_video/README.md・engine.cjs・overlay.js と、見本の台本 mancala.cjs・daifugo.cjs
 4. 見本の完成した動画(web/pc-firebase/assets/rule-steps/ の mc-*・df-* )を、ffmpeg でコマを並べて実際に見ること
 
@@ -49,7 +50,7 @@
 - 文面は docs/mockups/rules-video/<見本の名前>-rules.html を直し、node tools/build_rule_steps.cjs --text-only で
   js/rules-steps.js を作り直す(直接は直さない)。tools/build_rule_steps.cjs の REMADE に ID を足す。sw.js の CACHE 名を変える
 - 記録: README4AI_Claude_Codex_Antigravity.md の 5 章の先頭、docs/CHECKLIST_PENDING.md の先頭、
-  docs/RULE_VIDEO_GUIDE_FOR_AI.md の 10 章の表
+  docs/RULE_VIDEO_GUIDE_FOR_AI.md の 10 章の表、docs/RULE_VIDEO_STATUS.md(公開したら [x] にする)
 - 作業ブランチにコミット・プッシュし、動画をユーザーに見せる。公開用ブランチ(ccr-efc07031-6exjqs)へは、
   ユーザーが OK と言ってから入れる。公開したら GitHub Actions が success になったのを確かめてから報告する
 - 返事は日本語。直したこと・変えたファイル・確かめたこと/確かめていないことを分けて書き、最後に「次にやること」を番号つきで
