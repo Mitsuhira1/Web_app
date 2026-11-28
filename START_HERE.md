@@ -46,7 +46,7 @@
 | 画面の切り替え・対局の進め方・カットイン・結果・設定 | `js/app.js`(1940 行。`grep -n "^function 名前"`) |
 | 見た目 | `css/app.css`(3000 行。後ろほど新しい)・追加ゲームは `css/twelve.css` |
 | みんなで遊ぶ(部屋・同期・チャット・スタンプ・カーソル) | `js/online.js`(2240 行)・`js/net.js`(Firebase) |
-| ルール説明 | `js/rules.js`(動画は `assets/rules/<id>.mp4`)。ステップ動画は `js/rules-steps.js`(`tools/build_rule_steps.cjs` で作る)・`assets/rule-steps/`。録り直しは `tools/rule_video/`(README) |
+| ルール説明 | `js/rules.js`(動画は `assets/rules/<id>.mp4`)。ステップ動画は `js/rules-steps.js`(`tools/build_rule_steps.cjs` で作る)・`assets/rule-steps/`。録り直しは `tools/rule_video/`(README)。**作り方の手引き `docs/RULE_VIDEO_GUIDE_FOR_AI.md`・依頼文 `docs/RULE_VIDEO_PROMPT_FOR_AI.md`** |
 | 絵(アイコン・スタンプ・駒・札) | `js/art.js`(メニューのアイコンは画像 `assets/game-icons/`。絵を変えたら `node tools/build_game_icons.cjs`)。フェルトの地模様・マンカラの木枠は画像 `assets/tex/`(`node tools/build_textures.cjs`)、麻雀の牌は `assets/mj/`(`node tools/build_mahjong_tiles.cjs`) |
 | 効果音 / BGM / ゲームパッド | `js/sfx.js` / `js/bgm.js` / `js/gamepad.js` |
 | オフラインの保存(ファイルを足した時) | `sw.js` の `FILES` とキャッシュ名 |

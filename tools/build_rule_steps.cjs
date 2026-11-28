@@ -9,7 +9,7 @@ const src = textOnly ? docs : path.resolve(process.argv[2] || 'docs/mockups/rule
 const out = path.join(__dirname, '..', 'web', 'pc-firebase');
 const dest = path.join(out, 'assets', 'rule-steps');
 // tools/rule_video で録り直したゲーム。文面は docs/mockups/rules-video の見本、動画は録画の道具が assets/rule-steps に直接書いた物を使う(消さない・上書きしない)
-const REMADE = new Set(['mancala', 'daifugo']);
+const REMADE = new Set(['mancala', 'daifugo', 'shogi']);
 const stepsOf = (h, f) => { const m = /const STEPS = (\[[\s\S]*?\]);\s*\n/.exec(h); if (!m) throw new Error(f + ': STEPS なし'); return vm.runInNewContext(m[1]).map((s) => ({ t: s.t, d: s.d, src: s.src })); };
 const keep = new Set();
 for (const id of REMADE) stepsOf(fs.readFileSync(path.join(docs, id + '-rules.html'), 'utf8'), id).forEach((s) => keep.add(s.src));
