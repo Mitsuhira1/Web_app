@@ -1,17 +1,17 @@
 const transientAudio = (() => {
   let epoch = 0, quietUntil = 0;
   const sources = new Set();
-  const allowed = () => (!document.hidden || S.set.bgSound) && performance.now() >= quietUntil;
+  const allowed = () => (!document.hidden || S.set.bgSound) && rawNow() >= quietUntil;
   const track = source => { sources.add(source); source.addEventListener('ended', () => sources.delete(source), {once:true}); return source; };
   const clear = () => { epoch++; for (const source of sources) { try { source.stop(); source.disconnect(); } catch {} } sources.clear(); };
   document.addEventListener('visibilitychange', () => {
-    if (!S.set.bgSound) { clear(); quietUntil = document.hidden ? Infinity : performance.now() + 350; }
+    if (!S.set.bgSound) { clear(); quietUntil = document.hidden ? Infinity : rawNow() + 350; }
   });
   window.addEventListener('pagehide', clear);
   const later = (fn, delay = 0) => {
     if (!allowed()) return;
-    const ownEpoch = epoch, due = performance.now() + delay;
-    return setTimeout(() => { if (ownEpoch === epoch && allowed() && performance.now() - due < 250) fn(); }, delay);
+    const ownEpoch = epoch, due = rawNow() + delay;
+    return setTimeout(() => { if (ownEpoch === epoch && allowed() && rawNow() - due < 250) fn(); }, delay);
   };
   const guard = fn => { const ownEpoch = epoch; return (...args) => { if (ownEpoch === epoch && allowed()) return fn(...args); }; };
   return {allowed, track, later, guard};
@@ -218,7 +218,7 @@ function createSfx(call) {
     if (!enabled || !S.set.sound || !ctx || ctx.state !== 'running' || !transientAudio.allowed()) return;
     const level = Math.min(1, Math.max(0, Number(strength) || 0));
     const volume = S.set.master / 100 * S.set.sfxVol / 100;
-    const now = performance.now();
+    const now = rawNow();
     // 同時衝突を後でまとめて再生しない。小さな接触を落として強い衝突を優先する。
     if (level < .025 || volume <= 0 || now - lastChinchiroHit < 12 || chinchiroVoices.size >= 8) return;
     lastChinchiroHit = now;
@@ -249,7 +249,7 @@ function createSfx(call) {
     if (!enabled || !S.set.sound || !ctx || ctx.state !== 'running' || !transientAudio.allowed()) return;
     const volume = S.set.master / 100 * S.set.sfxVol / 100;
     if (volume <= 0) return;
-    const clock = performance.now();
+    const clock = rawNow();
     const src = transientAudio.track(ctx.createBufferSource());
     const recorded = !!(rollBuffer && plan.duration);
     src.buffer = rouletteAudioBuffer(ctx, plan, recorded);
@@ -280,7 +280,7 @@ function createSfx(call) {
     wheelSource?.stop();
     wheelSource = src;
     wheelRoll = roll;
-    const offset = plan.duration ? (performance.now() - clock) / 1000 : 0;
+    const offset = plan.duration ? (rawNow() - clock) / 1000 : 0;
     src.start(0, Math.min(offset, src.buffer.duration));
     if (roll) {
       const now = ctx.currentTime;

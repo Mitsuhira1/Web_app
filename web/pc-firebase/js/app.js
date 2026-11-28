@@ -620,6 +620,8 @@ async function cpuTurn(my, opts = {}) {
   }
   await runCursor(mv, my);
   if (my !== token) return;
+  while (modalPause() && my === token) await new Promise((r) => setTimeout(r, 100));
+  if (my !== token) return;
   if (auto && (!online || !view || view.outcome || view.toMove !== forSeat || !isSeatAutoCpu(forSeat))) {
     busy = false; cpuTurnKey = ''; hideCursor(); drawPlay(); return refresh();
   }
@@ -1412,7 +1414,8 @@ async function moveCpuCursor(name, targets, current, f = 1, origin = null) {
     c.getBoundingClientRect();
   }
   c.style.transitionDuration = Math.round(420 * f) + 'ms';
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  // 設定・確認を開いている間(シングルプレイ)は、カーソルの動きも止まる(アニメーションは modal-pause.js が止める)
+  const wait = async (ms) => { await new Promise((r) => setTimeout(r, ms)); while (modalPause() && current()) await new Promise((r) => setTimeout(r, 100)); };
   for (let k = 0; k < steps.length; k++) {
     const el = steps[k]; if (!el.isConnected) continue;
     const r = el.getBoundingClientRect();
@@ -1940,8 +1943,8 @@ function goBack() {
   if (['slideSetup','bunyoSetup','pakurisSetup','mineSetup','poetSetup','munageSetup','wolfSetup'].includes(S.screen)) return go(roomActive()?'room':'menu');
   if (S.screen === 'play') {
     if (online && view && view.mine < 0) return go('room');
-    // 対局中は確かめてから終わる(まだ 1 手も指していない時は、そのまま戻る。通信対戦はいつも確かめる)
-    if (online || (view && view.moves > 0 && !view.outcome)) return askQuit();
+    // 対局中は、まだ何も操作していない時も確かめてから終わる(途中から再開した対局も同じ)。終わった後(結果が出ている)はそのまま戻る
+    if (online || (view && !view.outcome)) return askQuit();
     quitSound(); return go(online ? 'room' : 'menu');
   }
   if (S.screen === 'setup') return go(S.setup.online ? 'room' : 'menu');

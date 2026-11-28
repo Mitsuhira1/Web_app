@@ -442,12 +442,10 @@ const fallingMatch = (() => {
     clearTimeout(timer); timer=setTimeout(()=>report(id),150);
   }
 
-  /* 戻る: 遊んでいる途中なら確かめる(終わった後・まだ何も置いていない時はそのまま) */
+  /* 戻る: 遊んでいる最中は、まだ何も置いていない時も確かめる(終わった後はそのまま) */
   function exit(id) {
     const leave=()=>{ closeSheet(); stopSession(); go('menu'); };
     if (!ses||ses.id!==id||ses.mode==='online'||(ses.result&&ses.result.box)) return leave();
-    const me=ses.players[0]?.board, started=me&&(me.score>0||me.pieceId>1||me.pairId>1);
-    if (!started&&ses.round<=1) return leave();
     setTimeout(focusPrimary,0);
     openSheet('<h2>対局を終了しますか</h2><p>途中の対局は保存されません。</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="fallLeave">終了する</button></div>');
     $('#fallLeave').onclick=leave;

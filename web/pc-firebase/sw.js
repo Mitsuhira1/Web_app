@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261128-stickfix-2";
+const CACHE = "asobipcfb-20261128-quitpause-1";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",
@@ -51,6 +51,7 @@ const FILES = [
 "./assets/rules/uno_play.mp4",
 "./assets/rules/yacht_roll.mp4",
 "./js/padconfig.js",
+"./js/modal-pause.js",
 "./js/gamepad.js",
 "./core/games/chinchiro.mjs",
 "./core/games/battleship.mjs",

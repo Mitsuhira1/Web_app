@@ -66,7 +66,7 @@ const slideGame=(()=>{
  // 戻る: 途中(1 手以上動かして、まだ完成していない)なら確かめる
  function exit(){
   const leave=()=>{closeSheet();go(roomActive()?'room':'menu');};
-  if(!puzzle||puzzle.done||!puzzle.moves)return leave();
+  if(!puzzle||puzzle.done)return leave(); // 対局中は、何も動かしていなくても確かめる
   setTimeout(focusPrimary,0);
   openSheet('<h2>対局を終了しますか</h2><p>途中の対局は保存されません。</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="slideLeave">終了する</button></div>');
   $('#slideLeave').onclick=leave;

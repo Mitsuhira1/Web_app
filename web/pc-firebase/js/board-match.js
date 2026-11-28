@@ -84,8 +84,8 @@ const boardMatch = (() => {
   function exit() {
     if (!state?.online) {
       const leave=()=>{ closeSheet(); reset(); go(roomActive()?'room':'menu'); };
-      // 対局の途中(1 手以上進めて、まだ勝負がついていない)なら、ほかのゲームと同じく確認する
-      if (!state || state.finish || !(state.version>0)) return leave();
+      // 対局中(まだ勝負がついていない)なら、何も操作していなくても確認する
+      if (!state || state.finish) return leave();
       setTimeout(focusPrimary, 0);
       openSheet('<h2>対局を終了しますか</h2><p>途中の対局は保存されません。</p><div class="btns"><button class="btn" data-sheetback>キャンセル</button><button class="btn gold" id="extraLeave">終了する</button></div>');
       $('#extraLeave').onclick = leave;

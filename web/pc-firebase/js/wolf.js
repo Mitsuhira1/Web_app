@@ -418,7 +418,14 @@ const wolfGame = (() => {
     else if (selected) send('choose',{target:selected});
   }
   function exit() {
-    if (!snapshot?.online) return go(roomActive()?'room':'menu');
+    if (!snapshot?.online) {
+      const out=()=>{ closeSheet(); go(roomActive()?'room':'menu'); };
+      if (!snapshot || snapshot.phase==='end') return out();
+      setTimeout(focusPrimary,0);
+      openSheet('<h2>人狼の対局を終わりますか</h2><div class="btns"><button class="btn" data-sheetback>戻る</button><button class="btn danger" id="wolfEnd">終わる</button></div>');
+      $('#wolfEnd').onclick = out;
+      return;
+    }
     if (!host) return go('room');
     const end = async () => {
       closeSheet();
