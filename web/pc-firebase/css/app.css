@@ -1156,15 +1156,17 @@ html.reduce *,html.reduce *::before,html.reduce *::after{animation-duration:.001
 .rnote{font-size:13px!important;color:var(--sub);margin-top:8px!important}
 .pguide{margin-top:10px}
 .ptabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.ptabs button{min-width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:400 22px "Yuji Boku",serif}
+.ptabs button{min-width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:400 22px "Yuji Boku",serif;display:grid;place-items:center;line-height:1;padding:0 0 4px}
+/* ↑ Yuji Boku の字は、字の箱の中で約 2px 下に寄って見えるので、下に 4px あけて字の形を枠の真ん中に置く(2026-11-28) */
 .ptabs button.ch{font:26px "Segoe UI Symbol","Noto Sans Symbols 2",serif}
 .ptabs button[aria-pressed="true"]{background:var(--mark);color:#3A2616;border-color:transparent}
 .pgrid{display:grid;grid-template-columns:repeat(7,1fr);width:min(320px,100%);aspect-ratio:1;border:2px solid #6b4a24;margin:0 auto}
 .pgrid span{display:grid;place-items:center;border:1px solid rgba(107,74,36,.55);background:#E9CB92}
 .pgrid.chess span{border:0}.pgrid .lt{background:#EEF0D2}.pgrid .dk{background:#7FA65A}
 .pgrid span.ok i{width:38%;height:38%;border-radius:50%;background:#C8362E;opacity:.85}
-.pgrid .km{font:400 26px "Yuji Boku",serif;color:#1c140c;background:#E7C580;border:1.5px solid #8a6a35;width:76%;height:86%;display:grid;place-items:center;clip-path:polygon(50% 0,82% 14%,94% 100%,6% 100%,18% 14%)}
-.pgrid .km.red{color:#B3261C}
+/* 図の駒は、盤の駒と同じ絵(KOMA_SVG。下の厚み・木の色・ふちの線)。前は四角に枠線を付けて駒の形に切り抜いていたので、枠線が下と横にだけ残って影のように見えていた */
+.pgrid .km{width:84%;height:92%;display:grid;place-items:center}
+.pgrid .km svg{width:100%;height:100%;display:block;overflow:visible}
 .pgrid .ch{font:34px "Segoe UI Symbol","Noto Sans Symbols 2",serif;color:#fff;text-shadow:0 0 2px #000,0 0 2px #000}
 .pguide p{margin-top:10px!important;font-size:14px!important}
 .sgrid7{top:60%;--cw:min(7.4cqh,5.8cqw)}

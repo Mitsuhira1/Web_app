@@ -39,6 +39,7 @@
       : `<text x="0" y="-3" font-family="Yuji Boku,serif" font-size="14" text-anchor="middle" fill="${red}">${n[0]}</text><text x="0" y="12" font-family="Yuji Boku,serif" font-size="14" text-anchor="middle" fill="${red}">${n[1]}</text>`;
     return `<svg viewBox="-19 -24 38 48" aria-hidden="true"><path d="${KP}" fill="#b98f4c"/><path d="${KP}" transform="translate(0,-1.6)" fill="url(#xKm)" stroke="#8a6a35" stroke-width=".8"/>${txt}</svg>`;
   };
+  window.KOMA_SVG = komaSvg; // ルールの「駒の一覧」(js/rules.js)でも、盤と同じ駒の絵を使う
   let prevSh = null;
   function shogi(b, A) {
     const W = b.w, N = W * W, pct = 100 / W;
