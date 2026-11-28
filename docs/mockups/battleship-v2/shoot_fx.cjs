@@ -83,10 +83,10 @@ async function movie(b, name, run, ms, box) {
   // 水柱は G5 のまわり(上に柱が伸びるので上を広めに)
   const wbox = [66 + 6 * 38 - 76, 74 + 4 * 38 - 130, 190, 210];
   const sbox = [66 + 9 * 38 - 120, 74 + 0 * 38 - 20, 200, 230];
-  await frames(b, 'water', water, [0, 80, 160, 260, 380, 480, 600, 720, 850, 1000, 1150, 1300, 1500, 1800, 2200], wbox);
-  await frames(b, 'sink', sink, [0, 300, 700, 1100, 1500, 1900, 2300, 2700, 3100, 3500, 3900, 4300, 4800, 5500, 6600], sbox);
-  await movie(b, 'water', water, 2600, [66 + 6 * 38 - 160, 74 + 4 * 38 - 150, 340, 300]);
-  await movie(b, 'sink', sink, 7400, [66 + 9 * 38 - 230, 74 - 40, 300, 300]);
+  await frames(b, 'water', water, [0, 84, 167, 250, 334, 417, 500, 584, 667, 750, 834, 917, 1000, 1200, 1500], wbox);
+  await frames(b, 'sink', sink, [84, 250, 500, 750, 1100, 1500, 1900, 2300, 2700, 3100, 3500, 3900, 4400, 5000, 5800], sbox);
+  await movie(b, 'water', water, 1800, [66 + 6 * 38 - 160, 74 + 4 * 38 - 150, 340, 300]);
+  await movie(b, 'sink', sink, 6400, [66 + 9 * 38 - 230, 74 - 40, 300, 300]);
   await b.close();
   console.log('saved water-sheet.png sink-sheet.png water.mp4 sink.mp4');
 })();
