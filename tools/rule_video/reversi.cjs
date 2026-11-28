@@ -56,13 +56,15 @@ async function replay(env, n) {
     const e = E[k];
     if (!e.pass && e.seat === 0) {
       await page.waitForFunction((k) => view && view.moves === k && view.human && !busy, k, { timeout: 60000 });
+      // 最後の手の後で CPU が次の手を打たないよう、先に止めておく
+      if (k === n - 1) await page.evaluate(() => { window.__hold = true; });
       await page.evaluate((m) => humanMove(m), e.m);
     } else {
       // CPU の手と、自動のパス
       await page.waitForFunction((k) => view && view.moves > k && !busy, k, { timeout: 60000 });
     }
   }
-  await page.waitForFunction((n) => view && view.moves === n && !busy, n, { timeout: 60000 });
+  await page.waitForFunction((n) => view && view.moves === n, n, { timeout: 60000 });
   await page.evaluate(() => { window.__hold = true; S.set.reduce = false; render(); });
   await wait(600);
 }
