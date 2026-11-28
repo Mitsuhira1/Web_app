@@ -103,7 +103,7 @@ export const INCANGOLD_SPEC = {
   sections: [
     [
       '概要と目的',
-      '全5ラウンドの遺跡探検を行い、最終的にテントへ持ち帰った宝石の合計が最も多いプレイヤーの勝ちです。',
+      '全5ラウンドの遺跡探検を行い、最終的にテントへ持ち帰った宝石の合計が最も多いプレイヤーの勝ちです。合計が同点の場合は、獲得した遺物カードの枚数が多いプレイヤーの勝ちで、枚数も同じなら引き分けです（公式ルールどおり）。',
     ],
     [
       '進むか、帰るか',
@@ -164,9 +164,15 @@ export const INCANGOLD_SPEC = {
 
     function finishGame(base, lastStep, lastRound) {
       const maxScore = Math.max(...base.tentGems);
-      const winners = base.tentGems
+      let winners = base.tentGems
         .map((sc, i) => (sc === maxScore ? i : -1))
         .filter((i) => i >= 0);
+      // 公式ルール: 同点の場合は遺物カードの枚数が多い方が勝ち。枚数も同じなら引き分け
+      if (winners.length > 1) {
+        const counts = base.artifactsBySeat || [];
+        const maxArt = Math.max(...winners.map((i) => counts[i] || 0));
+        winners = winners.filter((i) => (counts[i] || 0) === maxArt);
+      }
       const winner = winners.length === 1 ? winners[0] : -1;
       const reason = `全${INCANGOLD_TOTAL_ROUNDS}ラウンド終了`;
       return attachView({
@@ -204,6 +210,7 @@ export const INCANGOLD_SPEC = {
           hazardCounts: st.hazardCounts,
           removedHazards: st.removedHazards,
           artifactsClaimedTotal: st.artifactsClaimedTotal,
+          artifactsBySeat: st.artifactsBySeat ? st.artifactsBySeat.slice() : new Array(st.n).fill(0),
           nextArtifactValue: st.artifactsClaimedTotal < 3 ? 5 : 10,
           decided: st.choices.map((c, i) => !st.inCave[i] || c !== -1),
           myChoice: isPlayer ? st.choices[me] : -1,
@@ -226,6 +233,7 @@ export const INCANGOLD_SPEC = {
           tentGems: new Array(n).fill(0),
           removedHazards: {},
           artifactsClaimedTotal: 0,
+          artifactsBySeat: new Array(n).fill(0),
           winner: -1,
           reason: '',
         };
@@ -263,6 +271,7 @@ export const INCANGOLD_SPEC = {
         }
 
         const tentGems = s.tentGems.slice();
+        const artifactsBySeat = s.artifactsBySeat ? s.artifactsBySeat.slice() : new Array(n).fill(0);
         const roundGems = s.roundGems.slice();
         const inCave = s.inCave.slice();
         let pathGems = s.pathGems;
@@ -286,6 +295,7 @@ export const INCANGOLD_SPEC = {
               claimedArtifactPts += artifactsClaimedTotal <= 3 ? 5 : 10;
               claimedArtifactCount++;
             }
+            artifactsBySeat[returners[0]] += claimedArtifactCount;
             pathArtifacts = [];
           }
 
@@ -319,7 +329,7 @@ export const INCANGOLD_SPEC = {
             lostBySeat: {},
             tentGems: tentGems.slice(),
           };
-          const updated = { ...s, tentGems, artifactsClaimedTotal, removedHazards };
+          const updated = { ...s, tentGems, artifactsClaimedTotal, artifactsBySeat, removedHazards };
           if (s.roundNo >= INCANGOLD_TOTAL_ROUNDS) {
             return finishGame(updated, lastStep, lastRound);
           }
@@ -357,7 +367,7 @@ export const INCANGOLD_SPEC = {
             lostBySeat: {},
             tentGems: tentGems.slice(),
           };
-          const updated = { ...s, tentGems, artifactsClaimedTotal, removedHazards };
+          const updated = { ...s, tentGems, artifactsClaimedTotal, artifactsBySeat, removedHazards };
           if (s.roundNo >= INCANGOLD_TOTAL_ROUNDS) {
             return finishGame(updated, lastStep, lastRound);
           }
@@ -408,7 +418,7 @@ export const INCANGOLD_SPEC = {
               lostBySeat,
               tentGems: tentGems.slice(),
             };
-            const updated = { ...s, tentGems, artifactsClaimedTotal, removedHazards };
+            const updated = { ...s, tentGems, artifactsClaimedTotal, artifactsBySeat, removedHazards };
             if (s.roundNo >= INCANGOLD_TOTAL_ROUNDS) {
               return finishGame(updated, lastStep, lastRound);
             }
@@ -442,6 +452,7 @@ export const INCANGOLD_SPEC = {
           pathArtifacts,
           hazardCounts,
           artifactsClaimedTotal,
+          artifactsBySeat,
           removedHazards,
           choices: nextChoices,
           turn: firstNext,

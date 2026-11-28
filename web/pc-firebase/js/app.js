@@ -1143,13 +1143,17 @@ function showResult() {
   }
   const title = o.winner < 0 ? '引き分け' : solo ? (o.winner === 0 ? '成功' : '終了') : `${seatName(o.winner)} の勝利`;
   // コリドールの scores は点数ではなくゴールまでの最短手数(0=到着)なので、その意味が伝わる表記にする
-  const scText = (i) => cur.id === 'quoridor' ? (view.scores[i] >= 99 ? '到達不能' : view.scores[i] === 0 ? 'ゴール' : `あと${view.scores[i]}手`) : view.scores[i];
+  const artCnt = (i) => cur.id === 'incangold' && view.board && Array.isArray(view.board.artifactsBySeat) ? (view.board.artifactsBySeat[i] || 0) : 0;
+  const scText = (i) => cur.id === 'quoridor' ? (view.scores[i] >= 99 ? '到達不能' : view.scores[i] === 0 ? 'ゴール' : `あと${view.scores[i]}手`) : cur.id === 'incangold' && view.board && view.board.useArtifacts ? `${view.scores[i]}（遺物${artCnt(i)}枚）` : view.scores[i];
   const sc = cur.id !== 'uno' && view.scores && view.scores.length >= 2 ? `<div class="rscore num">${view.scores.map((s, i) => `<span>${esc(seatName(i))} <b>${scText(i)}</b></span>`).join('')}</div>` : '';
   // 3 人以上: 順位で出す(勝った人が 1 位。あとは点の多い順。大富豪は上がった順)。同点は同順位にし、引き分けの時は上がり順で差を付けない
   let rankHtml = '';
   if (view.seats.length >= 3 && view.scores) {
     const tb = view.board && view.board.tbl, place = tb && Array.isArray(tb.place) ? tb.place : null;
-    const key = (i) => (i === o.winner ? -1e9 : 0) + (o.winner >= 0 && place && place[i] >= 0 ? place[i] * 1000 - 1e6 : 0) + (cur.id === 'quoridor' ? 1 : -1) * (+view.scores[i] || 0);
+    // インカの黄金は公式ルールどおり、同点なら遺物カードの枚数で順位を分ける(枚数も同じなら同順位)
+    const key = (i) => cur.id === 'incangold'
+      ? (i === o.winner ? -1e9 : 0) - (+view.scores[i] || 0) * 100 - artCnt(i)
+      : (i === o.winner ? -1e9 : 0) + (o.winner >= 0 && place && place[i] >= 0 ? place[i] * 1000 - 1e6 : 0) + (cur.id === 'quoridor' ? 1 : -1) * (+view.scores[i] || 0);
     const order = view.seats.map((_, i) => i).sort((x, y) => key(x) - key(y));
     let prevKey = null, prevRank = 0;
     rankHtml = `<ol class="rrank">${order.map((i, k) => { const r = prevKey !== null && key(i) === prevKey ? prevRank : k + 1; prevKey = key(i); prevRank = r; return `<li class="${i === mySeat && (!online || (view && view.mine === i)) ? 'me' : ''}"><b><span class="rnum">${r}</span>位</b><span>${esc(seatName(i))}</span>${cur.id !== 'uno' && cur.id !== 'daifugo' ? `<em class="num">${scText(i)}</em>` : ''}</li>`; }).join('')}</ol>`;
