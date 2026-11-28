@@ -183,7 +183,7 @@ ffmpeg -v error -y -ss 12 -i out.mp4 -frames:v 1 -vf scale=960:-1 one.png
 |---|---|---|---|
 | マンカラ(mancala) | **済**(2026-11-28 公開) | mc-v3-step1・mc-v2-step2〜6(6 本) | `tools/rule_video/mancala.cjs` |
 | 大富豪(daifugo) | **済**(2026-11-28 公開) | df-v2-step1〜5,7,8・df-v3-step6(8 本) | `tools/rule_video/daifugo.cjs` |
-| 将棋(shogi) | **済**(2026-11-28、公開はユーザーの確認待ち) | sh-v2-step1〜7(7 本) | `tools/rule_video/shogi.cjs` |
+| 将棋(shogi) | **済**(2026-11-28 公開) | sh-v2-step1〜7(7 本) | `tools/rule_video/shogi.cjs` |
 | ほかの 58(下の一覧) | まだ(以前の作り方の動画 3 本ずつ。2 章の問題がある) | `<略号>-step1〜3.mp4` | なし |
 
 まだのゲーム(`js/rules-steps.js` の ID): gogo・reversi・connect4・gomoku・hex・morris・checkers・chess・dots・hitblow・hare・chinese・ludo・backgammon・go・yacht・mahjong・life・hanafuda・sevens・memory・speed・poker・holdem・blackjack・uno・solitaire・spider・slide・bunyo・pakuris・mine・mineVersus・bozu・wolf・roulette・war・takoyaki・butanoshippo・oldmaid・hearts・ginrummy・vulture・goita・quarto・geister・rummikub・pegsolitaire・munage・coyote・skull・liarsdice・incangold・take6・blokus・quoridor・battleship・chinchiro
