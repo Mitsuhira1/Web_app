@@ -886,7 +886,7 @@ function renderIncangold(b, A) {
   if (isMob()) return igMobileRender(b, A);
   prep(A);
   const me = Math.max(0, b.me);
-  strip(A, b, (i) => `テント ${b.tentGems[i]} 個 ・ ${b.inCave[i] ? `保持 ${b.roundGems[i]} 個` : '帰還済み'}`);
+  strip(A, b, (i) => `テント ${b.tentGems[i]} 個 ・ ${b.inCave[i] ? `保持 ${b.roundGems[i]} 個` : '帰還済み'}${b.useArtifacts ? ` ・ 遺物 ${(b.artifactsBySeat || [])[i] || 0} 枚` : ''}`);
   A.round(`ラウンド ${b.roundNo} / ${b.totalRounds}`);
   let side = `<div class="kv"><span>山札</span><b class="num">${b.deckCount} 枚</b></div><div class="kv"><span>道の宝石</span><b class="num">${b.pathGems} 個</b></div>`;
   if (b.pathArtifactsCount > 0) side += `<div class="kv"><span>道の遺物</span><b class="num">${b.pathArtifactsCount} 個</b></div><div class="kv"><span>遺物の点数</span><b class="num">1人帰還で ${b.nextArtifactValue} 点</b></div>`;
@@ -973,7 +973,7 @@ const IG_MOB_PATH_D = IG_MOB_PATH.pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFi
 function igMobileRender(b, A) {
   prep(A);
   const me = Math.max(0, b.me);
-  strip(A, b, (i) => `テント ${b.tentGems[i]} 個 ・ ${b.inCave[i] ? `保持 ${b.roundGems[i]} 個` : '帰還済み'}`);
+  strip(A, b, (i) => `テント ${b.tentGems[i]} 個 ・ ${b.inCave[i] ? `保持 ${b.roundGems[i]} 個` : '帰還済み'}${b.useArtifacts ? ` ・ 遺物 ${(b.artifactsBySeat || [])[i] || 0} 枚` : ''}`);
   A.round(`ラウンド ${b.roundNo} / ${b.totalRounds}`);
   let side = `<div class="kv"><span>山札</span><b class="num">${b.deckCount} 枚</b></div><div class="kv"><span>道の宝石</span><b class="num">${b.pathGems} 個</b></div>`;
   if (b.pathArtifactsCount > 0) side += `<div class="kv"><span>道の遺物</span><b class="num">${b.pathArtifactsCount} 個</b></div>`;
@@ -1041,7 +1041,7 @@ function igMobileRender(b, A) {
 function igLegacyRender(b, A) {
   prep(A);
   const me = Math.max(0, b.me);
-  strip(A, b, (i) => `テント ${b.tentGems[i]} 個 ・ ${b.inCave[i] ? `保持 ${b.roundGems[i]} 個` : '帰還済み'}`);
+  strip(A, b, (i) => `テント ${b.tentGems[i]} 個 ・ ${b.inCave[i] ? `保持 ${b.roundGems[i]} 個` : '帰還済み'}${b.useArtifacts ? ` ・ 遺物 ${(b.artifactsBySeat || [])[i] || 0} 枚` : ''}`);
   A.round(`ラウンド ${b.roundNo} / ${b.totalRounds}`);
   A.side(`<div class="kv"><span>山札</span><b class="num">${b.deckCount} 枚</b></div><div class="kv"><span>道の宝石</span><b class="num">${b.pathGems} 個</b></div>`);
   const mob = isMob();
