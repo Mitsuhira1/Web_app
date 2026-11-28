@@ -344,6 +344,11 @@
       hideCursor();
     }
   }
+  // マウスを動かしたら、スティックの専用カーソルはすぐ消す(マウス操作に切り替えたら残さない)
+  document.addEventListener('mousemove', (e) => {
+    if (!cur.shown || !e.isTrusted || (!e.movementX && !e.movementY)) return;
+    hideCursor();
+  }, { passive: true });
   function clickAtCursor() {
     if (!cur.shown) return false;
     const el = document.elementFromPoint(cur.x, cur.y);
