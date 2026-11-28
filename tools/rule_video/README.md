@@ -8,6 +8,8 @@
 python3 -m http.server -d web 8400 &          # リポジトリの一番上で
 node tools/rule_video/mancala.cjs              # 6 本すべて(1 本 3〜4 分)
 node tools/rule_video/mancala.cjs /tmp/out 2 5 # 出力先と、録るステップを選ぶ
+node tools/rule_video/daifugo-plan.mjs         # 大富豪: 札の名前で書いた手順を確かめて daifugo-steps.json に
+node tools/rule_video/daifugo.cjs              # 大富豪 8 本
 node tools/build_rule_steps.cjs --text-only    # docs/mockups/rules-video/<id>-rules.html の文面を js/rules-steps.js に入れ直す
 ```
 - 録り直したゲームは `tools/build_rule_steps.cjs` の `REMADE` に入れる(全体を取り込み直しても、その動画を消さない)。
@@ -18,6 +20,8 @@ node tools/build_rule_steps.cjs --text-only    # docs/mockups/rules-video/<id>-r
   CPU の手は台本どおりにする(worker への `cpuChoose` を横取り)。`__hold` で CPU を止め、`__holdResult` で結果の画面を止める(説明の間だけ)。規則・盤の描き方はアプリのまま。
 - `overlay.js`: 注釈(説明の文・囲み・名札・番号・矢印・カーソル)。時間は「動画の上の時間」で書く。
 - `mancala.cjs`: 台本。見せない手(`prefix`)は `mancala-sim.cjs` で探した。
+- `daifugo.cjs`: 台本。配り方(seed)を決め、CPU の手は始める前に全部入れておく(CPU が考え始めた後に入れると、CPU が自分の手を打ってしまう)。
+- 盤の下に空きが無いゲーム(大富豪など)は、説明の文を右の側板の空いた欄に出す(`T.capBox`)。`T.avoid([...])` で避ける物を決めると、かぶった時に止まる。
 
 ## 注釈の決まり(ユーザーの指示 2026-11-28)
 - 1 本目は「何をするゲームか」。専門の言葉(倉・横取りなど)は、出てきた所で説明する。

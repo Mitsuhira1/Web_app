@@ -38,7 +38,7 @@ async function launch() {
 }
 
 // メニュー → ゲームの設定 → スタート。録画用の設定(アニメーションはゆっくり・カットインあり)
-async function openGame(env, id, setupFn) {
+async function openGame(env, id, setupFn, o = {}) {
   const { page, wait } = env;
   if (await page.getByText('スキップ').count()) await page.getByText('スキップ').click();
   await wait(400);
@@ -47,28 +47,29 @@ async function openGame(env, id, setupFn) {
   await page.getByText('進む', { exact: true }).click();
   await wait(400);
   if (setupFn) await setupFn(page);
-  await page.click('[data-start]');
-  await wait(300);
-  // 録画用のつなぎ: CPU の手を台本から返す・CPU を止めておく・結果の画面を止めておく
-  await page.evaluate(() => {
-    window.__cpuQ = []; window.__hold = false; window.__holdResult = false; window.__resultPending = null;
-    if (worker) {
-      const pm = worker.postMessage.bind(worker);
-      worker.postMessage = (msg) => {
-        if (msg && msg.fn === 'cpuChoose' && window.__cpuQ.length) { const r = window.__cpuQ.shift(); setTimeout(() => worker.onmessage({ data: { id: msg.id, r, ms: 1 } }), 0); return; }
-        pm(msg);
-      };
-    } else throw new Error('worker なし');
+  // 録画用のつなぎ(スタートの前に入れる): 配り方(seed)を決める・CPU の手を台本から返す・CPU を止めておく・結果の画面を止めておく
+  // CPU が考え始める前に、台本の CPU の手(o.cpuQ)を入れておく。o.hold なら最初から CPU を止めておく
+  await page.evaluate(({ seed, q, hold }) => {
+    window.__cpuQ = q.slice(); window.__hold = hold; window.__holdResult = false; window.__resultPending = null; window.__seed = seed;
+    if (!worker) throw new Error('worker なし');
+    const pm = worker.postMessage.bind(worker);
+    worker.postMessage = (msg) => {
+      if (msg && msg.fn === 'newMatchNamed' && window.__seed) msg = { ...msg, args: [msg.args[0], msg.args[1], window.__seed, ...msg.args.slice(3)] };
+      if (msg && msg.fn === 'cpuChoose' && window.__cpuQ.length) { const r = window.__cpuQ.shift(); setTimeout(() => worker.onmessage({ data: { id: msg.id, r, ms: 1 } }), 0); return; }
+      pm(msg);
+    };
     const mp = modalPause; window.modalPause = () => window.__hold || mp();
     const sr = showResult; window.showResult = function () { if (window.__holdResult) { window.__resultPending = () => sr(); return; } return sr(); };
-  });
+  }, { seed: o.seed || null, q: o.cpuQ || [], hold: !!o.hold });
+  await page.click('[data-start]');
+  await wait(300);
 }
 
 // 見せない手(録画の前に進めておく局面)。アニメーションとカットインを止めて速く進める
 // who[k] は k 手目が人の手か(CPU の手は、CPU が考え始める前に台本へまとめて入れておく)
-async function replay(env, moves, who) {
+async function replay(env, moves, who, o = {}) {
   const { page, wait } = env;
-  await page.evaluate((q) => { window.__cpuQ.push(...q); S.set.reduce = true; render(); }, moves.filter((_, k) => !who[k]));
+  await page.evaluate(({ q, queued }) => { if (!queued) window.__cpuQ.push(...q); window.__hold = false; S.set.reduce = true; render(); }, { q: moves.filter((_, k) => !who[k]), queued: !!o.queued });
   await page.waitForFunction(() => !document.querySelector('#cutlayer .cutin'));
   for (let k = 0; k < moves.length; k++) {
     if (!who[k]) continue;
@@ -76,7 +77,7 @@ async function replay(env, moves, who) {
     await page.evaluate((m) => humanMove(m), moves[k]);
   }
   await page.waitForFunction((n) => view && view.moves === n && !busy, moves.length, { timeout: 60000 });
-  if (await page.evaluate(() => window.__cpuQ.length)) throw new Error('台本の CPU の手が残った');
+  if (!o.queued && await page.evaluate(() => window.__cpuQ.length)) throw new Error('台本の CPU の手が残った');
   await page.evaluate(() => { window.__hold = true; S.set.reduce = false; render(); });
   await wait(600);
 }

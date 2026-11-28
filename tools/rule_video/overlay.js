@@ -28,7 +28,9 @@
     background:rgba(255,253,247,.97);color:#2A1C0C;border-radius:18px;padding:14px 26px 15px 22px;border-left:8px solid ${AC};
     font-size:28px;line-height:1.42;font-weight:700;letter-spacing:.02em;box-shadow:0 10px 30px rgba(40,25,10,.28);white-space:nowrap;text-align:left}
   .tut-cap.on{transform:translate(-50%,0)}
-  .tut-cap em{font-style:normal;color:#D9541A;font-weight:900}
+  .tut-cap.tut-side{left:auto;bottom:auto;transform:translateY(8px);white-space:normal;word-break:auto-phrase;line-break:strict;font-size:25px;line-height:1.55;padding:14px 18px 15px 18px;max-width:none}
+  .tut-cap.tut-side.on{transform:none}
+  .tut-cap em{font-style:normal;color:#D9541A;font-weight:900;display:inline;font-size:inherit;margin:0;padding:0}
   .tut-lab{position:absolute;transform:translate(-50%,-50%) scale(.9);background:#fff;color:${AC_DARK};border:3px solid ${AC};border-radius:999px;
     padding:3px 16px 4px;font-size:23px;font-weight:900;white-space:nowrap;box-shadow:0 5px 14px rgba(0,0,0,.3)}
   .tut-lab.on{transform:translate(-50%,-50%) scale(1)}
@@ -76,6 +78,12 @@
     row: (side) => { const y = side === 0 ? 262 : 118; return { x: 170 - 50, y: y - 50, w: 5 * 92 + 100, h: 100, rr: 50 }; },
   };
   const toPage = (sh) => {
+    if (sh.page) return sh.page;
+    if (sh.els) { // いくつかの部品をまとめて囲む
+      const rs = (typeof sh.els === 'string' ? [...document.querySelectorAll(sh.els)] : sh.els).map((e) => e.getBoundingClientRect()); const p = sh.pad ?? 6;
+      const l = Math.min(...rs.map((r) => r.left)), t = Math.min(...rs.map((r) => r.top)), r2 = Math.max(...rs.map((r) => r.right)), b = Math.max(...rs.map((r) => r.bottom));
+      return { x: l - p, y: t - p, w: r2 - l + p * 2, h: b - t + p * 2, rr: sh.rr ?? 12 };
+    }
     if (sh.el) { const r = (typeof sh.el === 'string' ? document.querySelector(sh.el) : sh.el).getBoundingClientRect(); const p = sh.pad ?? 6; return { x: r.left - p, y: r.top - p, w: r.width + p * 2, h: r.height + p * 2, rr: sh.rr ?? 14 }; }
     const k = T.k();
     if (sh.r != null) { const [x, y] = T.pt(...sh.c); return { cx: x, cy: y, r: sh.r * k }; }
@@ -93,12 +101,37 @@
     g.innerHTML = shapeSvg(p, `fill="none" stroke="#fff" stroke-width="11" filter="url(#tutGlow)"`) + `<g class="tut-pulse">${shapeSvg(p, `fill="none" stroke="${col}" stroke-width="6" ${o.dash ? 'stroke-dasharray="14 9"' : ''}`)}</g>`;
     G.appendChild(g); on(g); items.set(id, g);
   };
+  // ---- かぶりを調べる(ユーザーの指示 2026-11-28: 名札・説明の札・番号を、ほかの物にかぶせない)。
+  // T.avoid([...セレクタ]) で避ける物を決める。かぶったら録画を止める(エラー)。囲み同士・囲みと差す物は調べない
+  T.avoidSel = null;
+  T.avoid = (sels) => { T.avoidSel = sels; };
+  const b4rect = (el) => { // 出し終わった時の形(出る途中の縮み・ずれを除く)
+    const cs = getComputedStyle(el), w = el.offsetWidth, h = el.offsetHeight, l = parseFloat(el.style.left), t = parseFloat(el.style.top);
+    if (el.classList.contains('tut-lab') || el.classList.contains('tut-badge')) return { l: l - w / 2, t: t - h / 2, r: l + w / 2, b: t + h / 2 };
+    if (el.classList.contains('tut-side')) return { l, t, r: l + w, b: t + h };
+    const r = el.getBoundingClientRect(); return { l: r.left, t: r.top - (parseFloat(cs.transform.split(',')[5]) || 0), r: r.right, b: r.bottom };
+  };
+  const hit = (a, b, m = 2) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > m && Math.min(a.b, b.b) - Math.max(a.t, b.t) > m;
+  T.check = (el, rc) => {
+    if (!T.avoidSel) return;
+    const name = '「' + el.textContent.slice(0, 16) + '」';
+    for (const sel of T.avoidSel) for (const e of document.querySelectorAll(sel)) {
+      if (root.contains(e)) continue; const q = e.getBoundingClientRect(); if (!q.width || !q.height) continue;
+      if (hit(rc, { l: q.left, t: q.top, r: q.right, b: q.bottom })) throw new Error(`かぶり: ${name} が ${sel}「${e.textContent.trim().slice(0, 12)}」に重なる`);
+    }
+    for (const [id, o] of items) { if (o === el || !o.classList.contains('on')) continue;
+      let qq; if (o.tagName === 'g') { const bb = o.querySelector('circle,ellipse,rect,path').getBBox(); qq = { l: bb.x, t: bb.y, r: bb.x + bb.width, b: bb.y + bb.height }; } else qq = b4rect(o); // 囲みは出し終わった大きさ(svg は画面と同じ座標)
+      if (o.tagName === 'g' && el.dataset.for === id) continue; // 自分の囲みとは調べない
+      if (hit(rc, qq)) throw new Error(`かぶり: ${name} が注釈 ${id} に重なる ${JSON.stringify(rc)} / ${JSON.stringify(qq)}`); }
+    if (capEl && capEl !== el && hit(rc, b4rect(capEl))) throw new Error(`かぶり: ${name} が説明の文に重なる`);
+  };
   // ---- 短い名札(とげ無し)。at: 盤の座標 [x,y] か、画面の座標 {page:[x,y]}
   T.label = (id, text, at, o = {}) => {
     T.clear(id);
     const [x, y] = at.page || T.pt(...at);
     const d = document.createElement('div'); d.className = 'tut-fade tut-lab' + (o.ng ? ' ng' : ''); d.textContent = text;
-    d.style.left = x + 'px'; d.style.top = y + 'px'; root.appendChild(d); on(d); items.set(id, d);
+    d.style.left = x + 'px'; d.style.top = y + 'px'; if (o.for) d.dataset.for = o.for; root.appendChild(d); on(d); items.set(id, d);
+    T.check(d, b4rect(d));
   };
   // ---- 説明の文(盤の下の空いた所。1 つだけ。新しい文に入れ替える時は、いったん消してから出す)
   let capEl = null;
@@ -106,10 +139,17 @@
     if (capEl) { fadeOut(capEl); capEl = null; await T.sleep(380); }
     if (!html) return;
     const d = document.createElement('div'); d.className = 'tut-fade tut-cap'; d.innerHTML = html;
-    const wrap = document.querySelector('#boardwrap').getBoundingClientRect();
-    d.style.left = (wrap.left + wrap.width / 2) + 'px';
-    root.appendChild(d); on(d); capEl = d;
-    if (d.getBoundingClientRect().width > 860) throw new Error('説明の文が長すぎる: ' + d.textContent);
+    if (T.capBox) { // 決めた欄(右の側板の空いた所など)に出す
+      const b = T.capBox; d.classList.add('tut-side'); Object.assign(d.style, { left: b.left + 'px', top: b.top + 'px', width: b.width + 'px' });
+      root.appendChild(d); on(d); capEl = d;
+      if (b.maxH && d.offsetHeight > b.maxH) throw new Error(`説明の文が欄に入らない(${d.offsetHeight}>${b.maxH} 幅${b.width}): ` + d.textContent);
+    } else {
+      const wrap = document.querySelector('#boardwrap').getBoundingClientRect();
+      d.style.left = (wrap.left + wrap.width / 2) + 'px';
+      root.appendChild(d); on(d); capEl = d;
+      if (d.getBoundingClientRect().width > 860) throw new Error('説明の文が長すぎる: ' + d.textContent);
+    }
+    T.check(d, b4rect(d));
   };
   // ---- 番号(石をまいた順)
   T.badge = (id, n, at) => {
@@ -121,7 +161,7 @@
   // ---- 向きを見せる矢印(線を引くように出す)。pts は盤の座標の点列(なめらかにつなぐ)
   T.arrow = (id, d, o = {}) => {
     T.clear(id);
-    const k = T.k(), m = svgEl().getScreenCTM();
+    const m = o.page ? new DOMMatrix() : svgEl().getScreenCTM();
     const path = d.replace(/(-?\d+(?:\.\d+)?)[ ,](-?\d+(?:\.\d+)?)/g, (_, a, b) => { const q = new DOMPoint(+a, +b).matrixTransform(m); return q.x.toFixed(1) + ' ' + q.y.toFixed(1); });
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.setAttribute('class', 'tut-fade on');
     g.innerHTML = `<path d="${path}" fill="none" stroke="#fff" stroke-width="${o.w ? o.w + 6 : 15}" stroke-linecap="round" stroke-linejoin="round" filter="url(#tutGlow)" class="tut-draw" data-m="url(#tutHeadW)"/>`
