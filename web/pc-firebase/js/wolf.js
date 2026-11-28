@@ -503,11 +503,12 @@ const wolfGame = (() => {
     const result = noteText();
     setText('wolfPrivate',result); $('#wolfPrivate').hidden = !result;
     setText('wolfMyStatus',p?(p.alive?'生存':'死亡'):'観戦');
-    const show = phase==='end' || (!!p?.alive && !!secret);
-    button.hidden = !show;
-    button.textContent = phase==='end'?'終了':submitted?'確定済み':phase==='talk'?'投票へ進む':
+    // ボタンは消さない(死亡・観戦・役の確認中は、使えない印のグレーアウトで残す)
+    const canAct = !!p?.alive && !!secret;
+    button.hidden = false;
+    button.textContent = phase==='end'?'終了':!p?'観戦中':!p.alive?'死亡中':!secret?'確認中':submitted?'確定済み':phase==='talk'?'投票へ進む':
       phase==='vote'?'投票を確定':options.length?powers[secret?.r]:'夜明けを待つ';
-    button.disabled = phase!=='end' && (submitted || ((phase==='vote'||options.length>0) && !selected));
+    button.disabled = phase!=='end' && (!canAct || submitted || ((phase==='vote'||options.length>0) && !selected));
     setText('wolfHint',phase==='end'?(state.winner==='wolf'?'人狼陣営の勝ち':'村人陣営の勝ち'):
       phase==='talk'?`投票準備　${state.readyCount || 0} / ${living(state).length}人`:
       options.length?(phase==='vote'?'追放する相手を選択':powers[secret?.r]+'相手を選択'):'');
