@@ -231,8 +231,8 @@ const step6 = async ({ human }) => {
   await D.pick(human[0].cards);
   await D.press('出す');
   T.cursorHide();
-  // 「革命」のカットインが出た時は、それには重ねない(2026-11-28 時点のアプリでは、このカットインは出ない)
-  await T.sleep(600);
+  // 「革命」のカットインには重ねない(出るのを待ち、消えてから説明する)
+  await T.until(() => document.querySelector('#cutlayer .cutin'));
   await D.calm();
   await T.sleep(800);
   T.ring('tag', { el: '#boardwrap .tag2.red', pad: 4, rr: 10 });
@@ -321,6 +321,8 @@ const step8 = async ({ human }) => {
   await T.sleep(500);
 };
 
+// 録り直した物は新しい名前にする(端末のキャッシュで古い版が見え続けるため)
+const FILE = { 6: 'df-v3-step6.mp4' }; // 2026-11-28 革命のカットインを直して録り直し
 const RUN = { 1: step1, 2: step2, 3: step3, 4: step4, 5: step5, 6: step6, 7: step7, 8: step8 };
 
 (async () => {
@@ -337,7 +339,7 @@ const RUN = { 1: step1, 2: step2, 3: step3, 4: step4, 5: step5, 6: step6, 7: ste
       const got = await env.page.evaluate(() => ({ moves: view.moves, q: window.__cpuQ.length, field: view.board.zones[0].cards.map((c) => c.t) }));
       if (got.moves !== P.prefix.length || got.q !== P.cpu.length || got.field.join() !== P.start.field.join()) throw new Error(`step${n}: 局面が台本と違う ${JSON.stringify(got)}`);
       await env.page.evaluate(`(${HELP})()`);
-      await record(env, path.join(OUT, `df-v2-step${n}.mp4`), RUN[n].toString(), { human: P.human }, K);
+      await record(env, path.join(OUT, (FILE[n] || `df-v2-step${n}.mp4`)), RUN[n].toString(), { human: P.human }, K);
     } catch (e) { console.log(`step${n} 失敗: ${String(e.message).split('\n')[0]}`); process.exitCode = 1; } finally { await env.browser.close(); }
   }
 })().catch((e) => { console.error(e); process.exit(1); });

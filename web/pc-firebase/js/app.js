@@ -1174,7 +1174,8 @@ function detectEvents(a, b) {
   if ((k === 'shogi') && b.board.check && !a.board.check && !b.outcome) cut({ text: '王手', tone: 'red', font: 'wa', ms: 1200 });
   if (k === 'chess' && b.board.check && !a.board.check && !b.outcome) cut({ text: 'Check', tone: 'noir', font: 'yo', ms: 1200 });
   const info = (x) => (x.board && (x.board.info || '')) + '';
-  if (cur.id === 'daifugo' && /革命/.test(info(b)) && !/革命/.test(info(a))) cut({ text: '革命', tone: 'red', font: 'dela', ms: 1600 });
+  // 革命: 卓の「革命中」の札と同じ印(tbl.rev)を見る。core は「革命」の字を info ではなく場の名前に入れるので、info では出なかった(2026-11-28 修正)
+  if (cur.id === 'daifugo' && b.board.tbl && a.board.tbl && b.board.tbl.rev && !a.board.tbl.rev) cut({ text: '革命', tone: 'red', font: 'dela', ms: 1600 });
   if (cur.id === 'hanafuda' && /こいこい/.test(info(b)) && !/こいこい/.test(info(a))) cut({ text: 'こいこい', tone: 'felt', font: 'wa', ms: 1400 });
   if (k === 'yacht' && Array.isArray(b.board.sheets) && Array.isArray(a.board.sheets)) {
     for (let p = 0; p < b.board.sheets.length; p++) {
