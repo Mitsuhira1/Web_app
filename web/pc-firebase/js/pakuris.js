@@ -252,7 +252,7 @@ const pakurisGame = (() => {
     if (!list||!list.length) return '';
     return `<span class="lbl">NEXT</span>`+list.slice(0,3).map((k,i)=>{ const cc=Math.max(4,Math.round(i?c*.45:c*.62)), s=SHAPES[k][0],
       mx=Math.max(...s.map(p=>p[0]))+1, mn=Math.min(...s.map(p=>p[1])), my=Math.max(...s.map(p=>p[1]))+1, mnx=Math.min(...s.map(p=>p[0]));
-      return `<div class="nx ${i?'':'first'}" style="height:${(my-mn)*cc+(i?14:22)}px"><div class="mini" style="--c:${cc}px;width:${(mx-mnx)*cc}px;height:${(my-mn)*cc}px">${s.map(([x,y])=>pakurisBlock(x-mnx,y-mn,k,cc)).join('')}</div></div>`; }).join('');
+      return `<div class="nx ${i?'':'first'}" style="height:${2*cc+(i?14:22)}px"><div class="mini" style="--c:${cc}px;width:${(mx-mnx)*cc}px;height:${(my-mn)*cc}px">${s.map(([x,y])=>pakurisBlock(x-mnx,y-mn,k,cc)).join('')}</div></div>`; }).join('');
   }
   function holdHtml(k, c, used) {
     const box=Math.round(c*2.6);

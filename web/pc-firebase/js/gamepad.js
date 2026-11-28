@@ -1,6 +1,8 @@
 /* PC向けゲームパッド(PAD)操作対応
    - 十字キー(共通の「カーソル移動」割り当て): 選択枠(.gp-focus)を要素間で動かす
-   - 左スティック: 専用カーソル(自分の席色+名前タグ)を動かし、決定でその位置をクリックする
+   - 左スティック: 盤面以外(メニュー・設定・ロビー等)では十字キーと同じ選択枠の方向移動。
+     盤面では、セル指定型など「盤上の位置を指す」ゲーム(CURSOR_GAMES)でのみ専用カーソル
+     (自分の席色+名前タグ)を動かし、それ以外のゲームでは選択枠の方向移動として働く
    - ボタンの割り当ては js/padconfig.js の PADCFG を参照する(共通/ゲーム別)
    - キーボード割り当ての実効のために PADACT を公開する(padconfig.js から使う) */
 'use strict';
@@ -306,12 +308,26 @@
     const ay = gp.axes && gp.axes.length > base + 1 ? gp.axes[base + 1] : 0;
     return [ax || 0, ay || 0];
   }
-  /* カーソルを絶対に使わないゲーム(盤は表示のみで、操作は方向+ボタンの離散操作だけ):
-     パクリス/ぶにょぶにょ=盤へのクリック自体が無く、操作は方向キーとボタンで完結する。
-     チンチロリン=対局中の操作は「サイコロを振る」の単一アクションのみで、盤上の位置を選ぶ操作が無い。
-     (人生すごろく=進路の選択、スライドパズル=タイルを指す、ヨット=サイコロを指す、坊主めくり=山を選ぶ、
-      ルーレット=ベット位置、カードゲーム=手札の選択、など「指す」操作があるゲームは対象外) */
-  const NO_CURSOR_GAMES = new Set(['pakuris', 'bunyo', 'chinchiro']);
+  /* 専用カーソルを出してよいゲーム(盤面でのみ)。方針(ユーザー指示 2026-11-27):
+     - 盤面以外(メニュー/ゲーム設定/ロビー/設定画面)ではスティックでカーソルを一切出さない。
+       左スティックは十字キーと完全に同じ「選択枠の方向移動」として働く。
+     - 盤面でも、「絶対にマウスカーソルを使うゲーム」=盤上のセル・位置を指定する操作が
+       本来の遊び方であるゲームに限ってカーソルを出す。それ以外ではスティックは方向操作
+       (選択枠の移動、そのゲームの方向割り当て)として働く。
+     カーソルを出すゲーム(セル・位置指定型): 将棋/5五将棋/リバーシ/コネクトフォー/五目/
+     ヘックス/マンカラ/モリス/チェッカー/チェス/ドット&ボックス/ウサギと猟犬/
+     チャイニーズチェッカー/ルドー/バックギャモン/碁/麻雀(牌を指して切る)/
+     人生すごろく(進路のマスを選ぶ)/スライドパズル(タイルを指す)/マインスイーパー(マス指定)/
+     バトルシップ/コリドール/ブロクス/ガイスター/クアルト/ペグソリティア/
+     ルーレット(ベット位置を指定)。根拠の詳細は gametest2/FINDINGS2.md の一覧表。
+     出さないゲーム: 落ちもの(パクリス/ぶにょぶにょ。スティックは方向操作化済み)、
+     チンチロリン(「振る」単一アクション)、カードゲーム類(手札は選択枠で選べる)、
+     ソリティア/スパイダー(選択枠に専用対応あり)、ラミィキューブ/ヨット/人狼/
+     坊主めくり/胸毛絶体絶命/ヒット&ブロー(ボタン・札・対象はすべて選択枠の候補になる)。 */
+  const CURSOR_GAMES = new Set(['shogi', 'gogo', 'reversi', 'connect4', 'gomoku', 'hex',
+    'mancala', 'morris', 'checkers', 'chess', 'dots', 'hare', 'chinese', 'ludo', 'backgammon',
+    'go', 'mahjong', 'life', 'slide', 'mine', 'mineVersus', 'battleship', 'quoridor', 'blokus',
+    'geister', 'quarto', 'pegsolitaire', 'roulette']);
   function updateStickCursor(gp, now, cfgGame, blocked) {
     if (blocked) { if (cur.shown) hideCursor(); cur.lastNow = now; return; }
     const [sx, sy] = cursorStick(gp, cfgGame);
@@ -577,10 +593,13 @@
     const overlayOpen = !padcfgOpen && !!(document.querySelector('#sheetwrap') || document.querySelector('.modal'));
     const cfgGame = currentCfgGame();
     const appGame = (typeof PADCFG !== 'undefined') ? PADCFG.currentGame() : null;
-    const noCursor = !!appGame && NO_CURSOR_GAMES.has(appGame);
-    const fg = (!padcfgOpen && !overlayOpen && PLAY_SCREENS.includes(S.screen)) ? fallingGame() : null;
+    const onBoard = PLAY_SCREENS.includes(S.screen);
+    /* カーソルを出してよいのは「盤面」かつ「セル・位置指定型のゲーム」の時だけ。
+       盤面以外と、それ以外のゲームではスティックは選択枠の方向移動になる */
+    const cursorOK = !padcfgOpen && !overlayOpen && onBoard && !!appGame && CURSOR_GAMES.has(appGame);
+    const fg = (!padcfgOpen && !overlayOpen && onBoard) ? fallingGame() : null;
 
-    updateStickCursor(gp, now, cfgGame, padcfgOpen || overlayOpen || noCursor);
+    updateStickCursor(gp, now, cfgGame, !cursorOK);
 
     // 方向入力
     if (padcfgOpen) {
@@ -598,6 +617,16 @@
         for (const [act, dk] of [['up', 'ArrowUp'], ['down', 'ArrowDown'], ['left', 'ArrowLeft'], ['right', 'ArrowRight']]) {
           const b = PADCFG.bind('common', act);
           if (b && pressed(PAD_INDEX[b])) { dir = dk; break; }
+        }
+      }
+      /* カーソルを出さない文脈(盤面以外・カーソル不要の盤面・ダイアログ表示中)では、
+         左スティックも十字キーと完全に同じ選択枠の方向移動として働く。
+         カーソルを出す盤面ではスティックはカーソル専用なので、ここでは扱わない */
+      if (!dir && !cursorOK) {
+        const ax = gp.axes && gp.axes.length > 0 ? gp.axes[0] : 0;
+        const ay = gp.axes && gp.axes.length > 1 ? gp.axes[1] : 0;
+        if (Math.abs(ax) > 0.55 || Math.abs(ay) > 0.55) {
+          dir = Math.abs(ax) >= Math.abs(ay) ? (ax > 0 ? 'ArrowRight' : 'ArrowLeft') : (ay > 0 ? 'ArrowDown' : 'ArrowUp');
         }
       }
       focusRepeat(dir, now);
