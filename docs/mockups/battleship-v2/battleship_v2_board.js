@@ -265,7 +265,7 @@ sidePanel();
 const EC = 38, EX = 66, EY = 74;
 const cellC = (k) => [EX + (k % 10) * EC + EC / 2, EY + Math.floor(k / 10) * EC + EC / 2];
 const fxLayer = () => document.getElementById('bs2fx');
-const el = (style, html = '') => { const d = document.createElement('div'); d.style.cssText = style; d.innerHTML = html; fxLayer().appendChild(d); return d; };
+const el = (style, html = '') => { const d = document.createElement('div'); d.style.cssText = 'opacity:0;' + style; d.innerHTML = html; fxLayer().appendChild(d); return d; };
 const R = (a, b) => a + Math.random() * (b - a);
 // 砲弾が落ちてくる影(だんだん小さく濃く)
 function incoming(k, ms = 520) {
@@ -277,88 +277,217 @@ function incoming(k, ms = 520) {
 function ripples(x, y, n = 3, size = 60) {
   for (let i = 0; i < n; i++) {
     const r = el(`left:${x}px;top:${y}px;width:${size}px;height:${size}px;margin:${-size / 2}px;border-radius:50%;border:2px solid #e8f6ffcc`);
-    r.animate([{ transform: 'scale(.15)', opacity: .9 }, { transform: 'scale(1)', opacity: 0 }], { duration: 900, delay: i * 180, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'both' }).finished.then(() => r.remove());
+    r.animate([{ transform: 'scale(.15)', opacity: .9 }, { transform: 'scale(1)', opacity: 0 }], { duration: 900, delay: i * 180, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' }).finished.then(() => r.remove());
   }
-}
-// 水柱(外れ): 白い柱が立ち上がって崩れ、しぶきが散り、波紋が広がる
-function waterColumn(k) {
-  const [x, y] = cellC(k);
-  const col = el(`left:${x - 20}px;top:${y - 96}px;width:40px;height:100px;transform-origin:50% 100%`,
-    `<svg width="40" height="100" viewBox="0 0 26 74" preserveAspectRatio="none"><defs><linearGradient id="wc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".7" stop-color="#d9f1ff" stop-opacity=".9"/><stop offset="1" stop-color="#9fd4f5" stop-opacity=".5"/></linearGradient></defs>
-    <path d="M3 74 C5 50 7 28 9 12 C10 5 12 2 13 0 C14 2 16 5 17 12 C19 28 21 50 23 74Z" fill="url(#wc)"/>
-    <circle cx="6" cy="16" r="2.6" fill="#fff"/><circle cx="20" cy="10" r="2.2" fill="#fff"/><circle cx="13" cy="4" r="2.4" fill="#fff"/></svg>`);
-  col.animate([
-    { transform: 'scaleY(.05) scaleX(.6)', opacity: 1 },
-    { transform: 'scaleY(1.05) scaleX(1)', opacity: 1, offset: .35 },
-    { transform: 'scaleY(.9) scaleX(1.25)', opacity: .9, offset: .6 },
-    { transform: 'scaleY(.2) scaleX(1.7)', opacity: 0 }], { duration: 1100, easing: 'cubic-bezier(.2,.8,.4,1)', fill: 'both' }).finished.then(() => col.remove());
-  for (let i = 0; i < 12; i++) {
-    const a = R(-Math.PI * .95, -Math.PI * .05), sp = R(28, 62), s = R(3, 6);
-    const dp = el(`left:${x}px;top:${y - 40}px;width:${s}px;height:${s}px;margin:${-s / 2}px;border-radius:50%;background:#f2fbff`);
-    dp.animate([{ transform: 'translate(0,0)', opacity: 0 }, { transform: `translate(${Math.cos(a) * sp * .5}px,${Math.sin(a) * sp * .5 - 10}px)`, opacity: 1, offset: .3 },
-      { transform: `translate(${Math.cos(a) * sp}px,${Math.sin(a) * sp * .2 + 40}px)`, opacity: 0 }], { duration: 1000, delay: 260, easing: 'ease-out', fill: 'both' }).finished.then(() => dp.remove());
-  }
-  setTimeout(() => ripples(x, y, 3, 64), 350);
 }
 // 命中: 閃光 → 火の玉 → 火の粉 → 煙
-function explosion(x, y, big = 1) {
+function explosion(x, y, big = 1, dl = 0) {
   const fl = el(`left:${x}px;top:${y}px;width:${90 * big}px;height:${90 * big}px;margin:${-45 * big}px;border-radius:50%;background:radial-gradient(#fffbe8 0%,#ffe9a8 25%,#ffb34733 60%,#0000 70%)`);
-  fl.animate([{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 380, easing: 'ease-out', fill: 'both' }).finished.then(() => fl.remove());
+  fl.animate([{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 380, delay: dl, easing: 'ease-out', fill: 'forwards' }).finished.then(() => fl.remove());
   const ring = el(`left:${x}px;top:${y}px;width:${110 * big}px;height:${110 * big}px;margin:${-55 * big}px;border-radius:50%;border:3px solid #fff4d6`);
-  ring.animate([{ transform: 'scale(.1)', opacity: .9 }, { transform: 'scale(1)', opacity: 0 }], { duration: 520, easing: 'cubic-bezier(.1,.8,.3,1)', fill: 'both' }).finished.then(() => ring.remove());
+  ring.animate([{ transform: 'scale(.1)', opacity: .9 }, { transform: 'scale(1)', opacity: 0 }], { duration: 520, delay: dl, easing: 'cubic-bezier(.1,.8,.3,1)', fill: 'forwards' }).finished.then(() => ring.remove());
   for (let i = 0; i < 5; i++) {
     const s = R(26, 42) * big, ox = R(-12, 12) * big, oy = R(-12, 8) * big;
     const b = el(`left:${x + ox}px;top:${y + oy}px;width:${s}px;height:${s}px;margin:${-s / 2}px;border-radius:50%;background:radial-gradient(#fff3b0 0%,#ffb13b 35%,#f0581c 65%,#a3200f00 72%)`);
-    b.animate([{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.15)', opacity: 1, offset: .45 }, { transform: 'scale(1.5) translateY(-6px)', opacity: 0 }], { duration: 700 + i * 60, delay: 40 + i * 40, easing: 'ease-out', fill: 'both' }).finished.then(() => b.remove());
+    b.animate([{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.15)', opacity: 1, offset: .45 }, { transform: 'scale(1.5) translateY(-6px)', opacity: 0 }], { duration: 700 + i * 60, delay: dl + 40 + i * 40, easing: 'ease-out', fill: 'forwards' }).finished.then(() => b.remove());
   }
   for (let i = 0; i < 14; i++) {
     const a = R(0, Math.PI * 2), sp = R(30, 70) * big;
     const sk = el(`left:${x}px;top:${y}px;width:3px;height:3px;margin:-1.5px;border-radius:50%;background:#ffd27a;box-shadow:0 0 4px #ff9b3a`);
-    sk.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * sp}px,${Math.sin(a) * sp + 18}px)`, opacity: 0 }], { duration: R(500, 800), delay: 60, easing: 'cubic-bezier(.1,.7,.4,1)', fill: 'both' }).finished.then(() => sk.remove());
+    sk.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * sp}px,${Math.sin(a) * sp + 18}px)`, opacity: 0 }], { duration: R(500, 800), delay: dl + 60, easing: 'cubic-bezier(.1,.7,.4,1)', fill: 'forwards' }).finished.then(() => sk.remove());
   }
   for (let i = 0; i < 4; i++) {
     const s = R(30, 44) * big;
     const sm = el(`left:${x + R(-8, 8)}px;top:${y}px;width:${s}px;height:${s}px;margin:${-s / 2}px;border-radius:50%;background:radial-gradient(#4a4a4acc,#2a2a2a66 55%,#0000 72%)`);
-    sm.animate([{ transform: 'translate(0,0) scale(.3)', opacity: 0 }, { transform: 'translate(0,-10px) scale(.8)', opacity: .9, offset: .3 }, { transform: `translate(${R(-14, 14)}px,-46px) scale(1.6)`, opacity: 0 }], { duration: 1500, delay: 260 + i * 120, easing: 'ease-out', fill: 'both' }).finished.then(() => sm.remove());
+    sm.animate([{ transform: 'translate(0,0) scale(.3)', opacity: 0 }, { transform: 'translate(0,-10px) scale(.8)', opacity: .9, offset: .3 }, { transform: `translate(${R(-14, 14)}px,-46px) scale(1.6)`, opacity: 0 }], { duration: 1500, delay: dl + 260 + i * 120, easing: 'ease-out', fill: 'forwards' }).finished.then(() => sm.remove());
   }
 }
 // 命中の後に残る火(ゆらぐ)
 function persistentFire(k) {
   const [x, y] = cellC(k);
   const f = el(`left:${x - 19}px;top:${y - 19}px;width:38px;height:38px`, `<svg width="38" height="38" viewBox="0 0 38 38"><defs>${DEFS('pf' + k)}</defs>${mark('hit', 19, 19, 38, 'pf' + k, true)}</svg>`);
-  f.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, fill: 'both' });
+  f.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, fill: 'forwards' });
   const fl = f.querySelector('path');
   return f;
 }
-// 撃沈: 艦の上で連続して爆ぜ、船体が見え、傾いて沈み、泡と油が残る
-function sink(cells, idx) {
+// ---- 共通: 放物線(重力)で動くキーフレーム
+function para(vx, vy, g, T, n = 12) {
+  const ks = [];
+  for (let i = 0; i <= n; i++) { const t = (T / 1000) * i / n; ks.push({ x: vx * t, y: vy * t + g * t * t / 2, o: i / n }); }
+  return ks;
+}
+const fly = (d, path, opts, fade = [1, 1, 0]) => d.animate(path.map((p, i) => ({ transform: `translate(${p.x}px,${p.y}px)`, opacity: i === path.length - 1 ? fade[2] : i === 0 ? fade[0] : fade[1], offset: p.o })), Object.assign({ fill: 'forwards', easing: 'linear' }, opts));
+const gone = (a, d) => a.finished.then(() => d.remove());
+
+// 水柱(外れ): 着水 → 白い柱が勢いよく立ち上がり(上へ行くほど遅く)、頂上で砕けてしぶきになり、
+// 重さで崩れ落ちる。根元に白い泡の輪が広がり、波紋が 3 重に出て、最後に白いピンが残る。
+// 水柱(外れ): 白い水のかたまりが重さに逆らって吹き上がり(上へ行くほど遅く)、頂上で広がって
+// しぶきになり、重さで崩れ落ちて霧になる。根元に泡の輪、波紋が 3 重、最後に白いピン。
+// 柱は、柔らかい白い玉をたくさん放物線で飛ばして作る(玉が重なって、泡立った柱に見える)。
+function waterColumn(k) {
+  const [x, y] = cellC(k);
+  const by = y + 8, g = 980;
+  const dimple = el(`left:${x}px;top:${y}px;width:34px;height:34px;margin:-17px;border-radius:50%;background:radial-gradient(#06223acc,#06223a00 70%)`);
+  gone(dimple.animate([{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .25 }, { transform: 'scale(1.5)', opacity: 0 }], { duration: 520, fill: 'forwards' }), dimple);
+  // 柱の玉: 真ん中ほど高く、外ほど低く横へ。少しずつ遅れて出るので、柱が下から伸びていく
+  // 柱の芯(根元から玉までをつなぐ、柔らかい白い柱)
+  const core = el(`left:${x - 17}px;top:${by - 92}px;width:34px;height:96px;transform-origin:50% 100%;border-radius:50% 50% 40% 40% / 30% 30% 10% 10%;background:radial-gradient(ellipse 50% 100% at 50% 100%,#ffffffee 0%,#f0f9ffd0 55%,#ffffff00 100%)`);
+  gone(core.animate([
+    { transform: 'scaleY(.05) scaleX(.7)', opacity: 0, offset: 0, easing: 'cubic-bezier(.3,.6,.4,1)' },
+    { transform: 'scaleY(1) scaleX(1)', opacity: 1, offset: .4 },
+    { transform: 'scaleY(.96) scaleX(1.15)', opacity: .95, offset: .52, easing: 'cubic-bezier(.55,0,.9,.6)' },
+    { transform: 'scaleY(.05) scaleX(1.7)', opacity: 0, offset: 1 }], { duration: 1050, delay: 70, fill: 'forwards' }), core);
+  const N = 80;
+  for (let i = 0; i < N; i++) {
+    const u = Math.pow(Math.random(), 1.4) * (Math.random() < .5 ? -1 : 1); // -1..1(0 が真ん中)
+    const dl = R(0, 320) * (1 - .35 * Math.abs(u));
+    const vy = -Math.sqrt(2 * g * R(112, 132)) * (1 - .5 * u * u) * R(.9, 1.03) * (1 - dl / 320 * .5);
+    const vx = u * R(26, 52) + R(-6, 6);
+    const T = (-2 * vy / g) * 1000 * .92;
+    const r0 = R(6, 9), grow = R(2, 2.9);
+    const b = el(`left:${x + u * 6}px;top:${by}px;width:${r0 * 2}px;height:${r0 * 2}px;margin:${-r0}px;border-radius:50%;background:radial-gradient(circle at 42% 38%,#ffffff 0%,#f4fbff 36%,#cfe6f6c0 58%,#ffffff00 72%)`);
+    const pts = para(vx, vy, g, T, 14);
+    gone(b.animate(pts.map((p) => ({ transform: `translate(${p.x}px,${p.y}px) scale(${1 + (grow - 1) * Math.min(1, p.o * 1.6)})`, opacity: p.o < .08 ? p.o / .08 : p.o < .55 ? 1 : Math.max(0, 1 - (p.o - .55) / .45), offset: p.o })), { duration: T, delay: dl, fill: 'forwards' }), b);
+  }
+  // 頂上で砕けたしぶき: 細かい粒が弧を描いて落ちる
+  for (let i = 0; i < 30; i++) {
+    const s = R(2, 4.5);
+    const dp = el(`left:${x + R(-10, 10)}px;top:${by - R(90, 122)}px;width:${s}px;height:${s}px;margin:${-s / 2}px;border-radius:50%;background:#f6fcff`);
+    const T = R(700, 1000);
+    gone(fly(dp, para(R(-80, 80), R(-110, -20), g * .55, T), { duration: T, delay: R(380, 560) }, [0, 1, 0]), dp);
+  }
+  // 根元から横へ低く飛ぶしぶき
+  for (let i = 0; i < 16; i++) {
+    const s = R(2, 4), a = R(0, Math.PI * 2);
+    const dp = el(`left:${x}px;top:${by}px;width:${s}px;height:${s}px;margin:${-s / 2}px;border-radius:50%;background:#eaf7ff`);
+    const T = R(360, 520);
+    gone(fly(dp, para(Math.cos(a) * R(50, 100), -R(70, 150), 900, T), { duration: T, delay: R(0, 60) }, [1, 1, 0]), dp);
+  }
+  // 崩れ落ちる時の霧(上から下へ流れて薄れる)
+  for (let i = 0; i < 3; i++) {
+    const m = el(`left:${x + R(-10, 10)}px;top:${by - 80 + i * 26}px;width:72px;height:60px;margin:-30px -36px;border-radius:50%;background:radial-gradient(#ffffff90,#ffffff00 68%)`);
+    gone(m.animate([{ transform: 'scale(.5)', opacity: 0 }, { transform: 'scale(1)', opacity: .65, offset: .3 }, { transform: 'translateY(34px) scale(1.6)', opacity: 0 }], { duration: 850, delay: 560 + i * 90, easing: 'ease-out', fill: 'forwards' }), m);
+  }
+  // 根元の泡の輪
+  const foam = el(`left:${x}px;top:${y}px;width:70px;height:70px;margin:-35px;border-radius:50%;background:radial-gradient(#ffffff00 26%,#ffffffd8 44%,#e8f6ff90 56%,#ffffff00 70%)`);
+  gone(foam.animate([{ transform: 'scale(.25)', opacity: 0 }, { transform: 'scale(.8)', opacity: .8, offset: .3 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 1100, delay: 820, easing: 'ease-out', fill: 'forwards' }), foam);
+  for (let i = 0; i < 3; i++) {
+    const r = el(`left:${x}px;top:${y}px;width:100px;height:100px;margin:-50px;border-radius:50%;border:${2 - i * .4}px solid #e8f6ff`);
+    gone(r.animate([{ transform: 'scale(.12)', opacity: .85 }, { transform: 'scale(1)', opacity: 0 }], { duration: 1300, delay: 900 + i * 240, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' }), r);
+  }
+  const peg = el(`left:${x - 19}px;top:${y - 19}px;width:38px;height:38px`, `<svg width="38" height="38" viewBox="0 0 38 38"><defs>${DEFS('pg' + k)}</defs>${mark('miss', 19, 19, 38, 'pg' + k, true)}</svg>`);
+  peg.animate([{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 260, delay: 1300, fill: 'forwards' });
+}
+
+// 撃沈: 最後の 1 発が爆発 → 誘爆が艦の上を走り、隠れていた船体が炎の中から現れる
+// → 横に傾き(真上からだと幅が細くなり、片側が暗くなる)→ 艦尾から海に引き込まれ、
+// 艦首が少し持ち上がってから最後に沈む。沈んだ所から泡が噴き出し、火は湯気になって消え、
+// 油と破片が広がり、細長い波紋が出る。最後は盤の「沈んだ艦」と同じ姿が残る。
+function sink(cells, idx, lastK) {
   const xs = cells.map((k) => k % 10), ys = cells.map((k) => Math.floor(k / 10));
   const horiz = ys[0] === ys[ys.length - 1], len = cells.length;
-  const x0 = EX + Math.min(...xs) * EC, y0 = EY + Math.min(...ys) * EC;
-  const w = horiz ? len * EC : EC, h = horiz ? EC : len * EC;
-  cells.forEach((k, i) => setTimeout(() => { const [x, y] = cellC(k); explosion(x, y, .8); }, i * 220));
-  const shipBox = el(`left:${x0}px;top:${y0}px;width:${w}px;height:${h}px;transform-origin:50% 50%;opacity:0`,
-    `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible"><defs>${DEFS('sk')}</defs><g transform="${horiz ? '' : `translate(${EC} 0) rotate(90)`}">${shipArt(len, idx, EC, false, true, 'url(#hullsk)')}</g></svg>`);
-  const wreckEl = el(`left:${x0}px;top:${y0}px;width:${w}px;height:${h}px;opacity:0`,
-    `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible"><defs>${DEFS('wk')}</defs>${wreck(len, idx, EC, 'wk', horiz)}</svg>`);
-  const t0 = len * 220 + 200;
-  cells.forEach((k) => { const m = document.querySelector(`.bs2 svg [data-k="${k}"]`); if (m) m.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, delay: t0 + 300, fill: 'forwards' }); });
-  shipBox.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: 200, fill: 'forwards' });
-  // 傾いて沈む(少し回り、小さくなり、暗くなる)
-  shipBox.animate([{ transform: 'rotate(0) scale(1)', opacity: 1 },
-    { transform: `rotate(${horiz ? 3 : -3}deg) scale(.97)`, opacity: 1, offset: .35 },
-    { transform: `rotate(${horiz ? 7 : -7}deg) scale(.9) translate(2px,3px)`, opacity: 0 }], { duration: 1700, delay: t0 + 300, easing: 'ease-in', fill: 'forwards' });
-  wreckEl.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 900, delay: t0 + 1300, fill: 'forwards' });
-  // 泡
-  for (let i = 0; i < 18; i++) {
-    const s = R(3, 7), px = x0 + R(4, w - 4), py = y0 + R(4, h - 4);
-    const bb = el(`left:${px}px;top:${py}px;width:${s}px;height:${s}px;margin:${-s / 2}px;border-radius:50%;border:1.5px solid #e8f6ffcc`);
-    bb.animate([{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .4 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: R(500, 900), delay: t0 + 600 + R(0, 1300), fill: 'both' }).finished.then(() => bb.remove());
+  const L = len * EC;
+  const cx = EX + (Math.min(...xs) + (horiz ? len / 2 : .5)) * EC, cy = EY + (Math.min(...ys) + (horiz ? .5 : len / 2)) * EC;
+  // 艦の向きの座標系(艦尾 x=0 → 艦首 x=L)を、場面の座標に直す
+  const P = (lx, ly) => horiz ? [cx - L / 2 + lx, cy - EC / 2 + ly] : [cx + EC / 2 - ly, cy - L / 2 + lx];
+  const order = cells.slice().sort((a, b) => horiz ? a - b : a - b); // 艦尾→艦首(艦の絵は左/上が艦尾)
+  // 盤に描いてある火(命中の印)は、ここからは演出が引き継ぐ
+  cells.forEach((k) => { const m = document.querySelector(`.bs2 svg [data-k="${k}"]`); if (m) m.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' }); });
+  // 1) 最後の 1 発と誘爆(当たった所から両端へ走る)
+  const li = Math.max(0, order.indexOf(lastK));
+  order.forEach((k, i) => { const [x, y] = cellC(k); explosion(x, y, i === li ? 1.1 : .8, Math.abs(i - li) * 170); });
+  const tBoom = (len - 1) * 170 + 200;
+  // 2) 船体(縦に細かく切った帯。帯ごとに沈ませるので、艦尾から順に海へ消えていく)
+  const N = len * 6, sw = L / N;
+  const shipSvg = `<svg width="${L}" height="${EC}" viewBox="0 0 ${L} ${EC}" style="display:block;overflow:visible"><defs>${DEFS('sk')}</defs>${shipArt(len, idx, EC, false, true, 'url(#hullsk)')}
+    <path d="M0 ${EC * .5} H${L}" stroke="#0000" /><rect class="dark" x="0" y="${EC * .5}" width="${L}" height="${EC * .5}" fill="#0b1c28" opacity="0"/></svg>`;
+  // 傾きと沈みは、帯をまとめた入れ物(hull)で行う
+  const hull = el(`opacity:1;left:${cx - (horiz ? L : EC) / 2}px;top:${cy - (horiz ? EC : L) / 2}px;width:${horiz ? L : EC}px;height:${horiz ? EC : L}px`);
+  const box = document.createElement('div');
+  box.style.cssText = `position:absolute;left:${horiz ? 0 : (EC - L) / 2}px;top:${horiz ? 0 : (L - EC) / 2}px;width:${L}px;height:${EC}px;transform:${horiz ? '' : 'rotate(90deg)'}`;
+  hull.appendChild(box);
+  const inner = document.createElement('div');
+  inner.style.cssText = `position:absolute;inset:0;transform-origin:50% 50%;opacity:0`;
+  box.appendChild(inner);
+  const tIn = 350, tList = tBoom + 500, tSink = tList + 650, perStrip = 2300 / N;
+  inner.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: tIn, fill: 'forwards' });
+  // 傾き: 幅が 70% になり、少し横へずれ、片側が暗くなる
+  inner.animate([{ transform: 'translateY(0) scaleY(1) rotate(0)' }, { transform: 'translateY(3px) scaleY(.7) rotate(-1.5deg)' }], { duration: 700, delay: tList, easing: 'ease-in-out', fill: 'forwards' });
+  const hullPath = shipArt(len, idx, EC, false, true, 'none').match(/<path d="([^"]*)"/)[1];
+  for (let i = 0; i < N; i++) {
+    const strip = document.createElement('div');
+    strip.style.cssText = `position:absolute;left:0;top:0;width:${L}px;height:${EC}px;transform-origin:${(i + .5) * sw}px 50%;clip-path:inset(-30% ${L - (i + 1) * sw - .5}px -30% ${i * sw}px)`;
+    strip.innerHTML = shipSvg + `<svg width="${L}" height="${EC}" viewBox="0 0 ${L} ${EC}" style="position:absolute;left:0;top:0;overflow:visible;opacity:0"><path d="${hullPath}" fill="#174a70"/></svg>`;
+    inner.appendChild(strip);
+    const t0 = tSink + i * perStrip, D = t0 - tSink + 560, a = (t0 - tSink) / D;
+    // 艦首側(後半)は、沈む前に少し持ち上がる(真上からは少し大きく見える)
+    const lift = i > N * .5 ? (i - N * .5) / (N * .5) : 0;
+    strip.animate([
+      { transform: 'scale(1)', opacity: 1, offset: 0 },
+      { transform: `scale(${1 + lift * .12})`, opacity: 1, offset: a },
+      { transform: 'scale(.82)', opacity: .45, offset: a + (1 - a) * .65 },
+      { transform: 'scale(.7)', opacity: 0, offset: 1 }], { duration: D, delay: tSink, easing: 'ease-in', fill: 'forwards' });
+    // 水がかぶる: 船体の形の海の色が、その帯に重なっていく
+    strip.lastChild.animate([{ opacity: 0 }, { opacity: 0, offset: Math.max(0, a - .02) }, { opacity: .9, offset: a + (1 - a) * .7 }, { opacity: 1 }], { duration: D, delay: tSink, fill: 'forwards' });
   }
-  // 油の広がり
-  const oil = el(`left:${x0 + w / 2}px;top:${y0 + h / 2}px;width:${w + 30}px;height:${h + 30}px;margin:${-(h + 30) / 2}px 0 0 ${-(w + 30) / 2}px;border-radius:50%;background:radial-gradient(#0b1a24aa,#0b1a2400 70%)`);
-  oil.animate([{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1)', opacity: .8 }], { duration: 1600, delay: t0 + 800, easing: 'ease-out', fill: 'both' });
-  setTimeout(() => ripples(x0 + w / 2, y0 + h / 2, 2, Math.max(w, h) + 40), t0 + 1200);
+  // 片側の影(傾いた側)
+  const shade = document.createElement('div');
+  shade.style.cssText = `position:absolute;left:0;top:0;width:${L}px;height:${EC}px;background:linear-gradient(#0000 40%,#05121c 100%);border-radius:${EC / 2}px;opacity:0`;
+  inner.appendChild(shade);
+  shade.animate([{ opacity: 0 }, { opacity: .65, offset: .2 }, { opacity: .5, offset: .4 }, { opacity: 0 }], { duration: tSink + 2300 - tList, delay: tList, fill: 'forwards' });
+  const tEnd = tSink + 2300 + 600;
+  // 沈む境目: 白く泡立つ線が、艦尾から艦首へ動いていく
+  {
+    const fw = EC * 1.5, fh = 16;
+    const line = el(`left:0;top:0;width:${fw}px;height:${fh}px;margin:${-fh / 2}px 0 0 ${-fw / 2}px;border-radius:50%;background:radial-gradient(#ffffffe0 0%,#eaf7ffa0 45%,#ffffff00 70%)`);
+    const ks = [];
+    for (let j = 0; j <= 10; j++) { const [px, py] = P(L * j / 10, EC / 2); ks.push({ transform: `translate(${px}px,${py}px) rotate(${horiz ? 90 : 0}deg) scaleX(${1 - j * .03})`, opacity: j === 0 ? 0 : j === 10 ? 0 : 1, offset: j / 10 }); }
+    gone(line.animate(ks, { duration: 2300 + 300, delay: tSink - 100, fill: 'forwards' }), line);
+  }
+  // 3) 火: 艦の上で燃え続け、その場所が沈んだ時に白い湯気になって消える
+  order.forEach((k, i) => {
+    const [x, y] = cellC(k);
+    const ts = tSink + ((i + .5) / len) * N * perStrip;
+    const f = el(`left:${x - 19}px;top:${y - 19}px;width:38px;height:38px`, `<svg width="38" height="38" viewBox="0 0 38 38" style="overflow:visible"><defs>${DEFS('sf' + k)}</defs><circle cx="19" cy="19" r="17" fill="url(#glowsf${k})"/>${flame(19, 17, 12)}</svg>`);
+    f.animate([{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'scale(1)', offset: .1 }, { opacity: 1, transform: 'scale(1.05)', offset: .9 }, { opacity: 0, transform: 'scale(.6)' }], { duration: ts - tIn + 200, delay: tIn + i * 120, fill: 'forwards' });
+    for (let j = 0; j < 3; j++) {
+      const s = R(18, 28);
+      const st = el(`left:${x + R(-6, 6)}px;top:${y}px;width:${s}px;height:${s}px;margin:${-s / 2}px;border-radius:50%;background:radial-gradient(#ffffffd8,#e8f2f800 70%)`);
+      gone(st.animate([{ transform: 'translate(0,0) scale(.3)', opacity: 0 }, { transform: 'translate(0,-8px) scale(.9)', opacity: .9, offset: .25 }, { transform: `translate(${R(-10, 10)}px,-40px) scale(1.7)`, opacity: 0 }], { duration: 1200, delay: ts + j * 120, easing: 'ease-out', fill: 'forwards' }), st);
+    }
+  });
+  // 4) 泡: 沈んだ所から、艦尾→艦首の順にぼこぼこと
+  for (let i = 0; i < 40; i++) {
+    const lx = R(.05, .95) * L, ly = R(.15, .85) * EC;
+    const [px, py] = P(lx, ly);
+    const s = R(3, 9);
+    const tb = tSink + (lx / L) * N * perStrip + R(150, 900);
+    const b = el(`left:${px}px;top:${py}px;width:${s}px;height:${s}px;margin:${-s / 2}px;border-radius:50%;border:1.5px solid #eaf7ffdd;background:radial-gradient(circle at 35% 35%,#ffffff90,#ffffff00 60%)`);
+    gone(b.animate([{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .6 }, { transform: 'scale(1.5)', opacity: 0 }], { duration: R(380, 700), delay: tb, fill: 'forwards' }), b);
+  }
+  // 5) 油と破片、細長い波紋
+  const [ox, oy] = P(L / 2, EC / 2);
+  const ow = horiz ? L + 40 : EC + 40, oh = horiz ? EC + 40 : L + 40;
+  const oil = el(`left:${ox}px;top:${oy}px;width:${ow}px;height:${oh}px;margin:${-oh / 2}px 0 0 ${-ow / 2}px;border-radius:50%;background:radial-gradient(#08141cb0,#08141c00 68%)`);
+  oil.animate([{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(1)', opacity: .75 }], { duration: 1800, delay: tSink + 400, easing: 'ease-out', fill: 'forwards' });
+  for (let i = 0; i < 8; i++) {
+    const [px, py] = P(R(.1, .9) * L, R(.2, .8) * EC);
+    const w = R(4, 8), h = R(2, 3.5);
+    const d = el(`left:${px}px;top:${py}px;width:${w}px;height:${h}px;margin:${-h / 2}px ${-w / 2}px;border-radius:1px;background:#3a2c22;transform:rotate(${R(0, 180)}deg)`);
+    d.animate([{ opacity: 0, transform: `rotate(${R(0, 180)}deg) translate(0,0)` }, { opacity: .9, transform: `rotate(${R(0, 180)}deg) translate(${R(-14, 14)}px,${R(-14, 14)}px)` }], { duration: 2200, delay: tSink + 600 + i * 90, easing: 'ease-out', fill: 'forwards' });
+  }
+  for (let i = 0; i < 3; i++) {
+    const rw = (horiz ? L : EC) + 70, rh = (horiz ? EC : L) + 70;
+    const r = el(`left:${ox}px;top:${oy}px;width:${rw}px;height:${rh}px;margin:${-rh / 2}px 0 0 ${-rw / 2}px;border-radius:50%;border:1.2px solid #e8f6ff90`);
+    gone(r.animate([{ transform: 'scale(.55)', opacity: .9 }, { transform: 'scale(1.15)', opacity: 0 }], { duration: 1400, delay: tSink + 1200 + i * 380, easing: 'ease-out', fill: 'forwards' }), r);
+  }
+  // 6) 最後: 盤の「沈んだ艦」と同じ姿
+  const ww = horiz ? L : EC, wh = horiz ? EC : L;
+  const wreckEl = el(`left:${cx - ww / 2}px;top:${cy - wh / 2}px;width:${ww}px;height:${wh}px;opacity:0`,
+    `<svg width="${ww}" height="${wh}" viewBox="0 0 ${ww} ${wh}" style="overflow:visible"><defs>${DEFS('wk')}</defs>${wreck(len, idx, EC, 'wk', horiz)}</svg>`);
+  wreckEl.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1200, delay: tEnd - 300, fill: 'forwards' });
+  return tEnd + 900;
 }
+
 window.__bs2fx = { incoming, waterColumn, explosion, persistentFire, sink, cellC, ripples };
 })();
