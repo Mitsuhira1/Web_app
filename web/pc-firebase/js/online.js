@@ -632,8 +632,21 @@ async function promoteToHostFromState(isTakeover = false) {
   if (netApi.role === 'host') return;
   fbState.takingOver = true;
   try {
-    const players = Object.assign({}, fbState.players || {});
     const myUid = netApi.uid;
+    if (!(fbState.players || {})[myUid]) return;
+    // 通信を伴う処理(ホストの印を書く・対局の後始末)を先に済ませる。席の一覧とコアへの引き継ぎは、その後に await なしで一気に行う
+    // (通信の途中で退出した人の通知が届いても、その人を席に入れたまま引き継いで「幽霊の席」が残らないようにする)
+    await netApi.assumeHost(Object.values(fbState.players || {}).filter((p) => p && p.uid).length || 1);
+    fbState.hostUid = myUid;
+    {
+      const rs0 = fbState.roomState || {};
+      if (rs0.boardMatch || rs0.wolf || rs0.mine || rs0.slide) {
+        boardMatch.reset(); wolfGame.reset();
+        if (['extraPlay','wolfPlay','minePlay','slidePlay'].includes(S.screen)) go('room');
+        await netApi.writeState({boardMatch:null,wolf:null,mine:null,slide:null});
+      }
+    }
+    const players = Object.assign({}, fbState.players || {});
     const myPlayer = players[myUid];
     if (!myPlayer) return;
     const mySlot = typeof myPlayer.slot === 'number' ? myPlayer.slot : (ost ? ost.mySlot : 0);
@@ -683,13 +696,6 @@ async function promoteToHostFromState(isTakeover = false) {
       chat: Array.isArray(rs.chat) ? rs.chat : (ost && Array.isArray(ost.chat) ? ost.chat : []),
     };
 
-    await netApi.assumeHost(sortedPlayers.length || 1);
-    fbState.hostUid = myUid;
-    if (rs.boardMatch || rs.wolf || rs.mine || rs.slide) {
-      boardMatch.reset(); wolfGame.reset();
-      if (['extraPlay','wolfPlay','minePlay','slidePlay'].includes(S.screen)) go('room');
-      await netApi.writeState({boardMatch:null,wolf:null,mine:null,slide:null});
-    }
     hostRoundInfo = {
       round: snapshot.round,
       gameId: snapshot.gameId,
@@ -732,6 +738,7 @@ async function promoteToHostFromState(isTakeover = false) {
     } else {
       mainCore.onlineSystemChat(`${meName()}がホストになりました`);
     }
+    syncHostPlayers(fbState.players);
     flushHostStateToFirebase();
     if (!rejoin) toast({ w: 'お知らせ', t: 'あなたがホストになりました' });
     onlineChanged();
