@@ -10,12 +10,12 @@
 - 作り終えて公開したら: `[ ]` を `[x]` にし、本数・動画の名前・台本・公開日・作った AI を書く。手引き 10 章の表も直す。
 - 並びはメニューの順(`js/app.js` の `ORDER`)。ID は `js/rules-steps.js` の名前。見本の HTML(`docs/mockups/rules-video/<名前>-rules.html`)が ID と違う物は「見本」に書いた。
 
-最終更新: 2026-11-28(更新済み 3 / 全 61、作成済み・未アップ 1)
+最終更新: 2026-11-28(更新済み 4 / 全 61、作成済み・未アップ 1)
 
 ## 一覧
 - [x] **将棋**(`shogi`) — 7 本 `sh-v2-step1` `sh-v2-step2` `sh-v2-step3` `sh-v2-step4` `sh-v2-step5` `sh-v2-step6` `sh-v2-step7` ・台本 `tools/rule_video/shogi.cjs` ・2026-11-28 公開(Claude)
 - [ ] **5五将棋**(`gogo`) — 旧版 3 本 `gg-step1` `gg-step2` `gg-step3`(作業中: Muse・2026-11-28)
-- [ ] **リバーシ**(`reversi`) — 旧版 3 本 `rv-step1` `rv-step2` `rv-step3`
+- [x] **リバーシ**(`reversi`) — 作り直し済み(他の AI が作成・2026-11-28 ユーザー申告により済み)
 - [ ] **コネクトフォー**(`connect4`) — 旧版 3 本 `c4-step1` `c4-step2` `c4-step3`(作業中: Muse・2026-11-28)
 - [ ] **五目ならべ**(`gomoku`) — 旧版 3 本 `gm-step1` `gm-step2` `gm-step3`(作業中: Muse・2026-11-28)
 - [ ] **ヘックス**(`hex`) — 旧版 3 本 `hx-step1` `hx-step2` `hx-step3`(作業中: Muse・2026-11-28)
