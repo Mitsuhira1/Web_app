@@ -387,65 +387,75 @@ function stepMove(d, pts, delay) {
 
 // ---------------------------------------------------------------- 水柱(外れ)
 // 1 コマごとに描いた絵(12 コマ ≒ 1 秒)。原点は着水点。上が -y。
-// 柱は 1 本の筒ではなく、上と外へ伸びる何枚もの「水の舌」(先がとがり、外へ少し反る)を重ねて作る。
-// 舌は伸び切ると先がちぎれて粒になり、そのあと重さで短く太くなって崩れる。
+// 水柱は「ひとかたまりの白い水」: 根元が細く、上へ広がり、てっぺんはもこもこ(大小のこぶ)。
+// 中に水色の影と、上と外へ流れるすじを少し入れる。頂上のこぶは外へちぎれ、崩れる時は両肩が外へ垂れる。
 function columnFrames(seed) {
   const fr = [];
+  let clipN = 0;
   const r = rng(seed);
-  // 舌の並び(真ん中が高く、外ほど低く外へ傾く)。毎回少しずつ違う形にするため、乱数で少しずらす
-  const TONGUES = [
-    { x: 0, a: 0, L: 118, w: 17 }, { x: -6, a: -9, L: 98, w: 14 }, { x: 6, a: 10, L: 96, w: 14 },
-    { x: -10, a: -22, L: 70, w: 12 }, { x: 11, a: 24, L: 66, w: 12 }, { x: -13, a: -40, L: 40, w: 10 }, { x: 13, a: 42, L: 38, w: 10 },
-  ].map((t) => ({ ...t, a: t.a + (r() - .5) * 6, L: t.L * (.9 + r() * .2), ph: r() * 6 }));
-  const sm = (pts) => { let d = ''; for (let i = 1; i < pts.length - 1; i++) { const m = [(pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2]; d += ` Q${pts[i][0].toFixed(1)} ${pts[i][1].toFixed(1)} ${m[0].toFixed(1)} ${m[1].toFixed(1)}`; } return d; };
-  // 1 枚の舌。k: 長さの割合、fat: 太さの割合、curl: 先の反り
-  const tongue = (t, k, fat, curl) => {
-    const n = 7, a = t.a * Math.PI / 180, dx = Math.sin(a), dy = -Math.cos(a), px = -dy, py = dx;
-    const side = t.a >= 0 ? 1 : -1, Lt = t.L * k, L = [], R2 = [], S = [];
-    for (let i = 0; i <= n; i++) {
-      const s = i / n, bend = side * curl * s * s * Lt * .22, wob = Math.sin(s * 7 + t.ph) * 1.2;
-      const cx = t.x + dx * Lt * s + px * (bend + wob), cy = dy * Lt * s + py * (bend + wob);
-      const w = t.w * fat * Math.pow(1 - s, .75) / 2;
-      L.push([cx - px * w, cy - py * w]); R2.push([cx + px * w, cy + py * w]); S.push([cx + px * w * .2, cy + py * w * .2]);
-    }
-    const tip = L[n];
-    const d = `M${L[0][0].toFixed(1)} ${(L[0][1] + 2).toFixed(1)}` + sm(L) + ` L${tip[0].toFixed(1)} ${tip[1].toFixed(1)}` + sm(R2.slice().reverse()) + ` L${R2[0][0].toFixed(1)} ${(R2[0][1] + 2).toFixed(1)}Z`;
-    const sh = `M${S[0][0].toFixed(1)} ${(S[0][1] + 2).toFixed(1)}` + sm(S) + ` L${tip[0].toFixed(1)} ${tip[1].toFixed(1)}` + sm(R2.slice().reverse()) + ` L${R2[0][0].toFixed(1)} ${(R2[0][1] + 2).toFixed(1)}Z`;
-    return { body: `<path d="${d}" fill="${W1}" stroke="${WL}" stroke-width=".9" stroke-opacity=".5" stroke-linejoin="round"/><path d="${sh}" fill="${W3}" opacity=".55"/>`, tip };
-  };
-  const plume = (k, fat, curl, breakTips = 0) => {
-    let s = '', tips = '';
-    // 外側の低い舌から描き、真ん中の高い舌を最後に(手前に)
-    [5, 6, 3, 4, 1, 2, 0].forEach((i) => {
-      const t = TONGUES[i];
-      const o = tongue(t, k * (breakTips ? .86 : 1), fat, curl);
-      s += o.body;
-      if (breakTips) {
-        // ちぎれた先: 舌の先の少し上と外に、丸い粒を 2〜3 個
-        const a = t.a * Math.PI / 180, side = t.a >= 0 ? 1 : -1;
-        for (let j = 0; j < (i < 3 ? 3 : 2); j++) {
-          const dd = 6 + j * 7 * breakTips, x = o.tip[0] + Math.sin(a) * dd + side * j * 3 * breakTips, y = o.tip[1] - Math.cos(a) * dd + j * j * 2 * breakTips;
-          const rr = (t.w * .32) * (1 - j * .22);
-          tips += `<path d="${blobPath(x, y, rr, rr * .95, .3, 7, r)}" fill="${W1}" stroke="${WL}" stroke-width=".8" stroke-opacity=".5"/>`;
-        }
-      }
+  const LUMPS = Array.from({ length: 7 }, (_, i) => ({ h: .55 + r() * .6 + (i === 3 ? .5 : i === 2 || i === 4 ? .25 : 0), w: .8 + r() * .5 }));
+  // 外形: H 高さ、Wb 根元の幅、Wt 頂上の幅、lump こぶの高さ、droop 両肩の垂れ
+  const outline = (H, Wb, Wt, lump, droop) => {
+    const tw = Wt / 2, bw = Wb / 2;
+    const shL = [-tw - droop * 10, -H * .78 + droop * 22], shR = [tw + droop * 10, -H * .78 + droop * 22];
+    let d = `M${-bw} 3 C${-bw - 2} ${-H * .3} ${-tw * .7} ${-H * .55} ${shL[0].toFixed(1)} ${shL[1].toFixed(1)}`;
+    // 左肩から右肩へ、こぶを 7 つ
+    const sum = LUMPS.reduce((s, l) => s + l.w, 0);
+    let x = shL[0], y = shL[1];
+    LUMPS.forEach((l, i) => {
+      const w = (shR[0] - shL[0]) * l.w / sum;
+      const t = (i + 1) / LUMPS.length;
+      const nx = x + w, ny = shL[1] + (shR[1] - shL[1]) * t - Math.sin(t * Math.PI) * H * .22;
+      const hh = w * .55 * l.h * lump + 2;
+      d += ` C${(x - w * .05).toFixed(1)} ${(y - hh).toFixed(1)} ${(nx + w * .05).toFixed(1)} ${(ny - hh).toFixed(1)} ${nx.toFixed(1)} ${ny.toFixed(1)}`;
+      x = nx; y = ny;
     });
-    return s + tips;
+    d += ` C${(tw * .7).toFixed(1)} ${(-H * .55).toFixed(1)} ${(bw + 2).toFixed(1)} ${(-H * .3).toFixed(1)} ${bw} 3Z`;
+    return d;
+  };
+  const mass = (H, Wb, Wt, lump, droop) => {
+    const d = outline(H, Wb, Wt, lump, droop);
+    // 影(水色)は全体、光(白)は左上に寄せた一回り小さい形、すじは上と外へ
+    const hi = outline(H * .9, Wb * .6, Wt * .78, lump * .9, droop);
+    let s = `<path d="${d}" fill="${W2}" stroke="${WL}" stroke-width="1.2" stroke-linejoin="round"/>`;
+    s += `<g transform="translate(${-Wt * .07} ${-H * .06})"><path d="${hi}" fill="${W1}"/></g>`;
+    // すじ: 本数は少なく、長さも位置もばらばらに。外形の中だけに描く
+    const cid = `wc${seed}_${(clipN++)}`;
+    s += `<clipPath id="${cid}"><path d="${d}"/></clipPath><g clip-path="url(#${cid})">`;
+    for (let i = 0; i < 3; i++) {
+      const side = i === 1 ? .2 : i === 0 ? -1 : 1;
+      const sx = side * Wb * (.1 + r() * .18), sy = -H * (.08 + r() * .25);
+      const ex = side * Wt * (.2 + r() * .2), ey = -H * (.55 + r() * .25);
+      s += `<path d="M${sx.toFixed(1)} ${sy.toFixed(1)} Q${(sx + (ex - sx) * .2).toFixed(1)} ${((sy + ey) / 2).toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}" fill="none" stroke="${W3}" stroke-width="${(1.4 + r() * 1.2).toFixed(1)}" stroke-linecap="round" opacity=".7"/>`;
+    }
+    s += `</g>`;
+    return s;
+  };
+  // 頂上からちぎれて外へ飛ぶ丸いかたまり
+  const chunks = (H, Wt, spread, fall, n = 6) => {
+    let s = '';
+    for (let i = 0; i < n; i++) {
+      const side = i % 2 ? 1 : -1, k = Math.floor(i / 2);
+      const x = side * (Wt * .3 + k * spread * .45 + r() * 6), y = -H - 4 + k * 8 + fall * (.5 + k * .4);
+      const rr = 5.5 - k * 1.2 + r();
+      s += `<path d="${blobPath(x, y, rr, rr * .9, .3, 8, r)}" fill="${W1}" stroke="${WL}" stroke-width=".9" stroke-opacity=".6"/>`;
+    }
+    return s;
   };
   const foam = (rx, ry, jag, k = 1) => `<path d="${blobPath(0, 0, rx, ry, jag, 14, r)}" fill="${W1}" stroke="${WL}" stroke-width="1" stroke-opacity=".45" opacity="${k}"/><path d="${blobPath(0, 1, rx * .55, ry * .5, jag, 10, r)}" fill="${W2}"/>`;
   const ring = (rad, w, o) => `<ellipse cx="0" cy="0" rx="${rad}" ry="${rad * .92}" fill="none" stroke="${W1}" stroke-width="${w}" opacity="${o}"/>`;
   const bits = (n, R, size) => { let s = ''; for (let i = 0; i < n; i++) { const a = r() * Math.PI * 2, d = R * (.5 + r() * .5); s += `<path d="${blobPath(Math.cos(a) * d, Math.sin(a) * d * .8, size * (.6 + r() * .6), size * (.5 + r() * .5), .5, 7, r)}" fill="${W1}" stroke="${WL}" stroke-width=".8" stroke-opacity=".4"/>`; } return s; };
   // 0: 着水(くぼみと、まわりへ跳ねる小さな粒)
   fr.push(`<ellipse cx="0" cy="0" rx="15" ry="11" fill="#0a2b45" opacity=".5"/>` + (() => { let s = ''; for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + r() * .3; s += `<circle cx="${(Math.cos(a) * 9).toFixed(1)}" cy="${(Math.sin(a) * 7).toFixed(1)}" r="${(2 + r() * 1.5).toFixed(1)}" fill="${W1}" stroke="${WL}" stroke-width=".8"/>`; } return s; })());
-  // 1〜4: 舌が伸びる(上へ行くほど遅い)
-  fr.push(foam(17, 8, .4) + plume(.36, 1.1, .1));
-  fr.push(foam(20, 9, .4) + plume(.7, 1.05, .25));
-  fr.push(foam(23, 10, .4) + plume(.92, 1, .45));
-  fr.push(foam(25, 11, .4) + plume(1, 1, .7, .5));
-  // 5〜7: 先がちぎれて外へ。舌は重さで短く太くなって崩れる
-  fr.push(foam(28, 12, .4) + plume(.86, 1.15, 1, 1));
-  fr.push(foam(31, 13, .45) + plume(.55, 1.4, 1.2));
-  fr.push(foam(34, 14, .5) + plume(.28, 1.8, 1.3));
+  // 1〜4: 下が細く、上へ広がりながら伸びる(上へ行くほど遅い)
+  fr.push(foam(19, 9, .4) + mass(34, 22, 30, .8, 0));
+  fr.push(foam(22, 10, .4) + mass(74, 24, 46, 1, 0));
+  fr.push(foam(25, 11, .4) + mass(100, 26, 58, 1.1, 0));
+  fr.push(foam(27, 12, .4) + mass(110, 28, 64, 1.1, .1) + chunks(110, 64, 18, 0, 4));
+  // 5〜7: 頂上がちぎれて外へ、両肩が外へ垂れ、重さで低く広がる
+  fr.push(foam(30, 13, .4) + mass(94, 32, 66, .9, .5) + chunks(98, 66, 24, 10));
+  fr.push(foam(33, 14, .45) + mass(64, 38, 64, .8, .9) + chunks(70, 62, 30, 24));
+  fr.push(foam(36, 15, .5) + mass(32, 46, 56, .6, 1) + chunks(40, 54, 34, 30, 4));
   // 8〜11: 泡の山 → 平らな泡 → 割れて小さくなる。波紋が外へ
   fr.push(foam(35, 15, .55) + `<path d="${blobPath(0, -5, 20, 9, .5, 10, r)}" fill="${W1}" stroke="${WL}" stroke-width="1" stroke-opacity=".5"/>` + ring(30, 2.2, .8));
   fr.push(foam(30, 14, .6, .95) + bits(5, 32, 5) + ring(36, 2, .7));
