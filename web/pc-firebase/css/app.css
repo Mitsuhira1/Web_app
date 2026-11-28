@@ -8,6 +8,10 @@
 @font-face{font-family:"Shippori Mincho B1";font-weight:800;src:url(../fonts/ShipporiMinchoB1-ExtraBold.woff2) format("woff2")}
 @font-face{font-family:"Cinzel";font-weight:700;src:url(../fonts/Cinzel.woff2) format("woff2")}
 @font-face{font-family:"Dela Gothic One";src:url(../fonts/DelaGothicOne.woff2) format("woff2")}
+@font-face{font-family:"Zen Kaku Gothic New";font-weight:500;src:url(../fonts/ZenKakuGothicNew-Medium.woff2) format("woff2");font-display:swap}
+@font-face{font-family:"Zen Kaku Gothic New";font-weight:700;src:url(../fonts/ZenKakuGothicNew-Bold.woff2) format("woff2");font-display:swap}
+@font-face{font-family:"Barlow Condensed";font-weight:600;src:url(../fonts/BarlowCondensed-SemiBold.woff2) format("woff2");font-display:swap}
+@font-face{font-family:"Barlow Condensed";font-weight:700;src:url(../fonts/BarlowCondensed-Bold.woff2) format("woff2");font-display:swap}
 @font-face{font-family:"Zen Antique";src:url(../fonts/ZenAntique.woff2) format("woff2")}
 /* Zen Antique に無い字(百人一首の札で使う 6 字)だけを足す */
 @font-face{font-family:"Zen Antique";src:url(../fonts/ZenAntique-Extra.woff2) format("woff2");unicode-range:U+7BC1,U+8EAC,U+5C91,U+66B9,U+6BB7,U+6763}

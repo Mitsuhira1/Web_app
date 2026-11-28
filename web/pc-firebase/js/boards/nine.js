@@ -586,15 +586,31 @@ const dieFace = (v, size, cls = '') => {
   const pips = Array.from({ length: 9 }, (_, i) => `<i class="${PIPS[v].includes(i) ? 'on' : ''}"></i>`).join('');
   return `<span class="die ${v === 1 ? 'one' : ''} ${cls}" style="--ds:${size}px" data-die="${v}">${pips}</span>`;
 };
-const CUP_COLORS = ['#2E4A7D', '#7A4A21', '#8C2F39', '#2E6E6A', '#5B4A8A', '#7D6A1E'];
-const cupSvg = (seat, w) => `<svg viewBox="0 0 100 84" width="${w}" aria-hidden="true"><ellipse cx="50" cy="14" rx="44" ry="12" fill="#00000030"/><path d="M8 14 L22 78 Q24 84 32 84 L68 84 Q76 84 78 78 L92 14 Q50 26 8 14Z" fill="${CUP_COLORS[seat % 6]}"/><path d="M8 14 Q50 26 92 14 Q50 4 8 14Z" fill="#00000038"/><ellipse cx="50" cy="13" rx="42" ry="10" fill="#14100C"/></svg>`;
-// ---- ライアーズダイス(見本の楕円卓と立体カップで描く) ----
-const LD_DP = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
-const ld2die = (v, size, rot = 0) => `<span class="ld2-die" style="width:${size}px;height:${size}px;transform:rotate(${rot}deg)"><span class="pips">${Array.from({ length: 9 }, (_, i) => `<i class="${LD_DP[v].includes(i) ? (v === 1 ? 'one' : 'on') : ''}"></i>`).join('')}</span></span>`;
-const ldCupSvg = (seat, w) => {
-  const col = CUP_COLORS[seat % 6];
-  return `<svg viewBox="0 0 100 100" width="${w}" aria-hidden="true"><ellipse cx="50" cy="93" rx="38" ry="5.5" fill="#000" opacity=".3"/><path d="M21 86 L27 24 Q29 11 41 9 L59 9 Q71 11 73 24 L79 86 Q79.5 93 72 93 L28 93 Q20.5 93 21 86Z" fill="${col}"/><path d="M21 86 L27 24 Q29 11 41 9 L50 9 L50 93 L28 93 Q20.5 93 21 86Z" fill="#fff" opacity=".10"/><path d="M50 9 L59 9 Q71 11 73 24 L79 86 Q79.5 93 72 93 L50 93Z" fill="#000" opacity=".16"/><path d="M22.5 78 L77.5 78 L79 86 Q79.5 93 72 93 L28 93 Q20.5 93 21 86Z" fill="#000" opacity=".22"/><rect x="23" y="74" width="54" height="3" fill="#E8C96A" opacity=".8"/><ellipse cx="50" cy="12.5" rx="16" ry="3.6" fill="#fff" opacity=".20"/><circle cx="50" cy="48" r="17.5" fill="#000" opacity=".28"/><circle cx="50" cy="48" r="17.5" fill="none" stroke="#E8C96A" stroke-width="2"/><rect x="39.5" y="37.5" width="21" height="21" rx="4.5" fill="#F5EFE0"/><circle cx="45" cy="43" r="2.3" fill="#33302A"/><circle cx="55" cy="43" r="2.3" fill="#33302A"/><circle cx="50" cy="48" r="2.3" fill="#33302A"/><circle cx="45" cy="53" r="2.3" fill="#33302A"/><circle cx="55" cy="53" r="2.3" fill="#33302A"/></svg>`;
+// ---- ライアーズダイス(木のテーブル。上に相手、真ん中に自分のダイス、下に次の宣言。見本: docs/mockups/liarsdice-v2/)
+const LD_PIPS = { 1: [[.5, .5]], 2: [[.27, .27], [.73, .73]], 3: [[.27, .27], [.5, .5], [.73, .73]], 4: [[.27, .27], [.73, .27], [.27, .73], [.73, .73]], 5: [[.27, .27], [.73, .27], [.5, .5], [.27, .73], [.73, .73]], 6: [[.27, .25], [.73, .25], [.27, .5], [.73, .5], [.27, .75], [.73, .75]] };
+// サイコロ(真上から。象牙色・1 の目は赤)。o: { rot, ring(金の枠), dim(暗く), shadow }
+const ldDie = (v, s, o = {}) => {
+  const r = s * 0.16;
+  const pips = LD_PIPS[v].map(([x, y]) => `<circle cx="${(x * s).toFixed(1)}" cy="${(y * s).toFixed(1)}" r="${(v === 1 ? s * .12 : s * .085).toFixed(1)}" fill="${v === 1 ? '#c22a22' : '#2b2119'}"/>`).join('');
+  return `<svg class="ld3-die" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="overflow:visible;transform:rotate(${o.rot || 0}deg)${o.dim ? ';opacity:.42' : ''}" data-die="${v}">` +
+    (o.shadow === false ? '' : `<rect x="${s * .06}" y="${s * .1}" width="${s}" height="${s}" rx="${r}" fill="#000" opacity=".35"/>`) +
+    `<rect width="${s}" height="${s}" rx="${r}" fill="#fbf5e6"/><rect width="${s}" height="${s}" rx="${r}" fill="none" stroke="#c9b893" stroke-width="${Math.max(1, s * .035).toFixed(1)}"/>` +
+    `<rect x="${s * .08}" y="${s * .06}" width="${s * .84}" height="${s * .4}" rx="${r * .6}" fill="#fff" opacity=".45"/>${pips}` +
+    (o.ring ? `<rect x="${-s * .1}" y="${-s * .1}" width="${s * 1.2}" height="${s * 1.2}" rx="${r * 1.4}" fill="none" stroke="#f3c95a" stroke-width="${(s * .07).toFixed(1)}"/>` : '') + `</svg>`;
 };
+// 伏せた革のカップ(少し斜め上から)
+const LD_CUPS = ['#6b4123', '#3f4d5e', '#6a2d2a', '#4d5a33', '#5a3f63', '#6b5a2a'];
+const ldCup = (w, tone) => `<svg width="${w}" height="${(w * 1.05).toFixed(1)}" viewBox="0 0 100 105" style="overflow:visible" aria-hidden="true">
+  <ellipse cx="50" cy="98" rx="42" ry="7" fill="#000" opacity=".45"/>
+  <path d="M14 92 L22 18 Q24 8 36 7 L64 7 Q76 8 78 18 L86 92 Q86 99 76 99 L24 99 Q14 99 14 92Z" fill="${tone}"/>
+  <path d="M14 92 L22 18 Q24 8 36 7 L48 7 L44 99 L24 99 Q14 99 14 92Z" fill="#fff" opacity=".07"/>
+  <path d="M66 7 Q76 8 78 18 L86 92 Q86 99 76 99 L64 99Z" fill="#000" opacity=".22"/>
+  <path d="M15.5 80 L84.5 80" stroke="#000" stroke-opacity=".25" stroke-width="2"/>
+  <path d="M17 84 L83 84" stroke="#e7c98d" stroke-opacity=".55" stroke-width="1.4" stroke-dasharray="3 3"/>
+  <path d="M22.5 22 L77.5 22" stroke="#e7c98d" stroke-opacity=".45" stroke-width="1.4" stroke-dasharray="3 3"/>
+  <ellipse cx="50" cy="9" rx="20" ry="3" fill="#fff" opacity=".12"/></svg>`;
+const ldSlots = (n, cls = 'ld3-slots') => `<span class="${cls}">${Array.from({ length: 5 }, (_, k) => `<i class="${k < n ? '' : 'lost'}"></i>`).join('')}</span>`;
+let ldRevealTimer = 0;
 function renderLiarsdice(b, A) {
   prep(A);
   const mob = isMob();
@@ -602,188 +618,116 @@ function renderLiarsdice(b, A) {
   const legalBids = [...new Set(A.view.legal || [])].filter((m) => m >= 100);
   const minBidMove = legalBids.length ? Math.min(...legalBids) : 0;
   const selOk = A.sel && A.sel.kind === 'liarsdice' && A.sel.moves === A.view.moves;
-  let qty = selOk ? A.sel.qty : Math.floor((minBidMove - 100) / 10);
-  let face = selOk ? A.sel.face : (minBidMove - 100) % 10;
-  if (!A.legal.has(100 + qty * 10 + face) && legalBids.length) {
-    const sameFace = legalBids.filter((m) => (m - 100) % 10 === face);
-    if (sameFace.length) qty = Math.floor((Math.min(...sameFace) - 100) / 10);
-    else { qty = Math.floor((minBidMove - 100) / 10); face = (minBidMove - 100) % 10; }
-  }
-  strip(A, b, (i) => !b.alive[i] ? '脱落' : `ダイス ${b.diceCounts[i]} 個`);
-  A.round(`ラウンド ${b.roundNo}`);
-  A.side(`<div class="kv"><span>場のダイス</span><b class="num">${b.totalDice} 個</b></div><div class="kv"><span>1 の扱い</span><b>${b.wildOnes ? 'ワイルド' : '通常'}</b></div>`);
-  const slots = mob ? {
-    1: [[280, 120]],
-    2: [[140, 120], [420, 120]],
-    3: [[95, 120], [280, 108], [465, 120]],
-    4: [[90, 116], [205, 104], [355, 104], [470, 116]],
-    5: [[95, 108], [280, 96], [465, 108], [150, 262], [410, 262]],
-  } : {
-    1: [[450, 104]],
-    2: [[215, 112], [685, 112]],
-    3: [[140, 252], [450, 104], [760, 252]],
-    4: [[128, 322], [228, 112], [672, 112], [772, 322]],
-    5: [[124, 336], [172, 118], [450, 100], [728, 118], [776, 336]],
-  };
-  const opps = [];
-  for (let k = 1; k < b.n; k++) opps.push((me + k) % b.n);
-  const slotList = slots[opps.length] || slots[3];
-  let html = `<div class="ld2-table"></div>`;
-  opps.forEach((seat, idx) => {
-    const [x, y] = slotList[idx];
-    const bidder = seat === b.lastBidder && !!b.currentBid;
-    html += at(x, y, `<div class="ld2-seat"><div class="ld2-cupbox${bidder ? ' decl' : ''}${b.alive[seat] ? '' : ' dead'}">${ldCupSvg(seat, 96)}<div class="ld2-chip">${b.diceCounts[seat]}</div></div>${bidder ? '<div class="ld2-decltag">宣言</div>' : `<div class="ld2-name">${esc(A.name(seat))}</div>`}</div>`);
-  });
-  if (b.currentBid) {
-    html += at(mob ? 280 : 450, mob ? (opps.length >= 5 ? 470 : 440) : 250, `<div class="ld2-plate"><span class="by">${esc(A.name(b.lastBidder))}</span>${ld2die(b.currentBid.face, 46)}<span class="qty">× ${b.currentBid.qty} 個</span></div>`);
-  }
-  const newRound = ninePrev && ninePrev.handle === A.handle && ninePrev.round !== b.roundNo;
-  const myDice = b.myDice ? b.myDice.map((v, i) => ld2die(v, 54, [-4, 3, -2, 2, -3][i % 5])).join('') : '';
-  html += at(mob ? 280 : 450, mob ? 690 : 436, `<div class="ld2-myseat"><span class="ld2-mycupwrap${newRound && !A.reduce ? ' shake' : ''}">${ldCupSvg(me, 84)}</span><div class="ld2-tray${newRound && !A.reduce ? ' roll' : ''}">${myDice}</div><div class="ld2-chip mine">${b.diceCounts[me]}</div></div>`);
-  if (newRound && !A.reduce) A.sfx('DICE', 30);
+  let qty, face;
   if (legalBids.length) {
-    const faces = [1, 2, 3, 4, 5, 6].map((f) => {
-      const ok = A.canPlay && legalBids.some((m) => (m - 100) % 10 === f);
-      return control(ld2die(f, 42), `data-ldface="${f}"`, `${f} の目を選ぶ`, ok, `ld-face-btn${f === face ? ' sel' : ''}`);
-    }).join('');
-    html += at(mob ? 280 : 450, mob ? 812 : 528, `<div class="ld-faces">${faces}</div>`);
-  }
-  const lr = b.lastRound;
-  if (lr && ninePrev && ninePrev.handle === A.handle && ninePrev.lr !== lr.roundNo && !A.reduce) {
-    const rows = lr.allDice.map((ds, i) => ds ? `<div class="ld-rev-row"><span class="ld-rev-name">${esc(A.name(i))}</span>${ds.map((v) =>
-      `<span class="${v === lr.bid.face || (b.wildOnes && v === 1) ? 'ld-hit' : ''}">${ld2die(v, 34)}</span>`).join('')}</div>` : '').join('');
-    html += `<div class="cy-reveal ld-reveal"><div class="ld-rev-rows">${rows}</div>` +
-      `<div class="cy-rev-calc">「${lr.bid.face}」は場に <b>${lr.actualCount} 個</b>(宣言 ${lr.bid.qty} 個)</div>` +
-      `<div class="cy-rev-result">${lr.action === 'exact' ? 'ジャスト' : 'ダウト'}! ${lr.callerSuccess ? `<b>${esc(A.name(lr.caller))}</b> の読みが当たりました` : `<b>${esc(A.name(lr.caller))}</b> の読みは外れました`}${lr.losers.length ? `(${lr.losers.map((s) => esc(A.name(s))).join('・')} がダイスを失います)` : ''}</div></div>`;
-    A.cut({ who: { name: A.name(lr.caller) }, text: lr.action === 'exact' ? 'ジャスト!' : 'ダウト!', tone: 'red', font: 'mo', ms: 1700 });
-    A.anim(3800);
-    A.sfx('CARD_FLIP', 60);
-  }
-  stage(A, b, html, (d) => {
-    if (d.ldface != null && A.canPlay) {
-      const f = Number(d.ldface);
-      const sameFace = legalBids.filter((m) => (m - 100) % 10 === f);
-      if (sameFace.length) {
-        const keepQty = sameFace.some((m) => Math.floor((m - 100) / 10) === qty);
-        A.sel = { kind: 'liarsdice', moves: A.view.moves, face: f, qty: keepQty ? qty : Math.floor((Math.min(...sameFace) - 100) / 10) };
-        A.redraw();
-      }
-      return;
+    qty = selOk ? A.sel.qty : Math.floor((minBidMove - 100) / 10);
+    face = selOk ? A.sel.face : (minBidMove - 100) % 10;
+    if (!A.legal.has(100 + qty * 10 + face)) {
+      const sameFace = legalBids.filter((m) => (m - 100) % 10 === face);
+      if (sameFace.length) qty = Math.floor((Math.min(...sameFace) - 100) / 10);
+      else { qty = Math.floor((minBidMove - 100) / 10); face = (minBidMove - 100) % 10; }
     }
-    tapMove(A)(d);
-  });
-  if (ninePrev) { ninePrev.lr = lr ? lr.roundNo : ninePrev.lr; ninePrev.round = b.roundNo; }
-  // ボタンは消さずに常時表示し、自分の番でない時はグレーアウトする
-  const acts = [];
-  {
-    acts.push({ label: 'ダウト!', move: 0, cls: 'danger', enabled: !!(b.canDoubt && A.legal.has(0)) });
-    acts.push({ label: 'ジャスト!', move: 1, enabled: !!(b.canExact && A.legal.has(1)) });
-    if (legalBids.length) {
-      const qtys = legalBids.filter((m) => (m - 100) % 10 === face).map((m) => Math.floor((m - 100) / 10));
-      const setQty = (v) => { A.sel = { kind: 'liarsdice', moves: A.view.moves, face, qty: v }; A.redraw(); };
-      acts.push({ label: '−', cls: 'step', fn: () => setQty(Math.max(Math.min(...qtys), qty - 1)), enabled: A.canPlay && qty > Math.min(...qtys) });
-      acts.push({ label: `${face} が ${qty} 個と宣言`, move: 100 + qty * 10 + face, cls: 'gold', enabled: A.legal.has(100 + qty * 10 + face) });
-      acts.push({ label: '＋', cls: 'step', fn: () => setQty(Math.min(Math.max(...qtys), qty + 1)), enabled: A.canPlay && qty < Math.max(...qtys) });
-    }
-  }
-  A.acts(acts);
-}
-function ldLegacyRender(b, A) {
-  prep(A);
-  const me = Math.max(0, b.me);
-  // 宣言の初期値: 合法手の中で最小のコード(最小の個数→最小の目)
-  const legalBids = [...new Set(A.view.legal || [])].filter((m) => m >= 100);
-  const minBidMove = legalBids.length ? Math.min(...legalBids) : 0;
-  const selOk = A.sel && A.sel.kind === 'liarsdice' && A.sel.moves === A.view.moves;
-  let qty = selOk ? A.sel.qty : Math.floor((minBidMove - 100) / 10);
-  let face = selOk ? A.sel.face : (minBidMove - 100) % 10;
-  if (!A.legal.has(100 + qty * 10 + face) && legalBids.length) {
-    // 選んでいる目が合法でなくなったら、その目で合法な最小の個数へ寄せる
-    const sameFace = legalBids.filter((m) => (m - 100) % 10 === face);
-    if (sameFace.length) qty = Math.floor((Math.min(...sameFace) - 100) / 10);
-    else { qty = Math.floor((minBidMove - 100) / 10); face = (minBidMove - 100) % 10; }
-  }
-  strip(A, b, (i) => !b.alive[i] ? '脱落' : `ダイス ${b.diceCounts[i]} 個`);
-  A.round(`ラウンド ${b.roundNo}`);
-  A.side(`<div class="kv"><span>場のダイス</span><b class="num">${b.totalDice} 個</b></div><div class="kv"><span>1 の扱い</span><b>${b.wildOnes ? 'ワイルド' : '通常'}</b></div>`);
-  const mob = isMob();
-  const slots = mob
-    ? { 1: [[280, 130]], 2: [[105, 140], [455, 140]], 3: [[92, 168], [280, 128], [468, 168]], 4: [[80, 320], [115, 138], [445, 138], [480, 320]], 5: [[76, 350], [100, 140], [280, 112], [460, 140], [484, 350]] }
-    : { 1: [[450, 122]], 2: [[215, 128], [685, 128]], 3: [[148, 238], [450, 116], [752, 238]], 4: [[138, 312], [232, 122], [668, 122], [762, 312]], 5: [[132, 332], [178, 132], [450, 106], [722, 132], [768, 332]] };
-  const opps = [];
-  for (let k = 1; k < b.n; k++) opps.push((me + k) % b.n);
-  const slotList = slots[opps.length] || slots[3];
-  let html = `<div class="nine-table ntable"><div class="feltin"></div></div>`;
-  opps.forEach((seat, idx) => {
-    const [x, y] = slotList[idx];
-    html += at(x, y, `<div class="ld-cup${b.alive[seat] ? '' : ' dead'}${seat === b.lastBidder && b.currentBid ? ' bidder' : ''}">${cupSvg(seat, mob ? 74 : 84)}<span class="ld-count">${b.diceCounts[seat]}</span></div>`);
-    html += at(x, y + (mob ? 62 : 68), seatChip(A, b, seat));
-  });
-  // 中央: 現在の宣言
-  const cx = mob ? 280 : 450, cy = mob ? 408 : 268;
-  if (b.currentBid) {
-    html += at(cx, cy, `<div class="ld-plate"><span class="ld-plate-lab">${esc(A.name(b.lastBidder))} の宣言</span><span class="ld-plate-main">${dieFace(b.currentBid.face, mob ? 54 : 62)}<b>× ${b.currentBid.qty} 個</b></span></div>`);
   } else {
-    html += at(cx, cy, `<div class="ld-plate"><span class="ld-plate-lab">まだ宣言なし</span><span class="ld-plate-main"><b>場のダイス ${b.totalDice} 個</b></span></div>`);
+    // 自分の番でない時も欄の形を変えないよう、今の宣言の「次」を薄く出しておく
+    face = b.currentBid ? b.currentBid.face : 2;
+    qty = b.currentBid ? b.currentBid.qty + 1 : 1;
   }
-  // 自分: 開いたカップとトレイ
-  const myY = mob ? 622 : 420;
-  const newRound = ninePrev && ninePrev.handle === A.handle && ninePrev.round !== b.roundNo;
-  html += at(cx - (mob ? 118 : 150), myY, `<div class="ld-cup mine${newRound && !A.reduce ? ' shake' : ''}">${cupSvg(b.me, mob ? 86 : 96)}</div>`);
-  if (b.myDice) {
-    html += at(cx + (mob ? 52 : 66), myY + 2, `<div class="ld-tray${newRound && !A.reduce ? ' roll' : ''}">${b.myDice.map((v, i) => dieFace(v, mob ? 46 : 52)).join('')}</div>`);
-  }
-  html += at(mob ? cx : cx - 292, mob ? myY + 74 : myY + 30, seatChip(A, b, me));
-  if (newRound && !A.reduce) A.sfx('DICE', 30);
-  // 宣言パネル(目を選ぶ)
-  if (legalBids.length) {
-    const faces = [1, 2, 3, 4, 5, 6].map((f) => {
-      const ok = A.canPlay && legalBids.some((m) => (m - 100) % 10 === f);
-      return control(dieFace(f, mob ? 38 : 42), `data-ldface="${f}"`, `${f} の目を選ぶ`, ok, `ld-face-btn${f === face ? ' sel' : ''}`);
-    }).join('');
-    html += at(cx, mob ? 762 : 512, `<div class="ld-faces">${faces}</div>`);
-  }
-  // 直前ラウンドの公開演出
+  // 側板: 全員同じ形(「ダイス」+残りの数の四角 5 つ)
+  A.strip(A.view.seats.map((s, i) => `<div class="pl${A.view.toMove === i && !A.view.outcome ? ' turn' : ''}">${avFor(A, b, i)}<span class="who"><span class="nm">${esc(A.name(i))}</span><span class="nt">${b.alive[i] ? `ダイス${ldSlots(b.diceCounts[i], 'ld3-sslots')}` : '脱落'}</span></span></div>`).join(''));
+  A.round(`ラウンド ${b.roundNo}`);
+  const sd = (v) => `<span class="ld3-sdie">${ldDie(v, 18, { shadow: false })}</span>`;
+  const hist = (b.bidHistory || []).slice(-6).map((h, i, arr) => `<div class="${i === arr.length - 1 ? 'now' : ''}"><span>${esc(A.name(h.seat))}</span>${sd(h.face)}<b>× ${h.qty}</b></div>`).join('');
+  A.side(`<div class="ld3-side"><div class="kv"><span>場のダイス</span><b class="num">${b.totalDice} 個</b></div><div class="kv"><span>1 の目</span><b>${b.wildOnes ? 'ワイルド' : '通常'}</b></div>${hist && !mob ? `<h4>このラウンドの宣言</h4><div class="hist">${hist}</div>` : ''}</div>`);
+  // 直前のラウンドの公開(ダウト/ジャストの直後だけ、約 4 秒)
   const lr = b.lastRound;
-  if (lr && ninePrev && ninePrev.handle === A.handle && ninePrev.lr !== lr.roundNo && !A.reduce) {
-    const rows = lr.allDice.map((ds, i) => ds ? `<div class="ld-rev-row"><span class="ld-rev-name">${esc(A.name(i))}</span>${ds.map((v) =>
-      `<span class="${v === lr.bid.face || (b.wildOnes && v === 1) ? 'ld-hit' : ''}">${dieFace(v, mob ? 30 : 34)}</span>`).join('')}</div>` : '').join('');
-    html += `<div class="cy-reveal ld-reveal"><div class="ld-rev-rows">${rows}</div>` +
-      `<div class="cy-rev-calc">「${lr.bid.face}」は場に <b>${lr.actualCount} 個</b>(宣言 ${lr.bid.qty} 個)</div>` +
-      `<div class="cy-rev-result">${lr.action === 'exact' ? 'ジャスト' : 'ダウト'}! ${lr.callerSuccess ? `<b>${esc(A.name(lr.caller))}</b> の読みが当たりました` : `<b>${esc(A.name(lr.caller))}</b> の読みは外れました`}${lr.losers.length ? `(${lr.losers.map((s) => esc(A.name(s))).join('・')} がダイスを失います)` : ''}</div></div>`;
-    A.cut({ who: { name: A.name(lr.caller) }, text: lr.action === 'exact' ? 'ジャスト!' : 'ダウト!', tone: 'red', font: 'mo', ms: 1700 });
-    A.anim(3800);
+  const revealing = !!(lr && ninePrev && ninePrev.handle === A.handle && ninePrev.lr !== lr.roundNo && !A.reduce);
+  const opps = [];
+  for (let k = 1; k < b.n; k++) opps.push((me + k) % b.n);
+  // 相手の席(上に横一列。スマホで 4 人以上は 2 段)
+  const pos = (i, k) => {
+    if (!mob) { const sp = Math.min(280, 820 / k); return [450 + (i - (k - 1) / 2) * sp, 22]; }
+    if (k <= 3) { const sp = Math.min(180, 520 / k); return [280 + (i - (k - 1) / 2) * sp, 16]; }
+    const top = Math.ceil(k / 2), row = i < top ? 0 : 1, j = row ? i - top : i, n2 = row ? k - top : top;
+    return [280 + (j - (n2 - 1) / 2) * 170, row ? 150 : 12];
+  };
+  const match = (v, bid) => bid && (v === bid.face || (b.wildOnes && v === 1 && bid.face !== 1));
+  let html = `<div class="ld3-wood${mob ? ' mob' : ''}"></div>`;
+  const cupW = mob ? (opps.length >= 4 ? 64 : 96) : 92;
+  opps.forEach((seat, i) => {
+    const [x, y] = pos(i, opps.length);
+    let body;
+    if (revealing && lr.allDice[seat] && lr.allDice[seat].length) {
+      const ds = mob ? (opps.length >= 3 ? 27 : 32) : 34;
+      body = `<div class="ld3-shown" style="height:${(cupW * 1.05).toFixed(0)}px${mob ? ';gap:3px' : ''}">${lr.allDice[seat].map((v, j) => ldDie(v, ds, { rot: [-6, 4, -3, 7, -2][j % 5], ring: match(v, lr.bid), dim: !match(v, lr.bid) })).join('')}</div>`;
+    } else body = `<div class="ld3-cup">${ldCup(cupW, LD_CUPS[seat % LD_CUPS.length])}</div>`;
+    const turn = !revealing && seat === b.turn && !b.done;
+    html += `<div class="ld2-seat${b.alive[seat] ? '' : ' out'}${turn ? ' turn' : ''}" style="left:${x.toFixed(0)}px;top:${y}px" data-public-seat="${seat}">${body}${ldSlots(b.diceCounts[seat])}<div class="ld3-nm">${esc(A.name(seat))}</div></div>`;
+    // 今の宣言は、言った人のカップの横に吹き出しで
+    if (!revealing && b.currentBid && b.lastBidder === seat) {
+      const right = x > (mob ? 380 : 640);
+      html += `<div class="ld3-bubble ${right ? 'r' : 'l'}" style="${right ? `right:${((mob ? 560 : 900) - x + cupW / 2 + 12).toFixed(0)}px` : `left:${(x + cupW / 2 + 12).toFixed(0)}px`};top:${y + cupW * .28}px">${ldDie(b.currentBid.face, mob ? 30 : 34, { shadow: false })}<span class="x">×</span><span class="q">${b.currentBid.qty}</span><span class="u">個</span></div>`;
+    }
+  });
+  // 自分: 革の受け皿に 5 個。開けたカップは左に倒しておく
+  const T = mob ? { x: 280, y: opps.length >= 4 ? 370 : 330, w: 480, d: 70 } : { x: 450, y: 322, w: 440, d: 62 };
+  const myDice = revealing ? (lr.allDice[me] || []) : (b.myDice || []);
+  const bidNow = revealing ? lr.bid : b.currentBid;
+  html += `<div class="ld3-tray" style="left:${T.x - T.w / 2}px;top:${T.y - 56}px;width:${T.w}px"></div>`;
+  if (!mob) html += `<div class="ld3-mycup" style="left:${T.x - T.w / 2 - 96}px;top:${T.y - 36}px">${ldCup(66, LD_CUPS[me % LD_CUPS.length])}</div>`;
+  const newRound = !revealing && ninePrev && ninePrev.handle === A.handle && ninePrev.round !== b.roundNo && !A.reduce;
+  html += `<div class="ld2-myseat${newRound ? ' roll' : ''}" style="left:${T.x}px;top:${T.y}px">${myDice.map((v, k) => ldDie(v, T.d, { rot: [-5, 3, -2, 4, -3][k % 5], ring: !revealing && match(v, bidNow), dim: revealing && !match(v, bidNow) })).join('')}</div>`;
+  if (!revealing && b.currentBid && b.lastBidder === me) html += `<div class="ld3-bubble b" style="left:${T.x - T.w / 2 + 10}px;top:${T.y - (mob ? 126 : 128)}px">${ldDie(b.currentBid.face, mob ? 30 : 34, { shadow: false })}<span class="x">×</span><span class="q">${b.currentBid.qty}</span><span class="u">個</span></div>`;
+  if (newRound) A.sfx('DICE', 30);
+  if (revealing) {
+    const who = esc(A.name(lr.caller)), act = lr.action === 'exact' ? 'ジャスト' : 'ダウト';
+    html += `<div class="ld3-count${mob ? ' mob' : ''}" style="left:${T.x}px;top:${mob ? T.y - 100 : 212}px"><span class="ld3-verdict">${who} の${act}</span><div class="big">${ldDie(lr.bid.face, 40, { shadow: false })}<span class="x">×</span>${lr.actualCount}</div><span class="small">宣言は ${lr.bid.qty} 個</span></div>`;
+    A.cut({ who: { name: A.name(lr.caller) }, text: `${act}!`, tone: 'red', font: 'mo', ms: 1700 });
+    A.anim(4200);
     A.sfx('CARD_FLIP', 60);
+    const mv = A.view.moves, hd = A.handle;
+    clearTimeout(ldRevealTimer);
+    ldRevealTimer = setTimeout(() => { if (A.view && A.view.moves === mv && A.handle === hd && document.querySelector('.ld3-count')) A.redraw(); }, 4300);
   }
+  // 次の宣言(目と個数を 1 本の欄に)。自分の番でない時も消さずに薄く
+  const qtys = legalBids.filter((m) => (m - 100) % 10 === face).map((m) => Math.floor((m - 100) / 10));
+  const canPick = A.canPlay && legalBids.length > 0 && !revealing;
+  const faces = [1, 2, 3, 4, 5, 6].map((f) => {
+    const ok = canPick && legalBids.some((m) => (m - 100) % 10 === f);
+    return control(ldDie(f, mob ? 34 : 32, { shadow: false }), `data-ldface="${f}"`, `${f} の目を選ぶ`, ok, `ld3-face${f === face ? ' sel' : ''}${ok ? '' : ' no'}`);
+  }).join('');
+  const minus = control('−', 'data-a="ldq-"', '個数を減らす', canPick && qty > Math.min(...qtys), 'ld3-step');
+  const plus = control('＋', 'data-a="ldq+"', '個数を増やす', canPick && qty < Math.max(...qtys), 'ld3-step');
+  const P = mob ? { x: 280, y: T.y + 196 } : { x: 450, y: 470 };
+  html += `<div class="ld3-pick${mob ? ' mob' : ''}${canPick ? '' : ' off'}" style="left:${P.x}px;top:${P.y}px"><span class="lb">次の宣言</span><div class="faces">${faces}</div><span class="sep"></span><div class="qty">${minus}<b>${qty}</b><span class="u">個</span>${plus}</div></div>`;
+  if (mob) nineSizeOverride = { w: 560, h: T.y + 290 };
   stage(A, b, html, (d) => {
-    if (d.ldface != null && A.canPlay) {
-      const f = Number(d.ldface);
-      const sameFace = legalBids.filter((m) => (m - 100) % 10 === f);
+    if (!canPick) return;
+    if (d.ldface != null) {
+      const f = Number(d.ldface), sameFace = legalBids.filter((m) => (m - 100) % 10 === f);
       if (sameFace.length) {
         const keepQty = sameFace.some((m) => Math.floor((m - 100) / 10) === qty);
         A.sel = { kind: 'liarsdice', moves: A.view.moves, face: f, qty: keepQty ? qty : Math.floor((Math.min(...sameFace) - 100) / 10) };
+        A.sfx('TILE', 0, { volume: .3 });
         A.redraw();
       }
       return;
     }
+    if (d.a === 'ldq-' || d.a === 'ldq+') {
+      const v = d.a === 'ldq+' ? Math.min(Math.max(...qtys), qty + 1) : Math.max(Math.min(...qtys), qty - 1);
+      A.sel = { kind: 'liarsdice', moves: A.view.moves, face, qty: v };
+      A.redraw();
+      return;
+    }
     tapMove(A)(d);
   });
+  nineSizeOverride = null;
   if (ninePrev) { ninePrev.lr = lr ? lr.roundNo : ninePrev.lr; ninePrev.round = b.roundNo; }
-  // 操作ボタン: 個数ステッパー+宣言+ダウト/ジャスト
   // ボタンは消さずに常時表示し、自分の番でない時はグレーアウトする
-  const acts = [];
-  {
-    acts.push({ label: 'ダウト!', move: 0, cls: 'danger', enabled: !!(b.canDoubt && A.legal.has(0)) });
-    acts.push({ label: 'ジャスト!', move: 1, enabled: !!(b.canExact && A.legal.has(1)) });
-    if (legalBids.length) {
-      const qtys = legalBids.filter((m) => (m - 100) % 10 === face).map((m) => Math.floor((m - 100) / 10));
-      const setQty = (v) => { A.sel = { kind: 'liarsdice', moves: A.view.moves, face, qty: v }; A.redraw(); };
-      acts.push({ label: '−', cls: 'step', fn: () => setQty(Math.max(Math.min(...qtys), qty - 1)), enabled: A.canPlay && qty > Math.min(...qtys) });
-      acts.push({ label: `${face} が ${qty} 個と宣言`, move: 100 + qty * 10 + face, cls: 'gold', enabled: A.legal.has(100 + qty * 10 + face) });
-      acts.push({ label: '＋', cls: 'step', fn: () => setQty(Math.min(Math.max(...qtys), qty + 1)), enabled: A.canPlay && qty < Math.max(...qtys) });
-    }
-  }
-  A.acts(acts);
+  A.acts([
+    { label: 'ダウト!', move: 0, cls: 'danger', enabled: !revealing && !!(b.canDoubt && A.legal.has(0)) },
+    { label: 'ジャスト!', move: 1, enabled: !revealing && !!(b.canExact && A.legal.has(1)) },
+    { label: `${face} が ${qty} 個と宣言`, move: 100 + qty * 10 + face, cls: 'gold', enabled: canPick && A.legal.has(100 + qty * 10 + face) },
+  ]);
 }
 window.RENDER.liarsdice = renderLiarsdice;
 
@@ -1732,136 +1676,437 @@ function bsCellsLocal(shipIdx, dir, x, y) {
   }
   return cells;
 }
-// 艦の絵(真上から見たシルエット)。ローカル座標: x=0..len*cell(艦尾→艦首), y=0..cell。
-// detail=true の時は砲身や艦橋の上段まで描く(PC などマスが大きい盤用)。
-function bsShipArt(len, idx, cell, sunk, detail, fillRef) {
-  const c = cell, T = len * c, cy = c / 2;
+// ---- 艦の絵(真上から見たシルエット)。ローカル座標: x=0..len*cell(艦尾→艦首), y=0..cell。
+// detail=true の時は砲身や艦橋の上段まで描く(マスが大きい盤用)。
+function bsShipArt(len, idx, c, sunk, detail, fillRef) {
+  const T = len * c, cy = c / 2;
   const slim = idx === 4; // 潜水艦は細い
   const ht = slim ? c * 0.28 : c * 0.17, hb = c - ht;
   const xs = c * 0.05, xb = T - c * 0.05;
   const hull = `M ${xs} ${ht + c * 0.05} L ${xb - c * 0.60} ${ht} Q ${xb - c * 0.04} ${ht + c * 0.02} ${xb} ${cy} Q ${xb - c * 0.04} ${hb - c * 0.02} ${xb - c * 0.60} ${hb} L ${xs} ${hb - c * 0.05} Q ${xs - c * 0.045} ${cy} ${xs} ${ht + c * 0.05} Z`;
-  const ink = sunk ? '#4A2320' : '#16283A';
-  const struct = sunk ? '#5A332B' : '#2E4356';
-  let s = `<path d="${hull}" fill="${fillRef}" stroke="${sunk ? '#8F1D1D' : '#22384C'}" stroke-width="${sunk ? 2.4 : 1.3}"/>`;
+  const ink = sunk ? '#2a1a16' : '#16283A';
+  const struct = sunk ? '#3b2924' : '#2E4356';
+  let s = `<path d="${hull}" fill="${fillRef}" stroke="${sunk ? '#22140f' : '#22384C'}" stroke-width="1.3"/>`;
   if (!sunk) s += `<path d="${hull}" fill="#D7E3EE" opacity=".26" transform="translate(${T / 2} ${cy}) scale(.88 .60) translate(${-T / 2} ${-cy})"/>`;
   const sw = Math.max(0.8, c * 0.045);
   const turret = (kx, dir) => {
     const x = kx * c, r = Math.max(1.7, c * 0.155);
     let t = '';
-    if (detail) {
-      const bl = c * 0.30, off = c * 0.05;
-      t += `<g stroke="${ink}" stroke-width="${sw}" stroke-linecap="round"><line x1="${x}" y1="${cy - off}" x2="${x + dir * bl}" y2="${cy - off}"/><line x1="${x}" y1="${cy + off}" x2="${x + dir * bl}" y2="${cy + off}"/></g>`;
-    }
+    if (detail) { const bl = c * 0.30, off = c * 0.05; t += `<g stroke="${ink}" stroke-width="${sw}" stroke-linecap="round"><line x1="${x}" y1="${cy - off}" x2="${x + dir * bl}" y2="${cy - off}"/><line x1="${x}" y1="${cy + off}" x2="${x + dir * bl}" y2="${cy + off}"/></g>`; }
     return t + `<circle cx="${x}" cy="${cy}" r="${r}" fill="${struct}" stroke="${ink}" stroke-width="${Math.max(0.7, c * 0.028)}"/>`;
   };
-  const bridge = (kx, w, h) => {
-    const x = kx * c;
-    let t = `<rect x="${x - w * c / 2}" y="${cy - h * c / 2}" width="${w * c}" height="${h * c}" rx="${c * 0.07}" fill="${struct}" stroke="${ink}" stroke-width="${Math.max(0.7, c * 0.028)}"/>`;
-    if (detail) t += `<rect x="${x - w * c * 0.28}" y="${cy - h * c * 0.30}" width="${w * c * 0.56}" height="${h * c * 0.60}" rx="${c * 0.05}" fill="${struct}" stroke="${ink}" stroke-width="${Math.max(0.6, c * 0.02)}"/>`;
-    return t;
-  };
+  const bridge = (kx, w, h) => { const x = kx * c; let t = `<rect x="${x - w * c / 2}" y="${cy - h * c / 2}" width="${w * c}" height="${h * c}" rx="${c * 0.07}" fill="${struct}" stroke="${ink}" stroke-width="${Math.max(0.7, c * 0.028)}"/>`; if (detail) t += `<rect x="${x - w * c * 0.28}" y="${cy - h * c * 0.30}" width="${w * c * 0.56}" height="${h * c * 0.60}" rx="${c * 0.05}" fill="${struct}" stroke="${ink}" stroke-width="${Math.max(0.6, c * 0.02)}"/>`; return t; };
   const funnel = (kx) => `<ellipse cx="${kx * c}" cy="${cy}" rx="${c * 0.085}" ry="${c * 0.125}" fill="${struct}" stroke="${ink}" stroke-width="${Math.max(0.6, c * 0.022)}"/>`;
   if (detail && !slim) s += `<line x1="${c * 0.35}" y1="${cy}" x2="${xb - c * 0.85}" y2="${cy}" stroke="${ink}" stroke-width="${Math.max(0.6, c * 0.022)}" opacity=".30"/>`;
-  if (idx === 0) { s += turret(0.85, 1) + turret(1.75, 1) + bridge(3.02, 0.52, 0.40) + funnel(3.55) + turret(4.18, -1); }
-  else if (idx === 1) { s += turret(0.80, 1) + turret(1.58, 1) + bridge(2.52, 0.46, 0.38) + turret(3.38, -1); }
-  else if (idx === 4) {
-    s += `<rect x="${c * 0.78}" y="${cy - c * 0.17}" width="${c * 0.55}" height="${c * 0.34}" rx="${c * 0.10}" fill="${struct}" stroke="${ink}" stroke-width="${Math.max(0.7, c * 0.028)}"/>`;
-    s += `<circle cx="${c * 0.42}" cy="${cy}" r="${Math.max(1.4, c * 0.075)}" fill="${struct}"/>`;
-  } else { s += turret(0.75, 1) + bridge(1.68, 0.40, 0.34) + funnel(2.32); }
+  if (idx === 0) s += turret(0.85, 1) + turret(1.75, 1) + bridge(3.02, 0.52, 0.40) + funnel(3.55) + turret(4.18, -1);
+  else if (idx === 1) s += turret(0.80, 1) + turret(1.58, 1) + bridge(2.52, 0.46, 0.38) + turret(3.38, -1);
+  else if (idx === 4) { s += `<rect x="${c * 0.78}" y="${cy - c * 0.17}" width="${c * 0.55}" height="${c * 0.34}" rx="${c * 0.10}" fill="${struct}" stroke="${ink}" stroke-width="${Math.max(0.7, c * 0.028)}"/>`; s += `<circle cx="${c * 0.42}" cy="${cy}" r="${Math.max(1.4, c * 0.075)}" fill="${struct}"/>`; }
+  else s += turret(0.75, 1) + bridge(1.68, 0.40, 0.34) + funnel(2.32);
   return s;
 }
-// 艦隊リスト用の小さい艦アイコン(横向き固定)
-function bsShipIcon(len, idx, px, sunk) {
-  const w = len * px;
-  return `<svg class="bs-shipicon" viewBox="0 0 ${w} ${px}" width="${w}" height="${px}">${bsShipArt(len, idx, px, sunk, false, sunk ? '#6B4A41' : '#7E97AC')}</svg>`;
+const bsHullPath = (len, idx, c) => bsShipArt(len, idx, c, false, false, 'none').match(/<path d="([^"]*)"/)[1];
+const BS_DEFS = (id) => `
+<linearGradient id="bsHull${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A9BFD2"/><stop offset=".5" stop-color="#5F7A90"/><stop offset="1" stop-color="#3D5A72"/></linearGradient>
+<linearGradient id="bsWreck${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d5552"/><stop offset=".5" stop-color="#3e3734"/><stop offset="1" stop-color="#2a2422"/></linearGradient>
+<linearGradient id="bsSea${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f5d86"/><stop offset=".55" stop-color="#174a70"/><stop offset="1" stop-color="#0f3555"/></linearGradient>
+<radialGradient id="bsSeaL${id}" cx=".3" cy=".15" r=".9"><stop offset="0" stop-color="#7fc4ea" stop-opacity=".22"/><stop offset="1" stop-color="#7fc4ea" stop-opacity="0"/></radialGradient>
+<pattern id="bsWave${id}" width="64" height="26" patternUnits="userSpaceOnUse"><path d="M0 13 Q8 8 16 13 T32 13 T48 13 T64 13" fill="none" stroke="#bfe3ff" stroke-opacity=".07" stroke-width="1.2"/><path d="M-16 0 Q-8 -5 0 0 T16 0 T32 0 T48 0 T64 0" fill="none" stroke="#bfe3ff" stroke-opacity=".05" stroke-width="1"/></pattern>
+<radialGradient id="bsScorch${id}"><stop offset="0" stop-color="#120a06" stop-opacity=".75"/><stop offset="1" stop-color="#120a06" stop-opacity="0"/></radialGradient>
+<radialGradient id="bsPeg${id}" cx=".38" cy=".34" r=".7"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#e3eaef"/><stop offset="1" stop-color="#a9b8c3"/></radialGradient>
+<radialGradient id="bsRPeg${id}" cx=".38" cy=".34" r=".7"><stop offset="0" stop-color="#ff8c7a"/><stop offset=".55" stop-color="#d8342c"/><stop offset="1" stop-color="#8e1914"/></radialGradient>`;
+// 盤に残る火(平らな 3 色。演出の火の 1 コマ目と同じ形)
+function bsFlame(x, y, c) {
+  const k = c / 38;
+  const fl = (w, h, col, dx) => { const t = -h * k, l = -w * k / 2, rr = w * k / 2; return `<path d="M${x + l + dx} ${y + 2 * k} Q${x + l - 2 * k + dx} ${y + t * .45} ${x + dx} ${y + t} Q${x + rr * .3 + dx} ${y + t * .55} ${x + rr * .55 + dx} ${y + t * .6} Q${x + rr + 2 * k + dx} ${y + t * .3} ${x + rr + dx} ${y + 2 * k}Z" fill="${col}"/>`; };
+  return `<ellipse cx="${x}" cy="${y + 3 * k}" rx="${11 * k}" ry="${5 * k}" fill="#1a0f0a" opacity=".55"/>` + fl(18, 24, '#d9431a', 0) + fl(13, 17, '#ff8a1e', .6 * k) + fl(7, 10, '#ffd23f', -.4 * k) +
+    `<ellipse cx="${x + 5 * k}" cy="${y - 28 * k}" rx="${6 * k}" ry="${4.5 * k}" fill="#4a4440" opacity=".8"/>`;
 }
+// 印: 外れ=白いピン+波紋、命中=焦げ跡+赤いピン+火
+function bsMark(st, cx, cy, c, id) {
+  if (st === 'miss') return `<circle cx="${cx}" cy="${cy}" r="${c * 0.34}" fill="none" stroke="#e8f6ff" stroke-opacity=".22" stroke-width="1.2"/><circle cx="${cx + 1}" cy="${cy + 1.5}" r="${c * 0.15}" fill="#06223a" opacity=".45"/><circle cx="${cx}" cy="${cy}" r="${c * 0.15}" fill="url(#bsPeg${id})"/>`;
+  return `<circle cx="${cx}" cy="${cy}" r="${c * 0.48}" fill="url(#bsScorch${id})"/>` + bsFlame(cx, cy, c) +
+    `<circle cx="${cx + 1}" cy="${cy + 1.5}" r="${c * 0.15}" fill="#1a0705" opacity=".5"/><circle cx="${cx}" cy="${cy}" r="${c * 0.15}" fill="url(#bsRPeg${id})"/>`;
+}
+// 沈んだ艦: 黒ずんだ船体が少し傾き、海の色をかぶり、まわりに油が浮く(演出の最後と同じ姿)
+function bsWreck(len, idx, c, id, horiz) {
+  const w = horiz ? len * c : c, h = horiz ? c : len * c;
+  const art = bsShipArt(len, idx, c, true, c >= 26, `url(#bsWreck${id})`);
+  const inner = horiz ? art : `<g transform="translate(${c} 0) rotate(90)">${art}</g>`;
+  const hull = bsHullPath(len, idx, c);
+  const hullT = horiz ? '' : `translate(${c} 0) rotate(90)`;
+  return `<ellipse cx="${w / 2}" cy="${h / 2}" rx="${w * .56}" ry="${h * .56}" fill="#08141c" opacity=".38"/>` +
+    `<g transform="rotate(${horiz ? 4 : -4} ${w / 2} ${h / 2})">${inner}<g transform="${hullT}"><path d="${hull}" fill="#164466" opacity=".55"/></g></g>`;
+}
+const bsShipGeom = (cells) => {
+  const xs = cells.map((k) => k % 10), ys = cells.map((k) => Math.floor(k / 10));
+  return { horiz: ys[0] === ys[ys.length - 1], x0: Math.min(...xs), y0: Math.min(...ys), len: cells.length };
+};
+// 盤(10×10)。o: { id, x, y, cell, labels, ships:[{index,cells,sunk}], board(状態の配列), target, ghost, tap, hide:Set(描かないマス), hideShip }
 function bsBoardSvg(o) {
-  const cell = o.cell, pad = o.labels ? Math.round(cell * 0.62) : 0;
-  const W = pad + cell * 10 + 4;
-  const X = (c) => pad + (c % 10) * cell, Y = (c) => pad + Math.floor(c / 10) * cell;
-  let s = `<svg class="bs-svg" viewBox="0 0 ${W} ${W}" width="${W}" height="${W}">`;
-  s += `<defs><linearGradient id="bsSea${o.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1D5F8A"/><stop offset="1" stop-color="#0C3556"/></linearGradient>` +
-    `<linearGradient id="bsHull${o.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A9BFD2"/><stop offset=".5" stop-color="#5F7A90"/><stop offset="1" stop-color="#3D5A72"/></linearGradient>` +
-    `<linearGradient id="bsHullSunk${o.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A6A5E"/><stop offset=".5" stop-color="#5A4038"/><stop offset="1" stop-color="#3A2A24"/></linearGradient></defs>`;
-  s += `<rect x="${pad}" y="${pad}" width="${cell * 10}" height="${cell * 10}" fill="url(#bsSea${o.id})" rx="4"/>`;
+  const c = o.cell, X = (k) => (k % 10) * c, Y = (k) => Math.floor(k / 10) * c, S = c * 10;
+  const lp = o.labels ? Math.round(c * 0.6) : 0;
+  let s = `<svg class="bs-svg" style="position:absolute;left:${o.x - lp}px;top:${o.y - lp}px;overflow:visible" width="${S + lp}" height="${S + lp}" viewBox="${-lp} ${-lp} ${S + lp} ${S + lp}"><defs>${BS_DEFS(o.id)}</defs>`;
+  s += `<rect x="-5" y="-5" width="${S + 10}" height="${S + 10}" rx="7" fill="#11171c" stroke="#ffffff14"/>`;
+  s += `<rect width="${S}" height="${S}" rx="3" fill="url(#bsSea${o.id})"/><rect width="${S}" height="${S}" rx="3" fill="url(#bsWave${o.id})"/><rect width="${S}" height="${S}" rx="3" fill="url(#bsSeaL${o.id})"/>`;
   if (o.labels) {
+    const fs = Math.round(c * 0.42);
     for (let i = 0; i < 10; i++) {
-      s += `<text x="${pad + i * cell + cell / 2}" y="${pad * 0.72}" class="bs-lab">${'ABCDEFGHIJ'[i]}</text>`;
-      s += `<text x="${pad * 0.52}" y="${pad + i * cell + cell * 0.66}" class="bs-lab">${i + 1}</text>`;
+      s += `<text class="bs-coord" x="${i * c + c / 2}" y="${-lp * 0.32}" text-anchor="middle" font-size="${fs}">${'ABCDEFGHIJ'[i]}</text>`;
+      s += `<text class="bs-coord" x="${-lp * 0.42}" y="${i * c + c * 0.66}" text-anchor="middle" font-size="${fs}">${i + 1}</text>`;
     }
   }
   let gl = '';
-  for (let i = 1; i < 10; i++) gl += `<line x1="${pad + i * cell}" y1="${pad}" x2="${pad + i * cell}" y2="${pad + cell * 10}"/><line x1="${pad}" y1="${pad + i * cell}" x2="${pad + cell * 10}" y2="${pad + i * cell}"/>`;
-  s += `<g stroke="#FFFFFF" stroke-opacity=".13">${gl}</g>`;
+  for (let i = 1; i < 10; i++) gl += `M${i * c} 0V${S}M0 ${i * c}H${S}`;
+  s += `<path d="${gl}" stroke="#d6efff" stroke-opacity=".11" stroke-width="1"/>`;
+  if (o.target != null && o.target >= 0) s += `<rect y="${Y(o.target)}" width="${S}" height="${c}" fill="#ffd37a" opacity=".07"/><rect x="${X(o.target)}" width="${c}" height="${S}" fill="#ffd37a" opacity=".07"/>`;
+  const sunkCells = new Set(), hide = new Set(o.hide || []);
   for (const sh of o.ships || []) {
     if (!sh.cells || !sh.cells.length) continue;
-    const xs = sh.cells.map(c => c % 10), ys = sh.cells.map(c => Math.floor(c / 10));
-    const horiz = ys[0] === ys[ys.length - 1];
-    const x0 = pad + Math.min(...xs) * cell, y0 = pad + Math.min(...ys) * cell;
-    const len = sh.cells.length;
-    const idx = (typeof sh.index === 'number') ? sh.index : Math.max(0, BS_FLEET.indexOf(len));
-    const fillRef = `url(#${sh.sunk ? 'bsHullSunk' : 'bsHull'}${o.id})`;
-    const art = bsShipArt(len, idx, cell, !!sh.sunk, cell >= 26, fillRef);
-    s += horiz
-      ? `<g transform="translate(${x0} ${y0})">${art}</g>`
-      : `<g transform="translate(${x0 + cell} ${y0}) rotate(90)">${art}</g>`;
+    if (sh.index === o.hideShip) { sh.cells.forEach((k) => hide.add(k)); continue; }
+    const g = bsShipGeom(sh.cells);
+    const idx = (typeof sh.index === 'number') ? sh.index : Math.max(0, BS_FLEET.indexOf(g.len));
+    if (sh.sunk) { sh.cells.forEach((k) => sunkCells.add(k)); s += `<g transform="translate(${g.x0 * c} ${g.y0 * c})">${bsWreck(g.len, idx, c, o.id, g.horiz)}</g>`; continue; }
+    const art = bsShipArt(g.len, idx, c, false, c >= 26, `url(#bsHull${o.id})`);
+    s += `<g transform="${g.horiz ? `translate(${g.x0 * c} ${g.y0 * c})` : `translate(${g.x0 * c + c} ${g.y0 * c}) rotate(90)`}">${art}</g>`;
   }
-  for (let c = 0; c < 100; c++) {
-    const st = o.board ? o.board[c] : 'unknown';
-    const cx = X(c) + cell / 2, cy = Y(c) + cell / 2;
-    if (st === 'miss') s += `<g><circle cx="${cx}" cy="${cy}" r="${cell * 0.15}" fill="#EAF6FF"/><circle cx="${cx}" cy="${cy}" r="${cell * 0.30}" fill="none" stroke="#EAF6FF" stroke-opacity=".45" stroke-width="1.6"/></g>`;
-    else if (st === 'hit') s += `<g><circle cx="${cx}" cy="${cy}" r="${cell * 0.29}" fill="#FF7A29"/><circle cx="${cx}" cy="${cy}" r="${cell * 0.16}" fill="#FFD23E"/><path d="M ${cx - cell * 0.26} ${cy - cell * 0.26} L ${cx + cell * 0.26} ${cy + cell * 0.26} M ${cx + cell * 0.26} ${cy - cell * 0.26} L ${cx - cell * 0.26} ${cy + cell * 0.26}" stroke="#8F1D1D" stroke-width="${Math.max(1.6, cell * 0.085)}" stroke-linecap="round"/></g>`;
+  for (let k = 0; k < 100; k++) {
+    const st = o.board ? o.board[k] : 'unknown';
+    if ((st !== 'miss' && st !== 'hit') || hide.has(k) || sunkCells.has(k)) continue;
+    s += bsMark(st, X(k) + c / 2, Y(k) + c / 2, c, o.id);
   }
   if (o.ghost) {
-    const fill = o.ghost.ok ? '#3DDC74' : '#E5484D';
-    for (const c of o.ghost.cells) s += `<rect x="${X(c) + 1}" y="${Y(c) + 1}" width="${cell - 2}" height="${cell - 2}" rx="5" fill="${fill}" fill-opacity=".5" stroke="${fill}" stroke-width="1.6"/>`;
-  }
-  if (o.lastCell != null && o.lastCell >= 0) {
-    s += `<circle cx="${X(o.lastCell) + cell / 2}" cy="${Y(o.lastCell) + cell / 2}" r="${cell * 0.46}" fill="none" stroke="#FFD23E" stroke-width="2.6" class="${o.boom ? 'bs-boom' : ''}"/>`;
+    const col = o.ghost.ok ? '#5fe08d' : '#ff6b6b';
+    const g = bsShipGeom(o.ghost.cells.length ? o.ghost.cells : [o.ghost.anchor]);
+    const len = BS_FLEET[o.ghost.ship], horiz = o.ghost.dir === 0;
+    const w = horiz ? len * c : c, h = horiz ? c : len * c;
+    s += `<rect x="${g.x0 * c + 1.5}" y="${g.y0 * c + 1.5}" width="${w - 3}" height="${h - 3}" rx="6" fill="${col}" fill-opacity=".16" stroke="${col}" stroke-width="2" stroke-dasharray="6 4"/>`;
+    s += `<g opacity=".72" transform="${horiz ? `translate(${g.x0 * c} ${g.y0 * c})` : `translate(${g.x0 * c + c} ${g.y0 * c}) rotate(90)`}">${bsShipArt(len, o.ghost.ship, c, false, true, `url(#bsHull${o.id})`)}</g>`;
   }
   if (o.target != null && o.target >= 0) {
-    const cx = X(o.target) + cell / 2, cy = Y(o.target) + cell / 2, r = cell * 0.44;
-    s += `<g class="bs-reticle" stroke="#FF4757" stroke-width="2.6" fill="none"><circle cx="${cx}" cy="${cy}" r="${r}"/><line x1="${cx - r - 4}" y1="${cy}" x2="${cx - r + 6}" y2="${cy}"/><line x1="${cx + r - 6}" y1="${cy}" x2="${cx + r + 4}" y2="${cy}"/><line x1="${cx}" y1="${cy - r - 4}" x2="${cx}" y2="${cy - r + 6}"/><line x1="${cx}" y1="${cy + r - 6}" x2="${cx}" y2="${cy + r + 4}"/></g>`;
+    const x = X(o.target), y = Y(o.target), k = c * 0.28, p = -2;
+    const br = (ax, ay, dx, dy) => `M${ax + dx * k} ${ay}H${ax}V${ay + dy * k}`;
+    s += `<path class="bs-aim" d="${br(x - p, y - p, 1, 1)}${br(x + c + p, y - p, -1, 1)}${br(x - p, y + c + p, 1, -1)}${br(x + c + p, y + c + p, -1, -1)}" fill="none" stroke="#ffcf4a" stroke-width="3" stroke-linecap="round"/><circle cx="${x + c / 2}" cy="${y + c / 2}" r="2.6" fill="#ffcf4a"/>`;
   }
   if (o.tap) {
-    for (let c = 0; c < 100; c++) {
-      if (o.tap === 'unknown' && o.board && o.board[c] !== 'unknown') continue;
-      s += `<rect x="${X(c)}" y="${Y(c)}" width="${cell}" height="${cell}" fill="transparent" data-bscell="${c}" class="bs-cell"/>`;
+    for (let k = 0; k < 100; k++) {
+      if (o.tap === 'unknown' && o.board && o.board[k] !== 'unknown') continue;
+      s += `<rect x="${X(k)}" y="${Y(k)}" width="${c}" height="${c}" fill="transparent" data-bscell="${k}" class="bs-cell"/>`;
     }
   }
   return s + '</svg>';
 }
-// 配置フェーズの操作拡張: 艦隊リストからのドラッグ配置と、右クリックでの向き変更。
+// 艦隊の小さな絵(状態を形で見せる): unknown=点線の輪郭 / ok / dmg(被弾マス) / sunk
+function bsShipIcon(i, c, state, hits = [], cls = '') {
+  const len = BS_FLEET[i], w = len * c, id = `i${i}${state}${c}`;
+  let s = `<svg class="bs-shipicon ${cls}" width="${w}" height="${c}" viewBox="0 0 ${w} ${c}" style="overflow:visible"><defs>${BS_DEFS(id)}</defs>`;
+  if (state === 'unknown') s += `<path d="${bsHullPath(len, i, c)}" fill="#ffffff08" stroke="#8ea2b2" stroke-width="1.2" stroke-dasharray="3 2.5"/>`;
+  else {
+    s += bsShipArt(len, i, c, state === 'sunk', c >= 26, `url(#${state === 'sunk' ? 'bsWreck' : 'bsHull'}${id})`);
+    for (const h of hits) s += `<circle cx="${h * c + c / 2}" cy="${c / 2}" r="${c * 0.24}" fill="#d8342c" stroke="#ffd9cf" stroke-width="1"/>`;
+    if (state === 'sunk') s += `<path d="M${c * 0.2} ${c * 0.85} L${w - c * 0.2} ${c * 0.15}" stroke="#d8342c" stroke-width="2.2" stroke-linecap="round"/>`;
+  }
+  return s + '</svg>';
+}
+const BS_ICO_SCOPE = `<svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="6.5" fill="none" stroke="#c3cfd8" stroke-width="1.6"/><path d="M9 0.5V5M9 13V17.5M0.5 9H5M13 9H17.5" stroke="#c3cfd8" stroke-width="1.6"/></svg>`;
+const BS_ICO_ANCHOR = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#c3cfd8" stroke-width="1.6" stroke-linecap="round"><circle cx="9" cy="3.4" r="1.9"/><path d="M9 5.3V16M5 8.2H13M2.6 11.2C3.4 14.2 6 16 9 16C12 16 14.6 14.2 15.4 11.2"/></svg>`;
+const bsMouse = (btn) => `<svg width="16" height="22" viewBox="0 0 16 22"><rect x="1" y="1" width="14" height="20" rx="7" fill="none" stroke="#9fb0bd" stroke-width="1.5"/><path d="M8 1V9" stroke="#9fb0bd" stroke-width="1.5"/>${btn === 'L' ? '<path d="M1.8 8 V7 A6.2 6.2 0 0 1 7.3 1.8 V9 H1.8Z" fill="#ffcf4a"/>' : '<path d="M14.2 8 V7 A6.2 6.2 0 0 0 8.7 1.8 V9 H14.2Z" fill="#ffcf4a"/>'}</svg>`;
+
+// ================================================================ バトルシップの演出(手描き風のコマ送り)
+// 手描きエフェクトの定石に合わせる: 単純な形+平らな 2〜3 色、1 秒 12 コマのコマ送り、水は「上と外へ」、
+// 消える時は薄くせず小さな塊に割れて消える、着水した所に平らな泡が残る。(見本: docs/mockups/battleship-v2/)
+// 演出はすべて「1 マス 38px」で描き、盤のマスの大きさに合わせて入れ物ごと縮める。
+const BS_FPS = 12, BS_FR = 1000 / BS_FPS, BSC = 38;
+const BW1 = '#ffffff', BW2 = '#d6effc', BW3 = '#86c3e6', BWL = '#1d5f8a';
+const BF1 = '#fff6d8', BF2 = '#ffd23f', BF3 = '#ff8a1e', BF4 = '#d9431a', BSM1 = '#4a4440', BSM2 = '#6e6762', BSM3 = '#8f8882';
+const bsRng = (seed) => { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
+function bsBlob(cx, cy, rx, ry, jag, n, rnd) {
+  const pts = [];
+  for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, k = 1 - jag / 2 + rnd() * jag; pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]); }
+  let d = '';
+  for (let i = 0; i < n; i++) {
+    const p = pts[i], q = pts[(i + 1) % n], r = pts[(i + 1) % n], s2 = pts[(i + 2) % n];
+    if (i === 0) d += `M${((p[0] + q[0]) / 2).toFixed(1)} ${((p[1] + q[1]) / 2).toFixed(1)}`;
+    d += ` Q${r[0].toFixed(1)} ${r[1].toFixed(1)} ${((r[0] + s2[0]) / 2).toFixed(1)} ${((r[1] + s2[1]) / 2).toFixed(1)}`;
+  }
+  return d + 'Z';
+}
+function bsDrop(x, y, r, ang) {
+  const c = Math.cos(ang), s = Math.sin(ang);
+  const tip = [x + c * r * 1.6, y + s * r * 1.6], l = [x - s * r, y + c * r], rr = [x + s * r, y - c * r], back = [x - c * r, y - s * r];
+  return `<path d="M${tip[0].toFixed(1)} ${tip[1].toFixed(1)} Q${rr[0].toFixed(1)} ${rr[1].toFixed(1)} ${back[0].toFixed(1)} ${back[1].toFixed(1)} Q${l[0].toFixed(1)} ${l[1].toFixed(1)} ${tip[0].toFixed(1)} ${tip[1].toFixed(1)}Z" fill="${BW1}" stroke="${BWL}" stroke-width=".9" stroke-opacity=".55"/>`;
+}
+// 演出の入れ物(場面の座標 x,y を原点に、1 マス 38px の大きさで描けるよう縮める)
+function bsFxBox(layer, x, y, c) {
+  const d = document.createElement('div');
+  d.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:0;height:0;transform:scale(${c / BSC});pointer-events:none`;
+  layer.appendChild(d);
+  return d;
+}
+function bsEl(parent, style, html = '') { const d = document.createElement('div'); d.style.cssText = 'position:absolute;opacity:0;' + style; d.innerHTML = html; parent.appendChild(d); return d; }
+// コマ送り: frames(SVG の中身)を delay から 1 コマずつ出す(原点 0,0)
+function bsFlip(box, frames, delay = 0, hold = 1, size = 300) {
+  const n = frames.length, D = n * hold * BS_FR;
+  frames.forEach((f, i) => {
+    const d = bsEl(box, `left:${-size / 2}px;top:${-size / 2}px;width:${size}px;height:${size}px`, `<svg width="${size}" height="${size}" viewBox="${-size / 2} ${-size / 2} ${size} ${size}" style="overflow:visible;display:block">${f}</svg>`);
+    const a = i / n, b = (i + 1) / n;
+    const ks = a > 0 ? [{ opacity: 0, offset: 0, easing: 'step-end' }, { opacity: 1, offset: a, easing: 'step-end' }] : [{ opacity: 1, offset: 0, easing: 'step-end' }];
+    ks.push({ opacity: 0, offset: b, easing: 'step-end' });
+    if (b < 1) ks.push({ opacity: 0, offset: 1 });
+    d.animate(ks, { duration: D, delay, fill: 'forwards' });
+  });
+  return D;
+}
+function bsStepMove(d, pts, delay) {
+  const n = pts.length;
+  d.animate(pts.map((p, i) => ({ transform: `translate(${p.x.toFixed(1)}px,${p.y.toFixed(1)}px)${p.r != null ? ` rotate(${p.r}deg)` : ''}`, offset: i / (n - 1), easing: 'step-end' })), { duration: (n - 1) * BS_FR, delay, fill: 'forwards' });
+  d.animate([{ opacity: 0, offset: 0, easing: 'step-end' }, { opacity: 1, offset: .001, easing: 'step-end' }, { opacity: 1, offset: .999 }, { opacity: 0, offset: 1 }], { duration: (n - 1) * BS_FR, delay, fill: 'forwards' });
+}
+// 砲弾が落ちてくる影(3 コマ)
+function bsIncoming(box) {
+  return bsFlip(box, [26, 17, 10].map((r) => `<ellipse cx="0" cy="0" rx="${r}" ry="${r * .8}" fill="#04131f" opacity="${(.25 + (26 - r) / 40).toFixed(2)}"/>`), 0, 1, 80);
+}
+// ---- 水柱(外れ): ひとかたまりの白い水が、根元は細く上へ広がりながら伸び、てっぺんがちぎれて外へ、
+//      両肩が垂れて崩れ、平らな泡が割れて小さくなり、波紋が外へ。最後に白いピン。
+function bsColumnFrames(seed) {
+  const fr = [], r = bsRng(seed);
+  let clipN = 0;
+  const LUMPS = Array.from({ length: 7 }, (_, i) => ({ h: .55 + r() * .6 + (i === 3 ? .5 : i === 2 || i === 4 ? .25 : 0), w: .8 + r() * .5 }));
+  const outline = (H, Wb, Wt, lump, droop) => {
+    const tw = Wt / 2, bw = Wb / 2;
+    const shL = [-tw - droop * 10, -H * .78 + droop * 22], shR = [tw + droop * 10, -H * .78 + droop * 22];
+    let d = `M${-bw} 3 C${-bw - 2} ${-H * .3} ${-tw * .7} ${-H * .55} ${shL[0].toFixed(1)} ${shL[1].toFixed(1)}`;
+    const sum = LUMPS.reduce((s, l) => s + l.w, 0);
+    let x = shL[0], y = shL[1];
+    LUMPS.forEach((l, i) => {
+      const w = (shR[0] - shL[0]) * l.w / sum, t = (i + 1) / LUMPS.length;
+      const nx = x + w, ny = shL[1] + (shR[1] - shL[1]) * t - Math.sin(t * Math.PI) * H * .22, hh = w * .55 * l.h * lump + 2;
+      d += ` C${(x - w * .05).toFixed(1)} ${(y - hh).toFixed(1)} ${(nx + w * .05).toFixed(1)} ${(ny - hh).toFixed(1)} ${nx.toFixed(1)} ${ny.toFixed(1)}`;
+      x = nx; y = ny;
+    });
+    return d + ` C${(tw * .7).toFixed(1)} ${(-H * .55).toFixed(1)} ${(bw + 2).toFixed(1)} ${(-H * .3).toFixed(1)} ${bw} 3Z`;
+  };
+  const mass = (H, Wb, Wt, lump, droop) => {
+    const d = outline(H, Wb, Wt, lump, droop), hi = outline(H * .9, Wb * .6, Wt * .78, lump * .9, droop);
+    let s = `<path d="${d}" fill="${BW2}" stroke="${BWL}" stroke-width="1.2" stroke-linejoin="round"/><g transform="translate(${-Wt * .07} ${-H * .06})"><path d="${hi}" fill="${BW1}"/></g>`;
+    const cid = `bswc${seed}_${clipN++}`;
+    s += `<clipPath id="${cid}"><path d="${d}"/></clipPath><g clip-path="url(#${cid})">`;
+    for (let i = 0; i < 3; i++) {
+      const side = i === 1 ? .2 : i === 0 ? -1 : 1;
+      const sx = side * Wb * (.1 + r() * .18), sy = -H * (.08 + r() * .25), ex = side * Wt * (.2 + r() * .2), ey = -H * (.55 + r() * .25);
+      s += `<path d="M${sx.toFixed(1)} ${sy.toFixed(1)} Q${(sx + (ex - sx) * .2).toFixed(1)} ${((sy + ey) / 2).toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}" fill="none" stroke="${BW3}" stroke-width="${(1.4 + r() * 1.2).toFixed(1)}" stroke-linecap="round" opacity=".7"/>`;
+    }
+    return s + '</g>';
+  };
+  const chunks = (H, Wt, spread, fall, n = 6) => { let s = ''; for (let i = 0; i < n; i++) { const side = i % 2 ? 1 : -1, k = Math.floor(i / 2), x = side * (Wt * .3 + k * spread * .45 + r() * 6), y = -H - 4 + k * 8 + fall * (.5 + k * .4), rr = 5.5 - k * 1.2 + r(); s += `<path d="${bsBlob(x, y, rr, rr * .9, .3, 8, r)}" fill="${BW1}" stroke="${BWL}" stroke-width=".9" stroke-opacity=".6"/>`; } return s; };
+  const foam = (rx, ry, jag, k = 1) => `<path d="${bsBlob(0, 0, rx, ry, jag, 14, r)}" fill="${BW1}" stroke="${BWL}" stroke-width="1" stroke-opacity=".45" opacity="${k}"/><path d="${bsBlob(0, 1, rx * .55, ry * .5, jag, 10, r)}" fill="${BW2}"/>`;
+  const ring = (rad, w, o) => `<ellipse cx="0" cy="0" rx="${rad}" ry="${rad * .92}" fill="none" stroke="${BW1}" stroke-width="${w}" opacity="${o}"/>`;
+  const bits = (n, R, size) => { let s = ''; for (let i = 0; i < n; i++) { const a = r() * Math.PI * 2, d = R * (.5 + r() * .5); s += `<path d="${bsBlob(Math.cos(a) * d, Math.sin(a) * d * .8, size * (.6 + r() * .6), size * (.5 + r() * .5), .5, 7, r)}" fill="${BW1}" stroke="${BWL}" stroke-width=".8" stroke-opacity=".4"/>`; } return s; };
+  fr.push(`<ellipse cx="0" cy="0" rx="15" ry="11" fill="#0a2b45" opacity=".5"/>` + (() => { let s = ''; for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + r() * .3; s += `<circle cx="${(Math.cos(a) * 9).toFixed(1)}" cy="${(Math.sin(a) * 7).toFixed(1)}" r="${(2 + r() * 1.5).toFixed(1)}" fill="${BW1}" stroke="${BWL}" stroke-width=".8"/>`; } return s; })());
+  fr.push(foam(19, 9, .4) + mass(34, 22, 30, .8, 0));
+  fr.push(foam(22, 10, .4) + mass(74, 24, 46, 1, 0));
+  fr.push(foam(25, 11, .4) + mass(100, 26, 58, 1.1, 0));
+  fr.push(foam(27, 12, .4) + mass(110, 28, 64, 1.1, .1) + chunks(110, 64, 18, 0, 4));
+  fr.push(foam(30, 13, .4) + mass(94, 32, 66, .9, .5) + chunks(98, 66, 24, 10));
+  fr.push(foam(33, 14, .45) + mass(64, 38, 64, .8, .9) + chunks(70, 62, 30, 24));
+  fr.push(foam(36, 15, .5) + mass(32, 46, 56, .6, 1) + chunks(40, 54, 34, 30, 4));
+  fr.push(foam(35, 15, .55) + `<path d="${bsBlob(0, -5, 20, 9, .5, 10, r)}" fill="${BW1}" stroke="${BWL}" stroke-width="1" stroke-opacity=".5"/>` + ring(30, 2.2, .8));
+  fr.push(foam(30, 14, .6, .95) + bits(5, 32, 5) + ring(36, 2, .7));
+  fr.push(bits(9, 28, 5.5) + `<path d="${bsBlob(0, 0, 14, 8, .7, 9, r)}" fill="${BW1}" opacity=".9"/>` + ring(42, 1.6, .55));
+  fr.push(bits(7, 31, 3.5) + ring(47, 1.2, .4));
+  fr.push(bits(4, 34, 2.5) + ring(51, 1, .25));
+  return fr;
+}
+function bsWater(box, seed, delay, pegId) {
+  const T = bsFlip(box, bsColumnFrames(seed), delay, 1, 320);
+  const r = bsRng(seed * 31 + 7);
+  for (let i = 0; i < 12; i++) {
+    const side = i % 2 ? 1 : -1;
+    const vx = side * (40 + r() * 60), vy = -(10 + r() * 45), g = 950, t0 = 5 + Math.floor(r() * 2);
+    const sx = side * (6 + r() * 26), sy = -60 - r() * 40, sz = 1.6 + r() * 2;
+    const n = 5 + Math.floor(r() * 2), pts = [];
+    for (let f = 0; f <= n; f++) { const t = f / BS_FPS; pts.push({ x: sx + vx * t, y: Math.min(sy + vy * t + g * t * t / 2, 6 + r() * 4) }); }
+    const d = bsEl(box, 'left:0;top:0;width:0;height:0;opacity:1', `<svg width="1" height="1" style="overflow:visible;position:absolute">${bsDrop(0, 0, sz, Math.atan2(vy, vx) + Math.PI)}</svg>`);
+    d.style.opacity = '0';
+    bsStepMove(d, pts, delay + t0 * BS_FR);
+  }
+  const peg = bsEl(box, 'left:-19px;top:-19px;width:38px;height:38px', `<svg width="38" height="38" viewBox="0 0 38 38"><defs>${BS_DEFS(pegId)}</defs>${bsMark('miss', 19, 19, 38, pegId)}</svg>`);
+  peg.animate([{ opacity: 0, offset: 0, easing: 'step-end' }, { opacity: 1, offset: 1 }], { duration: 10, delay: delay + T - 3 * BS_FR, fill: 'forwards' });
+  return delay + T;
+}
+// ---- 爆発(平らな色のコマ送り): 閃光 → 火の玉 → 黒い煙 → 灰色に薄れて割れる。破片が飛ぶ
+function bsBoomFrames(seed, s = 1) {
+  const r = bsRng(seed), fr = [];
+  const ball = (R, cols, jag, dy = 0) => cols.map((c, i) => `<path d="${bsBlob((r() - .5) * 3 * s, dy - i * 1.5 * s, R * (1 - i * .27) * s, R * (1 - i * .27) * .92 * s, jag, 11, r)}" fill="${c}"/>`).join('');
+  const spikes = (R, n) => { let d = ''; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + r() * .3, L = R * (1.4 + r() * .7); d += `<path d="M${Math.cos(a - .18) * R * .6 * s} ${Math.sin(a - .18) * R * .6 * s} L${Math.cos(a) * L * s} ${Math.sin(a) * L * s} L${Math.cos(a + .18) * R * .6 * s} ${Math.sin(a + .18) * R * .6 * s}Z" fill="${BF2}"/>`; } return d; };
+  const smoke = (n, R, cols, dy, spread) => { let d = ''; for (let i = 0; i < n; i++) { const a = r() * Math.PI * 2, rr = spread * (.3 + r() * .7); d += `<path d="${bsBlob(Math.cos(a) * rr * s, (Math.sin(a) * rr * .7 + dy) * s, R * (.6 + r() * .5) * s, R * (.55 + r() * .45) * s, .4, 9, r)}" fill="${cols[i % cols.length]}" stroke="#2a2420" stroke-width="1" stroke-opacity=".35"/>`; } return d; };
+  fr.push(spikes(10, 8) + `<circle r="${11 * s}" fill="${BF1}"/>`);
+  fr.push(ball(19, [BF4, BF3, BF2, BF1], .35));
+  fr.push(ball(24, [BF4, BF3, BF2, BF1], .45, -2));
+  fr.push(smoke(4, 11, [BSM1], -6, 14) + ball(22, [BF4, BF3, BF2], .55, -4));
+  fr.push(smoke(6, 12, [BSM1, BSM2], -10, 16) + ball(14, [BF3, BF2], .6, -6));
+  fr.push(smoke(6, 13, [BSM2, BSM1], -15, 19) + ball(7, [BF3, BF2], .6, -8));
+  fr.push(smoke(5, 12, [BSM2, BSM3], -20, 22));
+  fr.push(smoke(5, 9, [BSM3, BSM2], -25, 25));
+  fr.push(smoke(4, 6, [BSM3], -30, 27));
+  fr.push(smoke(3, 3.5, [BSM3], -34, 29));
+  return fr;
+}
+function bsBoom(box, x, y, delay, seed, s = 1) {
+  const sub = document.createElement('div');
+  sub.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:0;height:0`;
+  box.appendChild(sub);
+  const D = bsFlip(sub, bsBoomFrames(seed, s), delay, 1, 200);
+  const r = bsRng(seed + 5);
+  for (let i = 0; i < 7; i++) {
+    const a = r() * Math.PI * 2, v = 60 + r() * 60, pts = [];
+    for (let f = 0; f <= 5; f++) { const t = f / BS_FPS; pts.push({ x: Math.cos(a) * v * t, y: Math.sin(a) * v * t + 120 * t * t, r: Math.round(a * 57 + f * 40) }); }
+    const d = bsEl(sub, 'left:0;top:0;width:0;height:0', `<div style="position:absolute;width:6px;height:2.5px;margin:-1px -3px;background:#2a1d14;border-radius:1px"></div>`);
+    bsStepMove(d, pts, delay + BS_FR);
+  }
+  return delay + D;
+}
+// 燃え続ける火(3 コマを繰り返す)
+function bsFireLoop(box, x, y, from, until, seed) {
+  const r = bsRng(seed), frames = [];
+  for (let f = 0; f < 3; f++) {
+    const fl = (w, h, c, dx) => { const t = -h, l = -w / 2, rr = w / 2; return `<path d="M${l + dx} 2 Q${l - 2 + dx} ${t * .45} ${dx + (r() - .5) * 4} ${t} Q${rr * .3 + dx} ${t * .55} ${rr * .55 + dx} ${t * .6} Q${rr + 2 + dx} ${t * .3} ${rr + dx} 2Z" fill="${c}"/>`; };
+    frames.push(`<ellipse cx="0" cy="3" rx="11" ry="5" fill="#1a0f0a" opacity=".55"/>` + fl(18, 22 + r() * 6, BF4, 0) + fl(13, 16 + r() * 5, BF3, (r() - .5) * 2) + fl(7, 9 + r() * 4, BF2, (r() - .5) * 2) + `<path d="${bsBlob(4 + f * 2, -28 - f * 3, 6, 4.5, .4, 8, r)}" fill="${BSM1}" opacity=".85"/>`);
+  }
+  const sub = document.createElement('div');
+  sub.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:0;height:0`;
+  box.appendChild(sub);
+  const loops = Math.max(1, Math.ceil((until - from) / (3 * BS_FR)));
+  frames.forEach((f, i) => {
+    const d = bsEl(sub, 'left:-30px;top:-40px;width:60px;height:60px', `<svg width="60" height="60" viewBox="-30 -40 60 60" style="overflow:visible">${f}</svg>`);
+    const ks = [];
+    for (let L = 0; L < loops; L++) for (let j = 0; j < 3; j++) ks.push({ opacity: j === i ? 1 : 0, offset: (L * 3 + j) / (loops * 3), easing: 'step-end' });
+    ks.push({ opacity: 0, offset: 1 });
+    d.animate(ks, { duration: loops * 3 * BS_FR, delay: from, fill: 'forwards' });
+  });
+}
+// 命中: 影 → 爆発 → 残る火(盤の印と同じ)
+function bsHitFx(box, seed, delay, id) {
+  const t = bsBoom(box, 0, 0, delay, seed, 1);
+  const f = bsEl(box, 'left:-19px;top:-19px;width:38px;height:38px', `<svg width="38" height="38" viewBox="0 0 38 38" style="overflow:visible"><defs>${BS_DEFS(id)}</defs>${bsMark('hit', 19, 19, 38, id)}</svg>`);
+  f.animate([{ opacity: 0, offset: 0, easing: 'step-end' }, { opacity: 1, offset: 1 }], { duration: 10, delay: delay + 5 * BS_FR, fill: 'forwards' });
+  return t;
+}
+// ---- 撃沈: 爆発が艦の上を走る → 船体が現れて燃える → 傾き、艦尾から沈む(境目に白い泡の帯)
+//      → 火は湯気になって消え、泡のかけらが割れて小さくなり、木片と薄い油 → 盤の「沈んだ艦」の姿
+// box は艦の中心。艦の向きの座標: 艦尾 x=0 → 艦首 x=L(L = 長さ×38)、y=0..38。
+function bsSinkFx(box, cells, idx, lastK, delay, id) {
+  const g = bsShipGeom(cells), horiz = g.horiz, len = g.len, L = len * BSC;
+  const ww = horiz ? L : BSC, wh = horiz ? BSC : L;
+  const order = cells.slice().sort((a, b) => a - b);
+  const at = (i) => horiz ? [-L / 2 + (i + .5) * BSC, 0] : [0, -L / 2 + (i + .5) * BSC];
+  const P = (lx, ly) => horiz ? [-L / 2 + lx, -BSC / 2 + ly] : [BSC / 2 - ly, -L / 2 + lx];
+  const li = Math.max(0, order.indexOf(lastK));
+  order.forEach((k, i) => { const [x, y] = at(i); bsBoom(box, x, y, delay + Math.abs(i - li) * 2 * BS_FR, k * 13 + i, i === li ? 1.15 : .9); });
+  const tReveal = delay + 3 * BS_FR, tSink = delay + (len * 2 + 10) * BS_FR, sinkFrames = len * 5 + 6, tUnder = tSink + sinkFrames * BS_FR;
+  const hullPath = bsHullPath(len, idx, BSC);
+  const art = bsShipArt(len, idx, BSC, false, true, `url(#bsHull${id})`);
+  const r = bsRng(idx * 71 + cells[0]);
+  const frames = [];
+  for (let f = 0; f <= sinkFrames; f++) {
+    const p = Math.min(1, f / (sinkFrames - 2)), w = L * Math.pow(p, 1.25) - 6;
+    const lift = p > .55 ? Math.min(1, (p - .55) / .35) : 0, beam = f === 0 ? 1 : .8;
+    let gg = `<g transform="translate(0 ${BSC / 2}) scale(1 ${beam}) translate(0 ${-BSC / 2})"><path d="${hullPath}" fill="#0d3350" opacity="${(.55 * (1 - p * .4)).toFixed(2)}"/>`;
+    gg += `<clipPath id="bscl${id}_${f}"><rect x="${Math.max(0, w).toFixed(1)}" y="-20" width="${L + 40}" height="${BSC + 40}"/></clipPath>`;
+    gg += `<g clip-path="url(#bscl${id}_${f})" transform="translate(${L} ${BSC / 2}) scale(${1 + lift * .1}) translate(${-L} ${-BSC / 2})">${art}<path d="${hullPath}" fill="#0b1c28" opacity="${(.18 + p * .3).toFixed(2)}"/></g>`;
+    if (f > 0 && w < L - 4) {
+      const bx = Math.max(4, w + 2);
+      gg += `<path d="${bsBlob(bx, BSC / 2, 8 + r() * 3, BSC * .62, .55, 12, r)}" fill="${BW1}" stroke="${BWL}" stroke-width="1" stroke-opacity=".5"/><path d="${bsBlob(bx - 6, BSC / 2 + (r() - .5) * 8, 5, BSC * .3, .5, 9, r)}" fill="${BW2}"/>`;
+      for (let b = 0; b < 4; b++) gg += `<circle cx="${(bx - 8 - r() * 22).toFixed(1)}" cy="${(BSC * (.15 + r() * .7)).toFixed(1)}" r="${(1.8 + r() * 2.6).toFixed(1)}" fill="${BW1}" stroke="${BWL}" stroke-width=".8" stroke-opacity=".5"/>`;
+    }
+    frames.push(`<g transform="translate(${-ww / 2} ${-wh / 2})${horiz ? '' : ` translate(${BSC} 0) rotate(90)`}">${gg}</g></g>`);
+  }
+  const defs = bsEl(box, 'left:0;top:0;width:0;height:0', `<svg width="0" height="0"><defs>${BS_DEFS(id)}</defs></svg>`);
+  defs.style.opacity = '1';
+  const S = Math.max(ww, wh) + 80;
+  [frames[0], ...frames].forEach((f, i) => {
+    const d = bsEl(box, `left:${-S / 2}px;top:${-S / 2}px;width:${S}px;height:${S}px`, `<svg width="${S}" height="${S}" viewBox="${-S / 2} ${-S / 2} ${S} ${S}" style="overflow:visible">${f}</svg>`);
+    const a = i === 0 ? tReveal : tSink + (i - 1) * BS_FR, b = i === 0 ? tSink : tSink + i * BS_FR;
+    d.animate([{ opacity: 0, offset: 0, easing: 'step-end' }, { opacity: 1, offset: a / b, easing: 'step-end' }, { opacity: 0, offset: 1 }], { duration: b, fill: 'forwards' });
+  });
+  order.forEach((k, i) => {
+    const [x, y] = at(i), pos = (i + .5) / len;
+    const tOff = tSink + Math.ceil(Math.pow(pos, 1 / 1.25) * (sinkFrames - 2)) * BS_FR;
+    bsFireLoop(box, x, y, tReveal + i * BS_FR, tOff, k * 7);
+    const rs = bsRng(k * 3 + 1), sub = document.createElement('div');
+    sub.style.cssText = `position:absolute;left:${x}px;top:${y - 8}px;width:0;height:0`;
+    box.appendChild(sub);
+    bsFlip(sub, [0, 1, 2].map((j) => `<path d="${bsBlob(0, -j * 7, 9 + j * 4, 7 + j * 3, .5, 9, rs)}" fill="${BW1}" stroke="${BWL}" stroke-width="1" stroke-opacity=".35" opacity="${1 - j * .25}"/>`), tOff, 1, 80);
+  });
+  const fr2 = [], rr = bsRng(cells[0] * 5 + 3);
+  for (let f = 0; f < 12; f++) {
+    let gg = '';
+    const k = f / 11, pieces = 5 + Math.floor(k * 9);
+    for (let i = 0; i < pieces; i++) {
+      const lx = (i + .5) / pieces * L + (rr() - .5) * 12, ly = BSC / 2 + (rr() - .5) * BSC * .55, sz = BSC * .3 * (1 - k * .7) * (.6 + rr() * .6);
+      gg += `<path d="${bsBlob(lx, ly, sz * 1.2, sz, .55, 9, rr)}" fill="${BW2}" stroke="${BWL}" stroke-width=".9" stroke-opacity=".4"/><path d="${bsBlob(lx - sz * .2, ly - sz * .2, sz * .5, sz * .4, .5, 7, rr)}" fill="${BW1}"/>`;
+    }
+    if (f < 6) for (let i = 0; i < 5; i++) gg += `<circle cx="${(rr() * L).toFixed(1)}" cy="${(BSC * (.15 + rr() * .7)).toFixed(1)}" r="${(2 + rr() * 3.5 * (1 - f / 6)).toFixed(1)}" fill="none" stroke="${BW1}" stroke-width="1.4"/>`;
+    gg += `<path d="${bsBlob(L / 2, BSC / 2, L / 2 + 8 + f * 3, BSC / 2 + 6 + f * 3, .1, 20, rr)}" fill="none" stroke="${BW1}" stroke-width="${(1.8 - k * 1.2).toFixed(1)}" opacity="${(.7 - k * .6).toFixed(2)}"/>`;
+    fr2.push(`<g transform="translate(${-ww / 2} ${-wh / 2})${horiz ? '' : ` translate(${BSC} 0) rotate(90)`}">${gg}</g>`);
+  }
+  bsFlip(box, fr2, tUnder - BS_FR, 2, S + 80);
+  const ro = bsRng(cells[0] * 11 + 1);
+  const oil = bsEl(box, `left:${-(ww + 50) / 2}px;top:${-(wh + 50) / 2}px;width:${ww + 50}px;height:${wh + 50}px`, `<svg width="${ww + 50}" height="${wh + 50}" viewBox="${-(ww + 50) / 2} ${-(wh + 50) / 2} ${ww + 50} ${wh + 50}"><path d="${bsBlob(0, 0, ww / 2 + 16, wh / 2 + 16, .25, 16, ro)}" fill="#071722" opacity=".28"/><path d="${bsBlob(ww * .1, -wh * .05, ww / 3, wh / 3, .3, 12, ro)}" fill="#071722" opacity=".18"/></svg>`);
+  oil.animate([{ opacity: 0, offset: 0, easing: 'step-end' }, { opacity: .6, offset: .5, easing: 'step-end' }, { opacity: 1, offset: 1 }], { duration: 6 * BS_FR, delay: tUnder, fill: 'forwards' });
+  for (let i = 0; i < 6; i++) {
+    const [px, py] = P(ro() * L, BSC * (.2 + ro() * .6)), w = 5 + ro() * 6, rot = ro() * 180, vx = (ro() - .5) * 10, vy = (ro() - .5) * 10, dir = ro() < .5 ? 2 : -2, pts = [];
+    for (let f = 0; f <= 18; f++) pts.push({ x: px + vx * f / 18, y: py + vy * f / 18, r: Math.round(rot + f * dir) });
+    const d = bsEl(box, 'left:0;top:0;width:0;height:0', `<div style="position:absolute;width:${w}px;height:3px;margin:-1.5px ${-w / 2}px;background:#6b4a2e;box-shadow:inset 0 -1px 0 #3b2716;border-radius:1px"></div>`);
+    d.animate(pts.map((p, j) => ({ transform: `translate(${p.x.toFixed(1)}px,${p.y.toFixed(1)}px) rotate(${p.r}deg)`, offset: j / 18, easing: 'step-end' })), { duration: 18 * BS_FR, delay: tUnder + 2 * BS_FR, fill: 'forwards' });
+    d.animate([{ opacity: 0, offset: 0, easing: 'step-end' }, { opacity: 1, offset: 1 }], { duration: 10, delay: tUnder + 2 * BS_FR, fill: 'forwards' });
+  }
+  const tEnd = tUnder + 22 * BS_FR;
+  const wreckEl = bsEl(box, `left:${-ww / 2}px;top:${-wh / 2}px;width:${ww}px;height:${wh}px`, `<svg width="${ww}" height="${wh}" viewBox="0 0 ${ww} ${wh}" style="overflow:visible"><defs>${BS_DEFS(id + 'w')}</defs>${bsWreck(len, idx, BSC, id + 'w', horiz)}</svg>`);
+  wreckEl.animate([{ opacity: 0, offset: 0, easing: 'step-end' }, { opacity: .5, offset: .5, easing: 'step-end' }, { opacity: 1, offset: 1 }], { duration: 2 * BS_FR, delay: tEnd - 6 * BS_FR, fill: 'forwards' });
+  return tEnd;
+}
+// 直前の射撃の演出を、盤の上の演出の層で流す。geo: 盤 { x, y, cell }。終わるまでの時間(ms)を返す
+function bsPlayShotFx(la, geo, ships, key) {
+  const layer = document.querySelector('.bs-fx');
+  if (!layer) return 0;
+  const k = la.cell, c = geo.cell;
+  const cx = geo.x + (k % 10 + .5) * c, cy = geo.y + (Math.floor(k / 10) + .5) * c;
+  const box = bsFxBox(layer, cx, cy, c);
+  const t0 = bsIncoming(box);
+  const id = 'fx' + key.replace(/[^0-9a-z]/gi, '');
+  if (!la.hit) return bsWater(box, k * 97 + 13, t0, id);
+  if (la.sunk) {
+    const sh = (ships || []).find((s) => s.index === la.shipIdx && s.cells);
+    if (sh) {
+      const g = bsShipGeom(sh.cells);
+      const sx = geo.x + (g.x0 + (g.horiz ? g.len / 2 : .5)) * c, sy = geo.y + (g.y0 + (g.horiz ? .5 : g.len / 2)) * c;
+      return bsSinkFx(bsFxBox(layer, sx, sy, c), sh.cells, la.shipIdx, k, t0, id);
+    }
+  }
+  return bsHitFx(box, k * 13 + 5, t0, id);
+}
+
+// ================================================================ バトルシップの配置(ドックからのドラッグ・右クリックで向き)
 let bsDrag = null;
-function bsAttachPlaceTools(A, b, sel0) {
+function bsAttachPlaceTools(A, b, sel0, geo) {
   const wrap = document.getElementById('boardwrap');
   if (!wrap || !A.canPlay) return;
   const scene = wrap.querySelector('.nine-scene');
-  const svg = wrap.querySelector('.bs-svg');
-  if (!scene || !svg) return;
-  const mob = isMob();
-  const cell = mob ? 42 : 36, pad = Math.round(cell * 0.62);
-  const SW = mob ? 560 : 900, SH = mob ? 880 : 560;
+  if (!scene) return;
+  const SW = +scene.dataset.w, SH = +scene.dataset.h, c = geo.cell;
   scene.addEventListener('contextmenu', (ev) => {
     ev.preventDefault();
     if (bsDrag) { bsDrag.dir = 1 - bsDrag.dir; bsDrag.cell = null; if (bsDrag.paint) bsDrag.paint(); return; }
     const sel = (A.sel && A.sel.kind === 'battleship') ? A.sel : null;
-    if (sel) {
-      A.sel = { kind: 'battleship', moves: A.view.moves, ship: sel.ship, dir: 1 - sel.dir, cell: sel.cell };
-      A.sfx('TILE', 0, { volume: .3 });
-      A.redraw();
-    }
+    if (sel) { A.sel = { kind: 'battleship', moves: A.view.moves, ship: sel.ship, dir: 1 - sel.dir, cell: sel.cell }; A.sfx('TILE', 0, { volume: .3 }); A.redraw(); }
   });
+  const toScene = (e2) => { const sr = scene.getBoundingClientRect(); return [(e2.clientX - sr.left) / sr.width * SW, (e2.clientY - sr.top) / sr.height * SH]; };
   const cellFromEvent = (e2) => {
-    const r = svg.getBoundingClientRect();
-    const W = pad + cell * 10 + 4;
-    const fx = (e2.clientX - r.left) / r.width, fy = (e2.clientY - r.top) / r.height;
-    if (fx < 0 || fy < 0 || fx >= 1 || fy >= 1) return null;
-    const gx = Math.floor((fx * W - pad) / cell), gy = Math.floor((fy * W - pad) / cell);
-    if (gx < 0 || gx > 9 || gy < 0 || gy > 9) return null;
-    return { gx, gy };
+    const [sx, sy] = toScene(e2);
+    const gx = Math.floor((sx - geo.x) / c), gy = Math.floor((sy - geo.y) / c);
+    return gx < 0 || gx > 9 || gy < 0 || gy > 9 ? null : { gx, gy };
   };
-  wrap.querySelectorAll('.bs-shiprow').forEach((row) => {
+  wrap.querySelectorAll('.bs-dockrow').forEach((row) => {
     const idx = Number(row.dataset.bsship);
     if (b.myShips[idx].placed) return;
     row.addEventListener('pointerdown', (ev) => {
@@ -1870,33 +2115,21 @@ function bsAttachPlaceTools(A, b, sel0) {
       const ir = icon ? icon.getBoundingClientRect() : row.getBoundingClientRect();
       const per = ir.width / BS_FLEET[idx];
       const grab = Math.max(0, Math.min(BS_FLEET[idx] - 1, Math.floor((ev.clientX - ir.left) / per)));
-      const d = bsDrag = {
-        ship: idx, dir: (sel0 && sel0.ship === idx) ? sel0.dir : 0, grab,
-        sx: ev.clientX, sy: ev.clientY, x: ev.clientX, y: ev.clientY,
-        active: false, cell: null, ok: false, el: null, paint: null
-      };
+      const d = bsDrag = { ship: idx, dir: (sel0 && sel0.ship === idx) ? sel0.dir : 0, grab, sx: ev.clientX, sy: ev.clientY, x: ev.clientX, y: ev.clientY, active: false, cell: null, ok: false, el: null, paint: null };
       const paint = () => {
-        if (!d.el) {
-          d.el = document.createElement('div');
-          d.el.className = 'bs-dragghost';
-          scene.appendChild(d.el);
-        }
+        if (!d.el) { d.el = document.createElement('div'); d.el.className = 'bs-dragghost'; scene.appendChild(d.el); }
         const len = BS_FLEET[d.ship];
-        const w = (d.dir === 0 ? len : 1) * cell, h = (d.dir === 0 ? 1 : len) * cell;
+        const w = (d.dir === 0 ? len : 1) * c, h = (d.dir === 0 ? 1 : len) * c;
         const fill = d.cell == null ? 'rgba(126,151,172,.88)' : d.ok ? 'rgba(61,220,116,.55)' : 'rgba(229,72,77,.55)';
-        const art = bsShipArt(len, d.ship, cell, false, cell >= 26, fill);
-        d.el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${d.dir === 0 ? art : `<g transform="translate(${cell} 0) rotate(90)">${art}</g>`}</svg>`;
-        const sr = scene.getBoundingClientRect();
+        const art = bsShipArt(len, d.ship, c, false, c >= 26, fill);
+        d.el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${d.dir === 0 ? art : `<g transform="translate(${c} 0) rotate(90)">${art}</g>`}</svg>`;
         if (d.cell != null) {
-          const br = svg.getBoundingClientRect();
-          const bx = (br.left - sr.left) / sr.width * SW, by = (br.top - sr.top) / sr.height * SH;
-          d.el.style.left = (bx + pad + (d.cell % 10) * cell) + 'px';
-          d.el.style.top = (by + pad + Math.floor(d.cell / 10) * cell) + 'px';
+          d.el.style.left = (geo.x + (d.cell % 10) * c) + 'px';
+          d.el.style.top = (geo.y + Math.floor(d.cell / 10) * c) + 'px';
           d.el.style.transform = 'none';
         } else {
-          d.el.style.left = ((d.x - sr.left) / sr.width * SW) + 'px';
-          d.el.style.top = ((d.y - sr.top) / sr.height * SH) + 'px';
-          d.el.style.transform = 'translate(-50%,-50%)';
+          const [sx, sy] = toScene({ clientX: d.x, clientY: d.y });
+          d.el.style.left = sx + 'px'; d.el.style.top = sy + 'px'; d.el.style.transform = 'translate(-50%,-50%)';
         }
       };
       d.paint = paint;
@@ -1908,8 +2141,7 @@ function bsAttachPlaceTools(A, b, sel0) {
         const pos = cellFromEvent(e2);
         if (pos) {
           const len = BS_FLEET[d.ship];
-          let ox = d.dir === 0 ? pos.gx - d.grab : pos.gx;
-          let oy = d.dir === 0 ? pos.gy : pos.gy - d.grab;
+          let ox = d.dir === 0 ? pos.gx - d.grab : pos.gx, oy = d.dir === 0 ? pos.gy : pos.gy - d.grab;
           ox = Math.max(0, Math.min(10 - (d.dir === 0 ? len : 1), ox));
           oy = Math.max(0, Math.min(10 - (d.dir === 0 ? 1 : len), oy));
           d.cell = oy * 10 + ox;
@@ -1923,7 +2155,7 @@ function bsAttachPlaceTools(A, b, sel0) {
         if (bsDrag === d) bsDrag = null;
         if (d.el) d.el.remove();
         if (!d.active) return;
-        const stop = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+        const stop = (ev2) => { ev2.stopPropagation(); ev2.preventDefault(); };
         window.addEventListener('click', stop, { capture: true, once: true });
         setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 400);
         if (d.cell != null) {
@@ -1936,161 +2168,163 @@ function bsAttachPlaceTools(A, b, sel0) {
     });
   });
 }
+
+// ================================================================ バトルシップの盤
+// 砲撃の記録(側板の「最近の砲撃」)。view には履歴が無いので、この画面で見た射撃を覚えておく
+let bsLog = { handle: null, list: [] };
 function renderBattleship(b, A) {
   prep(A);
   const me = b.me, foe = me >= 0 ? 1 - me : -1;
   const mob = isMob();
-  const sunkOf = (ships) => ships ? ships.filter(s => s.sunk).length : 0;
-  strip(A, b, (i) => {
-    if (me >= 0) return i === me ? `自艦 撃沈 ${sunkOf(b.myShips)} / 5` : `撃沈 ${sunkOf(b.enemyShips)} / 5`;
-    return `撃沈 ${sunkOf(b.publicShips && b.publicShips[i])} / 5`;
-  });
-  A.round(b.phase === 'place' ? '配置フェーズ' : b.phase === 'done' ? '対戦終了' : '攻撃フェーズ');
-  let sideHtml = `<div class="kv"><span>手番</span><b>${b.turn >= 0 ? esc(A.name(b.turn)) : '―'}</b></div>`;
-  if (b.phase === 'battle' && b.shotsLeft > 1) sideHtml += `<div class="kv"><span>この手番</span><b>あと ${b.shotsLeft} 発</b></div>`;
-  if (b.phase === 'place' && me >= 0) sideHtml += `<div class="kv"><span>配置</span><b>あなた ${b.placedCounts[me]} / 5 ・ 相手 ${b.placedCounts[foe]} / 5</b></div>`;
-  A.side(sideHtml);
-  // 直前の射撃の結果音(再描画では鳴らさない)
+  const alive = (ships) => ships ? ships.filter((s) => !s.sunk).length : 5;
+  // 側板: 両者とも同じ形(「残り 4 隻」+艦の形の印 5 つ)。数が変わっても位置が動かない
+  const pips = (n) => `<span class="bs-pips">${[0, 1, 2, 3, 4].map((i) => `<i class="${i < n ? '' : 'off'}"></i>`).join('')}</span>`;
+  A.strip(A.view.seats.map((s, i) => {
+    let det;
+    if (b.phase === 'place') det = `配置 <span class="snum">${b.placedCounts[i]}</span> / 5`;
+    else {
+      const n = me >= 0 ? (i === me ? alive(b.myShips) : alive(b.enemyShips)) : alive(b.publicShips && b.publicShips[i]);
+      det = `残り <span class="snum">${n}</span> 隻${pips(n)}`;
+    }
+    return `<div class="pl${A.view.toMove === i && !A.view.outcome ? ' turn' : ''}">${avFor(A, b, i)}<span class="who"><span class="nm">${esc(A.name(i))}</span><span class="nt">${det}</span></span></div>`;
+  }).join(''));
+  A.round(b.phase === 'place' ? '配置' : b.phase === 'done' ? '対戦終了' : '攻撃');
+  // 直前の射撃
   const la = b.lastAction;
   const shotKey = la && la.type === 'shot' ? `${la.seat}:${la.cell}:${b.phase}` : '';
-  if (shotKey && ninePrev.bsKey !== shotKey) {
-    if (la.sunk) { A.sfx('TAKE', 0, { volume: .9 }); A.sfx('TAKE', 260, { volume: .7, rate: .8 }); }
-    else if (la.hit) A.sfx('TAKE', 0, { volume: .8 });
-    else A.sfx('MARBLE', 0, { volume: .55, rate: .55 });
+  const fresh = !!shotKey && ninePrev && ninePrev.handle === A.handle && ninePrev.bsKey !== shotKey;
+  if (bsLog.handle !== A.handle) bsLog = { handle: A.handle, list: [] };
+  if (shotKey && (!bsLog.list.length || bsLog.list[0].key !== shotKey)) {
+    bsLog.list.unshift({ key: shotKey, seat: la.seat, cell: la.cell, hit: la.hit, sunk: la.sunk, ship: la.shipIdx });
+    bsLog.list.length = Math.min(bsLog.list.length, 5);
   }
+  if (fresh) {
+    if (la.sunk) { A.sfx('TAKE', 120, { volume: .9 }); A.sfx('TAKE', 380, { volume: .7, rate: .8 }); }
+    else if (la.hit) A.sfx('TAKE', 120, { volume: .8 });
+    else A.sfx('MARBLE', 120, { volume: .55, rate: .55 });
+  }
+  const coord = (k) => `${'ABCDEFGHIJ'[k % 10]}${Math.floor(k / 10) + 1}`;
+  if (!mob && (b.phase === 'battle' || b.phase === 'done')) {
+    const rows = bsLog.list.slice(0, 4).map((e) => `<div class="bs-logrow"><span class="bs-who">${esc(A.name(e.seat))}</span><span class="bs-cd">${coord(e.cell)}</span><span class="bs-res"><i class="${e.sunk ? 'sunk' : e.hit ? 'hit' : ''}"></i>${e.sunk ? `撃沈 ${BS_NAMES[e.ship]}` : e.hit ? '命中' : '外れ'}</span></div>`).join('');
+    A.side(`${b.shotsLeft > 1 ? `<div class="kv"><span>この手番</span><b>あと ${b.shotsLeft} 発</b></div>` : ''}<div class="bs-log">${rows ? `<h4>最近の砲撃</h4>${rows}` : ''}</div>`);
+  } else A.side('');
   const selOk = A.sel && A.sel.kind === 'battleship' && A.sel.moves === A.view.moves;
-  let html = `<div class="nine-table bs-table"></div>`;
+  let html = `<div class="bs-table${mob ? ' mob' : ''}"></div>`;
   const acts = [];
-  const bsBars = (ships, board, mine) => ships.map((sh, i) => {
-    const segs = Array.from({ length: BS_FLEET[i] }, (_, j) => {
-      const hit = mine && sh.cells && board && board[sh.cells[j]] === 'hit';
-      return `<i class="${sh.sunk ? 'sunk' : hit ? 'hit' : ''}"></i>`;
-    }).join('');
-    return `<span class="bs-bar">${segs}</span>`;
-  }).join('');
-  const fleetRows = (ships, mine) => ships.map((sh, i) => {
-    const len = BS_FLEET[i];
-    const blocks = bsShipIcon(len, i, 10, !!sh.sunk);
-    let st, cls = '';
-    if (mine) {
-      if (!sh.placed) { st = '未配置'; cls = 'wait'; }
-      else if (sh.sunk) { st = '撃沈'; cls = 'sunk'; }
-      else if (sh.cells.some(c => b.ownBoard && b.ownBoard[c] === 'hit')) { st = '損傷'; cls = 'dmg'; }
-      else st = '健在';
-    } else {
-      st = sh.sunk ? '撃沈' : '未発見';
-      cls = sh.sunk ? 'sunk' : 'wait';
-    }
-    return `<div class="bs-fleet ${cls}"><span class="bs-fname">${BS_NAMES[i]}</span><span class="bs-blocks">${blocks}</span><span class="bs-fst">${st}</span></div>`;
-  }).join('');
-
+  const plate = (x, y, ico, t, sub = '') => at(x, y, `<div class="bs-plate">${ico}${t}${sub ? `<span class="sub">${sub}</span>` : ''}</div>`).replace('class="anchor"', 'class="anchor bs-left"');
+  // 盤の位置(PC 900×560 / スマホ 560×880)
+  const G = mob
+    ? { big: { x: 52, y: 66, cell: 44 }, small: { x: 40, y: 606, cell: 23 } }
+    : { big: { x: 66, y: 74, cell: 38 }, small: { x: 584, y: 74, cell: 25 } };
   if (b.phase === 'place' && me >= 0 && b.turn === me && A.canPlay) {
     // ===== 自分の配置ターン =====
-    const unplaced = b.myShips.filter(s => !s.placed);
+    const unplaced = b.myShips.filter((s) => !s.placed);
     let sel = selOk ? A.sel : null;
-    if (!sel || !unplaced.some(s => s.index === sel.ship)) sel = { kind: 'battleship', moves: A.view.moves, ship: unplaced[0].index, dir: 0, cell: null };
+    if (!sel || !unplaced.some((s) => s.index === sel.ship)) sel = { kind: 'battleship', moves: A.view.moves, ship: unplaced[0].index, dir: 0, cell: null };
     let ghost = null, ghostMove = -1, ghostCell = null;
     if (sel.cell != null) {
-      // 端で艦が盤外に出ないよう、起点を盤内に寄せる
       const len = BS_FLEET[sel.ship];
       let gx = sel.cell % 10, gy = Math.floor(sel.cell / 10);
       if (sel.dir === 0) gx = Math.min(gx, 10 - len); else gy = Math.min(gy, 10 - len);
       ghostCell = gy * 10 + gx;
       const cells = bsCellsLocal(sel.ship, sel.dir, gx, gy);
       ghostMove = sel.ship * 1000 + sel.dir * 100 + ghostCell;
-      ghost = { cells, ok: cells.length > 0 && A.legal.has(ghostMove) };
+      ghost = { cells, anchor: ghostCell, ship: sel.ship, dir: sel.dir, ok: cells.length > 0 && A.legal.has(ghostMove) };
     }
-    const cell = mob ? 42 : 36;
-    html += at(mob ? 280 : 300, mob ? 282 : 282, bsBoardSvg({ id: 'p', cell, labels: true, board: b.ownBoard, ships: b.myShips, tap: 'all', ghost }));
+    const geo = G.big;
+    html += plate(mob ? 30 : 44, mob ? 18 : 30, BS_ICO_ANCHOR, '自分の海域');
+    html += bsBoardSvg({ id: 'p', x: geo.x, y: geo.y, cell: geo.cell, labels: true, board: b.ownBoard, ships: b.myShips, tap: 'all', ghost });
+    // ドック: 艦を盤と同じ縮尺で並べる
+    const dc = mob ? 30 : 34;
     const rows = b.myShips.map((sh) => {
-      const blocks = bsShipIcon(BS_FLEET[sh.index], sh.index, 15, false);
       const cls = sh.placed ? 'placed' : sel.ship === sh.index ? 'sel' : '';
-      return `<div class="bs-shiprow ${cls}" data-bsship="${sh.index}"><span class="bs-fname">${BS_NAMES[sh.index]}</span><span class="bs-blocks">${blocks}</span><span class="bs-fst">${sh.placed ? '配置済み ✓' : sel.ship === sh.index ? '選択中' : ''}</span></div>`;
+      return `<div class="bs-dockrow ${cls}" data-bsship="${sh.index}">${bsShipIcon(sh.index, dc, 'ok', [], 'dock')}<span class="nm">${sh.placed ? '✓ ' : ''}${BS_NAMES[sh.index]}</span></div>`;
     }).join('');
-    html += at(mob ? 280 : 712, mob ? 690 : 282, `<div class="bs-tray"><div class="bs-tray-t">艦をドラッグして、海域に配置<br><span>向き： ${sel.dir === 0 ? '横' : '縦'}（${mob ? '同じマスの再タップ' : '右クリックか、同じマスの再タップ'}で変更）</span></div>${rows}</div>`);
+    const left = b.myShips.filter((s) => !s.placed).length;
+    if (mob) {
+      html += `<div class="bs-dock mob" style="left:40px;top:560px;width:480px">${rows}</div>`;
+    } else {
+      html += plate(520, 30, '', 'ドック', `残り ${left} 隻`);
+      html += `<div class="bs-dock" style="left:520px;top:74px;width:340px">${rows}</div>`;
+      html += `<div class="bs-hints" style="left:522px;top:432px"><div>${bsMouse('L')}ドラッグして海域に置く</div><div>${bsMouse('R')}右クリックで縦・横を変える</div></div>`;
+    }
+    html += `<div class="bs-fx"></div>`;
     stage(A, b, html, (d) => {
       if (d.bscell != null && A.canPlay) {
         const tapped = Number(d.bscell);
-        // 同じマスをもう一度タップしたら、ゴーストの向きを変える
-        if (sel.cell != null && (tapped === sel.cell || tapped === ghostCell)) {
-          A.sel = { kind: 'battleship', moves: A.view.moves, ship: sel.ship, dir: 1 - sel.dir, cell: sel.cell };
-        } else {
-          A.sel = { kind: 'battleship', moves: A.view.moves, ship: sel.ship, dir: sel.dir, cell: tapped };
-        }
+        if (sel.cell != null && (tapped === sel.cell || tapped === ghostCell)) A.sel = { kind: 'battleship', moves: A.view.moves, ship: sel.ship, dir: 1 - sel.dir, cell: sel.cell };
+        else A.sel = { kind: 'battleship', moves: A.view.moves, ship: sel.ship, dir: sel.dir, cell: tapped };
         A.sfx('TILE', 0, { volume: .35 });
         A.redraw();
         return;
       }
       if (d.bsship != null && A.canPlay) {
         const idx = Number(d.bsship);
-        if (!b.myShips[idx].placed) {
-          A.sel = { kind: 'battleship', moves: A.view.moves, ship: idx, dir: idx === sel.ship ? 1 - sel.dir : sel.dir, cell: null };
-          A.redraw();
-        }
+        if (!b.myShips[idx].placed) { A.sel = { kind: 'battleship', moves: A.view.moves, ship: idx, dir: idx === sel.ship ? 1 - sel.dir : sel.dir, cell: null }; A.redraw(); }
         return;
       }
       tapMove(A)(d);
     });
-    bsAttachPlaceTools(A, b, sel);
+    bsAttachPlaceTools(A, b, sel, geo);
     acts.push({ label: '向きを変える', fn: () => { A.sel = { kind: 'battleship', moves: A.view.moves, ship: sel.ship, dir: 1 - sel.dir, cell: sel.cell }; A.redraw(); }, enabled: true });
     acts.push({ label: 'ここに置く', cls: 'gold', enabled: !!(ghost && ghost.ok), fn: () => { A.sfx('TILE', 0, { volume: .8 }); A.play(ghostMove); } });
   } else if (b.phase === 'place') {
     // ===== 相手の配置待ち / 観戦 =====
-    const cell = mob ? 36 : 30;
     if (me >= 0) {
-      html += at(mob ? 280 : 450, mob ? 330 : 270, bsBoardSvg({ id: 'p', cell, labels: true, board: b.ownBoard, ships: b.myShips }));
-      html += at(mob ? 280 : 450, mob ? 640 : 500, `<div class="nine-note">相手が艦を配置しています…</div>`);
-    } else {
-      html += at(mob ? 280 : 450, mob ? 400 : 282, `<div class="nine-note">配置フェーズ（観戦中）</div>`);
-    }
+      const geo = G.big;
+      html += plate(mob ? 30 : 44, mob ? 18 : 30, BS_ICO_ANCHOR, '自分の海域');
+      html += bsBoardSvg({ id: 'p', x: geo.x, y: geo.y, cell: geo.cell, labels: true, board: b.ownBoard, ships: b.myShips });
+      html += at(mob ? 280 : 690, mob ? 600 : 270, `<div class="bs-wait">相手が艦を配置しています…</div>`);
+    } else html += at(mob ? 280 : 450, mob ? 400 : 282, `<div class="bs-wait">配置フェーズ（観戦中）</div>`);
+    html += `<div class="bs-fx"></div>`;
     stage(A, b, html, tapMove(A));
-  } else {
+    acts.push({ label: '向きを変える', enabled: false, fn: () => {} });
+    acts.push({ label: 'ここに置く', cls: 'gold', enabled: false, fn: () => {} });
+  } else if (me >= 0) {
     // ===== 攻撃 / 終了 =====
-    const myTurn = me >= 0 && b.turn === me && A.canPlay && b.phase === 'battle';
-    const target = selOk && A.sel.target != null ? A.sel.target : -1;
-    const lastOnEnemy = la && la.type === 'shot' && la.seat === me ? la.cell : -1;
-    const lastOnOwn = la && la.type === 'shot' && la.seat !== me ? la.cell : -1;
-    const boom = !!shotKey && ninePrev.bsKey !== shotKey;
-    if (me >= 0) {
-      const res = la && la.type === 'shot'
-        ? (la.seat === me
-          ? (la.sunk ? `命中！ ${BS_NAMES[la.shipIdx]}（全長${la.sunkLength}）を撃沈！` : la.hit ? '命中！' : 'ハズレ…')
-          : (la.sunk ? `被弾… ${BS_NAMES[la.shipIdx]}が撃沈` : la.hit ? '被弾！' : '相手の攻撃はハズレ'))
-        : '';
-      if (mob) {
-        html += at(280, 300, bsBoardSvg({ id: 'e', cell: 42, labels: true, board: b.enemyBoard, ships: b.enemyShips, tap: myTurn ? 'unknown' : null, target: myTurn ? target : -1, lastCell: lastOnEnemy, boom }));
-        html += at(280, 48, `<div class="bs-cap">敵の海域</div>`);
-        html += at(155, 668, bsBoardSvg({ id: 'o', cell: 19, labels: false, board: b.ownBoard, ships: b.myShips, lastCell: lastOnOwn, boom }));
-        html += at(405, 612, `<div class="bs-panel compact"><div class="bs-panel-t">敵艦隊</div>${fleetRows(b.enemyShips, false)}</div>`);
-        html += at(405, 765, `<div class="bs-panel compact"><div class="bs-panel-t">自艦隊</div>${fleetRows(b.myShips, true)}</div>`);
-        if (res) html += at(150, 548, `<div class="bs-result compact ${la.hit ? 'hit' : ''}">${res}</div>`);
-      } else {
-        html += at(218, 255, bsBoardSvg({ id: 'e', cell: 34, labels: true, board: b.enemyBoard, ships: b.enemyShips, tap: myTurn ? 'unknown' : null, target: myTurn ? target : -1, lastCell: lastOnEnemy, boom }));
-        html += at(218, 36, `<div class="bs-cap">敵の海域</div>`);
-        html += at(648, 205, bsBoardSvg({ id: 'o', cell: 25, labels: true, board: b.ownBoard, ships: b.myShips, lastCell: lastOnOwn, boom }));
-        html += at(648, 36, `<div class="bs-cap">自分の艦隊</div>`);
-        html += at(218, 502, `<div class="bs-bars">${bsBars(b.enemyShips, b.enemyBoard, false)}</div>`);
-        html += at(648, 502, `<div class="bs-bars">${bsBars(b.myShips, b.ownBoard, true)}</div>`);
-        if (res) html += at(648, 404, `<div class="bs-result ${la.hit ? 'hit' : ''}">${res}</div>`);
+    const myTurn = b.turn === me && A.canPlay && b.phase === 'battle';
+    const target = myTurn && selOk && A.sel.target != null ? A.sel.target : -1;
+    // 演出を流す射撃は、盤にはまだ印を描かない(演出の最後で同じ印になる)
+    const onEnemy = fresh && la.seat === me, onOwn = fresh && la.seat !== me;
+    const fxHide = (on) => on ? new Set([la.cell]) : null;
+    const eGeo = G.big, oGeo = G.small;
+    html += plate(mob ? 30 : 44, mob ? 18 : 30, BS_ICO_SCOPE, '敵の海域');
+    html += bsBoardSvg({ id: 'e', x: eGeo.x, y: eGeo.y, cell: eGeo.cell, labels: true, board: b.enemyBoard, ships: b.enemyShips, tap: myTurn ? 'unknown' : null, target, hide: fxHide(onEnemy), hideShip: onEnemy && la.sunk ? la.shipIdx : undefined });
+    // 敵の艦隊(見つかっていない艦は点線の輪郭)
+    const ec = mob ? 15 : 15;
+    html += `<div class="bs-roster" style="left:${eGeo.x}px;top:${mob ? 528 : 478}px">${b.enemyShips.map((sh, i) => `<div class="bs-rship${sh.sunk ? ' sunk' : ''}">${bsShipIcon(i, ec, sh.sunk ? 'sunk' : 'unknown')}<span>${BS_NAMES[i]}</span></div>`).join('')}</div>`;
+    html += mob ? plate(30, 574, BS_ICO_ANCHOR, '自分の艦隊') : plate(560, 30, BS_ICO_ANCHOR, '自分の艦隊');
+    html += bsBoardSvg({ id: 'o', x: oGeo.x, y: oGeo.y, cell: oGeo.cell, labels: true, board: b.ownBoard, ships: b.myShips, hide: fxHide(onOwn), hideShip: onOwn && la.sunk ? la.shipIdx : undefined });
+    // 自分の艦隊(被弾したマスに赤い点、沈んだ艦は黒ずんだ絵と赤い斜線)
+    const mc = mob ? 18 : 22;
+    html += `<div class="bs-mylist${mob ? ' mob' : ''}" style="left:${mob ? 316 : 584}px;top:${mob ? 600 : 356}px">${b.myShips.map((sh, i) => {
+      const hits = sh.cells ? sh.cells.map((k, j) => (b.ownBoard && b.ownBoard[k] === 'hit' ? j : -1)).filter((j) => j >= 0) : [];
+      const st = sh.sunk ? 'sunk' : hits.length ? 'dmg' : 'ok';
+      return `<span class="${sh.sunk ? 'sunk' : ''}">${BS_NAMES[i]}</span>${bsShipIcon(i, mc, st, sh.sunk ? [] : hits)}`;
+    }).join('')}</div>`;
+    html += `<div class="bs-fx"></div>`;
+    stage(A, b, html, (d) => {
+      if (d.bscell != null && myTurn) {
+        A.sel = { kind: 'battleship', moves: A.view.moves, target: Number(d.bscell) };
+        A.sfx('TILE', 0, { volume: .35 });
+        A.redraw();
+        return;
       }
-      stage(A, b, html, (d) => {
-        if (d.bscell != null && myTurn) {
-          A.sel = { kind: 'battleship', moves: A.view.moves, target: Number(d.bscell) };
-          A.sfx('TILE', 0, { volume: .35 });
-          A.redraw();
-          return;
-        }
-        tapMove(A)(d);
-      });
-      acts.push(myTurn && target >= 0 ? { label: '発射！', move: target, cls: 'gold', enabled: true } : { label: '発射！', cls: 'gold', enabled: false });
-    } else {
-      // 観戦: 両海域に撃沈艦のみ表示
-      const cell = mob ? 24 : 22;
-      html += at(mob ? 140 : 250, mob ? 300 : 282, bsBoardSvg({ id: 's0', cell, labels: false, board: null, ships: b.publicShips ? b.publicShips[0] : [] }));
-      html += at(mob ? 420 : 650, mob ? 300 : 282, bsBoardSvg({ id: 's1', cell, labels: false, board: null, ships: b.publicShips ? b.publicShips[1] : [] }));
-      html += at(mob ? 280 : 450, mob ? 620 : 500, `<div class="nine-note">観戦中（撃沈した艦だけが見えます）</div>`);
-      stage(A, b, html, tapMove(A));
+      tapMove(A)(d);
+    });
+    if (fresh && !A.reduce) {
+      const geo = onEnemy ? eGeo : oGeo;
+      const ms = bsPlayShotFx(la, geo, onEnemy ? b.enemyShips : b.myShips, `${A.view.moves}`);
+      if (ms) A.anim(ms / (A.speed || 1));
     }
+    acts.push(target >= 0 ? { label: `${coord(target)} へ発射`, move: target, cls: 'gold', enabled: true } : { label: '発射', cls: 'gold', enabled: false, fn: () => {} });
+  } else {
+    // 観戦: 両海域に撃沈艦のみ
+    const cell = mob ? 24 : 30;
+    html += bsBoardSvg({ id: 's0', x: mob ? 40 : 66, y: mob ? 80 : 90, cell, labels: true, board: null, ships: b.publicShips ? b.publicShips[0] : [] });
+    html += bsBoardSvg({ id: 's1', x: mob ? 300 : 500, y: mob ? 80 : 90, cell, labels: true, board: null, ships: b.publicShips ? b.publicShips[1] : [] });
+    html += at(mob ? 280 : 450, mob ? 420 : 470, `<div class="bs-wait">観戦中（撃沈した艦だけが見えます）</div>`);
+    stage(A, b, html, tapMove(A));
   }
   A.acts(acts);
   ninePrev.bsKey = shotKey;
@@ -2180,7 +2414,7 @@ const NINE_STATUS = {
   chinchiro: (b) => b.reason ? '' : b.me >= 0 && b.turn === b.me ? (b.attempts > 0 ? `目なし… あと ${3 - b.attempts} 回振れます` : 'サイコロを振ってください') : '',
   battleship: (b) => {
     if (b.phase === 'place') return b.me >= 0 && b.turn === b.me ? '艦を選んで配置してください' : '相手が艦を配置しています';
-    if (b.phase === 'battle' && b.me >= 0 && b.turn === b.me) return b.shotsLeft > 1 ? `敵の海域を狙ってください（この手番 あと${b.shotsLeft}発）` : '敵の海域を狙ってください';
+    if (b.phase === 'battle' && b.me >= 0 && b.turn === b.me) return '撃つマスを選んでください';
     return '';
   },
   skull: (b) => b.done ? '' : {

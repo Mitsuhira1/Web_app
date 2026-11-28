@@ -1,5 +1,7 @@
 # ライアーズダイス — 盤面の見本(第 2 版・PC 版)
 
+**2026-11-28 にアプリへ実装済み**(`web/pc-firebase/js/boards/nine.js`)。
+
 ユーザーの指摘(2026-11-28): 配置がわざとらしい・分かりにくい・字が AI っぽい。撮影: `node docs/mockups/liarsdice-v2/shoot.cjs <woff2 のフォルダ>`。
 
 | あなたの番 | ダウトでカップを開けた所 |

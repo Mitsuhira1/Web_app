@@ -6,6 +6,8 @@
 
 ---
 
+- 2026-11-28 バトルシップ・ライアーズダイスの盤の作り直し(見た目と演出のみ。規則は変えていない)。`web/pc-firebase/js/boards/nine.js`・`css/twelve.css`・字 2 種。見本は `docs/mockups/battleship-v2/`・`liarsdice-v2/`。
+
 ## 2026-11-28 将棋の「駒の一覧」の見た目(Claude、pc-firebase。表示のみ)
 - 上の選ぶ欄の字(Yuji Boku)が約 2px 下にずれて見えた → 下に 4px あけて中央に。図の駒は、盤の駒と同じ絵(`komaSvg`)にした(前は四角を駒の形に切り抜いた物で、枠線が影のように見えた)。ほかの版の駒の一覧も同じなら直す。
 

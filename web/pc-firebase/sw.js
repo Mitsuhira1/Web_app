@@ -1,5 +1,5 @@
 // PC 版(Web): ネットにつながる時はいつもネットから新しいファイルを取り、切れている時だけ保存したものを使う(tools/sync_pc.py が作る)
-const CACHE = "asobipcfb-20261128-wolfbtn-reversi-3";
+const CACHE = "asobipcfb-20261128-bs-ld-redesign-1";
 const FILES = [
 "./css/twelve.css",
 "./css/falling.css",
@@ -119,6 +119,10 @@ const FILES = [
 "./js/wolf.js",
 "./fonts/Cinzel.woff2",
 "./fonts/DelaGothicOne.woff2",
+"./fonts/BarlowCondensed-SemiBold.woff2",
+"./fonts/BarlowCondensed-Bold.woff2",
+"./fonts/ZenKakuGothicNew-Medium.woff2",
+"./fonts/ZenKakuGothicNew-Bold.woff2",
 "./fonts/KaiseiTokumin-ExtraBold.woff2",
 "./fonts/ShipporiMinchoB1-ExtraBold.woff2",
 "./fonts/YujiBoku-Koma.woff2",
@@ -165,6 +169,8 @@ const FILES = [
 "./licenses/ZenMaruGothic-OFL.txt",
 "./licenses/cinzel-OFL.txt",
 "./licenses/delagothicone-OFL.txt",
+"./licenses/barlowcondensed-OFL.txt",
+"./licenses/zenkakugothicnew-OFL.txt",
 "./licenses/kaiseitokumin-OFL.txt",
 "./licenses/kotlin.txt",
 "./licenses/shipporiminchob1-OFL.txt",
